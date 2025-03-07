@@ -9,8 +9,8 @@ import (
 )
 
 type LocalizationMiddleware struct {
-	translator localization.Translator
 	constants  *bootstrap.Constants
+	translator localization.Translator
 }
 
 func NewLocalization(constants *bootstrap.Constants, translator localization.Translator) *LocalizationMiddleware {

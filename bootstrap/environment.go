@@ -7,8 +7,9 @@ import (
 )
 
 type Env struct {
-	Server Server
-	Logger Logger
+	Server    Server
+	Logger    Logger
+	RateLimit RateLimit
 }
 
 type Server struct {
@@ -22,6 +23,11 @@ type Logger struct {
 	ConsoleOutput string
 }
 
+type RateLimit struct {
+	Limit string
+	Burst string
+}
+
 func NewEnvironments() *Env {
 	godotenv.Load(".env")
 	return &Env{
@@ -33,6 +39,10 @@ func NewEnvironments() *Env {
 			LogLevel:      os.Getenv("LOG_LEVEL"),
 			LogFile:       os.Getenv("LOG_FILE"),
 			ConsoleOutput: os.Getenv("CONSOLE_OUTPUT"),
+		},
+		RateLimit: RateLimit{
+			Limit: os.Getenv("RATE_LIMIT"),
+			Burst: os.Getenv("RATE_lIMIT_BURST"),
 		},
 	}
 }
