@@ -7,7 +7,7 @@ import (
 
 func main() {
 	gin.DisableConsoleColor()
-	ginEngine := gin.New()
+	ginEngine := gin.Default()
 
 	config := bootstrap.Run()
 
