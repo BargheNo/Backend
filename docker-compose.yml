@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    image: ghcr.io/bargheno/backend
+    container_name: app
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17
+    container_name: db
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  
+
+volumes:
+  db_data:

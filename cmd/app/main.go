@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	"github.com/gin-gonic/gin"
 )
@@ -11,5 +13,5 @@ func main() {
 
 	config := bootstrap.Run()
 
-	ginEngine.Run(config.Env.Server.Port)
+	ginEngine.Run(fmt.Sprintf(":%v", config.Env.Server.Port))
 }

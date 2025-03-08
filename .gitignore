@@ -1,2 +1,4 @@
 .env
 app.exe
+.vscode/
+db-data
