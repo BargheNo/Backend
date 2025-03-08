@@ -1,9 +1,6 @@
 name: CI
 
 on: 
-    push:
-        branches: 
-            - ops/CICD
     pull_request:
         branches: 
             - develop
