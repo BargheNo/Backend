@@ -28,6 +28,9 @@ func main() {
 
 	db := database.NewPostgresDatabase(dsn)
 	db.GetDB().AutoMigrate(
+		&entity.Address{},
+		&entity.Permission{},
+		&entity.Role{},
 		&entity.User{},
 	)
 

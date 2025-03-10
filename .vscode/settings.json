@@ -1,7 +1,6 @@
 {
-    "gopls":
-    {
-      "buildFlags": ["-tags=wireinject"]
+    "gopls": {
+        "buildFlags": ["-tags=wireinject"]
     },
     "cSpell.words": [
       "Barghe",

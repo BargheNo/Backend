@@ -4,8 +4,6 @@
 package wire
 
 import (
-	"log"
-
 	"github.com/BargheNo/Backend/bootstrap"
 	localizationimpl "github.com/BargheNo/Backend/internal/application/adapter/localization"
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
@@ -15,19 +13,19 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/repository"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository"
-	"github.com/BargheNo/Backend/internal/presentation/controller/v1/sample"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
 )
 
 var DatabaseProviderSet = wire.NewSet(
-	repositoryimpl.NewSampleRepository,
-	wire.Bind(new(repository.SampleRepository), new(*repositoryimpl.SampleRepository)),
+	repositoryimpl.NewUserRepository,
+	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
-	serviceimpl.NewSampleService,
-	wire.Bind(new(service.SampleService), new(*serviceimpl.SampleService)),
+	serviceimpl.NewUserService,
+	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -36,8 +34,12 @@ var AdapterProviderSet = wire.NewSet(
 	wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)),
 )
 
-var ControllerProviderSet = wire.NewSet(
-	sample.NewSampleController,
+var GeneralControllerProviderSet = wire.NewSet(
+	user.NewGeneralUserController,
+	wire.Struct(new(GeneralControllers), "*"),
+)
+
+var ControllersProviderSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
 )
 
@@ -58,9 +60,6 @@ func ProvideLoggerConfig(container *bootstrap.Config) *bootstrap.Logger {
 }
 
 func ProvideRateLimitConfig(container *bootstrap.Config) *bootstrap.RateLimit {
-	if container.Env == nil {
-		log.Fatal("RateLimit configuration is nil")
-	}
 	return &container.Env.RateLimit
 }
 
@@ -68,15 +67,20 @@ var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	ServiceProviderSet,
 	AdapterProviderSet,
-	ControllerProviderSet,
+	GeneralControllerProviderSet,
+	ControllersProviderSet,
 	MiddlewareProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
 )
 
+type GeneralControllers struct {
+	UserController *user.GeneralUserController
+}
+
 type Controllers struct {
-	SampleController *sample.SampleController
+	General *GeneralControllers
 }
 
 type Middlewares struct {

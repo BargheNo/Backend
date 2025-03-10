@@ -16,7 +16,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/repository"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository"
-	"github.com/BargheNo/Backend/internal/presentation/controller/v1/sample"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
 )
@@ -25,11 +25,14 @@ import (
 
 func InitializeApplication(container *bootstrap.Config, db database.Database) (*Application, error) {
 	constants := ProvideConstants(container)
-	sampleRepository := repositoryimpl.NewSampleRepository()
-	sampleService := serviceimpl.NewSampleService(constants, sampleRepository, db)
-	sampleController := sample.NewSampleController(constants, sampleService)
+	userRepository := repositoryimpl.NewUserRepository()
+	userService := serviceimpl.NewUserService(constants, userRepository, db)
+	generalUserController := user.NewGeneralUserController(constants, userService)
+	generalControllers := &GeneralControllers{
+		UserController: generalUserController,
+	}
 	controllers := &Controllers{
-		SampleController: sampleController,
+		General: generalControllers,
 	}
 	recoveryMiddleware := middleware.NewRecovery(constants)
 	translator := localizationimpl.NewTranslationService()
@@ -54,13 +57,15 @@ func InitializeApplication(container *bootstrap.Config, db database.Database) (*
 
 // wire.go:
 
-var DatabaseProviderSet = wire.NewSet(repositoryimpl.NewSampleRepository, wire.Bind(new(repository.SampleRepository), new(*repositoryimpl.SampleRepository)))
+var DatabaseProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)))
 
-var ServiceProviderSet = wire.NewSet(serviceimpl.NewSampleService, wire.Bind(new(service.SampleService), new(*serviceimpl.SampleService)))
+var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)))
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
 
-var ControllerProviderSet = wire.NewSet(sample.NewSampleController, wire.Struct(new(Controllers), "*"))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wire.Struct(new(GeneralControllers), "*"))
+
+var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, wire.Struct(new(Middlewares), "*"))
 
@@ -80,15 +85,20 @@ var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	ServiceProviderSet,
 	AdapterProviderSet,
-	ControllerProviderSet,
+	GeneralControllerProviderSet,
+	ControllersProviderSet,
 	MiddlewareProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
 )
 
+type GeneralControllers struct {
+	UserController *user.GeneralUserController
+}
+
 type Controllers struct {
-	SampleController *sample.SampleController
+	General *GeneralControllers
 }
 
 type Middlewares struct {

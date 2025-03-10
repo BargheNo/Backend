@@ -13,9 +13,14 @@ func Run(ginEngine *gin.Engine, app *wire.Application) {
 	ginEngine.Use(app.Middlewares.RateLimit.RateLimit)
 
 	v1 := ginEngine.Group("/v1")
-	registerSampleRoutes(v1, app)
+	registerGeneralRoutes(v1, app)
+	registerMemberRoutes(v1, app)
 }
 
-func registerSampleRoutes(v1 *gin.RouterGroup, app *wire.Application) {
-	httpv1.SetupSampleRoutes(v1, app)
+func registerGeneralRoutes(v1 *gin.RouterGroup, app *wire.Application) {
+	httpv1.SetupGeneralRoutes(v1, app)
+}
+
+func registerMemberRoutes(v1 *gin.RouterGroup, app *wire.Application) {
+	httpv1.SetupMemberRoutes(v1, app)
 }
