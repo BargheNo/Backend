@@ -1,8 +1,23 @@
 {
+    "gopls":
+    {
+      "buildFlags": ["-tags=wireinject"]
+    },
     "cSpell.words": [
-        "Barghe",
-        "godotenv",
-        "gonic",
-        "joho"
+      "Barghe",
+      "bargheno",
+      "dbname",
+      "godotenv",
+      "gonic",
+      "gorm",
+      "httpv",
+      "Inno",
+      "joho",
+      "localizationimpl",
+      "loggerimpl",
+      "primarykey",
+      "repositoryimpl",
+      "serviceimpl",
+      "sslmode"
     ]
 }

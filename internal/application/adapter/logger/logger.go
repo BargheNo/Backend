@@ -1,4 +1,4 @@
-package logger
+package loggerimpl
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type Logger struct {
 
 var loggerInstance logger.Logger
 
-func NewLogger(config bootstrap.Logger, constants *bootstrap.Constants) (*Logger, error) {
+func NewLogger(config *bootstrap.Logger, constants *bootstrap.Constants) (*Logger, error) {
 	if config.LogLevel == "" {
 		config.LogLevel = constants.LogLevel.Info
 	}

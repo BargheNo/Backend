@@ -10,6 +10,7 @@ type Env struct {
 	Server    Server
 	Logger    Logger
 	RateLimit RateLimit
+	PrimaryDB Database
 }
 
 type Server struct {
@@ -28,6 +29,14 @@ type RateLimit struct {
 	Burst string
 }
 
+type Database struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Name     string
+}
+
 func NewEnvironments() *Env {
 	godotenv.Load(".env")
 	return &Env{
@@ -43,6 +52,13 @@ func NewEnvironments() *Env {
 		RateLimit: RateLimit{
 			Limit: os.Getenv("RATE_LIMIT"),
 			Burst: os.Getenv("RATE_lIMIT_BURST"),
+		},
+		PrimaryDB: Database{
+			Host:     os.Getenv("DB_HOST"),
+			Port:     os.Getenv("DB_PORT"),
+			User:     os.Getenv("DB_USER"),
+			Password: os.Getenv("DB_PASSWORD"),
+			Name:     os.Getenv("DB_NAME"),
 		},
 	}
 }

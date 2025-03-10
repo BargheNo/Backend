@@ -1,4 +1,4 @@
-package localization
+package middleware
 
 import (
 	"net/http"

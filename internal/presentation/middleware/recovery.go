@@ -1,4 +1,4 @@
-package exception
+package middleware
 
 import (
 	"fmt"
