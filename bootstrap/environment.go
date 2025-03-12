@@ -7,10 +7,11 @@ import (
 )
 
 type Env struct {
-	Server    Server
-	Logger    Logger
-	RateLimit RateLimit
-	PrimaryDB Database
+	Server       Server
+	Logger       Logger
+	RateLimit    RateLimit
+	PrimaryDB    Database
+	PrimaryRedis Redis
 }
 
 type Server struct {
@@ -37,6 +38,13 @@ type Database struct {
 	Name     string
 }
 
+type Redis struct {
+	Port      string
+	Address   string
+	Password  string
+	RDBNumber string
+}
+
 func NewEnvironments() *Env {
 	godotenv.Load(".env")
 	return &Env{
@@ -59,6 +67,12 @@ func NewEnvironments() *Env {
 			User:     os.Getenv("DB_USER"),
 			Password: os.Getenv("DB_PASSWORD"),
 			Name:     os.Getenv("DB_NAME"),
+		},
+		PrimaryRedis: Redis{
+			Port:      os.Getenv("RDB_PORT"),
+			Address:   os.Getenv("RDB_ADDRESS"),
+			Password:  os.Getenv("RDB_PASSWORD"),
+			RDBNumber: os.Getenv("RDB_NUMBER"),
 		},
 	}
 }

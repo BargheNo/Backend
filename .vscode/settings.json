@@ -5,6 +5,8 @@
     "cSpell.words": [
       "Barghe",
       "bargheno",
+      "cacherepository",
+      "cacherepositoryimpl",
       "dbname",
       "godotenv",
       "gonic",
@@ -14,6 +16,7 @@
       "joho",
       "localizationimpl",
       "loggerimpl",
+      "pgximpl",
       "primarykey",
       "repositoryimpl",
       "serviceimpl",

@@ -13,9 +13,9 @@ import (
 	"github.com/BargheNo/Backend/internal/application/service"
 	"github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
-	"github.com/BargheNo/Backend/internal/domain/repository"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	"github.com/BargheNo/Backend/internal/infrastructure/repository"
+	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -23,10 +23,18 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApplication(container *bootstrap.Config, db database.Database) (*Application, error) {
+func InitializeApplication(container *bootstrap.Config) (*Application, error) {
+	bootstrapDatabase := ProvideDBConfig(container)
+	postgresDatabase := database.NewPostgresDatabase(bootstrapDatabase)
+	redis := ProvideRDBConfig(container)
+	redisDatabase := database.NewRedisDatabase(redis)
+	wireDatabase := &Database{
+		DB:  postgresDatabase,
+		RDB: redisDatabase,
+	}
 	constants := ProvideConstants(container)
 	userRepository := repositoryimpl.NewUserRepository()
-	userService := serviceimpl.NewUserService(constants, userRepository, db)
+	userService := serviceimpl.NewUserService(constants, userRepository, postgresDatabase)
 	generalUserController := user.NewGeneralUserController(constants, userService)
 	generalControllers := &GeneralControllers{
 		UserController: generalUserController,
@@ -51,13 +59,15 @@ func InitializeApplication(container *bootstrap.Config, db database.Database) (*
 		RateLimit:    rateLimitMiddleware,
 		Logger:       loggerMiddleware,
 	}
-	application := NewApplication(controllers, middlewares)
+	application := NewApplication(wireDatabase, controllers, middlewares)
 	return application, nil
 }
 
 // wire.go:
 
-var DatabaseProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)))
+var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.NewRedisDatabase, wire.Bind(new(database.Database), new(*database.PostgresDatabase)), wire.Bind(new(database.Cache), new(*database.RedisDatabase)), wire.Struct(new(Database), "*"))
+
+var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)))
 
 var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)))
 
@@ -81,8 +91,17 @@ func ProvideRateLimitConfig(container *bootstrap.Config) *bootstrap.RateLimit {
 	return &container.Env.RateLimit
 }
 
+func ProvideDBConfig(container *bootstrap.Config) *bootstrap.Database {
+	return &container.Env.PrimaryDB
+}
+
+func ProvideRDBConfig(container *bootstrap.Config) *bootstrap.Redis {
+	return &container.Env.PrimaryRedis
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
+	RepositoryProviderSet,
 	ServiceProviderSet,
 	AdapterProviderSet,
 	GeneralControllerProviderSet,
@@ -91,7 +110,14 @@ var ProviderSet = wire.NewSet(
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
+	ProvideDBConfig,
+	ProvideRDBConfig,
 )
+
+type Database struct {
+	DB  database.Database
+	RDB database.Cache
+}
 
 type GeneralControllers struct {
 	UserController *user.GeneralUserController
@@ -109,15 +135,17 @@ type Middlewares struct {
 }
 
 type Application struct {
+	Database    *Database
 	Controllers *Controllers
 	Middlewares *Middlewares
 }
 
-func NewApplication(
+func NewApplication(database2 *Database,
 	controllers *Controllers,
 	middlewares *Middlewares,
 ) *Application {
 	return &Application{
+		Database:    database2,
 		Controllers: controllers,
 		Middlewares: middlewares,
 	}

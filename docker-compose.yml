@@ -22,6 +22,16 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
   
+  rdb:
+    image: redis:7.4
+    container_name: rdb
+    restart: unless-stopped
+    ports:
+      - ${RDB_PORT}:${RDB_PORT}
+    volumes:
+      - rdb_data:/var/lib/redis/data
+  
 
 volumes:
   db_data:
+  rdb_data:
