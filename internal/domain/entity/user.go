@@ -9,10 +9,10 @@ type User struct {
 	FirstName     string
 	LastName      string
 	Phone         string
+	PhoneVerified bool
 	Password      string
-	OTP           string
-	ResendAttempt uint
 	Email         string
+	EmailVerified bool
 	NationalCode  string
 	Address       []Address `gorm:"polymorphic:Owner;"`
 	Roles         []Role    `gorm:"many2many:user_roles;"`

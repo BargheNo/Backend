@@ -30,7 +30,9 @@ func (rl *RateLimitMiddleware) RateLimit(c *gin.Context) {
 	}
 	limiter := rate.NewLimiter(rate.Limit(limit), burst)
 	if !limiter.Allow() {
-		rateLimitError := exception.NewRateLimitError()
+		rateLimitError := exception.RateLimitError{
+			Message: "rate limit exceeded",
+		}
 		panic(rateLimitError)
 	}
 	c.Next()

@@ -11,11 +11,14 @@ import (
 	"github.com/BargheNo/Backend/internal/application/adapter/localization"
 	"github.com/BargheNo/Backend/internal/application/adapter/logger"
 	"github.com/BargheNo/Backend/internal/application/service"
+	"github.com/BargheNo/Backend/internal/application/service/communication"
 	"github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -33,8 +36,14 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		RDB: redisDatabase,
 	}
 	constants := ProvideConstants(container)
+	otp := ProvideOTPConfig(container)
+	otpService := serviceimpl.NewOTPService(otp)
+	smsGateway := ProvideSMSGatewayConfig(container)
+	smsTemplates := ProvideSMSTemplates(container)
+	smsService := communicationService.NewSMSService(smsGateway, smsTemplates)
 	userRepository := repositoryimpl.NewUserRepository()
-	userService := serviceimpl.NewUserService(constants, userRepository, postgresDatabase)
+	userCacheRepository := cacherepositoryimpl.NewUserCacheRepository(redisDatabase)
+	userService := serviceimpl.NewUserService(constants, otpService, smsService, userRepository, userCacheRepository, postgresDatabase)
 	generalUserController := user.NewGeneralUserController(constants, userService)
 	generalControllers := &GeneralControllers{
 		UserController: generalUserController,
@@ -67,9 +76,9 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 
 var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.NewRedisDatabase, wire.Bind(new(database.Database), new(*database.PostgresDatabase)), wire.Bind(new(database.Cache), new(*database.RedisDatabase)), wire.Struct(new(Database), "*"))
 
-var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)))
+var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, cacherepositoryimpl.NewUserCacheRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)))
 
-var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)))
+var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)))
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
 
@@ -99,6 +108,18 @@ func ProvideRDBConfig(container *bootstrap.Config) *bootstrap.Redis {
 	return &container.Env.PrimaryRedis
 }
 
+func ProvideOTPConfig(container *bootstrap.Config) *bootstrap.OTP {
+	return &container.Env.OTP
+}
+
+func ProvideSMSGatewayConfig(container *bootstrap.Config) *bootstrap.SMSGateway {
+	return &container.Env.SMSGateway
+}
+
+func ProvideSMSTemplates(container *bootstrap.Config) *bootstrap.SMSTemplates {
+	return &container.Constants.SMSTemplates
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -112,6 +133,9 @@ var ProviderSet = wire.NewSet(
 	ProvideRateLimitConfig,
 	ProvideDBConfig,
 	ProvideRDBConfig,
+	ProvideOTPConfig,
+	ProvideSMSGatewayConfig,
+	ProvideSMSTemplates,
 )
 
 type Database struct {

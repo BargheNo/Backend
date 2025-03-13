@@ -7,9 +7,3 @@ type RateLimitError struct {
 func (e RateLimitError) Error() string {
 	return e.Message
 }
-
-func NewRateLimitError() RateLimitError {
-	return RateLimitError{
-		Message: "Rate limit exceeded.",
-	}
-}

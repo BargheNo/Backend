@@ -12,6 +12,8 @@ type Env struct {
 	RateLimit    RateLimit
 	PrimaryDB    Database
 	PrimaryRedis Redis
+	OTP          OTP
+	SMSGateway   SMSGateway
 }
 
 type Server struct {
@@ -45,8 +47,19 @@ type Redis struct {
 	RDBNumber string
 }
 
+type OTP struct {
+	Length       string
+	ExpiryMinute string
+	MaxAttempts  string
+}
+
+type SMSGateway struct {
+	APIKey string
+}
+
 func NewEnvironments() *Env {
-	godotenv.Load(".env")
+	godotenv.Load("../../.env")
+	// godotenv.Load(".env")
 	return &Env{
 		Server: Server{
 			Port: os.Getenv("SERVER_PORT"),
@@ -73,6 +86,14 @@ func NewEnvironments() *Env {
 			Address:   os.Getenv("RDB_ADDRESS"),
 			Password:  os.Getenv("RDB_PASSWORD"),
 			RDBNumber: os.Getenv("RDB_NUMBER"),
+		},
+		OTP: OTP{
+			Length:       os.Getenv("OTP_LENGTH"),
+			ExpiryMinute: os.Getenv("OTP_EXPIRY_MINUTES"),
+			MaxAttempts:  os.Getenv("OTP_MAX_ATTEMPTS"),
+		},
+		SMSGateway: SMSGateway{
+			APIKey: os.Getenv("SMS_GATEWAY_API_KEY"),
 		},
 	}
 }

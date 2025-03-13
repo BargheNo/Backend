@@ -8,11 +8,14 @@ import (
 	localizationimpl "github.com/BargheNo/Backend/internal/application/adapter/localization"
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
+	communicationService "github.com/BargheNo/Backend/internal/application/service/communication"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -28,12 +31,18 @@ var DatabaseProviderSet = wire.NewSet(
 
 var RepositoryProviderSet = wire.NewSet(
 	repositoryimpl.NewUserRepository,
+	cacherepositoryimpl.NewUserCacheRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
+	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewUserService,
+	serviceimpl.NewOTPService,
+	communicationService.NewSMSService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
+	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
+	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -79,6 +88,18 @@ func ProvideRDBConfig(container *bootstrap.Config) *bootstrap.Redis {
 	return &container.Env.PrimaryRedis
 }
 
+func ProvideOTPConfig(container *bootstrap.Config) *bootstrap.OTP {
+	return &container.Env.OTP
+}
+
+func ProvideSMSGatewayConfig(container *bootstrap.Config) *bootstrap.SMSGateway {
+	return &container.Env.SMSGateway
+}
+
+func ProvideSMSTemplates(container *bootstrap.Config) *bootstrap.SMSTemplates {
+	return &container.Constants.SMSTemplates
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -92,6 +113,9 @@ var ProviderSet = wire.NewSet(
 	ProvideRateLimitConfig,
 	ProvideDBConfig,
 	ProvideRDBConfig,
+	ProvideOTPConfig,
+	ProvideSMSGatewayConfig,
+	ProvideSMSTemplates,
 )
 
 type Database struct {

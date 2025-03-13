@@ -8,18 +8,21 @@
       "cacherepository",
       "cacherepositoryimpl",
       "dbname",
+      "eqfield",
       "godotenv",
       "gonic",
       "gorm",
       "httpv",
       "Inno",
       "joho",
+      "kavenegar",
       "localizationimpl",
       "loggerimpl",
       "pgximpl",
       "primarykey",
       "repositoryimpl",
       "serviceimpl",
-      "sslmode"
+      "sslmode",
+      "userdto"
     ]
 }

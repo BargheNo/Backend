@@ -14,10 +14,3 @@ type FieldError struct {
 func (fe FieldError) Error() string {
 	return fmt.Sprintf(fieldErrMsg, fe.Field, fe.Tag)
 }
-
-func NewFieldError(field, tag string) FieldError {
-	return FieldError{
-		Field: field,
-		Tag:   tag,
-	}
-}

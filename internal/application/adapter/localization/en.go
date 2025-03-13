@@ -1,10 +1,27 @@
 package localizationimpl
 
 var English = map[string]interface{}{
+	"firstName":       "first name",
+	"lastName":        "last name",
+	"phone":           "phone",
+	"password":        "password",
+	"confirmPassword": "confirm password",
+	"isAcceptTerms":   "terms and conditions",
 	"errors": map[string]interface{}{
-		"sample": "sample error happened.",
+		"generic":             "an error occurred, please try again.",
+		"numeric":             "The {0} should be a numeric value.",
+		"minimumLength":       "The {0} Len must bigger than 7 characters.",
+		"containsLowercase":   "The {0} should contain lowercase.",
+		"containsUppercase":   "The {0} should contain uppercase.",
+		"containsNumber":      "The {0} should contain number.",
+		"containsSpecialChar": "The {0} should contain special character.",
+		"alreadyRegistered":   "Has been already registered with this {0}",
+		"required":            "Field {0} required to fill",
+		"e164":                "Phone number u have entered is not correct",
+		"eqfield=Password":    "Password and {0} are not the same.",
+		"eq":                  "Field {0} should be true.",
 	},
 	"successMessage": map[string]interface{}{
-		"sample": "sample Successfully!",
+		"userRegister": "Registration Successful! Please check your email to verify your account and complete the registration process.",
 	},
 }
