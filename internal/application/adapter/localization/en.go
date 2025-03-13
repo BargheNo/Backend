@@ -22,6 +22,6 @@ var English = map[string]interface{}{
 		"eq":                  "Field {0} should be true.",
 	},
 	"successMessage": map[string]interface{}{
-		"userRegister": "Registration Successful! Please check your email to verify your account and complete the registration process.",
+		"userRegister": "Registration Successful! Please check your messages to verify your account and complete the registration process.",
 	},
 }
