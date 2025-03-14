@@ -5,8 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetTranslator(c *gin.Context, key string) localization.TranslatorInstance {
-	translator, exists := c.Get(key)
+func GetTranslator(ctx *gin.Context, key string) localization.TranslatorInstance {
+	translator, exists := ctx.Get(key)
 	if !exists {
 		panic("translator not registered!")
 	}

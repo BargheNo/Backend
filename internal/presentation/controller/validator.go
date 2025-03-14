@@ -11,20 +11,21 @@ import (
 
 var validate *validator.Validate = validator.New()
 
-func Validated[T any](c *gin.Context, constants *bootstrap.Context) T {
+func Validated[T any](ctx *gin.Context, constants *bootstrap.Context) T {
 	var params T
-	if err := c.ShouldBindUri(&params); err != nil {
-		bindingError := exception.NewBindingError(err)
+	if err := ctx.ShouldBindUri(&params); err != nil {
+
+		bindingError := exception.BindingError{Err: err}
 		panic(bindingError)
 	}
 
-	if err := c.ShouldBindQuery(&params); err != nil {
-		bindingError := exception.NewBindingError(err)
+	if err := ctx.ShouldBindQuery(&params); err != nil {
+		bindingError := exception.BindingError{Err: err}
 		panic(bindingError)
 	}
 
-	if err := c.ShouldBind(&params); err != nil {
-		bindingError := exception.NewBindingError(err)
+	if err := ctx.ShouldBind(&params); err != nil {
+		bindingError := exception.BindingError{Err: err}
 		panic(bindingError)
 	}
 
@@ -47,7 +48,7 @@ func formatValidationErrors[T any](errs validator.ValidationErrors) exception.Va
 	for _, e := range errs {
 		field, _ := t.FieldByName(e.StructField())
 		tagValue := getAnyTag(field, tagTypes...)
-		validationErrors = append(validationErrors, exception.NewFieldError(tagValue, e.Tag()))
+		validationErrors.Add(tagValue, e.Tag())
 	}
 
 	return validationErrors

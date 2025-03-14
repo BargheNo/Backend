@@ -1,3 +1,28 @@
-package localization
+package localizationimpl
 
-var Persian = map[string]interface{}{}
+var Persian = map[string]interface{}{
+	"firstName":       "نام",
+	"lastName":        "نام خانوادگی",
+	"phone":           "شماره تماس",
+	"password":        "رمز عبور",
+	"confirmPassword": "تایید رمز عیور",
+	"isAcceptTerms":   "تایید شرایط و مقررات",
+	"errors": map[string]interface{}{
+		"generic":             "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
+		"numeric":             "`{0}` باید عدد باشد.",
+		"fileRequired":        "وارد کردن فایل اجباری است.",
+		"minimumLength":       "باید از 7 کاراکتر بیشتر باشد.",
+		"containsLowercase":   "باید حتما دارای حرف کوچک باشد.",
+		"containsUppercase":   "باید حتما دارای حرف بزرگ باشد.",
+		"containsNumber":      "باید حتما دارای عدد باشد.",
+		"containsSpecialChar": "باید حتما دارای حروف خاص باشد.",
+		"alreadyRegistered":   "قبلا با این {0} ثبت نام کرده است.",
+		"required":            "بخش {0} باید کامل شود.",
+		"e164":                "شماره تلفن به درستی ثبت نشده است.",
+		"eqfield":             "رمز عبور و {0} مطابقت ندارند.",
+		"eq=true":             "مقدار {0 باید درست باشد}",
+	},
+	"successMessage": map[string]interface{}{
+		"userRegister": "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
+	},
+}

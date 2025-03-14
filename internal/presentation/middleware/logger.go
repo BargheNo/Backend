@@ -1,11 +1,10 @@
-package logger
+package middleware
 
 import (
 	"time"
 
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 type LoggerMiddleware struct {
@@ -31,26 +30,26 @@ func (log *LoggerMiddleware) GinLoggerMiddleware(c *gin.Context) {
 		for _, e := range c.Errors.Errors() {
 			log.logger.Error(
 				"Request Error",
-				zap.Int("status", c.Writer.Status()),
-				zap.String("method", c.Request.Method),
-				zap.String("path", path),
-				zap.String("query", query),
-				zap.String("ip", c.ClientIP()),
-				zap.Duration("latency", latency),
-				zap.String("user-agent", c.Request.UserAgent()),
-				zap.String("error", e),
+				logger.Int("status", c.Writer.Status()),
+				logger.String("method", c.Request.Method),
+				logger.String("path", path),
+				logger.String("query", query),
+				logger.String("ip", c.ClientIP()),
+				logger.Duration("latency", latency),
+				logger.String("user-agent", c.Request.UserAgent()),
+				logger.String("error", e),
 			)
 		}
 	} else {
 		log.logger.Info(
 			"Request",
-			zap.Int("status", c.Writer.Status()),
-			zap.String("method", c.Request.Method),
-			zap.String("path", path),
-			zap.String("query", query),
-			zap.String("ip", c.ClientIP()),
-			zap.Duration("latency", latency),
-			zap.String("user-agent", c.Request.UserAgent()),
+			logger.Int("status", c.Writer.Status()),
+			logger.String("method", c.Request.Method),
+			logger.String("path", path),
+			logger.String("query", query),
+			logger.String("ip", c.ClientIP()),
+			logger.Duration("latency", latency),
+			logger.String("user-agent", c.Request.UserAgent()),
 		)
 	}
 }
