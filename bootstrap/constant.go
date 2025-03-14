@@ -96,8 +96,8 @@ func NewConstants() *Constants {
 			OTP: "sendOTPTemplate",
 		},
 		JWTKeysPath: JWTKeysPath{
-			PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
-			PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
+			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
+			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
 		},
 	}
 }

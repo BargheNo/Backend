@@ -3,3 +3,4 @@ app.exe
 .vscode/
 db-data
 *.pem
+.DS_Store

@@ -11,6 +11,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+COPY ./internal/application/adapter/jwt/privateKey.pem ./internal/application/adapter/jwt/
+COPY ./internal/application/adapter/jwt/publicKey.pem /internal/application/adapter/jwt/
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o main ./cmd/app
 
@@ -22,6 +24,9 @@ WORKDIR /app
 
 COPY --from=builder /app/main .
 
+RUN mkdir -p /app/internal/application/adapter/jwt
+COPY ./internal/application/adapter/jwt/privateKey.pem ./internal/application/adapter/jwt/
+COPY ./internal/application/adapter/jwt/publicKey.pem ./internal/application/adapter/jwt/
 COPY .env .
 
 EXPOSE 8080
