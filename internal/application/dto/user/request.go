@@ -6,3 +6,8 @@ type BasicRegisterRequest struct {
 	Phone     string
 	Password  string
 }
+
+type VerifyPhoneRequest struct {
+	Phone string
+	OTP   string
+}

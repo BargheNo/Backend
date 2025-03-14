@@ -130,3 +130,35 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 	}
 	// userService.smsService.SendOTP(registerInfo.Phone, otp)
 }
+
+func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneRequest) {
+	var validationErrors exception.ValidationErrors
+	user, userExist := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
+	if !userExist {
+		validationErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		panic(validationErrors)
+	}
+	if user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.AlreadyRegistered)
+		panic(conflictErrors)
+	}
+
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
+	err := userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
+	if err != nil {
+		if exception.IsOTPExpired(err) {
+			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.OTPExpired)
+		} else if exception.IsInvalidOTP(err) {
+			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.InvalidOTP)
+		} else {
+			panic(err)
+		}
+		panic(validationErrors)
+	}
+	user.PhoneVerified = true
+	err = userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
+	}
+}

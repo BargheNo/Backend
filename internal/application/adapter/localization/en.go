@@ -20,8 +20,12 @@ var English = map[string]interface{}{
 		"e164":                "Phone number u have entered is not correct",
 		"eqfield=Password":    "Password and {0} are not the same.",
 		"eq":                  "Field {0} should be true.",
+		"otpExpired":          "OTP is expired.",
+		"invalidOTP":          "OTP is invalid.",
+		"notRegistered":       "You have to register first.",
 	},
 	"successMessage": map[string]interface{}{
-		"userRegister": "Registration Successful! Please check your messages to verify your account and complete the registration process.",
+		"userRegister":      "Registration Successful! Please check your messages to verify your account and complete the registration process.",
+		"phoneVerification": "your phone has been successfully verified.",
 	},
 }
