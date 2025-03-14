@@ -80,7 +80,7 @@ func (userController *GeneralUserController) Login(ctx *gin.Context) {
 	userInfo := userController.userService.Login(verifyOTPInfo)
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.Login")
+	message, _ := trans.Translate("successMessage.login")
 	controller.Response(ctx, 200, message, userInfo)
 }
 
