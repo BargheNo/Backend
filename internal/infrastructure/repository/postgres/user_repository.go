@@ -27,3 +27,7 @@ func (repo *UserRepository) FindUserByPhone(db database.Database, phone string) 
 func (repo *UserRepository) CreateUser(db database.Database, user *entity.User) error {
 	return db.GetDB().Create(&user).Error
 }
+
+func (repo *UserRepository) DeleteUserByPhone(db database.Database, phone string) error {
+	return db.GetDB().Where("phone = ?", phone).Delete(&entity.User{}).Error
+}

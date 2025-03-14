@@ -103,6 +103,12 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 	if err != nil {
 		panic(err)
 	}
+
+	err = userService.userRepository.DeleteUserByPhone(userService.db, registerInfo.Phone)
+	if err != nil {
+		panic(err)
+	}
+
 	user := &entity.User{
 		FirstName:     registerInfo.FirstName,
 		LastName:      registerInfo.LastName,
