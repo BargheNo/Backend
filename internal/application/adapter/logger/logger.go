@@ -105,24 +105,32 @@ func GetLogger() logger.Logger {
 	return loggerInstance
 }
 
-func (l *Logger) Debug(msg string, fields ...zap.Field) {
-	l.zap.Debug(msg, fields...)
+func toZapFields(fields []logger.Field) []zap.Field {
+	zapFields := make([]zap.Field, len(fields))
+	for i, field := range fields {
+		zapFields[i] = zap.Any(field.Key, field.Value)
+	}
+	return zapFields
 }
 
-func (l *Logger) Info(msg string, fields ...zap.Field) {
-	l.zap.Info(msg, fields...)
+func (l *Logger) Debug(msg string, fields ...logger.Field) {
+	l.zap.Debug(msg, toZapFields(fields)...)
 }
 
-func (l *Logger) Warn(msg string, fields ...zap.Field) {
-	l.zap.Warn(msg, fields...)
+func (l *Logger) Info(msg string, fields ...logger.Field) {
+	l.zap.Info(msg, toZapFields(fields)...)
 }
 
-func (l *Logger) Error(msg string, fields ...zap.Field) {
-	l.zap.Error(msg, fields...)
+func (l *Logger) Warn(msg string, fields ...logger.Field) {
+	l.zap.Warn(msg, toZapFields(fields)...)
 }
 
-func (l *Logger) Fatal(msg string, fields ...zap.Field) {
-	l.zap.Fatal(msg, fields...)
+func (l *Logger) Error(msg string, fields ...logger.Field) {
+	l.zap.Error(msg, toZapFields(fields)...)
+}
+
+func (l *Logger) Fatal(msg string, fields ...logger.Field) {
+	l.zap.Fatal(msg, toZapFields(fields)...)
 }
 
 func (l *Logger) WithFields(fields map[string]interface{}) logger.Logger {

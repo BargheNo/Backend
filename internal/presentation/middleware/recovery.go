@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	"github.com/BargheNo/Backend/internal/domain/exception"
+	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -101,7 +102,7 @@ func handleConflictError(c *gin.Context, conflictErrors exception.ConflictErrors
 }
 
 func unhandledErrors(c *gin.Context, err error, transKey string) {
-	log.Println(err.Error())
+	loggerimpl.GetLogger().Error("unhandled error recovery middleware", logger.Error("error:", err))
 	trans := controller.GetTranslator(c, transKey)
 	errorMessage, _ := trans.Translate("errors.generic")
 
