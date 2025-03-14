@@ -23,8 +23,8 @@ jobs:
 
       - name: Write .pem files
         run: |
-            echo "${{ secrets.PRIVATE }}" > key.pem
-            echo "${{ secrets.PUBLIC }}" > public.pem
+            echo "${{ secrets.PRIVATE }}" > privateKey.pem
+            echo "${{ secrets.PUBLIC }}" > publicKey.pem
 
         
         
