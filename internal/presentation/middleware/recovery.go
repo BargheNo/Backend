@@ -13,6 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	genericError = "errors.generic"
+)
+
 type RecoveryMiddleware struct {
 	constants *bootstrap.Constants
 }
@@ -23,35 +27,37 @@ func NewRecovery(constants *bootstrap.Constants) *RecoveryMiddleware {
 	}
 }
 
-func (recovery RecoveryMiddleware) Recovery(c *gin.Context) {
+func (recovery RecoveryMiddleware) Recovery(ctx *gin.Context) {
 	defer func() {
 		if rec := recover(); rec != nil {
 			if err, ok := rec.(error); ok {
-				recovery.handleRecoveredError(c, err)
-				c.Abort()
+				recovery.handleRecoveredError(ctx, err)
+				ctx.Abort()
 			}
 		}
 	}()
 
-	c.Next()
+	ctx.Next()
 }
 
-func (recovery RecoveryMiddleware) handleRecoveredError(c *gin.Context, err error) {
+func (recovery RecoveryMiddleware) handleRecoveredError(ctx *gin.Context, err error) {
 	if validationErrors, ok := err.(exception.ValidationErrors); ok {
-		handleValidationError(c, validationErrors, recovery.constants.Context.Translator)
+		handleValidationError(ctx, validationErrors, recovery.constants.Context.Translator)
 	} else if bindingError, ok := err.(exception.BindingError); ok {
-		handleBindingError(c, bindingError, recovery.constants.Context.Translator)
+		handleBindingError(ctx, bindingError, recovery.constants.Context.Translator)
 	} else if _, ok := err.(exception.RateLimitError); ok {
-		handleRateLimitError(c, recovery.constants.Context.Translator)
+		handleRateLimitError(ctx, recovery.constants.Context.Translator)
 	} else if conflictErrors, ok := err.(exception.ConflictErrors); ok {
-		handleConflictError(c, conflictErrors, recovery.constants.Context.Translator)
+		handleConflictError(ctx, conflictErrors, recovery.constants.Context.Translator)
+	} else if authError, ok := err.(*exception.AuthError); ok {
+		handleAuthError(ctx, *authError, recovery.constants.Context.Translator)
 	} else {
-		unhandledErrors(c, err, recovery.constants.Context.Translator)
+		unhandledErrors(ctx, err, recovery.constants.Context.Translator)
 	}
 }
 
-func handleValidationError(c *gin.Context, validationErrors exception.ValidationErrors, transKey string) {
-	trans := controller.GetTranslator(c, transKey)
+func handleValidationError(ctx *gin.Context, validationErrors exception.ValidationErrors, transKey string) {
+	trans := controller.GetTranslator(ctx, transKey)
 	errorMessages := make(map[string]map[string]string)
 
 	for _, validationError := range validationErrors.Errors {
@@ -63,12 +69,12 @@ func handleValidationError(c *gin.Context, validationErrors exception.Validation
 		errorMessages[validationError.Field][validationError.Tag] = message
 	}
 
-	controller.Response(c, 422, errorMessages, nil)
+	controller.Response(ctx, 422, errorMessages, nil)
 }
 
-func handleBindingError(c *gin.Context, bindingError exception.BindingError, transKey string) {
-	trans := controller.GetTranslator(c, transKey)
-	message, _ := trans.Translate("errors.generic")
+func handleBindingError(ctx *gin.Context, bindingError exception.BindingError, transKey string) {
+	trans := controller.GetTranslator(ctx, transKey)
+	message, _ := trans.Translate(genericError)
 
 	if numError, ok := bindingError.Err.(*strconv.NumError); ok {
 		message, _ = trans.Translate("errors.numeric", numError.Num)
@@ -76,17 +82,17 @@ func handleBindingError(c *gin.Context, bindingError exception.BindingError, tra
 		message, _ = trans.Translate("errors.fileRequired")
 	}
 
-	controller.Response(c, 400, message, nil)
+	controller.Response(ctx, 400, message, nil)
 }
 
-func handleRateLimitError(c *gin.Context, transKey string) {
-	trans := controller.GetTranslator(c, transKey)
+func handleRateLimitError(ctx *gin.Context, transKey string) {
+	trans := controller.GetTranslator(ctx, transKey)
 	message, _ := trans.Translate("errors.rateLimitExceed")
-	controller.Response(c, 429, message, nil)
+	controller.Response(ctx, 429, message, nil)
 }
 
-func handleConflictError(c *gin.Context, conflictErrors exception.ConflictErrors, transKey string) {
-	trans := controller.GetTranslator(c, transKey)
+func handleConflictError(ctx *gin.Context, conflictErrors exception.ConflictErrors, transKey string) {
+	trans := controller.GetTranslator(ctx, transKey)
 	errorMessages := make(map[string]map[string]string)
 
 	for _, conflictError := range conflictErrors.Errors {
@@ -98,13 +104,31 @@ func handleConflictError(c *gin.Context, conflictErrors exception.ConflictErrors
 		errorMessages[conflictError.Field][conflictError.Tag] = message
 	}
 
-	controller.Response(c, 422, errorMessages, nil)
+	controller.Response(ctx, 422, errorMessages, nil)
 }
 
-func unhandledErrors(c *gin.Context, err error, transKey string) {
-	loggerimpl.GetLogger().Error("unhandled error recovery middleware", logger.Error("error:", err))
-	trans := controller.GetTranslator(c, transKey)
-	errorMessage, _ := trans.Translate("errors.generic")
+func handleAuthError(ctx *gin.Context, authError exception.AuthError, transKey string) {
+	trans := controller.GetTranslator(ctx, transKey)
 
-	controller.Response(c, 500, errorMessage, nil)
+	message, _ := trans.Translate(genericError)
+	switch authError.Type {
+	case exception.ErrorTypeInvalidCredentials:
+		message, _ = trans.Translate("errors.invalidAuthCredentials")
+	case exception.ErrorTypeExpiredToken:
+		message, _ = trans.Translate("errors.expiredAuthToken")
+	case exception.ErrorTypeInvalidToken:
+		message, _ = trans.Translate("errors.invalidAuthToken")
+	case exception.ErrorTypeUnauthorized:
+		message, _ = trans.Translate("errors.unauthorized")
+	}
+
+	controller.Response(ctx, 401, message, nil)
+}
+
+func unhandledErrors(ctx *gin.Context, err error, transKey string) {
+	loggerimpl.GetLogger().Error("unhandled error recovery middleware", logger.Error("error:", err))
+	trans := controller.GetTranslator(ctx, transKey)
+	errorMessage, _ := trans.Translate(genericError)
+
+	controller.Response(ctx, 500, errorMessage, nil)
 }

@@ -35,3 +35,11 @@ func (repo *UserRepository) DeleteUserByPhone(db database.Database, phone string
 func (repo *UserRepository) UpdateUser(db database.Database, user *entity.User) error {
 	return db.GetDB().Save(&user).Error
 }
+
+func (repo *UserRepository) FindUserRoles(db database.Database, user *entity.User) error {
+	return db.GetDB().Preload("Roles").First(&user).Error
+}
+
+func (repo *UserRepository) FindRolePermissions(db database.Database, role *entity.Role) error {
+	return db.GetDB().Preload("Permissions").First(&role).Error
+}

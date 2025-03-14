@@ -5,6 +5,7 @@ package wire
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	jwtimpl "github.com/BargheNo/Backend/internal/application/adapter/jwt"
 	localizationimpl "github.com/BargheNo/Backend/internal/application/adapter/localization"
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
@@ -40,14 +41,17 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewUserService,
 	serviceimpl.NewOTPService,
 	communicationService.NewSMSService,
+	serviceimpl.NewJWTService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
+	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
 	localizationimpl.NewTranslationService,
 	loggerimpl.NewLogger,
+	jwtimpl.NewJWTKeyManager,
 	wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)),
 )
 
@@ -100,6 +104,10 @@ func ProvideSMSTemplates(container *bootstrap.Config) *bootstrap.SMSTemplates {
 	return &container.Constants.SMSTemplates
 }
 
+func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
+	return &container.Constants.JWTKeysPath
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -116,6 +124,7 @@ var ProviderSet = wire.NewSet(
 	ProvideOTPConfig,
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
+	ProvideJWTKeysPath,
 )
 
 type Database struct {

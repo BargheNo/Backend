@@ -8,6 +8,7 @@ package wire
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	"github.com/BargheNo/Backend/internal/application/adapter/jwt"
 	"github.com/BargheNo/Backend/internal/application/adapter/localization"
 	"github.com/BargheNo/Backend/internal/application/adapter/logger"
 	"github.com/BargheNo/Backend/internal/application/service"
@@ -42,8 +43,11 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	smsGateway := ProvideSMSGatewayConfig(container)
 	smsTemplates := ProvideSMSTemplates(container)
 	smsService := communicationService.NewSMSService(smsGateway, smsTemplates)
+	keyManager := jwtimpl.NewJWTKeyManager()
+	jwtKeysPath := ProvideJWTKeysPath(container)
+	jwtService := serviceimpl.NewJWTService(keyManager, jwtKeysPath)
 	userRepository := repositoryimpl.NewUserRepository()
-	userService := serviceimpl.NewUserService(constants, otpService, smsService, userRepository, userCacheRepository, postgresDatabase)
+	userService := serviceimpl.NewUserService(constants, otpService, smsService, jwtService, userRepository, userCacheRepository, postgresDatabase)
 	generalUserController := user.NewGeneralUserController(constants, userService)
 	generalControllers := &GeneralControllers{
 		UserController: generalUserController,
@@ -78,9 +82,9 @@ var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.New
 
 var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, cacherepositoryimpl.NewUserCacheRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)))
 
-var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)))
+var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)))
 
-var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
+var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wire.Struct(new(GeneralControllers), "*"))
 
@@ -120,6 +124,10 @@ func ProvideSMSTemplates(container *bootstrap.Config) *bootstrap.SMSTemplates {
 	return &container.Constants.SMSTemplates
 }
 
+func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
+	return &container.Constants.JWTKeysPath
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -136,6 +144,7 @@ var ProviderSet = wire.NewSet(
 	ProvideOTPConfig,
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
+	ProvideJWTKeysPath,
 )
 
 type Database struct {

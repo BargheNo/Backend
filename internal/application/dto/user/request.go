@@ -11,3 +11,8 @@ type VerifyPhoneRequest struct {
 	Phone string
 	OTP   string
 }
+
+type LoginRequest struct {
+	Phone    string
+	Password string
+}
