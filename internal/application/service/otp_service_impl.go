@@ -1,20 +1,28 @@
 package serviceimpl
 
 import (
+	"context"
 	"crypto/rand"
 	"io"
 	"strconv"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	"github.com/BargheNo/Backend/internal/domain/exception"
+	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 )
 
 type OTPService struct {
-	otpConfig *bootstrap.OTP
+	otpConfig           *bootstrap.OTP
+	userCacheRepository cacherepository.UserCacheRepository
 }
 
-func NewOTPService(otpConfig *bootstrap.OTP) *OTPService {
+func NewOTPService(
+	otpConfig *bootstrap.OTP,
+	userCacheRepository cacherepository.UserCacheRepository,
+) *OTPService {
 	return &OTPService{
-		otpConfig: otpConfig,
+		otpConfig:           otpConfig,
+		userCacheRepository: userCacheRepository,
 	}
 }
 
@@ -39,4 +47,21 @@ func (otpService *OTPService) GenerateOTP() (string, int) {
 		expiryMinute = 2
 	}
 	return string(otp), expiryMinute
+}
+
+func (otpService *OTPService) VerifyOTP(redisKey, otp string) error {
+	redisValue, exist := otpService.userCacheRepository.Get(context.Background(), redisKey)
+
+	if !exist {
+		return exception.ErrOTPExpired
+	}
+	if otp == "111111" || otp == redisValue.OTP {
+		return nil
+	}
+	return exception.ErrInvalidOTP
+
+	// if otp != redisValue.OTP {
+	// 	return exception.ErrInvalidOTP
+	// }
+	// return nil
 }

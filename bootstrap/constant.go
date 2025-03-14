@@ -30,6 +30,7 @@ type RedisKey struct {
 type ErrorField struct {
 	Phone    string
 	Password string
+	OTP      string
 }
 
 type ErrorTag struct {
@@ -39,6 +40,9 @@ type ErrorTag struct {
 	ContainsUppercase   string
 	ContainsNumber      string
 	ContainsSpecialChar string
+	OTPExpired          string
+	InvalidOTP          string
+	NotRegistered       string
 }
 
 type SMSTemplates struct {
@@ -61,6 +65,7 @@ func NewConstants() *Constants {
 		Field: ErrorField{
 			Phone:    "phone",
 			Password: "password",
+			OTP:      "otp",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:   "alreadyRegistered",
@@ -69,6 +74,9 @@ func NewConstants() *Constants {
 			ContainsUppercase:   "containsUppercase",
 			ContainsNumber:      "containsNumber",
 			ContainsSpecialChar: "containsSpecialChar",
+			OTPExpired:          "otpExpired",
+			InvalidOTP:          "invalidOTP",
+			NotRegistered:       "notRegistered",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

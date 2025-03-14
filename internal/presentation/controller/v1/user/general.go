@@ -46,11 +46,24 @@ func (userController *GeneralUserController) BasicRegister(ctx *gin.Context) {
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (userController *GeneralUserController) RegisterPhone(ctx *gin.Context) {
-	// some code here ...
+func (userController *GeneralUserController) VerifyPhone(ctx *gin.Context) {
+	type verifyPhoneParams struct {
+		Phone string `json:"phone" validate:"required,e164"`
+		OTP   string `json:"otp" validate:"required"`
+	}
+	params := controller.Validated[verifyPhoneParams](ctx, &userController.constants.Context)
+	verifyOTPInfo := userdto.VerifyPhoneRequest{
+		Phone: params.Phone,
+		OTP:   params.OTP,
+	}
+	userController.userService.VerifyPhone(verifyOTPInfo)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.phoneVerification")
+	controller.Response(ctx, 200, message, nil)
 }
 
-func (userController *GeneralUserController) RegisterEmail(ctx *gin.Context) {
+func (userController *GeneralUserController) VerifyEmail(ctx *gin.Context) {
 	// some code here ...
 }
 
