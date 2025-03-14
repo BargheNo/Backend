@@ -46,6 +46,38 @@ services:
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
 
+  node-exporter:
+    image: prom/node-exporter:master
+    container_name: devops_node_exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+       
+  postgres-exporter:
+    image: bitnami/postgres-exporter:latest
+    container_name: devops_postgres_exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+    depends_on:
+      - db
+  
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: devops_cadvisor
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - redis
+
   
 
 volumes:
