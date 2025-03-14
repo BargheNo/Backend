@@ -9,6 +9,7 @@ type Constants struct {
 	Field        ErrorField
 	Tag          ErrorTag
 	SMSTemplates SMSTemplates
+	JWTKeysPath  JWTKeysPath
 }
 
 type Context struct {
@@ -34,19 +35,28 @@ type ErrorField struct {
 }
 
 type ErrorTag struct {
-	AlreadyRegistered   string
-	MinimumLength       string
-	ContainsLowercase   string
-	ContainsUppercase   string
-	ContainsNumber      string
-	ContainsSpecialChar string
-	OTPExpired          string
-	InvalidOTP          string
-	NotRegistered       string
+	AlreadyRegistered      string
+	MinimumLength          string
+	ContainsLowercase      string
+	ContainsUppercase      string
+	ContainsNumber         string
+	ContainsSpecialChar    string
+	OTPExpired             string
+	InvalidOTP             string
+	NotRegistered          string
+	InvalidAuthCredentials string
+	ExpiredAuthToken       string
+	InvalidAuthToken       string
+	Unauthorized           string
 }
 
 type SMSTemplates struct {
 	OTP string
+}
+
+type JWTKeysPath struct {
+	PublicKey  string
+	PrivateKey string
 }
 
 func NewConstants() *Constants {
@@ -68,18 +78,26 @@ func NewConstants() *Constants {
 			OTP:      "otp",
 		},
 		Tag: ErrorTag{
-			AlreadyRegistered:   "alreadyRegistered",
-			MinimumLength:       "minimumLength",
-			ContainsLowercase:   "containsLowercase",
-			ContainsUppercase:   "containsUppercase",
-			ContainsNumber:      "containsNumber",
-			ContainsSpecialChar: "containsSpecialChar",
-			OTPExpired:          "otpExpired",
-			InvalidOTP:          "invalidOTP",
-			NotRegistered:       "notRegistered",
+			AlreadyRegistered:      "alreadyRegistered",
+			MinimumLength:          "minimumLength",
+			ContainsLowercase:      "containsLowercase",
+			ContainsUppercase:      "containsUppercase",
+			ContainsNumber:         "containsNumber",
+			ContainsSpecialChar:    "containsSpecialChar",
+			OTPExpired:             "otpExpired",
+			InvalidOTP:             "invalidOTP",
+			NotRegistered:          "notRegistered",
+			InvalidAuthCredentials: "invalidAuthCredentials",
+			ExpiredAuthToken:       "expiredAuthToken",
+			InvalidAuthToken:       "invalidAuthToken",
+			Unauthorized:           "unauthorized",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
+		},
+		JWTKeysPath: JWTKeysPath{
+			PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
+			PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
 		},
 	}
 }

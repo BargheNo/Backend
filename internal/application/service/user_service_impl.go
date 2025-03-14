@@ -20,6 +20,7 @@ type UserService struct {
 	constants           *bootstrap.Constants
 	otpService          service.OTPService
 	smsService          service.SMSService
+	jwtService          service.JWTService
 	userRepository      repository.UserRepository
 	userCacheRepository cacherepository.UserCacheRepository
 	db                  database.Database
@@ -29,6 +30,7 @@ func NewUserService(
 	constants *bootstrap.Constants,
 	otpService service.OTPService,
 	smsService service.SMSService,
+	jwtService service.JWTService,
 	userRepository repository.UserRepository,
 	userCacheRepository cacherepository.UserCacheRepository,
 	db database.Database,
@@ -37,6 +39,7 @@ func NewUserService(
 		constants:           constants,
 		otpService:          otpService,
 		smsService:          smsService,
+		jwtService:          jwtService,
 		userRepository:      userRepository,
 		userCacheRepository: userCacheRepository,
 		db:                  db,
@@ -160,5 +163,52 @@ func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneReques
 	err = userService.userRepository.UpdateUser(userService.db, user)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func (userService *UserService) FindUserPermissions(user *entity.User) []string {
+	err := userService.userRepository.FindUserRoles(userService.db, user)
+	if err != nil {
+		panic(err)
+	}
+	var permissionNames []string
+	for _, role := range user.Roles {
+		err = userService.userRepository.FindRolePermissions(userService.db, &role)
+		if err != nil {
+			panic(err)
+		}
+		permissions := role.Permissions
+		for _, permission := range permissions {
+			permissionNames = append(permissionNames, permission.Name)
+		}
+	}
+	return permissionNames
+}
+
+func (userService *UserService) Login(loginInfo userdto.LoginRequest) userdto.UserInfoResponse {
+	user, userExist := userService.userRepository.FindUserByPhone(userService.db, loginInfo.Phone)
+	if !userExist {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+	if !user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginInfo.Password))
+	if err != nil {
+		authError := exception.NewInvalidCredentialsError("phone and password not match", nil)
+		panic(authError)
+	}
+	accessToken, refreshToken := userService.jwtService.GenerateToken(user.ID)
+	permissions := userService.FindUserPermissions(user)
+	return userdto.UserInfoResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		Permissions:  permissions,
 	}
 }

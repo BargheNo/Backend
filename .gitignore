@@ -2,3 +2,4 @@
 app.exe
 .vscode/
 db-data
+*.pem

@@ -10,4 +10,6 @@ type UserRepository interface {
 	CreateUser(db database.Database, user *entity.User) error
 	DeleteUserByPhone(db database.Database, phone string) error
 	UpdateUser(db database.Database, user *entity.User) error
+	FindUserRoles(db database.Database, user *entity.User) error
+	FindRolePermissions(db database.Database, role *entity.Role) error
 }

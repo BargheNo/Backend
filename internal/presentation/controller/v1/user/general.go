@@ -68,7 +68,20 @@ func (userController *GeneralUserController) VerifyEmail(ctx *gin.Context) {
 }
 
 func (userController *GeneralUserController) Login(ctx *gin.Context) {
-	// some code here ...
+	type verifyPhoneParams struct {
+		Phone    string `json:"phone" validate:"required,e164"`
+		Password string `json:"password" validate:"required"`
+	}
+	params := controller.Validated[verifyPhoneParams](ctx, &userController.constants.Context)
+	verifyOTPInfo := userdto.LoginRequest{
+		Phone:    params.Phone,
+		Password: params.Password,
+	}
+	userInfo := userController.userService.Login(verifyOTPInfo)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.Login")
+	controller.Response(ctx, 200, message, userInfo)
 }
 
 func (userController *GeneralUserController) ForgotPassword(ctx *gin.Context) {
