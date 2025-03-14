@@ -55,6 +55,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	controllers := &Controllers{
 		General: generalControllers,
 	}
+	corsMiddleware := middleware.NewCorsMiddleware()
 	recoveryMiddleware := middleware.NewRecovery(constants)
 	translator := localizationimpl.NewTranslationService()
 	localizationMiddleware := middleware.NewLocalization(constants, translator)
@@ -67,6 +68,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	}
 	loggerMiddleware := middleware.NewLoggerMiddleware(loggerimplLogger)
 	middlewares := &Middlewares{
+		CORS:         corsMiddleware,
 		Recovery:     recoveryMiddleware,
 		Localization: localizationMiddleware,
 		RateLimit:    rateLimitMiddleware,
@@ -90,7 +92,7 @@ var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wi
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
-var MiddlewareProviderSet = wire.NewSet(middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, wire.Struct(new(Middlewares), "*"))
+var MiddlewareProviderSet = wire.NewSet(middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, wire.Struct(new(Middlewares), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -161,6 +163,7 @@ type Controllers struct {
 }
 
 type Middlewares struct {
+	CORS         *middleware.CORSMiddleware
 	Recovery     *middleware.RecoveryMiddleware
 	Localization *middleware.LocalizationMiddleware
 	RateLimit    *middleware.RateLimitMiddleware
