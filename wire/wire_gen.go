@@ -11,6 +11,7 @@ import (
 	"github.com/BargheNo/Backend/internal/application/adapter/jwt"
 	"github.com/BargheNo/Backend/internal/application/adapter/localization"
 	"github.com/BargheNo/Backend/internal/application/adapter/logger"
+	"github.com/BargheNo/Backend/internal/application/adapter/metrics"
 	"github.com/BargheNo/Backend/internal/application/service"
 	"github.com/BargheNo/Backend/internal/application/service/communication"
 	"github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -19,7 +20,6 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	"github.com/BargheNo/Backend/internal/infrastructure/metrics"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -68,7 +68,8 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		return nil, err
 	}
 	loggerMiddleware := middleware.NewLoggerMiddleware(loggerimplLogger)
-	prometheusMetrics := metricsimpl.NewPrometheusMetrics()
+	metrics := ProvideMetrics(constants)
+	prometheusMetrics := metricsimpl.NewPrometheusMetrics(metrics)
 	prometheusMiddleware := middleware.NewPrometheusMiddleware(prometheusMetrics)
 	middlewares := &Middlewares{
 		Recovery:     recoveryMiddleware,
@@ -135,6 +136,10 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
+func ProvideMetrics(container *bootstrap.Constants) *bootstrap.Metrics {
+	return &container.Metrics
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -143,6 +148,7 @@ var ProviderSet = wire.NewSet(
 	GeneralControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
+	MetricsProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -152,7 +158,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
 	ProvideJWTKeysPath,
-	MetricsProviderSet,
+	ProvideMetrics,
 )
 
 type Database struct {

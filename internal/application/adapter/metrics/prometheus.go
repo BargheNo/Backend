@@ -1,30 +1,32 @@
 package metricsimpl
 
 import (
+	"github.com/BargheNo/Backend/bootstrap"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-
-
 type PrometheusMetrics struct {
+	metrics             *bootstrap.Metrics
 	httpRequestsTotal   *prometheus.CounterVec
 	httpRequestDuration *prometheus.HistogramVec
 }
 
-func NewPrometheusMetrics() *PrometheusMetrics {
+func NewPrometheusMetrics(metrics *bootstrap.Metrics) *PrometheusMetrics {
 	return &PrometheusMetrics{
+		metrics: metrics,
 		httpRequestsTotal: promauto.NewCounterVec(
 			prometheus.CounterOpts{
-				Name: "http_requests_total",
-				Help: "Total number of HTTP requests",
+
+				Name: metrics.HTTPRequestsTotal.Name,
+				Help: metrics.HTTPRequestsTotal.Help,
 			},
 			[]string{"method", "route", "status"},
 		),
 		httpRequestDuration: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
-				Name:    "http_request_duration_seconds",
-				Help:    "HTTP request duration in seconds",
+				Name: metrics.HTTPRequestDuration.Name,
+				Help: metrics.HTTPRequestDuration.Help,
 				Buckets: prometheus.DefBuckets,
 			},
 			[]string{"method", "route"},

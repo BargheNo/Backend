@@ -4,16 +4,16 @@
 package wire
 
 import (
-	"github.com/BargheNo/Backend/internal/infrastructure/metrics"
-	"github.com/BargheNo/Backend/internal/domain/metrics"
 	"github.com/BargheNo/Backend/bootstrap"
 	jwtimpl "github.com/BargheNo/Backend/internal/application/adapter/jwt"
 	localizationimpl "github.com/BargheNo/Backend/internal/application/adapter/localization"
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
+	metricsimpl "github.com/BargheNo/Backend/internal/application/adapter/metrics"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
 	communicationService "github.com/BargheNo/Backend/internal/application/service/communication"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
+	"github.com/BargheNo/Backend/internal/domain/metrics"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -116,6 +116,10 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
+func ProvideMetrics(container *bootstrap.Constants) *bootstrap.Metrics {
+	return &container.Metrics
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -124,6 +128,7 @@ var ProviderSet = wire.NewSet(
 	GeneralControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
+	MetricsProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -133,7 +138,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
 	ProvideJWTKeysPath,
-	MetricsProviderSet,
+	ProvideMetrics,
 )
 
 type Database struct {
