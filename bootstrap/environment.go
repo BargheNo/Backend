@@ -58,8 +58,8 @@ type SMSGateway struct {
 }
 
 func NewEnvironments() *Env {
-	godotenv.Load("../../.env")
-	// godotenv.Load(".env")
+	// godotenv.Load("../../.env")
+	godotenv.Load(".env")
 	return &Env{
 		Server: Server{
 			Port: os.Getenv("SERVER_PORT"),
