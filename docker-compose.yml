@@ -49,14 +49,14 @@ services:
 
   node-exporter:
     image: prom/node-exporter:master
-    container_name: devops_node_exporter
+    container_name: node-exporter
     restart: unless-stopped
     ports:
       - "9100:9100"
        
   postgres-exporter:
     image: bitnami/postgres-exporter:latest
-    container_name: devops_postgres_exporter
+    container_name: postgres-exporter
     restart: unless-stopped
     ports:
       - "9187:9187"
@@ -67,7 +67,7 @@ services:
   
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
-    container_name: devops_cadvisor
+    container_name: cadvisor
     restart: unless-stopped
     ports:
       - "8081:8080"
@@ -77,11 +77,11 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
-      - redis
+      - rdb
 
   alertmanager:
     image: prom/alertmanager:main
-    container_name: devops_alertmanager
+    container_name: alertmanager
     restart: unless-stopped
     ports:
       - "9093:9093"
@@ -92,9 +92,27 @@ services:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
 
+  grafana:
+    image: grafana/grafana:main
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
   
 
 volumes:
   db_data:
   rdb_data:
   prometheus_data:
+  alertmanager_data:
+  grafana_data:
