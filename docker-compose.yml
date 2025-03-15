@@ -141,6 +141,8 @@ services:
     restart: unless-stopped
     ports:
       - "9093:9093"
+    environment:
+      - EMAIL_PAT=${EMAIL_PAT}
     volumes:
       - ./monitoring/alertmanager/config.yml:/etc/alertmanager/config.yml
       - alertmanager_data:/alertmanager
