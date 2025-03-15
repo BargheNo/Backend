@@ -10,6 +10,7 @@ type Constants struct {
 	Tag          ErrorTag
 	SMSTemplates SMSTemplates
 	JWTKeysPath  JWTKeysPath
+	Metrics      Metrics
 }
 
 type Context struct {
@@ -59,6 +60,16 @@ type JWTKeysPath struct {
 	PrivateKey string
 }
 
+type Metrics struct {
+	HTTPRequestsTotal   Options
+	HTTPRequestDuration Options
+}
+
+type Options struct {
+	Name string
+	Help string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
@@ -98,6 +109,17 @@ func NewConstants() *Constants {
 		JWTKeysPath: JWTKeysPath{
 			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
 			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
+		},
+		Metrics: Metrics{
+			HTTPRequestsTotal: Options{
+				Name: "http_requests_total",
+				Help: "Total number of HTTP requests",
+			},
+			HTTPRequestDuration: Options{
+				Name: "http_request_duration_seconds",
+				Help: "HTTP request duration in seconds",
+			},
+
 		},
 	}
 }

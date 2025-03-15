@@ -1,0 +1,151 @@
+groups:
+  - name: backend
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "More than 5% of HTTP requests are failing with 5xx status codes."
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request latency detected"
+          description: "95th percentile request duration exceeds 0.5 seconds."
+  
+  
+  - name: node
+    rules:
+      - alert: NodeDown
+        expr: up{job="node_exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node Exporter is down"
+          description: "Node Exporter is not reachable for more than 5 minutes."
+
+      - alert: HighCPUUsage
+        expr: rate(node_cpu_seconds_total{mode="idle"}[5m]) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage exceeds 90% for more than 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage exceeds 90% for more than 5 minutes."
+
+      - alert: DiskSpaceLow
+        expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space detected"
+          description: "Disk space usage exceeds 90% for more than 5 minutes."
+
+
+  - name: postgres
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL is not reachable for more than 5 minutes."
+
+      - alert: HighPostgresLatency
+        expr: histogram_quantile(0.95, sum(rate(pg_stat_statements_query_time_seconds_sum[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High PostgreSQL latency detected"
+          description: "95th percentile query duration exceeds 0.5 seconds."
+      - alert: PostgresSlowQueries
+        expr: pg_stat_statements_blks_read > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of slow queries detected"
+          description: "PostgreSQL has more than 1000 slow queries in the last 5 minutes."
+      - alert: PostgresHighConnectionCount
+        expr: pg_stat_activity_count > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of PostgreSQL connections detected"
+          description: "PostgreSQL has more than 100 active connections in the last 5 minutes."
+      - alert: PostgresReplicationLag
+        expr: pg_stat_replication_lag > 1000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High PostgreSQL replication lag detected"
+          description: "PostgreSQL replication lag exceeds 1 second."
+  
+  - name: cadvisor
+    rules:
+      - alert: ContainerHighCPUUsage
+        expr: sum by(name, container_name) (rate(container_cpu_usage_seconds_total{image!=""}[5m])) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High container CPU usage detected"
+          description: "Container {{ $labels.container_name }} on {{ $labels.name }} is using more than 80% CPU for 5 minutes."
+      
+      - alert: ContainerHighMemoryUsage
+        expr: sum by(name, container_name) (container_memory_usage_bytes{image!=""}) / sum by(name, container_name) (container_spec_memory_limit_bytes{image!=""}) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High container memory usage detected"
+          description: "Container {{ $labels.container_name }} on {{ $labels.name }} is using more than 80% of its memory limit for 5 minutes."
+      
+      - alert: ContainerKilled
+        expr: time() - container_last_seen{image!=""} > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container killed or crashed"
+          description: "Container {{ $labels.container_name }} on {{ $labels.name }} disappeared at {{ $value | humanizeTimestamp }}."
+      
+      - alert: ContainerHighThrottleRate
+        expr: rate(container_cpu_cfs_throttled_seconds_total{image!=""}[5m]) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container CPU throttling detected"
+          description: "Container {{ $labels.container_name }} on {{ $labels.name }} is being throttled by the kernel."
+      
+      - alert: ContainerNetworkHighErrorRate
+        expr: sum by (name, container_name) (rate(container_network_transmit_errors_total{image!=""}[5m]) + rate(container_network_receive_errors_total{image!=""}[5m])) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container network errors detected"
+          description: "Container {{ $labels.container_name }} on {{ $labels.name }} is experiencing network errors."

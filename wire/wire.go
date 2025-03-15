@@ -8,10 +8,12 @@ import (
 	jwtimpl "github.com/BargheNo/Backend/internal/application/adapter/jwt"
 	localizationimpl "github.com/BargheNo/Backend/internal/application/adapter/localization"
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
+	metricsimpl "github.com/BargheNo/Backend/internal/application/adapter/metrics"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
 	communicationService "github.com/BargheNo/Backend/internal/application/service/communication"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
+	"github.com/BargheNo/Backend/internal/domain/metrics"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -64,12 +66,18 @@ var ControllersProviderSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
 )
 
+var MetricsProviderSet = wire.NewSet(
+	metricsimpl.NewPrometheusMetrics,
+	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
+)
+
 var MiddlewareProviderSet = wire.NewSet(
 	middleware.NewCorsMiddleware,
 	middleware.NewRecovery,
 	middleware.NewLocalization,
 	middleware.NewRateLimit,
 	middleware.NewLoggerMiddleware,
+	middleware.NewPrometheusMiddleware,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -109,6 +117,10 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
+func ProvideMetrics(container *bootstrap.Constants) *bootstrap.Metrics {
+	return &container.Metrics
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -117,6 +129,7 @@ var ProviderSet = wire.NewSet(
 	GeneralControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
+	MetricsProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -126,6 +139,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
 	ProvideJWTKeysPath,
+	ProvideMetrics,
 )
 
 type Database struct {
@@ -147,6 +161,7 @@ type Middlewares struct {
 	Localization *middleware.LocalizationMiddleware
 	RateLimit    *middleware.RateLimitMiddleware
 	Logger       *middleware.LoggerMiddleware
+	Prometheus   *middleware.PrometheusMiddleware
 }
 
 type Application struct {
