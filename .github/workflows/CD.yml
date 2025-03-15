@@ -1,9 +1,6 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - feat/cors
   pull_request:
     branches: 
       - develop
