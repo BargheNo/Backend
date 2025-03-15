@@ -61,12 +61,13 @@ jobs:
           script: |
             cd /root/backend
             echo "${{ secrets.ENV_FILE }}" > .env
-            echo "${{ secrets.PRIVATE }}" > privateKey.pem
-            echo "${{ secrets.PUBLIC }}" > publicKey.pem
+            # echo "${{ secrets.PRIVATE }}" > privateKey.pem
+            # echo "${{ secrets.PUBLIC }}" > publicKey.pem
             chmod 644 .env
-            chmod 644 privateKey.pem
-            chmod 644 publicKey.pem
+            # chmod 644 privateKey.pem
+            # chmod 644 publicKey.pem
             
+            docker container prune
             docker compose pull
             docker compose down --remove-orphans
             docker compose up -d
