@@ -72,6 +72,7 @@ var MetricsProviderSet = wire.NewSet(
 )
 
 var MiddlewareProviderSet = wire.NewSet(
+	middleware.NewCorsMiddleware,
 	middleware.NewRecovery,
 	middleware.NewLocalization,
 	middleware.NewRateLimit,
@@ -150,6 +151,7 @@ type Controllers struct {
 }
 
 type Middlewares struct {
+	CORS         *middleware.CORSMiddleware
 	Recovery     *middleware.RecoveryMiddleware
 	Localization *middleware.LocalizationMiddleware
 	RateLimit    *middleware.RateLimitMiddleware
