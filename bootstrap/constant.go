@@ -119,6 +119,7 @@ func NewConstants() *Constants {
 				Name: "http_request_duration_seconds",
 				Help: "HTTP request duration in seconds",
 			},
+
 		},
 	}
 }
