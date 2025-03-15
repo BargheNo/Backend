@@ -17,6 +17,12 @@ jobs:
       - name: Write .env file
         run: | 
             echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Write .pem files
+        run: |
+            echo "${{ secrets.PRIVATE }}" > privateKey.pem
+            echo "${{ secrets.PUBLIC }}" > publicKey.pem
+
         
         
       - name: Set up Docker Buildx
@@ -52,7 +58,11 @@ jobs:
           script: |
             cd /root/backend
             echo "${{ secrets.ENV_FILE }}" > .env
+            echo "${{ secrets.PRIVATE }}" > privateKey.pem
+            echo "${{ secrets.PUBLIC }}" > publicKey.pem
             chmod 644 .env
+            chmod 644 privateKey.pem
+            chmod 644 publicKey.pem
             
             docker compose pull
             docker compose down --remove-orphans
