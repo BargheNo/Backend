@@ -1,6 +1,9 @@
 name: CD
 
 on:
+  push:
+    branches:
+      - fix/CICD
   pull_request:
     branches: 
       - develop
@@ -20,8 +23,8 @@ jobs:
 
       - name: Write .pem files
         run: |
-            echo "${{ secrets.PRIVATE }}" > privateKey.pem
-            echo "${{ secrets.PUBLIC }}" > publicKey.pem
+            echo "${{ secrets.PRIVATE }}" > ./internal/application/adapter/jwt/privateKey.pem
+            echo "${{ secrets.PUBLIC }}" > ./internal/application/adapter/jwt/publicKey.pem
 
         
         
