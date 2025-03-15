@@ -15,9 +15,11 @@ import (
 	"github.com/BargheNo/Backend/internal/application/service/communication"
 	"github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
+	"github.com/BargheNo/Backend/internal/domain/metrics"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	"github.com/BargheNo/Backend/internal/infrastructure/metrics"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -66,11 +68,14 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		return nil, err
 	}
 	loggerMiddleware := middleware.NewLoggerMiddleware(loggerimplLogger)
+	prometheusMetrics := metricsimpl.NewPrometheusMetrics()
+	prometheusMiddleware := middleware.NewPrometheusMiddleware(prometheusMetrics)
 	middlewares := &Middlewares{
 		Recovery:     recoveryMiddleware,
 		Localization: localizationMiddleware,
 		RateLimit:    rateLimitMiddleware,
 		Logger:       loggerMiddleware,
+		Prometheus:   prometheusMiddleware,
 	}
 	application := NewApplication(wireDatabase, controllers, middlewares)
 	return application, nil
@@ -90,7 +95,9 @@ var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wi
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
-var MiddlewareProviderSet = wire.NewSet(middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, wire.Struct(new(Middlewares), "*"))
+var MetricsProviderSet = wire.NewSet(metricsimpl.NewPrometheusMetrics, wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)))
+
+var MiddlewareProviderSet = wire.NewSet(middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, wire.Struct(new(Middlewares), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -145,6 +152,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
 	ProvideJWTKeysPath,
+	MetricsProviderSet,
 )
 
 type Database struct {
@@ -165,6 +173,7 @@ type Middlewares struct {
 	Localization *middleware.LocalizationMiddleware
 	RateLimit    *middleware.RateLimitMiddleware
 	Logger       *middleware.LoggerMiddleware
+	Prometheus   *middleware.PrometheusMiddleware
 }
 
 type Application struct {

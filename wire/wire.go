@@ -4,6 +4,8 @@
 package wire
 
 import (
+	"github.com/BargheNo/Backend/internal/infrastructure/metrics"
+	"github.com/BargheNo/Backend/internal/domain/metrics"
 	"github.com/BargheNo/Backend/bootstrap"
 	jwtimpl "github.com/BargheNo/Backend/internal/application/adapter/jwt"
 	localizationimpl "github.com/BargheNo/Backend/internal/application/adapter/localization"
@@ -64,11 +66,17 @@ var ControllersProviderSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
 )
 
+var MetricsProviderSet = wire.NewSet(
+	metricsimpl.NewPrometheusMetrics,
+	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
+)
+
 var MiddlewareProviderSet = wire.NewSet(
 	middleware.NewRecovery,
 	middleware.NewLocalization,
 	middleware.NewRateLimit,
 	middleware.NewLoggerMiddleware,
+	middleware.NewPrometheusMiddleware,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -125,6 +133,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
 	ProvideJWTKeysPath,
+	MetricsProviderSet,
 )
 
 type Database struct {
@@ -145,6 +154,7 @@ type Middlewares struct {
 	Localization *middleware.LocalizationMiddleware
 	RateLimit    *middleware.RateLimitMiddleware
 	Logger       *middleware.LoggerMiddleware
+	Prometheus   *middleware.PrometheusMiddleware
 }
 
 type Application struct {

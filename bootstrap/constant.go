@@ -10,6 +10,7 @@ type Constants struct {
 	Tag          ErrorTag
 	SMSTemplates SMSTemplates
 	JWTKeysPath  JWTKeysPath
+	
 }
 
 type Context struct {

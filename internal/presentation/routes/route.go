@@ -12,6 +12,7 @@ func Run(ginEngine *gin.Engine, app *wire.Application) {
 	ginEngine.Use(app.Middlewares.Localization.Localization)
 	ginEngine.Use(app.Middlewares.Recovery.Recovery)
 	ginEngine.Use(app.Middlewares.RateLimit.RateLimit)
+	ginEngine.Use(app.Middlewares.Prometheus.PrometheusMiddleware)
 
 	ginEngine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
