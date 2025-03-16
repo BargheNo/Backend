@@ -6,12 +6,12 @@ import (
 
 type Address struct {
 	database.Model
-	Province      string
-	City          string
-	StreetAddress string
-	PostalCode    string
-	HouseNumber   string
-	Unit          uint
-	OwnerID       uint
-	OwnerType     string
+	Province      	string
+	City          	string
+	StreetAddress 	string
+	PostalCode    	string
+	BuildingNumber  string
+	Unit          	uint
+	OwnerID       	uint
+	OwnerType     	string
 }
