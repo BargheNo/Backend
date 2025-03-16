@@ -12,7 +12,7 @@ func NewCorporationRepository() *CorporationRepository {
 	return &CorporationRepository{}
 }
 
-func (repo *CorporationRepository) FindCorporationByCIN(db database.Database, cin uint) (*entity.Corporation, bool) {
+func (repo *CorporationRepository) FindCorporationByCIN(db database.Database, cin string) (*entity.Corporation, bool) {
 	var corporation entity.Corporation
 	result := db.GetDB().Where("cin = ?", cin).First(&corporation)
 	if result.Error != nil {
@@ -28,7 +28,7 @@ func (repo *CorporationRepository) CreateCorporation(db database.Database, corpo
 	return db.GetDB().Create(&corporation).Error
 }
 
-func (repo *CorporationRepository) DeleteCorporationByCIN(db database.Database, cin uint) error {
+func (repo *CorporationRepository) DeleteCorporationByCIN(db database.Database, cin string) error {
 	return db.GetDB().Where("cin = ?", cin).Delete(&entity.Corporation{}).Error
 }
 

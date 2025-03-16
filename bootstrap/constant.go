@@ -11,6 +11,7 @@ type Constants struct {
 	SMSTemplates SMSTemplates
 	JWTKeysPath  JWTKeysPath
 	Metrics      Metrics
+	Status	  	 Status
 }
 
 type Context struct {
@@ -30,9 +31,11 @@ type RedisKey struct {
 }
 
 type ErrorField struct {
-	Phone    string
-	Password string
-	OTP      string
+	Phone    	string
+	Password 	string
+	OTP      	string
+	Corporation string
+	CIN	  		string
 }
 
 type ErrorTag struct {
@@ -70,6 +73,12 @@ type Options struct {
 	Help string
 }
 
+type Status struct {
+	Approved   string
+	Pending  string
+	Rejected string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
@@ -84,9 +93,10 @@ func NewConstants() *Constants {
 			Fatal: "fatal",
 		},
 		Field: ErrorField{
-			Phone:    "phone",
-			Password: "password",
-			OTP:      "otp",
+			Phone:    	"phone",
+			Password: 	"password",
+			OTP:      	"otp",
+			Corporation: "corporation",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -120,6 +130,11 @@ func NewConstants() *Constants {
 				Help: "HTTP request duration in seconds",
 			},
 
+		},
+		Status: Status{
+			Approved:   "approved",
+			Pending:    "pending",
+			Rejected:   "rejected",
 		},
 	}
 }

@@ -16,9 +16,11 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/metrics"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
+	cinimpl "github.com/BargheNo/Backend/internal/infrastructure/CIN"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -35,8 +37,10 @@ var DatabaseProviderSet = wire.NewSet(
 var RepositoryProviderSet = wire.NewSet(
 	repositoryimpl.NewUserRepository,
 	cacherepositoryimpl.NewUserCacheRepository,
+	repositoryimpl.NewCorporationRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
+	wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -44,10 +48,14 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewOTPService,
 	communicationService.NewSMSService,
 	serviceimpl.NewJWTService,
+	serviceimpl.NewCorporationService,
+	cinimpl.NewCINService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
 	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
+	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
+	wire.Bind(new(service.CINService), new(*cinimpl.CINService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -59,6 +67,7 @@ var AdapterProviderSet = wire.NewSet(
 
 var GeneralControllerProviderSet = wire.NewSet(
 	user.NewGeneralUserController,
+	corporation.NewGeneralCorporationController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -149,6 +158,7 @@ type Database struct {
 
 type GeneralControllers struct {
 	UserController *user.GeneralUserController
+	CorporationController *corporation.GeneralCorporationController
 }
 
 type Controllers struct {

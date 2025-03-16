@@ -5,7 +5,9 @@ import (
 )
 type Corporation struct {
 	database.Model
-	Name    string
-	CIN     uint
-	Address []Address `gorm:"polymorphic:Owner;"`
+	Name    	string
+	CIN     	string
+	Address 	[]Address `gorm:"polymorphic:Owner;"`
+	Status		string
+	Password 	string
 }

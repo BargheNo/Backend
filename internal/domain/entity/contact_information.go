@@ -7,6 +7,7 @@ type ContactInformation struct {
 	Address   []Address `gorm:"polymorphic:Owner;"`
 	WhatsApp  string
 	Instagram string
+	Linkedin  string
 	Telegram  string
 	Phone     string
 	Email     string

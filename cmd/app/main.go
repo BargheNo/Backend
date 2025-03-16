@@ -25,6 +25,8 @@ func main() {
 		&entity.Permission{},
 		&entity.Role{},
 		&entity.User{},
+		&entity.Corporation{},
+		&entity.ContactInformation{},
 	)
 
 	routes.Run(ginEngine, app)

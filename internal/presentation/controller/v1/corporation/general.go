@@ -25,11 +25,18 @@ func NewGeneralCorporationController(
 
 func (corporationController *GeneralCorporationController) Register(ctx *gin.Context) {
 	type registerParams struct {
+		Name string `json:"name" validate:"required"`
 		CIN string `json:"cin" validate:"required"`
+		Password string `json:"password" validate:"required"`
 	}
 	params := controller.Validated[registerParams](ctx, &corporationController.constants.Context)
 	registerInfo := corporationdto.RegisterRequest{
+		Name: params.Name,
 		CIN: params.CIN,
+		Password: params.Password,
 	}
 	corporationController.corporationService.Register(registerInfo)
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.corporationRegister")
+	controller.Response(ctx, 200, message, nil)
 }

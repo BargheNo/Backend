@@ -6,8 +6,8 @@ import (
 )
 
 type CorporationRepository interface {
-	FindCorporationByCIN(db database.Database, cin uint) (*entity.Corporation, bool)
+	FindCorporationByCIN(db database.Database, cin string) (*entity.Corporation, bool)
 	CreateCorporation(db database.Database, corporation *entity.Corporation) error
-	DeleteCorporationByCIN(db database.Database, cin uint) error
+	DeleteCorporationByCIN(db database.Database, cin string) error
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
 }
