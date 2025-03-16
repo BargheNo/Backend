@@ -6,4 +6,5 @@ type UserService interface {
 	Register(registerInfo userdto.BasicRegisterRequest)
 	VerifyPhone(verifyInfo userdto.VerifyPhoneRequest)
 	Login(loginInfo userdto.LoginRequest) userdto.UserInfoResponse
+	ForgotPassword(forgotPasswordInfo userdto.ForgotPassword)
 }

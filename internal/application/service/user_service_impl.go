@@ -212,3 +212,19 @@ func (userService *UserService) Login(loginInfo userdto.LoginRequest) userdto.Us
 		Permissions:  permissions,
 	}
 }
+
+func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.ForgotPassword) {
+	user, userExist := userService.userRepository.FindUserByPhone(userService.db, forgotPasswordInfo.Phone)
+	if !userExist || !user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+	otp, expiryMinute := userService.otpService.GenerateOTP()
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(forgotPasswordInfo.Phone)
+	err := userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
+	if err != nil {
+		panic(err)
+	}
+	// userService.smsService.SendOTP(registerInfo.Phone, otp)
+}

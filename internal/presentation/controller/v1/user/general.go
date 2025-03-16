@@ -85,7 +85,18 @@ func (userController *GeneralUserController) Login(ctx *gin.Context) {
 }
 
 func (userController *GeneralUserController) ForgotPassword(ctx *gin.Context) {
-	// some code here ...
+	type forgotPasswordParams struct {
+		Phone string `json:"phone" validate:"required,e164"`
+	}
+	params := controller.Validated[forgotPasswordParams](ctx, &userController.constants.Context)
+	forgotPasswordInfo := userdto.ForgotPassword{
+		Phone: params.Phone,
+	}
+	userController.userService.ForgotPassword(forgotPasswordInfo)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.forgotPassword")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (userController *GeneralUserController) ResetPassword(ctx *gin.Context) {
