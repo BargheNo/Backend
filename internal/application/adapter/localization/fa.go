@@ -7,6 +7,7 @@ var Persian = map[string]interface{}{
 	"password":        "رمز عبور",
 	"confirmPassword": "تایید رمز عیور",
 	"isAcceptTerms":   "تایید شرایط و مقررات",
+	"user":            "کاربر",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -20,7 +21,7 @@ var Persian = map[string]interface{}{
 		"required":               "بخش {0} باید کامل شود.",
 		"e164":                   "شماره تلفن به درستی ثبت نشده است.",
 		"eqfield":                "رمز عبور و {0} مطابقت ندارند.",
-		"eq=true":                "مقدار {0 باید درست باشد}",
+		"eq":                     "مقدار {0} باید درست باشد.",
 		"otpExpired":             "رمز یکبار مصرف شما منقضی شده است.",
 		"invalidOTP":             "رمز یکبار مصرف وارد شده اشتباه است.",
 		"notRegistered":          "ابتدا باید در سایت ثبت نام کنید.",
@@ -28,6 +29,8 @@ var Persian = map[string]interface{}{
 		"expiredAuthToken":       "نشست شما منقضی شده است. لطفا دوباره وارد شوید.",
 		"invalidAuthToken":       "در توکن ورود شما اشکالی وجود دارد.",
 		"unauthorized":           "ابتدا باید وارد شوید.",
+		"notFound":               "این {0} موجود نیست.",
+		"notVerified":            "باید ابتدا حساب خود را فعال کنید.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":      "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",

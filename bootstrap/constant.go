@@ -31,6 +31,7 @@ type RedisKey struct {
 }
 
 type ErrorField struct {
+	User     string
 	Phone    string
 	Password string
 	OTP      string
@@ -46,6 +47,7 @@ type ErrorTag struct {
 	OTPExpired             string
 	InvalidOTP             string
 	NotRegistered          string
+	NotVerified            string
 	InvalidAuthCredentials string
 	ExpiredAuthToken       string
 	InvalidAuthToken       string
@@ -86,6 +88,7 @@ func NewConstants() *Constants {
 			Fatal: "fatal",
 		},
 		Field: ErrorField{
+			User:     "user",
 			Phone:    "phone",
 			Password: "password",
 			OTP:      "otp",
@@ -100,6 +103,7 @@ func NewConstants() *Constants {
 			OTPExpired:             "otpExpired",
 			InvalidOTP:             "invalidOTP",
 			NotRegistered:          "notRegistered",
+			NotVerified:            "notVerified",
 			InvalidAuthCredentials: "invalidAuthCredentials",
 			ExpiredAuthToken:       "expiredAuthToken",
 			InvalidAuthToken:       "invalidAuthToken",

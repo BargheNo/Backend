@@ -6,6 +6,7 @@ var English = map[string]interface{}{
 	"phone":           "phone",
 	"password":        "password",
 	"confirmPassword": "confirm password",
+	"user":            "user",
 	"isAcceptTerms":   "terms and conditions",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
@@ -27,6 +28,8 @@ var English = map[string]interface{}{
 		"expiredAuthToken":       "Your token has been expired. Please log in again.",
 		"invalidAuthToken":       "There is a problem with your token.",
 		"unauthorized":           "Please login first.",
+		"notFound":               "The {0} not found.",
+		"notVerified":            "You have to verify your account first.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":      "Registration Successful! Please check your messages to verify your account and complete the registration process.",

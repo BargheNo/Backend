@@ -132,8 +132,8 @@ func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneReques
 	var validationErrors exception.ValidationErrors
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
 	if !userExist {
-		validationErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
-		panic(validationErrors)
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
 	}
 	if user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
@@ -182,13 +182,12 @@ func (userService *UserService) FindUserPermissions(user *entity.User) []string 
 func (userService *UserService) Login(loginInfo userdto.LoginRequest) userdto.UserInfoResponse {
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, loginInfo.Phone)
 	if !userExist {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
 	}
 	if !user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
 		panic(conflictErrors)
 	}
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginInfo.Password))
@@ -209,9 +208,13 @@ func (userService *UserService) Login(loginInfo userdto.LoginRequest) userdto.Us
 
 func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.ForgotPasswordRequest) {
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, forgotPasswordInfo.Phone)
-	if !userExist || !user.PhoneVerified {
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
 		panic(conflictErrors)
 	}
 	otp, expiryMinute := userService.otpService.GenerateOTP()
@@ -226,9 +229,13 @@ func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.Forgot
 func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest) userdto.UserInfoResponse {
 	var validationErrors exception.ValidationErrors
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
-	if !userExist || !user.PhoneVerified {
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
 		panic(conflictErrors)
 	}
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
@@ -258,8 +265,12 @@ func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest)
 func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswordRequest) {
 	user, userExist := userService.userRepository.FindUserByID(userService.db, resetPassInfo.ID)
 	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
 		panic(conflictErrors)
 	}
 
