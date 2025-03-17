@@ -4,4 +4,5 @@ import corporationdto "github.com/BargheNo/Backend/internal/application/dto/corp
 
 type CorporationService interface {
 	Register(registerInfo corporationdto.RegisterRequest)
+	Login(loginInfo corporationdto.LoginRequest) corporationdto.CorporationInfoResponse
 }

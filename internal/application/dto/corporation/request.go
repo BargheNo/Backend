@@ -5,3 +5,8 @@ type RegisterRequest struct {
 	CIN 		string
 	Password	string
 }
+
+type LoginRequest struct {
+	CIN		string
+	Password	string
+}

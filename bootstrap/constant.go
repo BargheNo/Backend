@@ -39,19 +39,22 @@ type ErrorField struct {
 }
 
 type ErrorTag struct {
-	AlreadyRegistered      string
-	MinimumLength          string
-	ContainsLowercase      string
-	ContainsUppercase      string
-	ContainsNumber         string
-	ContainsSpecialChar    string
-	OTPExpired             string
-	InvalidOTP             string
-	NotRegistered          string
-	InvalidAuthCredentials string
-	ExpiredAuthToken       string
-	InvalidAuthToken       string
-	Unauthorized           string
+	AlreadyRegistered      	string
+	MinimumLength          	string
+	ContainsLowercase      	string
+	ContainsUppercase      	string
+	ContainsNumber         	string
+	ContainsSpecialChar    	string
+	OTPExpired             	string
+	InvalidOTP             	string
+	NotRegistered          	string
+	InvalidAuthCredentials 	string
+	ExpiredAuthToken       	string
+	InvalidAuthToken       	string
+	Unauthorized           	string
+	NotActive		   	   	string
+	Pending				   	string
+	Rejected				string
 }
 
 type SMSTemplates struct {
@@ -112,6 +115,7 @@ func NewConstants() *Constants {
 			ExpiredAuthToken:       "expiredAuthToken",
 			InvalidAuthToken:       "invalidAuthToken",
 			Unauthorized:           "unauthorized",
+			Pending:				"pending",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

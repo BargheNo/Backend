@@ -40,13 +40,19 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 	if err != nil {
 		panic(err)
 	}
-	_, corporationExists := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, registerInfo.CIN)
+	corporation, corporationExists := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, registerInfo.CIN)
 	if corporationExists {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyRegistered)
-		panic(conflictErrors)
+		switch {
+			case corporation.Status == corporationService.constants.Status.Approved:
+				conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyRegistered)
+				panic(conflictErrors)
+			case corporation.Status == corporationService.constants.Status.Pending :
+				conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.Pending)
+				panic(conflictErrors)
+		}
 	}
 
-	corporation := &entity.Corporation{
+	corporation = &entity.Corporation{
 		Name:     registerInfo.Name,
 		CIN:      registerInfo.CIN,
 		Password: registerInfo.Password,
@@ -56,5 +62,34 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 	err = corporationService.CorporationRepository.CreateCorporation(corporationService.db, corporation)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func (corporationService *CorporationService) Login(loginInfo corporationdto.LoginRequest) corporationdto.CorporationInfoResponse {
+	corporation, corporationExist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, loginInfo.CIN)
+	var conflictErrors exception.ConflictErrors
+	if !corporationExist {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+	switch {
+		case corporation.Status == corporationService.constants.Status.Pending:
+			conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.Pending)
+			panic(conflictErrors)
+		case corporation.Status == corporationService.constants.Status.Rejected:
+			conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.Rejected)
+			panic(conflictErrors)
+	}
+
+	if corporation.Password != loginInfo.Password {
+		authError := exception.NewInvalidCredentialsError("password not match", nil)
+		panic(authError)
+	}
+
+	accessToken, refreshToken := corporationService.JWTService.GenerateToken(corporation.ID)
+	return corporationdto.CorporationInfoResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		Name:         corporation.Name,
 	}
 }

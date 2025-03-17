@@ -10,6 +10,7 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		auth.POST("/register/basic", app.Controllers.General.UserController.BasicRegister)
 		auth.POST("/corporation/register/", app.Controllers.General.CorporationController.Register)
+		auth.POST("/corporation/login/", app.Controllers.General.CorporationController.Login)
 		// auth.POST("/register/complete", app.Controllers.General.UserController.CompleteRegister)
 		auth.POST("/verify/phone", app.Controllers.General.UserController.VerifyPhone)
 		auth.POST("/verify/email", app.Controllers.General.UserController.VerifyEmail)
