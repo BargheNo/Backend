@@ -68,13 +68,13 @@ func (corporationController *GeneralCorporationController) GetInstallationReques
 
 func (corporationController *GeneralCorporationController) SetBid(ctx *gin.Context) {
 	type setBidParams struct {
-		InstallationRequestID uint    `json:"installation_request_id" validate:"required"`
-		MinCost               float64 `json:"min_cost" validate:"required"`
-		MaxCost               float64 `json:"max_cost" validate:"required"`
-		MinDeadline           string  `json:"min_deadline" validate:"required"`
-		MaxDeadline           string  `json:"max_deadline" validate:"required"`
+		InstallationRequestID uint    `json:"installationRequest_id" validate:"required"`
+		MinCost               float64 `json:"minCost" validate:"required"`
+		MaxCost               float64 `json:"maxCost" validate:"required"`
+		MinDeadline           string  `json:"minDeadline" validate:"required"`
+		MaxDeadline           string  `json:"maxDeadline" validate:"required"`
 		Description           string  `json:"description" validate:"required"`
-		InstallationTime      string  `json:"installation_time" validate:"required"`
+		InstallationTime      string  `json:"installationTime" validate:"required"`
 	}
 	params := controller.Validated[setBidParams](ctx, &corporationController.constants.Context)
 
@@ -99,8 +99,8 @@ func (corporationController *GeneralCorporationController) SetBid(ctx *gin.Conte
 
 func (corporationController *GeneralCorporationController) CancelBid(ctx *gin.Context) {
 	type cancelBidParams struct {
-		BidID                 uint `json:"bid_id" validate:"required"`
-		InstallationRequestID uint `json:"installation_request_id" validate:"required"`
+		BidID                 uint `json:"bidId" validate:"required"`
+		InstallationRequestID uint `json:"installationRequestId" validate:"required"`
 	}
 	params := controller.Validated[cancelBidParams](ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
