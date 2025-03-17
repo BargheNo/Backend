@@ -106,7 +106,7 @@ func handleConflictError(ctx *gin.Context, conflictErrors exception.ConflictErro
 		errorMessages[conflictError.Field][conflictError.Tag] = message
 	}
 
-	controller.Response(ctx, 422, errorMessages, nil)
+	controller.Response(ctx, 409, errorMessages, nil)
 }
 
 func handleAuthError(ctx *gin.Context, authError exception.AuthError, transKey string) {

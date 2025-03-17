@@ -41,7 +41,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	constants := ProvideConstants(container)
 	otp := ProvideOTPConfig(container)
 	userCacheRepository := cacherepositoryimpl.NewUserCacheRepository(redisDatabase)
-	otpService := serviceimpl.NewOTPService(otp, userCacheRepository)
+	otpService := serviceimpl.NewOTPService(constants, otp, userCacheRepository)
 	smsGateway := ProvideSMSGatewayConfig(container)
 	smsTemplates := ProvideSMSTemplates(container)
 	smsService := communicationService.NewSMSService(smsGateway, smsTemplates)

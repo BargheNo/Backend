@@ -129,7 +129,6 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 }
 
 func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneRequest) {
-	var validationErrors exception.ValidationErrors
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
 	if !userExist {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
@@ -144,14 +143,7 @@ func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneReques
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
 	err := userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
 	if err != nil {
-		if exception.IsOTPExpired(err) {
-			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.OTPExpired)
-		} else if exception.IsInvalidOTP(err) {
-			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.InvalidOTP)
-		} else {
-			panic(err)
-		}
-		panic(validationErrors)
+		panic(err)
 	}
 	user.PhoneVerified = true
 	err = userService.userRepository.UpdateUser(userService.db, user)
@@ -227,7 +219,6 @@ func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.Forgot
 }
 
 func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest) userdto.UserInfoResponse {
-	var validationErrors exception.ValidationErrors
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
 	if !userExist {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
@@ -241,14 +232,7 @@ func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest)
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
 	err := userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
 	if err != nil {
-		if exception.IsOTPExpired(err) {
-			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.OTPExpired)
-		} else if exception.IsInvalidOTP(err) {
-			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.InvalidOTP)
-		} else {
-			panic(err)
-		}
-		panic(validationErrors)
+		panic(err)
 	}
 
 	accessToken, refreshToken := userService.jwtService.GenerateToken(user.ID)
