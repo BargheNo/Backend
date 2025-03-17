@@ -22,6 +22,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -55,8 +56,11 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		UserController: generalUserController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
+	installationService := serviceimpl.NewInstallationService(constants, postgresDatabase)
+	customerInstallationController := installation.NewCustomerInstallationController(constants, installationService)
 	customerControllers := &CustomerControllers{
-		UserController: customerUserController,
+		UserController:         customerUserController,
+		InstallationController: customerInstallationController,
 	}
 	controllers := &Controllers{
 		General:  generalControllers,
@@ -95,15 +99,15 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 
 var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.NewRedisDatabase, wire.Bind(new(database.Database), new(*database.PostgresDatabase)), wire.Bind(new(database.Cache), new(*database.RedisDatabase)), wire.Struct(new(Database), "*"))
 
-var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, cacherepositoryimpl.NewUserCacheRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)))
+var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, repositoryimpl.NewInstallationRepository, cacherepositoryimpl.NewUserCacheRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)))
 
-var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)))
+var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, serviceimpl.NewInstallationService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)))
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, wire.Struct(new(CustomerControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -183,7 +187,8 @@ type GeneralControllers struct {
 }
 
 type CustomerControllers struct {
-	UserController *user.CustomerUserController
+	UserController         *user.CustomerUserController
+	InstallationController *installation.CustomerInstallationController
 }
 
 type Controllers struct {

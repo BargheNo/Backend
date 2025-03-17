@@ -19,6 +19,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -34,8 +35,10 @@ var DatabaseProviderSet = wire.NewSet(
 
 var RepositoryProviderSet = wire.NewSet(
 	repositoryimpl.NewUserRepository,
+	repositoryimpl.NewInstallationRepository,
 	cacherepositoryimpl.NewUserCacheRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
+	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
 )
 
@@ -44,10 +47,12 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewOTPService,
 	communicationService.NewSMSService,
 	serviceimpl.NewJWTService,
+	serviceimpl.NewInstallationService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
 	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
+	wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -64,6 +69,7 @@ var GeneralControllerProviderSet = wire.NewSet(
 
 var CustomerControllerProviderSet = wire.NewSet(
 	user.NewCustomerUserController,
+	installation.NewCustomerInstallationController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -159,7 +165,8 @@ type GeneralControllers struct {
 }
 
 type CustomerControllers struct {
-	UserController *user.CustomerUserController
+	UserController         *user.CustomerUserController
+	InstallationController *installation.CustomerInstallationController
 }
 
 type Controllers struct {

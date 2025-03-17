@@ -7,6 +7,7 @@
       "bargheno",
       "cacherepository",
       "cacherepositoryimpl",
+      "customerdto",
       "dbname",
       "eqfield",
       "godotenv",
