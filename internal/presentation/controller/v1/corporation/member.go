@@ -9,24 +9,24 @@ import (
 )
 
 type MemberCorporationController struct {
-	constants          *bootstrap.Constants
-	corporationService service.CorporationService
+	constants  *bootstrap.Constants
+	BidService service.BidService
 }
 
 func NewMemberCorporationController(
 	constants *bootstrap.Constants,
-	corporationService service.CorporationService,
+	BidService service.BidService,
 ) *MemberCorporationController {
 	return &MemberCorporationController{
-		constants:          constants,
-		corporationService: corporationService,
+		constants:  constants,
+		BidService: BidService,
 	}
 }
 
 func (corporationController *MemberCorporationController) GetInstallationRequests(ctx *gin.Context) {
 	pagination := controller.GetPagination(ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	installation_requests := corporationController.corporationService.GetInstallationRequests(corporationID.(uint), pagination.Page, pagination.PageSize)
+	installation_requests := corporationController.BidService.GetInstallationRequests(corporationID.(uint), pagination.Page, pagination.PageSize)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.GetInstallationRequests")
@@ -57,7 +57,7 @@ func (corporationController *MemberCorporationController) SetBid(ctx *gin.Contex
 
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	bidInfo.CorporationID = corporationID.(uint)
-	corporationController.corporationService.SetBid(bidInfo)
+	corporationController.BidService.SetBid(bidInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.SetBid")
@@ -76,7 +76,7 @@ func (corporationController *MemberCorporationController) CancelBid(ctx *gin.Con
 		InstallationRequestID: params.InstallationRequestID,
 		CorporationID:         corporationID.(uint),
 	}
-	corporationController.corporationService.CancelBid(bidInfo)
+	corporationController.BidService.CancelBid(bidInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.CancelBid")
@@ -86,7 +86,7 @@ func (corporationController *MemberCorporationController) CancelBid(ctx *gin.Con
 func (corporationController *MemberCorporationController) GetBids(ctx *gin.Context) {
 	pagination := controller.GetPagination(ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	bids := corporationController.corporationService.GetBids(corporationID.(uint), pagination.Page, pagination.PageSize)
+	bids := corporationController.BidService.GetBids(corporationID.(uint), pagination.Page, pagination.PageSize)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.GetBids")
