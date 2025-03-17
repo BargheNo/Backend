@@ -10,4 +10,5 @@ type CorporationRepository interface {
 	CreateCorporation(db database.Database, corporation *entity.Corporation) error
 	DeleteCorporationByCIN(db database.Database, cin string) error
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
+	GetInstallationRequests(db database.Database, corporationID uint) ([]*entity.InstallationRequest, error)
 }

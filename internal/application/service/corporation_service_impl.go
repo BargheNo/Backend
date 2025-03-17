@@ -93,3 +93,24 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 		Name:         corporation.Name,
 	}
 }
+
+func (corporationService *CorporationService) GetInstallationRequests(id uint) []corporationdto.InstallationRequestResponse {
+	installationRequests, err := corporationService.CorporationRepository.GetInstallationRequests(corporationService.db, id)
+	if err != nil {
+		panic(err)
+	}
+
+	installationRequestResponses := make([]corporationdto.InstallationRequestResponse, len(installationRequests))
+	for i, request := range installationRequests {
+		installationRequestResponses[i] = corporationdto.InstallationRequestResponse{
+			ID:             request.ID,
+			UserID:         request.UserID,
+			Area:           request.Area,
+			PowerRequested: request.PowerRequested,
+			MaxCost:        request.MaxCost,
+			Deadline:       request.Deadline,
+			BuildingType:   request.BuildingType,
+		}
+	}
+	return installationRequestResponses
+}

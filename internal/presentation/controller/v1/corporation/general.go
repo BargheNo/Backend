@@ -56,3 +56,14 @@ func (corporationController *GeneralCorporationController) Login(ctx *gin.Contex
 	message, _ := trans.Translate("successMessage.Login")
 	controller.Response(ctx, 200, message, corporationInfo)
 }
+
+func (corporationController *GeneralCorporationController) GetInstallationRequests(ctx *gin.Context) {
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	installation_requests := corporationController.corporationService.GetInstallationRequests(corporationID.(uint))
+	
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.GetInstallationRequests")
+	controller.Response(ctx, 200, message, installation_requests)
+}
+
+

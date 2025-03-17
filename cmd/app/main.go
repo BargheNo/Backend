@@ -27,6 +27,8 @@ func main() {
 		&entity.User{},
 		&entity.Corporation{},
 		&entity.ContactInformation{},
+		&entity.InstallationRequest{},
+		&entity.Bidders{},
 	)
 
 	routes.Run(ginEngine, app)

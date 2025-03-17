@@ -35,3 +35,16 @@ func (repo *CorporationRepository) DeleteCorporationByCIN(db database.Database, 
 func (repo *CorporationRepository) UpdateCorporation(db database.Database, corporation *entity.Corporation) error {
 	return db.GetDB().Save(&corporation).Error
 }
+
+func (repo *CorporationRepository) GetInstallationRequests(db database.Database, corporationID uint) ([]*entity.InstallationRequest, error) {
+	var requests []*entity.InstallationRequest
+	
+	result := db.GetDB().
+		Where("id NOT IN (SELECT request_id FROM bidders WHERE corporation_id = ?)", corporationID).
+		Find(&requests)
+	
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return requests, nil
+}

@@ -34,5 +34,6 @@ var Persian = map[string]interface{}{
 		"phoneVerification": "شماره شما با موفقیت تایید شد.",
 		"login":             "شما با موفقیت وارد شدید.",
 		"corporationRegister": "درخواست ثبت نام شما با موفقیت ارسال شد. لطفا منتظر بمانید تا ادمین درخواست شما را تایید کند.",
+		"getInstallationRequests": "درخواست های نصب با موفقیت دریافت شد.",
 	},
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/metrics"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
-	cinimpl "github.com/BargheNo/Backend/internal/infrastructure/CIN"
+	cinimpl "github.com/BargheNo/Backend/internal/infrastructure/cin"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"

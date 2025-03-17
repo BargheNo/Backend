@@ -33,5 +33,6 @@ var English = map[string]interface{}{
 		"phoneVerification": "Your phone has been successfully verified.",
 		"login":             "Logged in successfully.",
 		"corporationRegister": "Your Registration request has been sent successfully. Please wait for the admin to approve your request.",
+		"getInstallationRequests": "Installation requests fetched successfully.",
 	},
 }

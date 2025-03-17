@@ -15,8 +15,9 @@ type Constants struct {
 }
 
 type Context struct {
-	Translator                   string
-	IsLoadedValidationTranslator string
+	Translator                   	string
+	IsLoadedValidationTranslator 	string
+	ID								string
 }
 
 type LogLevel struct {
@@ -87,6 +88,7 @@ func NewConstants() *Constants {
 		Context: Context{
 			Translator:                   "translator",
 			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
+			ID:                           "id",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",

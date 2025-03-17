@@ -6,5 +6,8 @@ import (
 )
 
 func SetupMemberRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
-	// some APIs here-> E.g: auth/register/complete
+	corp := routerGroup.Group("/corp")
+	{
+		corp.GET("/installation_requests", app.Controllers.General.CorporationController.GetInstallationRequests)
+	}
 }
