@@ -21,6 +21,7 @@
       "loggerimpl",
       "pgximpl",
       "primarykey",
+      "promhttp",
       "repositoryimpl",
       "serviceimpl",
       "sslmode",

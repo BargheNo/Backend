@@ -51,6 +51,8 @@ func (recovery RecoveryMiddleware) handleRecoveredError(ctx *gin.Context, err er
 		handleConflictError(ctx, conflictErrors, recovery.constants.Context.Translator)
 	} else if authError, ok := err.(*exception.AuthError); ok {
 		handleAuthError(ctx, *authError, recovery.constants.Context.Translator)
+	} else if notFoundError, ok := err.(exception.NotFoundError); ok {
+		handleNotFoundError(ctx, notFoundError, recovery.constants.Context.Translator)
 	} else {
 		unhandledErrors(ctx, err, recovery.constants.Context.Translator)
 	}
@@ -104,7 +106,7 @@ func handleConflictError(ctx *gin.Context, conflictErrors exception.ConflictErro
 		errorMessages[conflictError.Field][conflictError.Tag] = message
 	}
 
-	controller.Response(ctx, 422, errorMessages, nil)
+	controller.Response(ctx, 409, errorMessages, nil)
 }
 
 func handleAuthError(ctx *gin.Context, authError exception.AuthError, transKey string) {
@@ -123,6 +125,13 @@ func handleAuthError(ctx *gin.Context, authError exception.AuthError, transKey s
 	}
 
 	controller.Response(ctx, 401, message, nil)
+}
+
+func handleNotFoundError(ctx *gin.Context, notFoundError exception.NotFoundError, transKey string) {
+	trans := controller.GetTranslator(ctx, transKey)
+	itemName, _ := trans.Translate(notFoundError.Item)
+	message, _ := trans.Translate("errors.notFound", itemName)
+	controller.Response(ctx, 404, message, nil)
 }
 
 func unhandledErrors(ctx *gin.Context, err error, transKey string) {

@@ -53,21 +53,23 @@ func (userService *UserService) validatePasswordTests(errors *[]string, test str
 	}
 }
 
-func (userService *UserService) passwordValidation(password string) []string {
-	var errors []string
+func (userService *UserService) passwordValidation(password string) error {
+	var errors exception.ValidationErrors
+	var errorTags []string
 
-	userService.validatePasswordTests(&errors, ".{8,}", password, userService.constants.Tag.MinimumLength)
-	userService.validatePasswordTests(&errors, "[a-z]", password, userService.constants.Tag.ContainsLowercase)
-	userService.validatePasswordTests(&errors, "[A-Z]", password, userService.constants.Tag.ContainsUppercase)
-	userService.validatePasswordTests(&errors, "[0-9]", password, userService.constants.Tag.ContainsNumber)
-	userService.validatePasswordTests(&errors, "[^\\d\\w]", password, userService.constants.Tag.ContainsSpecialChar)
+	userService.validatePasswordTests(&errorTags, ".{8,}", password, userService.constants.Tag.MinimumLength)
+	userService.validatePasswordTests(&errorTags, "[a-z]", password, userService.constants.Tag.ContainsLowercase)
+	userService.validatePasswordTests(&errorTags, "[A-Z]", password, userService.constants.Tag.ContainsUppercase)
+	userService.validatePasswordTests(&errorTags, "[0-9]", password, userService.constants.Tag.ContainsNumber)
+	userService.validatePasswordTests(&errorTags, "[^\\d\\w]", password, userService.constants.Tag.ContainsSpecialChar)
 
-	return errors
-}
-
-func hashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
+	for _, tag := range errorTags {
+		errors.Add(userService.constants.Field.Password, tag)
+	}
+	if len(errorTags) > 0 {
+		return errors
+	}
+	return nil
 }
 
 func (userService *UserService) validateRegisterInfo(phone, password string) error {
@@ -85,16 +87,7 @@ func (userService *UserService) validateRegisterInfo(phone, password string) err
 		return conflictErrors
 	}
 
-	var passwordErrors exception.ValidationErrors
-	passwordErrorTags := userService.passwordValidation(password)
-
-	for _, tag := range passwordErrorTags {
-		passwordErrors.Add(userService.constants.Field.Password, tag)
-	}
-	if len(passwordErrorTags) > 0 {
-		return passwordErrors
-	}
-	return nil
+	return userService.passwordValidation(password)
 }
 
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) {
@@ -102,7 +95,8 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 	if err != nil {
 		panic(err)
 	}
-	hashedPassword, err := hashPassword(registerInfo.Password)
+
+	hashesPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(registerInfo.Password), 14)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +110,7 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 		FirstName:     registerInfo.FirstName,
 		LastName:      registerInfo.LastName,
 		Phone:         registerInfo.Phone,
-		Password:      hashedPassword,
+		Password:      string(hashesPasswordBytes),
 		PhoneVerified: false,
 		EmailVerified: false,
 	}
@@ -135,11 +129,10 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 }
 
 func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneRequest) {
-	var validationErrors exception.ValidationErrors
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
 	if !userExist {
-		validationErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
-		panic(validationErrors)
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
 	}
 	if user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
@@ -150,14 +143,7 @@ func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneReques
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
 	err := userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
 	if err != nil {
-		if exception.IsOTPExpired(err) {
-			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.OTPExpired)
-		} else if exception.IsInvalidOTP(err) {
-			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.InvalidOTP)
-		} else {
-			panic(err)
-		}
-		panic(validationErrors)
+		panic(err)
 	}
 	user.PhoneVerified = true
 	err = userService.userRepository.UpdateUser(userService.db, user)
@@ -188,13 +174,12 @@ func (userService *UserService) FindUserPermissions(user *entity.User) []string 
 func (userService *UserService) Login(loginInfo userdto.LoginRequest) userdto.UserInfoResponse {
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, loginInfo.Phone)
 	if !userExist {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
 	}
 	if !user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
 		panic(conflictErrors)
 	}
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginInfo.Password))
@@ -210,5 +195,81 @@ func (userService *UserService) Login(loginInfo userdto.LoginRequest) userdto.Us
 		FirstName:    user.FirstName,
 		LastName:     user.LastName,
 		Permissions:  permissions,
+	}
+}
+
+func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.ForgotPasswordRequest) {
+	user, userExist := userService.userRepository.FindUserByPhone(userService.db, forgotPasswordInfo.Phone)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
+		panic(conflictErrors)
+	}
+	otp, expiryMinute := userService.otpService.GenerateOTP()
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(forgotPasswordInfo.Phone)
+	err := userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
+	if err != nil {
+		panic(err)
+	}
+	// userService.smsService.SendOTP(registerInfo.Phone, otp)
+}
+
+func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest) userdto.UserInfoResponse {
+	user, userExist := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
+		panic(conflictErrors)
+	}
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
+	err := userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
+	if err != nil {
+		panic(err)
+	}
+
+	accessToken, refreshToken := userService.jwtService.GenerateToken(user.ID)
+	permissions := userService.FindUserPermissions(user)
+	return userdto.UserInfoResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		Permissions:  permissions,
+	}
+}
+
+func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswordRequest) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, resetPassInfo.ID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
+		panic(conflictErrors)
+	}
+
+	if err := userService.passwordValidation(resetPassInfo.Password); err != nil {
+		panic(err)
+	}
+
+	hashesPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(resetPassInfo.Password), 14)
+	if err != nil {
+		panic(err)
+	}
+
+	user.Password = string(hashesPasswordBytes)
+	err = userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
 	}
 }

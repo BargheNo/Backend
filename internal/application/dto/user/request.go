@@ -16,3 +16,12 @@ type LoginRequest struct {
 	Phone    string
 	Password string
 }
+
+type ForgotPasswordRequest struct {
+	Phone string
+}
+
+type ResetPasswordRequest struct {
+	ID       uint
+	Password string
+}

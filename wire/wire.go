@@ -62,6 +62,11 @@ var GeneralControllerProviderSet = wire.NewSet(
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
+var CustomerControllerProviderSet = wire.NewSet(
+	user.NewCustomerUserController,
+	wire.Struct(new(CustomerControllers), "*"),
+)
+
 var ControllersProviderSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
 )
@@ -72,6 +77,7 @@ var MetricsProviderSet = wire.NewSet(
 )
 
 var MiddlewareProviderSet = wire.NewSet(
+	middleware.NewAuthMiddleware,
 	middleware.NewCorsMiddleware,
 	middleware.NewRecovery,
 	middleware.NewLocalization,
@@ -127,6 +133,7 @@ var ProviderSet = wire.NewSet(
 	ServiceProviderSet,
 	AdapterProviderSet,
 	GeneralControllerProviderSet,
+	CustomerControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	MetricsProviderSet,
@@ -151,17 +158,23 @@ type GeneralControllers struct {
 	UserController *user.GeneralUserController
 }
 
+type CustomerControllers struct {
+	UserController *user.CustomerUserController
+}
+
 type Controllers struct {
-	General *GeneralControllers
+	General  *GeneralControllers
+	Customer *CustomerControllers
 }
 
 type Middlewares struct {
-	CORS         *middleware.CORSMiddleware
-	Recovery     *middleware.RecoveryMiddleware
-	Localization *middleware.LocalizationMiddleware
-	RateLimit    *middleware.RateLimitMiddleware
-	Logger       *middleware.LoggerMiddleware
-	Prometheus   *middleware.PrometheusMiddleware
+	Authentication *middleware.AuthMiddleware
+	CORS           *middleware.CORSMiddleware
+	Recovery       *middleware.RecoveryMiddleware
+	Localization   *middleware.LocalizationMiddleware
+	RateLimit      *middleware.RateLimitMiddleware
+	Logger         *middleware.LoggerMiddleware
+	Prometheus     *middleware.PrometheusMiddleware
 }
 
 type Application struct {

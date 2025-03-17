@@ -41,7 +41,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	constants := ProvideConstants(container)
 	otp := ProvideOTPConfig(container)
 	userCacheRepository := cacherepositoryimpl.NewUserCacheRepository(redisDatabase)
-	otpService := serviceimpl.NewOTPService(otp, userCacheRepository)
+	otpService := serviceimpl.NewOTPService(constants, otp, userCacheRepository)
 	smsGateway := ProvideSMSGatewayConfig(container)
 	smsTemplates := ProvideSMSTemplates(container)
 	smsService := communicationService.NewSMSService(smsGateway, smsTemplates)
@@ -54,9 +54,15 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	generalControllers := &GeneralControllers{
 		UserController: generalUserController,
 	}
-	controllers := &Controllers{
-		General: generalControllers,
+	customerUserController := user.NewCustomerUserController(constants, userService)
+	customerControllers := &CustomerControllers{
+		UserController: customerUserController,
 	}
+	controllers := &Controllers{
+		General:  generalControllers,
+		Customer: customerControllers,
+	}
+	authMiddleware := middleware.NewAuthMiddleware(constants, jwtService, userRepository, postgresDatabase)
 	corsMiddleware := middleware.NewCorsMiddleware()
 	recoveryMiddleware := middleware.NewRecovery(constants)
 	translator := localizationimpl.NewTranslationService()
@@ -73,12 +79,13 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	prometheusMetrics := metricsimpl.NewPrometheusMetrics(metrics)
 	prometheusMiddleware := middleware.NewPrometheusMiddleware(prometheusMetrics)
 	middlewares := &Middlewares{
-		CORS:         corsMiddleware,
-		Recovery:     recoveryMiddleware,
-		Localization: localizationMiddleware,
-		RateLimit:    rateLimitMiddleware,
-		Logger:       loggerMiddleware,
-		Prometheus:   prometheusMiddleware,
+		Authentication: authMiddleware,
+		CORS:           corsMiddleware,
+		Recovery:       recoveryMiddleware,
+		Localization:   localizationMiddleware,
+		RateLimit:      rateLimitMiddleware,
+		Logger:         loggerMiddleware,
+		Prometheus:     prometheusMiddleware,
 	}
 	application := NewApplication(wireDatabase, controllers, middlewares)
 	return application, nil
@@ -96,12 +103,13 @@ var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, log
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wire.Struct(new(GeneralControllers), "*"))
 
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, wire.Struct(new(CustomerControllers), "*"))
+
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
 var MetricsProviderSet = wire.NewSet(metricsimpl.NewPrometheusMetrics, wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)))
 
-var MiddlewareProviderSet = wire.NewSet(middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, wire.Struct(new(Middlewares), "*"))
-
+var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, wire.Struct(new(Middlewares), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -149,6 +157,7 @@ var ProviderSet = wire.NewSet(
 	ServiceProviderSet,
 	AdapterProviderSet,
 	GeneralControllerProviderSet,
+	CustomerControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	MetricsProviderSet,
@@ -173,17 +182,23 @@ type GeneralControllers struct {
 	UserController *user.GeneralUserController
 }
 
+type CustomerControllers struct {
+	UserController *user.CustomerUserController
+}
+
 type Controllers struct {
-	General *GeneralControllers
+	General  *GeneralControllers
+	Customer *CustomerControllers
 }
 
 type Middlewares struct {
-	CORS         *middleware.CORSMiddleware
-	Recovery     *middleware.RecoveryMiddleware
-	Localization *middleware.LocalizationMiddleware
-	RateLimit    *middleware.RateLimitMiddleware
-	Logger       *middleware.LoggerMiddleware
-	Prometheus   *middleware.PrometheusMiddleware
+	Authentication *middleware.AuthMiddleware
+	CORS           *middleware.CORSMiddleware
+	Recovery       *middleware.RecoveryMiddleware
+	Localization   *middleware.LocalizationMiddleware
+	RateLimit      *middleware.RateLimitMiddleware
+	Logger         *middleware.LoggerMiddleware
+	Prometheus     *middleware.PrometheusMiddleware
 }
 
 type Application struct {

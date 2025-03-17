@@ -85,15 +85,35 @@ func (userController *GeneralUserController) Login(ctx *gin.Context) {
 }
 
 func (userController *GeneralUserController) ForgotPassword(ctx *gin.Context) {
-	// some code here ...
-}
+	type forgotPasswordParams struct {
+		Phone string `json:"phone" validate:"required,e164"`
+	}
+	params := controller.Validated[forgotPasswordParams](ctx, &userController.constants.Context)
+	forgotPasswordInfo := userdto.ForgotPasswordRequest{
+		Phone: params.Phone,
+	}
+	userController.userService.ForgotPassword(forgotPasswordInfo)
 
-func (userController *GeneralUserController) ResetPassword(ctx *gin.Context) {
-	// some code here ...
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.forgotPassword")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (userController *GeneralUserController) ConfirmOTP(ctx *gin.Context) {
-	// some code here ...
+	type verifyOTPParams struct {
+		Phone string `json:"phone" validate:"required,e164"`
+		OTP   string `json:"otp" validate:"required"`
+	}
+	params := controller.Validated[verifyOTPParams](ctx, &userController.constants.Context)
+	verifyPhoneInfo := userdto.VerifyPhoneRequest{
+		Phone: params.Phone,
+		OTP:   params.OTP,
+	}
+	userInfo := userController.userService.VerifyOTP(verifyPhoneInfo)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.phoneVerification")
+	controller.Response(ctx, 200, message, userInfo)
 }
 
 func (userController *GeneralUserController) RefreshToken(ctx *gin.Context) {
