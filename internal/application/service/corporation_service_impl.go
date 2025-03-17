@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"regexp"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -9,6 +11,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type CorporationService struct {
@@ -35,6 +38,25 @@ func NewCorporationService(
 	}
 }
 
+func (corporationService *CorporationService) validatePasswordTests(errors *[]string, test string, password string, tag string) {
+	matched, _ := regexp.MatchString(test, password)
+	if !matched {
+		*errors = append(*errors, tag)
+	}
+}
+
+func (corporationService *CorporationService) passwordValidation(password string) []string {
+	var errors []string
+
+	corporationService.validatePasswordTests(&errors, ".{8,}", password, corporationService.constants.Tag.MinimumLength)
+	corporationService.validatePasswordTests(&errors, "[a-z]", password, corporationService.constants.Tag.ContainsLowercase)
+	corporationService.validatePasswordTests(&errors, "[A-Z]", password, corporationService.constants.Tag.ContainsUppercase)
+	corporationService.validatePasswordTests(&errors, "[0-9]", password, corporationService.constants.Tag.ContainsNumber)
+	corporationService.validatePasswordTests(&errors, "[^\\d\\w]", password, corporationService.constants.Tag.ContainsSpecialChar)
+
+	return errors
+}
+
 func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) {
 	var conflictErrors exception.ConflictErrors
 	_, err := corporationService.CINService.ValidateCIN(registerInfo.CIN)
@@ -47,10 +69,24 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		panic(conflictErrors)
 	}
 
+	var passwordErrors exception.ValidationErrors
+	passwordErrorTags := corporationService.passwordValidation(registerInfo.Password)
+	for _, tag := range passwordErrorTags {
+		passwordErrors.Add(corporationService.constants.Field.Password, tag)
+	}
+	if len(passwordErrors.Errors) > 0 {
+		panic(passwordErrors)
+	}
+
+	hashedPassword, err := hashPassword(registerInfo.Password)
+	if err != nil {
+		panic(err)
+	}
+
 	corporation = &entity.Corporation{
 		Name:     registerInfo.Name,
 		CIN:      registerInfo.CIN,
-		Password: registerInfo.Password,
+		Password: hashedPassword,
 		Status:   enums.AwaitingApproval.String(),
 	}
 
@@ -72,8 +108,9 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 		panic(conflictErrors)
 	}
 
-	if corporation.Password != loginInfo.Password {
-		authError := exception.NewInvalidCredentialsError("password not match", nil)
+	err := bcrypt.CompareHashAndPassword([]byte(corporation.Password), []byte(loginInfo.Password))
+	if err != nil {
+		authError := exception.NewInvalidCredentialsError("cin and password not match", nil)
 		panic(authError)
 	}
 
