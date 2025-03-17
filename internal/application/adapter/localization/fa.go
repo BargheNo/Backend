@@ -10,7 +10,7 @@ var Persian = map[string]interface{}{
 	"corporation":         "شرکت",
 	"cin":                 "شناسه ملی",
 	"installationRequest": "درخواست نصب",
-	"bidder":              "متقاضی",
+	"bid":                 "پیشنهاد",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",

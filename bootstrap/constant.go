@@ -38,7 +38,7 @@ type ErrorField struct {
 	Corporation         string
 	CIN                 string
 	InstallationRequest string
-	Bidder              string
+	Bid                 string
 }
 
 type ErrorTag struct {
@@ -101,7 +101,7 @@ func NewConstants() *Constants {
 			Corporation:         "corporation",
 			CIN:                 "cin",
 			InstallationRequest: "installation_request",
-			Bidder:              "bidder",
+			Bid:                 "bid",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",

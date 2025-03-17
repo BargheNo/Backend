@@ -13,8 +13,8 @@ type CorporationRepository interface {
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
 	GetOpenInstallationRequests(db database.Database, corporationID uint) ([]*entity.InstallationRequest, error)
 	FindInstallationRequestByID(db database.Database, id uint) (*entity.InstallationRequest, bool)
-	CreateBidder(db database.Database, bidder *entity.Bidders) error
-	FindBidderByID(db database.Database, id uint) (*entity.Bidders, bool)
-	DeleteBidderByID(db database.Database, id uint) error
-	GetBids(db database.Database, requestID uint) ([]*entity.Bidders, error)
+	CreateBid(db database.Database, bid *entity.Bid) error
+	FindBidByID(db database.Database, id uint) (*entity.Bid, bool)
+	DeleteBidByID(db database.Database, id uint) error
+	GetBids(db database.Database, requestID uint) ([]*entity.Bid, error)
 }

@@ -139,7 +139,7 @@ func (corporationService *CorporationService) SetBid(bidInfo corporationdto.SetB
 		panic(conflictErrors)
 	}
 
-	bid := &entity.Bidders{
+	bid := &entity.Bid{
 		RequestType:      enums.InstallationRequest.String(),
 		RequestID:        bidInfo.InstallationRequestID,
 		CorporationID:    bidInfo.CorporationID,
@@ -151,7 +151,7 @@ func (corporationService *CorporationService) SetBid(bidInfo corporationdto.SetB
 		InstallationTime: bidInfo.InstallationTime,
 		Status:           enums.Pending.String(),
 	}
-	err := corporationService.CorporationRepository.CreateBidder(corporationService.db, bid)
+	err := corporationService.CorporationRepository.CreateBid(corporationService.db, bid)
 	if err != nil {
 		panic(err)
 	}
@@ -179,22 +179,22 @@ func (corporationService *CorporationService) CancelBid(bidInfo corporationdto.C
 		panic(conflictErrors)
 	}
 
-	bidder, exist := corporationService.CorporationRepository.FindBidderByID(corporationService.db, bidInfo.BidderID)
+	bid, exist := corporationService.CorporationRepository.FindBidByID(corporationService.db, bidInfo.BidID)
 	switch {
 	case !exist:
-		conflictErrors.Add(corporationService.constants.Field.Bidder, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(corporationService.constants.Field.Bid, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case bidder.CorporationID != bidInfo.CorporationID:
-		conflictErrors.Add(corporationService.constants.Field.Bidder, corporationService.constants.Tag.NotExist)
+	case bid.CorporationID != bidInfo.CorporationID:
+		conflictErrors.Add(corporationService.constants.Field.Bid, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case bidder.RequestType != enums.InstallationRequest.String():
-		conflictErrors.Add(corporationService.constants.Field.Bidder, corporationService.constants.Tag.NotExist)
+	case bid.RequestType != enums.InstallationRequest.String():
+		conflictErrors.Add(corporationService.constants.Field.Bid, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case bidder.Status != enums.Pending.String():
-		conflictErrors.Add(corporationService.constants.Field.Bidder, corporationService.constants.Tag.NotExist)
+	case bid.Status != enums.Pending.String():
+		conflictErrors.Add(corporationService.constants.Field.Bid, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
-	err := corporationService.CorporationRepository.DeleteBidderByID(corporationService.db, bidInfo.BidderID)
+	err := corporationService.CorporationRepository.DeleteBidByID(corporationService.db, bidInfo.BidID)
 	if err != nil {
 		panic(err)
 	}

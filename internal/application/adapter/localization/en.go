@@ -10,7 +10,7 @@ var English = map[string]interface{}{
 	"corporation":         "corporation",
 	"cin":                 "cin",
 	"installationRequest": "installation request",
-	"bidder":              "bidder",
+	"bid":                 "bid",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",

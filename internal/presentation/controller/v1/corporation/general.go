@@ -105,7 +105,7 @@ func (corporationController *GeneralCorporationController) CancelBid(ctx *gin.Co
 	params := controller.Validated[cancelBidParams](ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	bidInfo := corporationdto.CancelBidRequest{
-		BidderID:              params.BidID,
+		BidID:                 params.BidID,
 		InstallationRequestID: params.InstallationRequestID,
 		CorporationID:         corporationID.(uint),
 	}

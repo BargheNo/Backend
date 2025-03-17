@@ -2,7 +2,7 @@ package entity
 
 import "github.com/BargheNo/Backend/internal/infrastructure/database"
 
-type Bidders struct {
+type Bid struct {
 	database.Model	
 	CorporationID		uint
 	RequestID			uint
