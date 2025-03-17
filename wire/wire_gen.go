@@ -61,8 +61,13 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		UserController:        generalUserController,
 		CorporationController: generalCorporationController,
 	}
+	memberCorporationController := corporation.NewMemberCorporationController(constants, corporationService)
+	memberControllers := &MemberControllers{
+		CorporationController: memberCorporationController,
+	}
 	controllers := &Controllers{
 		General: generalControllers,
+		Member:  memberControllers,
 	}
 	corsMiddleware := middleware.NewCorsMiddleware()
 	recoveryMiddleware := middleware.NewRecovery(constants)
@@ -104,6 +109,8 @@ var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.New
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
+
+var MemberControllerProviderSet = wire.NewSet(corporation.NewMemberCorporationController, wire.Struct(new(MemberControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -155,6 +162,7 @@ var ProviderSet = wire.NewSet(
 	ServiceProviderSet,
 	AdapterProviderSet,
 	GeneralControllerProviderSet,
+	MemberControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	ProvideConstants,
@@ -179,8 +187,13 @@ type GeneralControllers struct {
 	CorporationController *corporation.GeneralCorporationController
 }
 
+type MemberControllers struct {
+	CorporationController *corporation.MemberCorporationController
+}
+
 type Controllers struct {
 	General *GeneralControllers
+	Member  *MemberControllers
 }
 
 type Middlewares struct {
