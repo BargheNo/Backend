@@ -122,8 +122,9 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 	}
 }
 
-func (corporationService *CorporationService) GetInstallationRequests(id uint) []corporationdto.InstallationRequestResponse {
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, id)
+func (corporationService *CorporationService) GetInstallationRequests(corporationId uint, page int, pageSize int) []corporationdto.InstallationRequestResponse {
+	offset := (page - 1) * pageSize
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationId)
 	var conflictErrors exception.ConflictErrors
 	switch {
 	case !exist:
@@ -134,7 +135,7 @@ func (corporationService *CorporationService) GetInstallationRequests(id uint) [
 		panic(conflictErrors)
 	}
 
-	installationRequests, err := corporationService.CorporationRepository.GetOpenInstallationRequests(corporationService.db, id)
+	installationRequests, err := corporationService.CorporationRepository.GetOpenInstallationRequests(corporationService.db, corporationId, offset, pageSize)
 	if err != nil {
 		panic(err)
 	}
@@ -238,7 +239,8 @@ func (corporationService *CorporationService) CancelBid(bidInfo corporationdto.C
 	}
 }
 
-func (corporationService *CorporationService) GetBids(corporationID uint) []corporationdto.BidsResponse {
+func (corporationService *CorporationService) GetBids(corporationID uint, page int, pageSize int) []corporationdto.BidsResponse {
+	offset := (page - 1) * pageSize
 	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
 	var conflictErrors exception.ConflictErrors
 	switch {
@@ -250,7 +252,7 @@ func (corporationService *CorporationService) GetBids(corporationID uint) []corp
 		panic(conflictErrors)
 	}
 
-	bids, err := corporationService.CorporationRepository.GetBids(corporationService.db, corporationID)
+	bids, err := corporationService.CorporationRepository.GetBids(corporationService.db, corporationID, offset, pageSize)
 	if err != nil {
 		panic(err)
 	}

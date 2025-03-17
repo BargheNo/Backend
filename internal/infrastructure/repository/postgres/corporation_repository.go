@@ -48,10 +48,12 @@ func (repo *CorporationRepository) UpdateCorporation(db database.Database, corpo
 	return db.GetDB().Save(&corporation).Error
 }
 
-func (repo *CorporationRepository) GetOpenInstallationRequests(db database.Database, corporationID uint) ([]*entity.InstallationRequest, error) {
+func (repo *CorporationRepository) GetOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int) ([]*entity.InstallationRequest, error) {
 	var requests []*entity.InstallationRequest
 	result := db.GetDB().
-		Where("id NOT IN (SELECT request_id FROM bid WHERE corporation_id = ?) AND status = 'open'", corporationID).
+		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ?) AND status = 'open'", corporationID).
+		Offset(offset).
+		Limit(pageSize).
 		Find(&requests)
 
 	if result.Error != nil {
@@ -104,9 +106,9 @@ func (repo *CorporationRepository) DeleteBidByID(db database.Database, id uint) 
 	return db.GetDB().Where("request_id = ?", id).Delete(&entity.Bid{}).Error
 }
 
-func (repo *CorporationRepository) GetBids(db database.Database, corporationID uint) ([]*entity.Bid, error) {
+func (repo *CorporationRepository) GetBids(db database.Database, corporationID uint, offset int, pageSize int) ([]*entity.Bid, error) {
 	var bids []*entity.Bid
-	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&bids)
+	result := db.GetDB().Where("corporation_id = ?", corporationID).Offset(offset).Limit(pageSize).Find(&bids)
 	if result.Error != nil {
 		return nil, result.Error
 	}

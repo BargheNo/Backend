@@ -58,8 +58,9 @@ func (corporationController *GeneralCorporationController) Login(ctx *gin.Contex
 }
 
 func (corporationController *GeneralCorporationController) GetInstallationRequests(ctx *gin.Context) {
+	pagination := controller.GetPagination(ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	installation_requests := corporationController.corporationService.GetInstallationRequests(corporationID.(uint))
+	installation_requests := corporationController.corporationService.GetInstallationRequests(corporationID.(uint), pagination.Page, pagination.PageSize)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.GetInstallationRequests")
@@ -117,8 +118,9 @@ func (corporationController *GeneralCorporationController) CancelBid(ctx *gin.Co
 }
 
 func (corporationController *GeneralCorporationController) GetBids(ctx *gin.Context) {
+	pagination := controller.GetPagination(ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	bids := corporationController.corporationService.GetBids(corporationID.(uint))
+	bids := corporationController.corporationService.GetBids(corporationID.(uint), pagination.Page, pagination.PageSize)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.GetBids")
