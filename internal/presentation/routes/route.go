@@ -27,5 +27,6 @@ func registerGeneralRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 }
 
 func registerMemberRoutes(v1 *gin.RouterGroup, app *wire.Application) {
+	v1.Use(app.Middlewares.Auth.AuthRequired)
 	httpv1.SetupMemberRoutes(v1, app)
 }

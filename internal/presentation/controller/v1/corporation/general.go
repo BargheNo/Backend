@@ -60,10 +60,67 @@ func (corporationController *GeneralCorporationController) Login(ctx *gin.Contex
 func (corporationController *GeneralCorporationController) GetInstallationRequests(ctx *gin.Context) {
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	installation_requests := corporationController.corporationService.GetInstallationRequests(corporationID.(uint))
-	
+
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.GetInstallationRequests")
 	controller.Response(ctx, 200, message, installation_requests)
 }
 
+func (corporationController *GeneralCorporationController) SetBid(ctx *gin.Context) {
+	type setBidParams struct {
+		InstallationRequestID uint    `json:"installation_request_id" validate:"required"`
+		MinCost               float64 `json:"min_cost" validate:"required"`
+		MaxCost               float64 `json:"max_cost" validate:"required"`
+		MinDeadline           string  `json:"min_deadline" validate:"required"`
+		MaxDeadline           string  `json:"max_deadline" validate:"required"`
+		Description           string  `json:"description" validate:"required"`
+		InstallationTime      string  `json:"installation_time" validate:"required"`
+	}
+	params := controller.Validated[setBidParams](ctx, &corporationController.constants.Context)
 
+	bidInfo := corporationdto.SetBidRequest{
+		InstallationRequestID: params.InstallationRequestID,
+		MinCost:               params.MinCost,
+		MaxCost:               params.MaxCost,
+		MinDeadline:           params.MinDeadline,
+		MaxDeadline:           params.MaxDeadline,
+		Description:           params.Description,
+		InstallationTime:      params.InstallationTime,
+	}
+
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	bidInfo.CorporationID = corporationID.(uint)
+	corporationController.corporationService.SetBid(bidInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.SetBid")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *GeneralCorporationController) CancelBid(ctx *gin.Context) {
+	type cancelBidParams struct {
+		BidID                 uint `json:"bid_id" validate:"required"`
+		InstallationRequestID uint `json:"installation_request_id" validate:"required"`
+	}
+	params := controller.Validated[cancelBidParams](ctx, &corporationController.constants.Context)
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	bidInfo := corporationdto.CancelBidRequest{
+		BidderID:              params.BidID,
+		InstallationRequestID: params.InstallationRequestID,
+		CorporationID:         corporationID.(uint),
+	}
+	corporationController.corporationService.CancelBid(bidInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.CancelBid")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *GeneralCorporationController) GetBids(ctx *gin.Context) {
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	bids := corporationController.corporationService.GetBids(corporationID.(uint))
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.GetBids")
+	controller.Response(ctx, 200, message, bids)
+}

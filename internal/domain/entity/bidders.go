@@ -4,8 +4,8 @@ import "github.com/BargheNo/Backend/internal/infrastructure/database"
 
 type Bidders struct {
 	database.Model	
-	CorporationID		Corporation `gorm:"foreignKey:CorporationID"`
-	RequestID			InstallationRequest `gorm:"foreignKey:RequestID"`
+	CorporationID		uint
+	RequestID			uint
 	RequestType			string
 	MinCost				float64
 	MaxCost				float64

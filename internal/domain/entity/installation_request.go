@@ -4,7 +4,7 @@ import "github.com/BargheNo/Backend/internal/infrastructure/database"
 
 type InstallationRequest struct {
 	database.Model  
-	UserID         	string  
+	UserID         	uint  
 	Area           	float64 
 	PowerRequested  float64 
 	MaxCost        	float64 

@@ -3,20 +3,22 @@ package bootstrap
 import "fmt"
 
 type Constants struct {
-	Context      Context
-	LogLevel     LogLevel
-	RedisKey     RedisKey
-	Field        ErrorField
-	Tag          ErrorTag
-	SMSTemplates SMSTemplates
-	JWTKeysPath  JWTKeysPath
-	Metrics      Metrics
-	Status	  	 Status
+	Context      	Context
+	LogLevel     	LogLevel
+	RedisKey     	RedisKey
+	Field        	ErrorField
+	Tag          	ErrorTag
+	SMSTemplates 	SMSTemplates
+	JWTKeysPath  	JWTKeysPath
+	Metrics      	Metrics
+	Status	  	 	Status
+	RequestType   	RequestType
 }
 
 type Context struct {
 	Translator                   	string
 	IsLoadedValidationTranslator 	string
+	IsLoadedJWTKeys					string
 	ID								string
 }
 
@@ -32,11 +34,13 @@ type RedisKey struct {
 }
 
 type ErrorField struct {
-	Phone    	string
-	Password 	string
-	OTP      	string
-	Corporation string
-	CIN	  		string
+	Phone    			string
+	Password 			string
+	OTP      			string
+	Corporation 		string
+	CIN	  				string
+	InstallationRequest	string
+	Bidder				string
 }
 
 type ErrorTag struct {
@@ -46,8 +50,8 @@ type ErrorTag struct {
 	ContainsUppercase      	string
 	ContainsNumber         	string
 	ContainsSpecialChar    	string
-	OTPExpired             	string
-	InvalidOTP             	string
+	Expired             	string
+	Invalid             	string
 	NotRegistered          	string
 	InvalidAuthCredentials 	string
 	ExpiredAuthToken       	string
@@ -56,6 +60,7 @@ type ErrorTag struct {
 	NotActive		   	   	string
 	Pending				   	string
 	Rejected				string
+	NotExist				string
 }
 
 type SMSTemplates struct {
@@ -83,12 +88,18 @@ type Status struct {
 	Rejected string
 }
 
+type RequestType struct {
+	Installation 	string
+	Maintenance   	string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
-			Translator:                   "translator",
-			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
-			ID:                           "id",
+			Translator:                   	"translator",
+			IsLoadedValidationTranslator: 	"isLoadedValidationTranslator",
+			IsLoadedJWTKeys: 				"isLoadedJWTKeys",
+			ID:                           	"id",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",
@@ -102,6 +113,9 @@ func NewConstants() *Constants {
 			Password: 	"password",
 			OTP:      	"otp",
 			Corporation: "corporation",
+			CIN:       	"cin",
+			InstallationRequest: "installation_request",
+			Bidder:		"bidder",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -110,14 +124,17 @@ func NewConstants() *Constants {
 			ContainsUppercase:      "containsUppercase",
 			ContainsNumber:         "containsNumber",
 			ContainsSpecialChar:    "containsSpecialChar",
-			OTPExpired:             "otpExpired",
-			InvalidOTP:             "invalidOTP",
+			Expired:             	"Expired",
+			Invalid:             	"invalid",
 			NotRegistered:          "notRegistered",
 			InvalidAuthCredentials: "invalidAuthCredentials",
 			ExpiredAuthToken:       "expiredAuthToken",
 			InvalidAuthToken:       "invalidAuthToken",
 			Unauthorized:           "unauthorized",
 			Pending:				"pending",
+			Rejected:				"rejected",
+			NotActive:				"notActive",
+			NotExist:				"notExist",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
@@ -141,6 +158,10 @@ func NewConstants() *Constants {
 			Approved:   "approved",
 			Pending:    "pending",
 			Rejected:   "rejected",
+		},
+		RequestType: RequestType{
+			Installation: "installation_request",
+			Maintenance:   "maintenance_request",
 		},
 	}
 }

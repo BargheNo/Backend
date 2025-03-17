@@ -87,6 +87,7 @@ var MiddlewareProviderSet = wire.NewSet(
 	middleware.NewRateLimit,
 	middleware.NewLoggerMiddleware,
 	middleware.NewPrometheusMiddleware,
+	middleware.NewAuthMiddleware,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -172,6 +173,7 @@ type Middlewares struct {
 	RateLimit    *middleware.RateLimitMiddleware
 	Logger       *middleware.LoggerMiddleware
 	Prometheus   *middleware.PrometheusMiddleware
+	Auth         *middleware.AuthMiddleware
 }
 
 type Application struct {

@@ -151,9 +151,9 @@ func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneReques
 	err := userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
 	if err != nil {
 		if exception.IsOTPExpired(err) {
-			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.OTPExpired)
+			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.Expired)
 		} else if exception.IsInvalidOTP(err) {
-			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.InvalidOTP)
+			validationErrors.Add(userService.constants.Field.OTP, userService.constants.Tag.Invalid)
 		} else {
 			panic(err)
 		}

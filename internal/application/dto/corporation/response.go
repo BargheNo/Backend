@@ -9,10 +9,22 @@ type CorporationInfoResponse struct {
 
 type InstallationRequestResponse struct {
 	ID            	uint 		`json:"id"`
-	UserID        	string 		`json:"userId"`
+	UserID        	uint 		`json:"userId"`
 	Area 		  	float64   	`json:"area"`
 	PowerRequested 	float64   	`json:"powerRequested"`
 	MaxCost	   		float64   	`json:"maxCost"`
 	Deadline       	string 		`json:"deadline"`
 	BuildingType	string 		`json:"buildingType"`
+}
+
+type BidsResponse struct {
+	ID            			uint 		`json:"id"`
+	InstallationRequestID 	uint 	`json:"installationRequestId"`
+	Description 			string 		`json:"description"`
+	MinCost      			float64   	`json:"minCost"`
+	MaxCost      			float64   	`json:"maxCost"`
+	MinDeadline  			string 		`json:"minDeadline"`
+	MaxDeadline  			string 		`json:"maxDeadline"`
+	InstallationTime 		string 	`json:"installationTime"`
+	Status	   				string 		`json:"status"`
 }

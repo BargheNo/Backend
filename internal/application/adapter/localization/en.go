@@ -7,6 +7,10 @@ var English = map[string]interface{}{
 	"password":        "password",
 	"confirmPassword": "confirm password",
 	"isAcceptTerms":   "terms and conditions",
+	"corporation":     "corporation",
+	"cin":             "cin",
+	"installationRequest": "installation request",
+	"bidder":          "bidder",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -20,13 +24,16 @@ var English = map[string]interface{}{
 		"e164":                   "Phone number u have entered is not correct",
 		"eqfield=Password":       "Password and {0} are not the same.",
 		"eq":                     "Field {0} should be true.",
-		"otpExpired":             "OTP is expired.",
-		"invalidOTP":             "OTP is invalid.",
+		"Expired":             "OTP is expired.",
+		"invalid":             "OTP is invalid.",
 		"notRegistered":          "You have to register first.",
 		"invalidAuthCredentials": "Username and password not matched",
 		"expiredAuthToken":       "Your token has been expired. Please log in again.",
 		"invalidAuthToken":       "There is a problem with your token.",
 		"unauthorized":           "Please login first.",
+		"notActive":             "Your account is not active.",
+
+		"notExist":             "This {0} does not exist.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":      "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -34,5 +41,8 @@ var English = map[string]interface{}{
 		"login":             "Logged in successfully.",
 		"corporationRegister": "Your Registration request has been sent successfully. Please wait for the admin to approve your request.",
 		"getInstallationRequests": "Installation requests fetched successfully.",
+		"setBid": "Your bid has been successfully registered.",
+		"cancelBid": "Your bid has been successfully canceled.",
+		"getBids": "Bids fetched successfully.",
 	},
 }
