@@ -140,7 +140,7 @@ func (corporationService *CorporationService) SetBid(bidInfo corporationdto.SetB
 	}
 
 	bid := &entity.Bidders{
-		RequestType:      corporationService.constants.RequestType.Installation,
+		RequestType:      enums.InstallationRequest.String(),
 		RequestID:        bidInfo.InstallationRequestID,
 		CorporationID:    bidInfo.CorporationID,
 		MinCost:          bidInfo.MinCost,
@@ -187,7 +187,7 @@ func (corporationService *CorporationService) CancelBid(bidInfo corporationdto.C
 	case bidder.CorporationID != bidInfo.CorporationID:
 		conflictErrors.Add(corporationService.constants.Field.Bidder, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case bidder.RequestType != corporationService.constants.RequestType.Installation:
+	case bidder.RequestType != enums.InstallationRequest.String():
 		conflictErrors.Add(corporationService.constants.Field.Bidder, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	case bidder.Status != enums.Pending.String():

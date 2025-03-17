@@ -3,22 +3,21 @@ package bootstrap
 import "fmt"
 
 type Constants struct {
-	Context      	Context
-	LogLevel     	LogLevel
-	RedisKey     	RedisKey
-	Field        	ErrorField
-	Tag          	ErrorTag
-	SMSTemplates 	SMSTemplates
-	JWTKeysPath  	JWTKeysPath
-	Metrics      	Metrics
-	RequestType   	RequestType
+	Context      Context
+	LogLevel     LogLevel
+	RedisKey     RedisKey
+	Field        ErrorField
+	Tag          ErrorTag
+	SMSTemplates SMSTemplates
+	JWTKeysPath  JWTKeysPath
+	Metrics      Metrics
 }
 
 type Context struct {
-	Translator                   	string
-	IsLoadedValidationTranslator 	string
-	IsLoadedJWTKeys					string
-	ID								string
+	Translator                   string
+	IsLoadedValidationTranslator string
+	IsLoadedJWTKeys              string
+	ID                           string
 }
 
 type LogLevel struct {
@@ -33,33 +32,33 @@ type RedisKey struct {
 }
 
 type ErrorField struct {
-	Phone    			string
-	Password 			string
-	OTP      			string
-	Corporation 		string
-	CIN	  				string
-	InstallationRequest	string
-	Bidder				string
+	Phone               string
+	Password            string
+	OTP                 string
+	Corporation         string
+	CIN                 string
+	InstallationRequest string
+	Bidder              string
 }
 
 type ErrorTag struct {
-	AlreadyRegistered      	string
-	MinimumLength          	string
-	ContainsLowercase      	string
-	ContainsUppercase      	string
-	ContainsNumber         	string
-	ContainsSpecialChar    	string
-	Expired             	string
-	Invalid             	string
-	NotRegistered          	string
-	InvalidAuthCredentials 	string
-	ExpiredAuthToken       	string
-	InvalidAuthToken       	string
-	Unauthorized           	string
-	NotActive		   	   	string
-	Pending				   	string
-	Rejected				string
-	NotExist				string
+	AlreadyRegistered      string
+	MinimumLength          string
+	ContainsLowercase      string
+	ContainsUppercase      string
+	ContainsNumber         string
+	ContainsSpecialChar    string
+	Expired                string
+	Invalid                string
+	NotRegistered          string
+	InvalidAuthCredentials string
+	ExpiredAuthToken       string
+	InvalidAuthToken       string
+	Unauthorized           string
+	NotActive              string
+	Pending                string
+	Rejected               string
+	NotExist               string
 }
 
 type SMSTemplates struct {
@@ -81,18 +80,13 @@ type Options struct {
 	Help string
 }
 
-type RequestType struct {
-	Installation 	string
-	Maintenance   	string
-}
-
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
-			Translator:                   	"translator",
-			IsLoadedValidationTranslator: 	"isLoadedValidationTranslator",
-			IsLoadedJWTKeys: 				"isLoadedJWTKeys",
-			ID:                           	"id",
+			Translator:                   "translator",
+			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
+			IsLoadedJWTKeys:              "isLoadedJWTKeys",
+			ID:                           "id",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",
@@ -102,13 +96,13 @@ func NewConstants() *Constants {
 			Fatal: "fatal",
 		},
 		Field: ErrorField{
-			Phone:    	"phone",
-			Password: 	"password",
-			OTP:      	"otp",
-			Corporation: "corporation",
-			CIN:       	"cin",
+			Phone:               "phone",
+			Password:            "password",
+			OTP:                 "otp",
+			Corporation:         "corporation",
+			CIN:                 "cin",
 			InstallationRequest: "installation_request",
-			Bidder:		"bidder",
+			Bidder:              "bidder",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -117,17 +111,17 @@ func NewConstants() *Constants {
 			ContainsUppercase:      "containsUppercase",
 			ContainsNumber:         "containsNumber",
 			ContainsSpecialChar:    "containsSpecialChar",
-			Expired:             	"Expired",
-			Invalid:             	"invalid",
+			Expired:                "Expired",
+			Invalid:                "invalid",
 			NotRegistered:          "notRegistered",
 			InvalidAuthCredentials: "invalidAuthCredentials",
 			ExpiredAuthToken:       "expiredAuthToken",
 			InvalidAuthToken:       "invalidAuthToken",
 			Unauthorized:           "unauthorized",
-			Pending:				"pending",
-			Rejected:				"rejected",
-			NotActive:				"notActive",
-			NotExist:				"notExist",
+			Pending:                "pending",
+			Rejected:               "rejected",
+			NotActive:              "notActive",
+			NotExist:               "notExist",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
@@ -145,12 +139,6 @@ func NewConstants() *Constants {
 				Name: "http_request_duration_seconds",
 				Help: "HTTP request duration in seconds",
 			},
-
-		},
-
-		RequestType: RequestType{
-			Installation: "installation_request",
-			Maintenance:   "maintenance_request",
 		},
 	}
 }
