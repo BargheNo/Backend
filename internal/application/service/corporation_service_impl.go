@@ -5,6 +5,7 @@ import (
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enums"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -34,30 +35,23 @@ func NewCorporationService(
 	}
 }
 
-
 func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) {
 	var conflictErrors exception.ConflictErrors
 	_, err := corporationService.CINService.ValidateCIN(registerInfo.CIN)
 	if err != nil {
 		panic(err)
 	}
-	corporation, corporationExists := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, registerInfo.CIN)
-	if corporationExists {
-		switch {
-		case corporation.Status == corporationService.constants.Status.Approved:
-			conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyRegistered)
-			panic(conflictErrors)
-		case corporation.Status == corporationService.constants.Status.Pending :
-			conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.Pending)
-			panic(conflictErrors)
-		}
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, registerInfo.CIN)
+	if exist && corporation.Status != enums.Rejected.String() {
+		conflictErrors.Add(corporationService.constants.Field.CIN, corporationService.constants.Tag.AlreadyRegistered)
+		panic(conflictErrors)
 	}
 
 	corporation = &entity.Corporation{
 		Name:     registerInfo.Name,
 		CIN:      registerInfo.CIN,
 		Password: registerInfo.Password,
-		Status:   corporationService.constants.Status.Pending,
+		Status:   enums.AwaitingApproval.String(),
 	}
 
 	err = corporationService.CorporationRepository.CreateCorporation(corporationService.db, corporation)
@@ -73,7 +67,7 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
-	if corporation.Status != corporationService.constants.Status.Approved {
+	if corporation.Status != enums.Approved.String() {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -98,7 +92,7 @@ func (corporationService *CorporationService) GetInstallationRequests(id uint) [
 	case !exist:
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
-	case corporation.Status != corporationService.constants.Status.Approved:
+	case corporation.Status != enums.Approved.String():
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -107,7 +101,6 @@ func (corporationService *CorporationService) GetInstallationRequests(id uint) [
 	if err != nil {
 		panic(err)
 	}
-
 
 	installationRequestResponses := make([]corporationdto.InstallationRequestResponse, len(installationRequests))
 	for i, request := range installationRequests {
@@ -131,7 +124,7 @@ func (corporationService *CorporationService) SetBid(bidInfo corporationdto.SetB
 	case !exist:
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
-	case corporation.Status != corporationService.constants.Status.Approved:
+	case corporation.Status != enums.Approved.String():
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -141,22 +134,22 @@ func (corporationService *CorporationService) SetBid(bidInfo corporationdto.SetB
 	case !exist:
 		conflictErrors.Add(corporationService.constants.Field.InstallationRequest, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case installationRequest.Status != "open":
+	case installationRequest.Status != enums.Open.String():
 		conflictErrors.Add(corporationService.constants.Field.InstallationRequest, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
-	
+
 	bid := &entity.Bidders{
-		RequestType: 			corporationService.constants.RequestType.Installation,
-		RequestID: 				bidInfo.InstallationRequestID,
-		CorporationID:       	bidInfo.CorporationID,
-		MinCost:              	bidInfo.MinCost,
-		MaxCost:              	bidInfo.MaxCost,
-		MinDeadline:          	bidInfo.MinDeadline,
-		MaxDeadline:          	bidInfo.MaxDeadline,
-		Description:          	bidInfo.Description,
-		InstallationTime:     	bidInfo.InstallationTime,
-		Status:              	corporationService.constants.Status.Pending,
+		RequestType:      corporationService.constants.RequestType.Installation,
+		RequestID:        bidInfo.InstallationRequestID,
+		CorporationID:    bidInfo.CorporationID,
+		MinCost:          bidInfo.MinCost,
+		MaxCost:          bidInfo.MaxCost,
+		MinDeadline:      bidInfo.MinDeadline,
+		MaxDeadline:      bidInfo.MaxDeadline,
+		Description:      bidInfo.Description,
+		InstallationTime: bidInfo.InstallationTime,
+		Status:           enums.Pending.String(),
 	}
 	err := corporationService.CorporationRepository.CreateBidder(corporationService.db, bid)
 	if err != nil {
@@ -171,18 +164,17 @@ func (corporationService *CorporationService) CancelBid(bidInfo corporationdto.C
 	case !exist:
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
-	case corporation.Status != corporationService.constants.Status.Approved:
+	case corporation.Status != enums.Approved.String():
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
-
 
 	request, exist := corporationService.CorporationRepository.FindInstallationRequestByID(corporationService.db, bidInfo.InstallationRequestID)
 	switch {
 	case !exist:
 		conflictErrors.Add(corporationService.constants.Field.InstallationRequest, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case request.Status != "open":
+	case request.Status != enums.Open.String():
 		conflictErrors.Add(corporationService.constants.Field.InstallationRequest, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
@@ -198,7 +190,7 @@ func (corporationService *CorporationService) CancelBid(bidInfo corporationdto.C
 	case bidder.RequestType != corporationService.constants.RequestType.Installation:
 		conflictErrors.Add(corporationService.constants.Field.Bidder, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case bidder.Status != corporationService.constants.Status.Pending:
+	case bidder.Status != enums.Pending.String():
 		conflictErrors.Add(corporationService.constants.Field.Bidder, corporationService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
@@ -215,7 +207,7 @@ func (corporationService *CorporationService) GetBids(corporationID uint) []corp
 	case !exist:
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
-	case corporation.Status != corporationService.constants.Status.Approved:
+	case corporation.Status != enums.Approved.String():
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -227,15 +219,15 @@ func (corporationService *CorporationService) GetBids(corporationID uint) []corp
 	bidResponses := make([]corporationdto.BidsResponse, len(bids))
 	for i, bid := range bids {
 		bidResponses[i] = corporationdto.BidsResponse{
-			ID:                 bid.ID,
-			InstallationRequestID:	bid.RequestID,
-			MinCost:            	bid.MinCost,
-			MaxCost:            	bid.MaxCost,
-			MinDeadline:        	bid.MinDeadline,
-			MaxDeadline:        	bid.MaxDeadline,
-			Description:        	bid.Description,
-			InstallationTime:   	bid.InstallationTime,
-			Status:             	bid.Status,
+			ID:                    bid.ID,
+			InstallationRequestID: bid.RequestID,
+			MinCost:               bid.MinCost,
+			MaxCost:               bid.MaxCost,
+			MinDeadline:           bid.MinDeadline,
+			MaxDeadline:           bid.MaxDeadline,
+			Description:           bid.Description,
+			InstallationTime:      bid.InstallationTime,
+			Status:                bid.Status,
 		}
 	}
 

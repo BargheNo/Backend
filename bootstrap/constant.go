@@ -11,7 +11,6 @@ type Constants struct {
 	SMSTemplates 	SMSTemplates
 	JWTKeysPath  	JWTKeysPath
 	Metrics      	Metrics
-	Status	  	 	Status
 	RequestType   	RequestType
 }
 
@@ -82,12 +81,6 @@ type Options struct {
 	Help string
 }
 
-type Status struct {
-	Approved   string
-	Pending  string
-	Rejected string
-}
-
 type RequestType struct {
 	Installation 	string
 	Maintenance   	string
@@ -154,11 +147,7 @@ func NewConstants() *Constants {
 			},
 
 		},
-		Status: Status{
-			Approved:   "approved",
-			Pending:    "pending",
-			Rejected:   "rejected",
-		},
+
 		RequestType: RequestType{
 			Installation: "installation_request",
 			Maintenance:   "maintenance_request",
