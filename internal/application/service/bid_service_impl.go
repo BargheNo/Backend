@@ -2,6 +2,7 @@ package serviceimpl
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enums"
@@ -10,41 +11,41 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
-type BidServiceImpl struct {
-	constants     *bootstrap.Constants
-	JWTService    service.JWTService
-	db            database.Database
-	BidRepository repository.BidRepository
+type BidService struct {
+	constants             *bootstrap.Constants
+	JWTService            service.JWTService
+	db                    database.Database
+	corporationRepository repository.CorporationRepository
 }
 
-func NewBidServiceImpl(
+func NewBidService(
 	constants *bootstrap.Constants,
 	jwtService service.JWTService,
 	db database.Database,
-	bidRepository repository.BidRepository,
-) *BidServiceImpl {
-	return &BidServiceImpl{
-		constants:     constants,
-		JWTService:    jwtService,
-		db:            db,
-		BidRepository: bidRepository,
+	corporationRepository repository.CorporationRepository,
+) *BidService {
+	return &BidService{
+		constants:             constants,
+		JWTService:            jwtService,
+		db:                    db,
+		corporationRepository: corporationRepository,
 	}
 }
 
-func (corporationService *CorporationService) GetInstallationRequests(corporationId uint, page int, pageSize int) []corporationdto.InstallationRequestResponse {
+func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int) []corporationdto.InstallationRequestResponse {
 	offset := (page - 1) * pageSize
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationId)
+	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, corporationId)
 	var conflictErrors exception.ConflictErrors
 	switch {
 	case !exist:
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	case corporation.Status != enums.Approved.String():
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
 
-	installationRequests, err := corporationService.CorporationRepository.GetOpenInstallationRequests(corporationService.db, corporationId, offset, pageSize)
+	installationRequests, err := bidService.corporationRepository.GetOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
 	if err != nil {
 		panic(err)
 	}
@@ -65,25 +66,25 @@ func (corporationService *CorporationService) GetInstallationRequests(corporatio
 	return installationRequestResponses
 }
 
-func (corporationService *CorporationService) SetBid(bidInfo corporationdto.SetBidRequest) {
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, bidInfo.CorporationID)
+func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
+	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, bidInfo.CorporationID)
 	var conflictErrors exception.ConflictErrors
 	switch {
 	case !exist:
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	case corporation.Status != enums.Approved.String():
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
 
-	installationRequest, exist := corporationService.CorporationRepository.FindInstallationRequestByID(corporationService.db, bidInfo.InstallationRequestID)
+	installationRequest, exist := bidService.corporationRepository.FindInstallationRequestByID(bidService.db, bidInfo.InstallationRequestID)
 	switch {
 	case !exist:
-		conflictErrors.Add(corporationService.constants.Field.InstallationRequest, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	case installationRequest.Status != enums.Open.String():
-		conflictErrors.Add(corporationService.constants.Field.InstallationRequest, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
 
@@ -99,69 +100,69 @@ func (corporationService *CorporationService) SetBid(bidInfo corporationdto.SetB
 		InstallationTime: bidInfo.InstallationTime,
 		Status:           enums.Pending.String(),
 	}
-	err := corporationService.CorporationRepository.CreateBid(corporationService.db, bid)
+	err := bidService.corporationRepository.CreateBid(bidService.db, bid)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (corporationService *CorporationService) CancelBid(bidInfo corporationdto.CancelBidRequest) {
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, bidInfo.CorporationID)
+func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest) {
+	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, bidInfo.CorporationID)
 	var conflictErrors exception.ConflictErrors
 	switch {
 	case !exist:
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	case corporation.Status != enums.Approved.String():
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
 
-	request, exist := corporationService.CorporationRepository.FindInstallationRequestByID(corporationService.db, bidInfo.InstallationRequestID)
+	request, exist := bidService.corporationRepository.FindInstallationRequestByID(bidService.db, bidInfo.InstallationRequestID)
 	switch {
 	case !exist:
-		conflictErrors.Add(corporationService.constants.Field.InstallationRequest, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	case request.Status != enums.Open.String():
-		conflictErrors.Add(corporationService.constants.Field.InstallationRequest, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
 
-	bid, exist := corporationService.CorporationRepository.FindBidByID(corporationService.db, bidInfo.BidID)
+	bid, exist := bidService.corporationRepository.FindBidByID(bidService.db, bidInfo.BidID)
 	switch {
 	case !exist:
-		conflictErrors.Add(corporationService.constants.Field.Bid, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	case bid.CorporationID != bidInfo.CorporationID:
-		conflictErrors.Add(corporationService.constants.Field.Bid, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	case bid.RequestType != enums.InstallationRequest.String():
-		conflictErrors.Add(corporationService.constants.Field.Bid, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	case bid.Status != enums.Pending.String():
-		conflictErrors.Add(corporationService.constants.Field.Bid, corporationService.constants.Tag.NotExist)
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
-	err := corporationService.CorporationRepository.DeleteBidByID(corporationService.db, bidInfo.BidID)
+	err := bidService.corporationRepository.DeleteBidByID(bidService.db, bidInfo.BidID)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (corporationService *CorporationService) GetBids(corporationID uint, page int, pageSize int) []corporationdto.BidsResponse {
+func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int) []corporationdto.BidsResponse {
 	offset := (page - 1) * pageSize
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, corporationID)
 	var conflictErrors exception.ConflictErrors
 	switch {
 	case !exist:
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	case corporation.Status != enums.Approved.String():
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
 
-	bids, err := corporationService.CorporationRepository.GetBids(corporationService.db, corporationID, offset, pageSize)
+	bids, err := bidService.corporationRepository.GetBids(bidService.db, corporationID, offset, pageSize)
 	if err != nil {
 		panic(err)
 	}

@@ -50,12 +50,14 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewJWTService,
 	serviceimpl.NewCorporationService,
 	cinimpl.NewCINService,
+	serviceimpl.NewBidService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
 	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
 	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
 	wire.Bind(new(service.CINService), new(*cinimpl.CINService)),
+	wire.Bind(new(service.BidService), new(*serviceimpl.BidService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
