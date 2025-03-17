@@ -16,6 +16,7 @@ type Constants struct {
 type Context struct {
 	Translator                   string
 	IsLoadedValidationTranslator string
+	UserID                       string
 }
 
 type LogLevel struct {
@@ -75,6 +76,7 @@ func NewConstants() *Constants {
 		Context: Context{
 			Translator:                   "translator",
 			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
+			UserID:                       "userID",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",
@@ -119,7 +121,6 @@ func NewConstants() *Constants {
 				Name: "http_request_duration_seconds",
 				Help: "HTTP request duration in seconds",
 			},
-
 		},
 	}
 }

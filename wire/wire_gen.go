@@ -57,6 +57,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	controllers := &Controllers{
 		General: generalControllers,
 	}
+	authMiddleware := middleware.NewAuthMiddleware(constants, jwtService, userRepository, postgresDatabase)
 	corsMiddleware := middleware.NewCorsMiddleware()
 	recoveryMiddleware := middleware.NewRecovery(constants)
 	translator := localizationimpl.NewTranslationService()
@@ -73,12 +74,13 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	prometheusMetrics := metricsimpl.NewPrometheusMetrics(metrics)
 	prometheusMiddleware := middleware.NewPrometheusMiddleware(prometheusMetrics)
 	middlewares := &Middlewares{
-		CORS:         corsMiddleware,
-		Recovery:     recoveryMiddleware,
-		Localization: localizationMiddleware,
-		RateLimit:    rateLimitMiddleware,
-		Logger:       loggerMiddleware,
-		Prometheus:   prometheusMiddleware,
+		Authentication: authMiddleware,
+		CORS:           corsMiddleware,
+		Recovery:       recoveryMiddleware,
+		Localization:   localizationMiddleware,
+		RateLimit:      rateLimitMiddleware,
+		Logger:         loggerMiddleware,
+		Prometheus:     prometheusMiddleware,
 	}
 	application := NewApplication(wireDatabase, controllers, middlewares)
 	return application, nil
@@ -100,8 +102,7 @@ var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
 var MetricsProviderSet = wire.NewSet(metricsimpl.NewPrometheusMetrics, wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)))
 
-var MiddlewareProviderSet = wire.NewSet(middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, wire.Struct(new(Middlewares), "*"))
-
+var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, wire.Struct(new(Middlewares), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -178,12 +179,13 @@ type Controllers struct {
 }
 
 type Middlewares struct {
-	CORS         *middleware.CORSMiddleware
-	Recovery     *middleware.RecoveryMiddleware
-	Localization *middleware.LocalizationMiddleware
-	RateLimit    *middleware.RateLimitMiddleware
-	Logger       *middleware.LoggerMiddleware
-	Prometheus   *middleware.PrometheusMiddleware
+	Authentication *middleware.AuthMiddleware
+	CORS           *middleware.CORSMiddleware
+	Recovery       *middleware.RecoveryMiddleware
+	Localization   *middleware.LocalizationMiddleware
+	RateLimit      *middleware.RateLimitMiddleware
+	Logger         *middleware.LoggerMiddleware
+	Prometheus     *middleware.PrometheusMiddleware
 }
 
 type Application struct {

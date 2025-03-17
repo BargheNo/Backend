@@ -99,7 +99,7 @@ func (userController *GeneralUserController) ForgotPassword(ctx *gin.Context) {
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (userController *GeneralUserController) VerifyOTP(ctx *gin.Context) {
+func (userController *GeneralUserController) ConfirmOTP(ctx *gin.Context) {
 	type verifyOTPParams struct {
 		Phone string `json:"phone" validate:"required,e164"`
 		OTP   string `json:"otp" validate:"required"`
@@ -117,10 +117,6 @@ func (userController *GeneralUserController) VerifyOTP(ctx *gin.Context) {
 }
 
 func (userController *GeneralUserController) ResetPassword(ctx *gin.Context) {
-	// some code here ...
-}
-
-func (userController *GeneralUserController) ConfirmOTP(ctx *gin.Context) {
 	// some code here ...
 }
 
