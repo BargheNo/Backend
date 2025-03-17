@@ -11,4 +11,5 @@ type InstallationRequest struct {
 	Deadline       	string
 	BuildingType   	string  
 	Status			string
+	Address        	string
 }

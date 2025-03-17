@@ -15,6 +15,7 @@ type InstallationRequestResponse struct {
 	MaxCost	   		float64   	`json:"maxCost"`
 	Deadline       	string 		`json:"deadline"`
 	BuildingType	string 		`json:"buildingType"`
+	Address			string 		`json:"address"`
 }
 
 type BidsResponse struct {

@@ -149,6 +149,7 @@ func (corporationService *CorporationService) GetInstallationRequests(id uint) [
 			MaxCost:        request.MaxCost,
 			Deadline:       request.Deadline,
 			BuildingType:   request.BuildingType,
+			Address:        request.Address,
 		}
 	}
 	return installationRequestResponses
