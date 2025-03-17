@@ -60,7 +60,7 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 			MaxCost:        request.MaxCost,
 			Deadline:       request.Deadline,
 			BuildingType:   request.BuildingType,
-			Address:        request.Address,
+			Address:        request.Address.String(),
 		}
 	}
 	return installationRequestResponses
@@ -89,7 +89,6 @@ func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
 	}
 
 	bid := &entity.Bid{
-		RequestType:      enums.InstallationRequest.String(),
 		RequestID:        bidInfo.InstallationRequestID,
 		CorporationID:    bidInfo.CorporationID,
 		MinCost:          bidInfo.MinCost,
@@ -134,9 +133,6 @@ func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest)
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	case bid.CorporationID != bidInfo.CorporationID:
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
-		panic(conflictErrors)
-	case bid.RequestType != enums.InstallationRequest.String():
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	case bid.Status != enums.Pending.String():
