@@ -32,8 +32,8 @@ func NewAuthMiddleware(
 	}
 }
 
-func (am *AuthMiddleware) AuthRequired(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
+func (am *AuthMiddleware) AuthRequired(ctx *gin.Context) {
+	authHeader := ctx.GetHeader("Authorization")
 	if authHeader == "" {
 		unauthorizedError := exception.NewUnauthorizedError("empty auth header", nil)
 		panic(unauthorizedError)
@@ -56,7 +56,7 @@ func (am *AuthMiddleware) AuthRequired(c *gin.Context) {
 		panic(err)
 	}
 
-	c.Set(am.constants.Context.UserID, uint(claims["sub"].(float64)))
+	ctx.Set(am.constants.Context.ID, uint(claims["sub"].(float64)))
 
-	c.Next()
+	ctx.Next()
 }

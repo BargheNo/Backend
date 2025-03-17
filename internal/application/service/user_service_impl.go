@@ -53,21 +53,23 @@ func (userService *UserService) validatePasswordTests(errors *[]string, test str
 	}
 }
 
-func (userService *UserService) passwordValidation(password string) []string {
-	var errors []string
+func (userService *UserService) passwordValidation(password string) error {
+	var errors exception.ValidationErrors
+	var errorTags []string
 
-	userService.validatePasswordTests(&errors, ".{8,}", password, userService.constants.Tag.MinimumLength)
-	userService.validatePasswordTests(&errors, "[a-z]", password, userService.constants.Tag.ContainsLowercase)
-	userService.validatePasswordTests(&errors, "[A-Z]", password, userService.constants.Tag.ContainsUppercase)
-	userService.validatePasswordTests(&errors, "[0-9]", password, userService.constants.Tag.ContainsNumber)
-	userService.validatePasswordTests(&errors, "[^\\d\\w]", password, userService.constants.Tag.ContainsSpecialChar)
+	userService.validatePasswordTests(&errorTags, ".{8,}", password, userService.constants.Tag.MinimumLength)
+	userService.validatePasswordTests(&errorTags, "[a-z]", password, userService.constants.Tag.ContainsLowercase)
+	userService.validatePasswordTests(&errorTags, "[A-Z]", password, userService.constants.Tag.ContainsUppercase)
+	userService.validatePasswordTests(&errorTags, "[0-9]", password, userService.constants.Tag.ContainsNumber)
+	userService.validatePasswordTests(&errorTags, "[^\\d\\w]", password, userService.constants.Tag.ContainsSpecialChar)
 
-	return errors
-}
-
-func hashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
+	for _, tag := range errorTags {
+		errors.Add(userService.constants.Field.Password, tag)
+	}
+	if len(errorTags) > 0 {
+		return errors
+	}
+	return nil
 }
 
 func (userService *UserService) validateRegisterInfo(phone, password string) error {
@@ -85,16 +87,7 @@ func (userService *UserService) validateRegisterInfo(phone, password string) err
 		return conflictErrors
 	}
 
-	var passwordErrors exception.ValidationErrors
-	passwordErrorTags := userService.passwordValidation(password)
-
-	for _, tag := range passwordErrorTags {
-		passwordErrors.Add(userService.constants.Field.Password, tag)
-	}
-	if len(passwordErrorTags) > 0 {
-		return passwordErrors
-	}
-	return nil
+	return userService.passwordValidation(password)
 }
 
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) {
@@ -102,7 +95,8 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 	if err != nil {
 		panic(err)
 	}
-	hashedPassword, err := hashPassword(registerInfo.Password)
+
+	hashesPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(registerInfo.Password), 14)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +110,7 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 		FirstName:     registerInfo.FirstName,
 		LastName:      registerInfo.LastName,
 		Phone:         registerInfo.Phone,
-		Password:      hashedPassword,
+		Password:      string(hashesPasswordBytes),
 		PhoneVerified: false,
 		EmailVerified: false,
 	}
@@ -213,7 +207,7 @@ func (userService *UserService) Login(loginInfo userdto.LoginRequest) userdto.Us
 	}
 }
 
-func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.ForgotPassword) {
+func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.ForgotPasswordRequest) {
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, forgotPasswordInfo.Phone)
 	if !userExist || !user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
@@ -258,5 +252,29 @@ func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest)
 		FirstName:    user.FirstName,
 		LastName:     user.LastName,
 		Permissions:  permissions,
+	}
+}
+
+func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswordRequest) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, resetPassInfo.ID)
+	if !userExist {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+
+	if err := userService.passwordValidation(resetPassInfo.Password); err != nil {
+		panic(err)
+	}
+
+	hashesPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(resetPassInfo.Password), 14)
+	if err != nil {
+		panic(err)
+	}
+
+	user.Password = string(hashesPasswordBytes)
+	err = userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
 	}
 }

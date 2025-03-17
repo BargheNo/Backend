@@ -54,8 +54,13 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	generalControllers := &GeneralControllers{
 		UserController: generalUserController,
 	}
+	customerUserController := user.NewCustomerUserController(constants, userService)
+	customerControllers := &CustomerControllers{
+		UserController: customerUserController,
+	}
 	controllers := &Controllers{
-		General: generalControllers,
+		General:  generalControllers,
+		Customer: customerControllers,
 	}
 	authMiddleware := middleware.NewAuthMiddleware(constants, jwtService, userRepository, postgresDatabase)
 	corsMiddleware := middleware.NewCorsMiddleware()
@@ -97,6 +102,8 @@ var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.New
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wire.Struct(new(GeneralControllers), "*"))
+
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, wire.Struct(new(CustomerControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -150,6 +157,7 @@ var ProviderSet = wire.NewSet(
 	ServiceProviderSet,
 	AdapterProviderSet,
 	GeneralControllerProviderSet,
+	CustomerControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	MetricsProviderSet,
@@ -174,8 +182,13 @@ type GeneralControllers struct {
 	UserController *user.GeneralUserController
 }
 
+type CustomerControllers struct {
+	UserController *user.CustomerUserController
+}
+
 type Controllers struct {
-	General *GeneralControllers
+	General  *GeneralControllers
+	Customer *CustomerControllers
 }
 
 type Middlewares struct {

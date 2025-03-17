@@ -33,5 +33,6 @@ var English = map[string]interface{}{
 		"phoneVerification": "Your phone has been successfully verified.",
 		"login":             "Logged in successfully.",
 		"forgotPassword":    "Please check your messages to verify your phone number.",
+		"resetPassword":     "Password reset successfully.",
 	},
 }

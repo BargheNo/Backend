@@ -17,6 +17,11 @@ type LoginRequest struct {
 	Password string
 }
 
-type ForgotPassword struct {
+type ForgotPasswordRequest struct {
 	Phone string
+}
+
+type ResetPasswordRequest struct {
+	ID       uint
+	Password string
 }

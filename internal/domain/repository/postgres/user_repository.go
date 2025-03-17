@@ -6,6 +6,7 @@ import (
 )
 
 type UserRepository interface {
+	FindUserByID(db database.Database, id uint) (*entity.User, bool)
 	FindUserByPhone(db database.Database, phone string) (*entity.User, bool)
 	CreateUser(db database.Database, user *entity.User) error
 	DeleteUserByPhone(db database.Database, phone string) error

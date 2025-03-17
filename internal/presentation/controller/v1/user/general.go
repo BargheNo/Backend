@@ -89,7 +89,7 @@ func (userController *GeneralUserController) ForgotPassword(ctx *gin.Context) {
 		Phone string `json:"phone" validate:"required,e164"`
 	}
 	params := controller.Validated[forgotPasswordParams](ctx, &userController.constants.Context)
-	forgotPasswordInfo := userdto.ForgotPassword{
+	forgotPasswordInfo := userdto.ForgotPasswordRequest{
 		Phone: params.Phone,
 	}
 	userController.userService.ForgotPassword(forgotPasswordInfo)
@@ -114,10 +114,6 @@ func (userController *GeneralUserController) ConfirmOTP(ctx *gin.Context) {
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.phoneVerification")
 	controller.Response(ctx, 200, message, userInfo)
-}
-
-func (userController *GeneralUserController) ResetPassword(ctx *gin.Context) {
-	// some code here ...
 }
 
 func (userController *GeneralUserController) RefreshToken(ctx *gin.Context) {

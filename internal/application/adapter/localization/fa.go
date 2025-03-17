@@ -34,5 +34,6 @@ var Persian = map[string]interface{}{
 		"phoneVerification": "شماره شما با موفقیت تایید شد.",
 		"login":             "شما با موفقیت وارد شدید.",
 		"forgotPassword":    "لطفا پیامک های خود را بررسی کنید تا تلفن خود را تایید نمایید .",
+		"resetPassword":     "گذرواژه با موفقیت تغییر کرد.",
 	},
 }

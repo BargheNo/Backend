@@ -62,6 +62,11 @@ var GeneralControllerProviderSet = wire.NewSet(
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
+var CustomerControllerProviderSet = wire.NewSet(
+	user.NewCustomerUserController,
+	wire.Struct(new(CustomerControllers), "*"),
+)
+
 var ControllersProviderSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
 )
@@ -128,6 +133,7 @@ var ProviderSet = wire.NewSet(
 	ServiceProviderSet,
 	AdapterProviderSet,
 	GeneralControllerProviderSet,
+	CustomerControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	MetricsProviderSet,
@@ -152,8 +158,13 @@ type GeneralControllers struct {
 	UserController *user.GeneralUserController
 }
 
+type CustomerControllers struct {
+	UserController *user.CustomerUserController
+}
+
 type Controllers struct {
-	General *GeneralControllers
+	General  *GeneralControllers
+	Customer *CustomerControllers
 }
 
 type Middlewares struct {

@@ -12,6 +12,18 @@ func NewUserRepository() *UserRepository {
 	return &UserRepository{}
 }
 
+func (repo *UserRepository) FindUserByID(db database.Database, id uint) (*entity.User, bool) {
+	var user entity.User
+	result := db.GetDB().First(&user, id)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &user, true
+}
+
 func (repo *UserRepository) FindUserByPhone(db database.Database, phone string) (*entity.User, bool) {
 	var user entity.User
 	result := db.GetDB().Where("phone = ?", phone).First(&user)
