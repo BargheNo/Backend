@@ -7,4 +7,5 @@ type UserService interface {
 	VerifyPhone(verifyInfo userdto.VerifyPhoneRequest)
 	Login(loginInfo userdto.LoginRequest) userdto.UserInfoResponse
 	ForgotPassword(forgotPasswordInfo userdto.ForgotPassword)
+	VerifyOTP(verifyInfo userdto.VerifyPhoneRequest) userdto.UserInfoResponse
 }

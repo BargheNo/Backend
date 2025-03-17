@@ -14,6 +14,7 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		auth.POST("/verify/email", app.Controllers.General.UserController.VerifyEmail)
 		auth.POST("/login", app.Controllers.General.UserController.Login)
 		auth.POST("/forgot-password", app.Controllers.General.UserController.ForgotPassword)
+		auth.POST("/verify/otp", app.Controllers.General.UserController.VerifyOTP)
 		auth.POST("/reset-password", app.Controllers.General.UserController.ResetPassword)
 		auth.POST("/confirm-otp", app.Controllers.General.UserController.ConfirmOTP)
 		auth.POST("/refresh", app.Controllers.General.UserController.RefreshToken)
