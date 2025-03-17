@@ -55,8 +55,7 @@ type ErrorTag struct {
 	ExpiredAuthToken       string
 	InvalidAuthToken       string
 	Unauthorized           string
-	NotActive              string
-	Pending                string
+	AwaitingApproval       string
 	Rejected               string
 	NotExist               string
 }
@@ -118,9 +117,8 @@ func NewConstants() *Constants {
 			ExpiredAuthToken:       "expiredAuthToken",
 			InvalidAuthToken:       "invalidAuthToken",
 			Unauthorized:           "unauthorized",
-			Pending:                "pending",
+			AwaitingApproval:       "awaitingApproval",
 			Rejected:               "rejected",
-			NotActive:              "notActive",
 			NotExist:               "notExist",
 		},
 		SMSTemplates: SMSTemplates{
