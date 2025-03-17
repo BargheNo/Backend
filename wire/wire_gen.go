@@ -101,13 +101,11 @@ var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, cacher
 
 var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, serviceimpl.NewCorporationService, cinimpl.NewCINService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)), wire.Bind(new(service.CINService), new(*cinimpl.CINService)))
 
-var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
+var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
-
-var MetricsProviderSet = wire.NewSet(metricsimpl.NewPrometheusMetrics, wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)))
 
 var MiddlewareProviderSet = wire.NewSet(middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, middleware.NewAuthMiddleware, wire.Struct(new(Middlewares), "*"))
 
@@ -159,7 +157,6 @@ var ProviderSet = wire.NewSet(
 	GeneralControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
-	MetricsProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,

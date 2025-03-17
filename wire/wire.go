@@ -62,7 +62,9 @@ var AdapterProviderSet = wire.NewSet(
 	localizationimpl.NewTranslationService,
 	loggerimpl.NewLogger,
 	jwtimpl.NewJWTKeyManager,
+	metricsimpl.NewPrometheusMetrics,
 	wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)),
+	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
 )
 
 var GeneralControllerProviderSet = wire.NewSet(
@@ -73,11 +75,6 @@ var GeneralControllerProviderSet = wire.NewSet(
 
 var ControllersProviderSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
-)
-
-var MetricsProviderSet = wire.NewSet(
-	metricsimpl.NewPrometheusMetrics,
-	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
 )
 
 var MiddlewareProviderSet = wire.NewSet(
@@ -139,7 +136,6 @@ var ProviderSet = wire.NewSet(
 	GeneralControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
-	MetricsProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -158,7 +154,7 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController *user.GeneralUserController
+	UserController        *user.GeneralUserController
 	CorporationController *corporation.GeneralCorporationController
 }
 
