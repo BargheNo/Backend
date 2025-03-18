@@ -48,12 +48,25 @@ func (repo *CorporationRepository) UpdateCorporation(db database.Database, corpo
 	return db.GetDB().Save(&corporation).Error
 }
 
-func (repo *CorporationRepository) GetOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int) ([]*entity.InstallationRequest, error) {
+func (repo *CorporationRepository) GetOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int, sortBy string, dir string) ([]*entity.InstallationRequest, error) {
+	var requests []*entity.InstallationRequest
+	query := db.GetDB().
+		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ?) AND status = 'open'", corporationID)
+	query = query.Order(sortBy + " " + dir)
+	result := query.Offset(offset).Limit(pageSize).Find(&requests)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return requests, nil
+}
+
+func (repo *CorporationRepository) GetRandomOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int) ([]*entity.InstallationRequest, error) {
 	var requests []*entity.InstallationRequest
 	result := db.GetDB().
 		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ?) AND status = 'open'", corporationID).
 		Offset(offset).
 		Limit(pageSize).
+		Order("RANDOM()").
 		Find(&requests)
 
 	if result.Error != nil {
@@ -106,9 +119,13 @@ func (repo *CorporationRepository) DeleteBidByID(db database.Database, id uint) 
 	return db.GetDB().Where("request_id = ?", id).Delete(&entity.Bid{}).Error
 }
 
-func (repo *CorporationRepository) GetBids(db database.Database, corporationID uint, offset int, pageSize int) ([]*entity.Bid, error) {
+func (repo *CorporationRepository) GetBids(db database.Database, corporationID uint, offset int, pageSize int, sortBy string, dir string) ([]*entity.Bid, error) {
 	var bids []*entity.Bid
-	result := db.GetDB().Where("corporation_id = ?", corporationID).Offset(offset).Limit(pageSize).Find(&bids)
+	query := db.GetDB().
+		Where("corporation_id = ?", corporationID).
+		Order(sortBy + " " + dir)
+	
+	result := query.Offset(offset).Limit(pageSize).Find(&bids)
 	if result.Error != nil {
 		return nil, result.Error
 	}

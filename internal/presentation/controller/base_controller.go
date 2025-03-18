@@ -31,3 +31,12 @@ func GetPagination(c *gin.Context, context *bootstrap.Context) PaginationParams 
 	}
 	return param
 }
+
+type SortParams struct {
+	SortBy    string `form:"sortBy"`
+	Ascending bool  `form:"ascending"`
+}
+func GetSort(c *gin.Context, context *bootstrap.Context) SortParams {
+	param := Validated[SortParams](c, context)
+	return param
+}

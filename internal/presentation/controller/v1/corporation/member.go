@@ -130,8 +130,9 @@ func (corporationController *MemberCorporationController) DeleteAddress(ctx *gin
 
 func (corporationController *MemberCorporationController) GetInstallationRequests(ctx *gin.Context) {
 	pagination := controller.GetPagination(ctx, &corporationController.constants.Context)
+	sortparams := controller.GetSort(ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	installation_requests := corporationController.BidService.GetInstallationRequests(corporationID.(uint), pagination.Page, pagination.PageSize)
+	installation_requests := corporationController.BidService.GetInstallationRequests(corporationID.(uint), pagination.Page, pagination.PageSize, sortparams.SortBy, sortparams.Ascending)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.GetInstallationRequests")
@@ -190,8 +191,9 @@ func (corporationController *MemberCorporationController) CancelBid(ctx *gin.Con
 
 func (corporationController *MemberCorporationController) GetBids(ctx *gin.Context) {
 	pagination := controller.GetPagination(ctx, &corporationController.constants.Context)
+	sortparams := controller.GetSort(ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	bids := corporationController.BidService.GetBids(corporationID.(uint), pagination.Page, pagination.PageSize)
+	bids := corporationController.BidService.GetBids(corporationID.(uint), pagination.Page, pagination.PageSize, sortparams.SortBy, sortparams.Ascending)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.GetBids")

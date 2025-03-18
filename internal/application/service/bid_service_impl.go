@@ -32,10 +32,16 @@ func NewBidService(
 	}
 }
 
-func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int) []corporationdto.InstallationRequestResponse {
+func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, ascending bool) []corporationdto.InstallationRequestResponse {
 	offset := (page - 1) * pageSize
+	dir := "asc"
+	if !ascending {
+		dir = "desc"
+	}
 	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, corporationId)
 	var conflictErrors exception.ConflictErrors
+	var installationRequests []*entity.InstallationRequest
+	var err error
 	switch {
 	case !exist:
 		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
@@ -45,7 +51,12 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 		panic(conflictErrors)
 	}
 
-	installationRequests, err := bidService.corporationRepository.GetOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
+	if sortBy != "" {
+		installationRequests, err = bidService.corporationRepository.GetOpenInstallationRequests(bidService.db, corporationId, offset, pageSize, sortBy, dir)
+	} else {
+		installationRequests, err = bidService.corporationRepository.GetRandomOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
+	}
+	
 	if err != nil {
 		panic(err)
 	}
@@ -145,8 +156,12 @@ func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest)
 	}
 }
 
-func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int) []corporationdto.BidsResponse {
+func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int, sortBy string, ascending bool) []corporationdto.BidsResponse {
 	offset := (page - 1) * pageSize
+	dir := "asc"
+	if !ascending {
+		dir = "desc"
+	}
 	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, corporationID)
 	var conflictErrors exception.ConflictErrors
 	switch {
@@ -157,8 +172,12 @@ func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int
 		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
-
-	bids, err := bidService.corporationRepository.GetBids(bidService.db, corporationID, offset, pageSize)
+	if sortBy == "" {
+		sortBy = "id"
+	}
+	
+	bids, err := bidService.corporationRepository.GetBids(bidService.db, corporationID, offset, pageSize, sortBy, dir)
+	
 	if err != nil {
 		panic(err)
 	}
