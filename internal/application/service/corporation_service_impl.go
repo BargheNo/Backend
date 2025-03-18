@@ -11,7 +11,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	"golang.org/x/crypto/bcrypt"
+	// "golang.org/x/crypto/bcrypt"
 )
 
 type CorporationService struct {
@@ -97,9 +97,9 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 }
 
 func (corporationService *CorporationService) Login(loginInfo corporationdto.LoginRequest) corporationdto.CorporationInfoResponse {
-	corporation, corporationExist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, loginInfo.CIN)
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, loginInfo.CIN)
 	var conflictErrors exception.ConflictErrors
-	if !corporationExist {
+	if !exist {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -108,11 +108,11 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 		panic(conflictErrors)
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(corporation.Password), []byte(loginInfo.Password))
-	if err != nil {
-		authError := exception.NewInvalidCredentialsError("cin and password not match", nil)
-		panic(authError)
-	}
+	// err := bcrypt.CompareHashAndPassword([]byte(corporation.Password), []byte(loginInfo.Password))
+	// if err != nil {
+	// 	authError := exception.NewInvalidCredentialsError("cin and password not match", nil)
+	// 	panic(authError)
+	// }
 
 	accessToken, refreshToken := corporationService.JWTService.GenerateToken(corporation.ID)
 	return corporationdto.CorporationInfoResponse{
@@ -122,3 +122,33 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 	}
 }
 
+func (corporationService *CorporationService) AddContactInfo(corporationID uint, contactInfo corporationdto.ContactInfoRequest) {
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	var conflictErrors exception.ConflictErrors
+	if !exist {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+
+	if corporation.Status != enums.Approved.String() {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+
+	corporation.ContactInformation = entity.ContactInformation{
+		Phone:     contactInfo.Phone,
+		Email:     contactInfo.Email,
+		Eitaa:     contactInfo.Eitaa,
+		Bale:      contactInfo.Bale,
+		Website:   contactInfo.Website,
+		WhatsApp:  contactInfo.WhatsApp,
+		Instagram: contactInfo.Instagram,
+		Telegram:  contactInfo.Telegram,
+		Linkedin:  contactInfo.Linkedin,
+	}
+
+	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
+}

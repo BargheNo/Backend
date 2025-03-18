@@ -10,17 +10,51 @@ import (
 
 type MemberCorporationController struct {
 	constants  *bootstrap.Constants
+	corporationService service.CorporationService
 	BidService service.BidService
 }
 
 func NewMemberCorporationController(
 	constants *bootstrap.Constants,
+	corporationService service.CorporationService,
 	BidService service.BidService,
 ) *MemberCorporationController {
 	return &MemberCorporationController{
 		constants:  constants,
+		corporationService: corporationService,
 		BidService: BidService,
 	}
+}
+
+func (corporationController *MemberCorporationController) AddContactInfo(ctx *gin.Context) {
+	type addContactInfoParams struct {
+		Phone string `json:"phone"`
+		Email       string `json:"email"`
+		Eitaa       string `json:"eitaa"`
+		Bale        string `json:"bale"`
+		Website     string `json:"website"`
+		WhatsApp    string `json:"whatsApp"`
+		Instagram   string `json:"instagram"`
+		Telegram    string `json:"telegram"`
+		Linkedin    string `json:"linkedin"`
+	}
+
+	params := controller.Validated[addContactInfoParams](ctx, &corporationController.constants.Context)
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	contactInfo := corporationdto.ContactInfoRequest{
+		Phone: params.Phone,
+		Email:       params.Email,
+		Eitaa:       params.Eitaa,
+		Bale:        params.Bale,
+		Website:     params.Website,
+		WhatsApp:    params.WhatsApp,
+		Instagram:   params.Instagram,
+		Telegram:    params.Telegram,
+		Linkedin:    params.Linkedin,
+	}
+
+	corporationController.corporationService.AddContactInfo(corporationID.(uint), contactInfo)
+
 }
 
 func (corporationController *MemberCorporationController) GetInstallationRequests(ctx *gin.Context) {

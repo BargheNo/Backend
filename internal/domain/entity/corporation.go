@@ -10,7 +10,7 @@ type Corporation struct {
 	CIN                  string
 	Status               string
 	Password             string
-	ContactInformationID uint
-	Address              []Address          `gorm:"polymorphic:Owner;"`
-	ContactInformation   ContactInformation `gorm:"foreignKey:ContactInformationID"`
+	ContactInformation   ContactInformation
+	Addresses            []Address `gorm:"polymorphic:Owner;"`
+	Bids                 []Bid
 }

@@ -27,3 +27,15 @@ type CancelBidRequest struct {
 	InstallationRequestID uint
 	CorporationID         uint
 }
+
+type ContactInfoRequest struct {
+	Phone     string
+	Email     string
+	Eitaa     string
+	Bale      string
+	Website   string
+	WhatsApp  string
+	Instagram string
+	Linkedin  string
+	Telegram  string
+}
