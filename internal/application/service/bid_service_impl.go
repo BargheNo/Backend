@@ -30,6 +30,8 @@ func NewBidService(
 		constants:             constants,
 		JWTService:            jwtService,
 		db:                    db,
+		bidRepository:         bidRepository,
+		corporationService:    corporationService,
 	}
 }
 

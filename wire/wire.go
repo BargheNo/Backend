@@ -38,9 +38,11 @@ var RepositoryProviderSet = wire.NewSet(
 	repositoryimpl.NewUserRepository,
 	cacherepositoryimpl.NewUserCacheRepository,
 	repositoryimpl.NewCorporationRepository,
+	repositoryimpl.NewBidRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
 	wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)),
+	wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
