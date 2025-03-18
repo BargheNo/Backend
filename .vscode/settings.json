@@ -3,6 +3,7 @@
         "buildFlags": ["-tags=wireinject"]
     },
     "cSpell.words": [
+      "addressdto",
       "Barghe",
       "bargheno",
       "cacherepository",
@@ -15,6 +16,7 @@
       "gorm",
       "httpv",
       "Inno",
+      "installationdto",
       "joho",
       "jwtimpl",
       "kavenegar",

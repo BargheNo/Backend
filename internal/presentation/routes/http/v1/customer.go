@@ -13,8 +13,14 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		// auth.POST("/register/complete", app.Controllers.General.UserController.CompleteRegister)
 	}
 
-	// orders := routerGroup.Group("/order")
-	// {
-	// 	orders.POST("/request", app.Controllers.Customer.UserController.)
-	// }
+	orders := routerGroup.Group("/installation")
+	{
+		orders.POST("/request", app.Controllers.Customer.InstallationController.PanelInstallationRequest)
+	}
+
+	addresses := routerGroup.Group("/address")
+	{
+		addresses.POST("/user", app.Controllers.Customer.AddressController.CreateAddress)
+		addresses.GET("/user", app.Controllers.Customer.AddressController.GetCustomerAddresses)
+	}
 }
