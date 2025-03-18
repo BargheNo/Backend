@@ -15,22 +15,25 @@ type BidService struct {
 	constants             *bootstrap.Constants
 	JWTService            service.JWTService
 	db                    database.Database
-	corporationRepository repository.CorporationRepository
+	bidRepository		  repository.BidRepository
+	corporationService   service.CorporationService
 }
 
 func NewBidService(
 	constants *bootstrap.Constants,
 	jwtService service.JWTService,
 	db database.Database,
-	corporationRepository repository.CorporationRepository,
+	bidRepository repository.BidRepository,
+	corporationService service.CorporationService,
 ) *BidService {
 	return &BidService{
 		constants:             constants,
 		JWTService:            jwtService,
 		db:                    db,
-		corporationRepository: corporationRepository,
 	}
 }
+
+
 
 func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, ascending bool) []corporationdto.InstallationRequestResponse {
 	offset := (page - 1) * pageSize
@@ -38,23 +41,20 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 	if !ascending {
 		dir = "desc"
 	}
-	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, corporationId)
-	var conflictErrors exception.ConflictErrors
-	var installationRequests []*entity.InstallationRequest
-	var err error
-	switch {
-	case !exist:
-		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
-	case corporation.Status != enums.Approved.String():
+	_, exist := bidService.corporationService.GetCorporationByID(corporationId)
+	if !exist {
+		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
+	var installationRequests []*entity.InstallationRequest
+	var err error
+	
 
 	if sortBy != "" {
-		installationRequests, err = bidService.corporationRepository.GetOpenInstallationRequests(bidService.db, corporationId, offset, pageSize, sortBy, dir)
+		installationRequests, err = bidService.bidRepository.GetOpenInstallationRequests(bidService.db, corporationId, offset, pageSize, sortBy, dir)
 	} else {
-		installationRequests, err = bidService.corporationRepository.GetRandomOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
+		installationRequests, err = bidService.bidRepository.GetRandomOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
 	}
 	
 	if err != nil {
@@ -78,18 +78,13 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 }
 
 func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
-	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, bidInfo.CorporationID)
+	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
 	var conflictErrors exception.ConflictErrors
-	switch {
-	case !exist:
-		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
-	case corporation.Status != enums.Approved.String():
+	if !exist {
 		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
-
-	installationRequest, exist := bidService.corporationRepository.FindInstallationRequestByID(bidService.db, bidInfo.InstallationRequestID)
+	installationRequest, exist := bidService.bidRepository.FindInstallationRequestByID(bidService.db, bidInfo.InstallationRequestID)
 	switch {
 	case !exist:
 		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
@@ -110,25 +105,21 @@ func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
 		InstallationTime: bidInfo.InstallationTime,
 		Status:           enums.Pending.String(),
 	}
-	err := bidService.corporationRepository.CreateBid(bidService.db, bid)
+	err := bidService.bidRepository.CreateBid(bidService.db, bid)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest) {
-	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, bidInfo.CorporationID)
+	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
 	var conflictErrors exception.ConflictErrors
-	switch {
-	case !exist:
-		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
-	case corporation.Status != enums.Approved.String():
+	if !exist {
 		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
 
-	request, exist := bidService.corporationRepository.FindInstallationRequestByID(bidService.db, bidInfo.InstallationRequestID)
+	request, exist := bidService.bidRepository.FindInstallationRequestByID(bidService.db, bidInfo.InstallationRequestID)
 	switch {
 	case !exist:
 		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
@@ -138,7 +129,7 @@ func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest)
 		panic(conflictErrors)
 	}
 
-	bid, exist := bidService.corporationRepository.FindBidByID(bidService.db, bidInfo.BidID)
+	bid, exist := bidService.bidRepository.FindBidByID(bidService.db, bidInfo.BidID)
 	switch {
 	case !exist:
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
@@ -150,7 +141,7 @@ func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest)
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
-	err := bidService.corporationRepository.DeleteBidByID(bidService.db, bidInfo.BidID)
+	err := bidService.bidRepository.DeleteBidByID(bidService.db, bidInfo.BidID)
 	if err != nil {
 		panic(err)
 	}
@@ -162,13 +153,9 @@ func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int
 	if !ascending {
 		dir = "desc"
 	}
-	corporation, exist := bidService.corporationRepository.FindCorporationByID(bidService.db, corporationID)
+	_, exist := bidService.corporationService.GetCorporationByID(corporationID)
 	var conflictErrors exception.ConflictErrors
-	switch {
-	case !exist:
-		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
-	case corporation.Status != enums.Approved.String():
+	if !exist {
 		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -176,7 +163,7 @@ func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int
 		sortBy = "id"
 	}
 	
-	bids, err := bidService.corporationRepository.GetBids(bidService.db, corporationID, offset, pageSize, sortBy, dir)
+	bids, err := bidService.bidRepository.GetBids(bidService.db, corporationID, offset, pageSize, sortBy, dir)
 	
 	if err != nil {
 		panic(err)

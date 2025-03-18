@@ -9,4 +9,5 @@ type CorporationService interface {
 	AddAddress(corporationID uint, address corporationdto.AddressRequest)
 	EditAddress(corporationID uint, addressID uint, address corporationdto.AddressRequest)
 	DeleteAddress(corporationID uint, addressID uint)
+	GetCorporationByID(corporationID uint) (*corporationdto.CorporationInfoResponse, bool)
 }

@@ -38,6 +38,18 @@ func NewCorporationService(
 	}
 }
 
+func (corporationService *CorporationService) GetCorporationByID(corporationID uint) (*entity.Corporation, bool) {
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	if !exist {
+		return nil, false
+	}
+	if corporation.Status != enums.Approved.String() {
+		return nil, false
+	}
+	return corporation, true
+}
+
+
 func (corporationService *CorporationService) validatePasswordTests(errors *[]string, test string, password string, tag string) {
 	matched, _ := regexp.MatchString(test, password)
 	if !matched {
@@ -123,13 +135,9 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 }
 
 func (corporationService *CorporationService) UpdateContactInfo(corporationID uint, contactInfo corporationdto.ContactInfoRequest) {
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
-	var conflictErrors exception.ConflictErrors
+	corporation, exist := corporationService.GetCorporationByID(corporationID)
 	if !exist {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
-	}
-	if corporation.Status != enums.Approved.String() {
+		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -153,13 +161,9 @@ func (corporationService *CorporationService) UpdateContactInfo(corporationID ui
 }
 
 func (corporationService *CorporationService) AddAddress(corporationID uint, address corporationdto.AddressRequest) {
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	corporation, exist := corporationService.GetCorporationByID(corporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
-	}
-	if corporation.Status != enums.Approved.String() {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -182,13 +186,9 @@ func (corporationService *CorporationService) AddAddress(corporationID uint, add
 }
 
 func (corporationService *CorporationService) EditAddress(corporationID uint, addressID uint, address corporationdto.AddressRequest) {
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	corporation, exist := corporationService.GetCorporationByID(corporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
-	}
-	if corporation.Status != enums.Approved.String() {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
@@ -216,16 +216,13 @@ func (corporationService *CorporationService) EditAddress(corporationID uint, ad
 }
 
 func (corporationService *CorporationService) DeleteAddress(corporationID uint, addressID uint) {
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	corporation, exist := corporationService.GetCorporationByID(corporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
-	if corporation.Status != enums.Approved.String() {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
-	}
+	
 	for i, addr := range corporation.Addresses {
 		if addr.ID == addressID {
 			corporation.Addresses = append(corporation.Addresses[:i], corporation.Addresses[i+1:]...)
