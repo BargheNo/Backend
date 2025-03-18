@@ -26,7 +26,7 @@ func NewMemberCorporationController(
 	}
 }
 
-func (corporationController *MemberCorporationController) AddContactInfo(ctx *gin.Context) {
+func (corporationController *MemberCorporationController) UpdateContactInfo(ctx *gin.Context) {
 	type addContactInfoParams struct {
 		Phone string `json:"phone"`
 		Email       string `json:"email"`
@@ -53,7 +53,11 @@ func (corporationController *MemberCorporationController) AddContactInfo(ctx *gi
 		Linkedin:    params.Linkedin,
 	}
 
-	corporationController.corporationService.AddContactInfo(corporationID.(uint), contactInfo)
+	corporationController.corporationService.UpdateContactInfo(corporationID.(uint), contactInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.UpdateContactInfo")
+	controller.Response(ctx, 200, message, nil)
 
 }
 

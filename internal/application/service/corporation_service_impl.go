@@ -122,14 +122,13 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 	}
 }
 
-func (corporationService *CorporationService) AddContactInfo(corporationID uint, contactInfo corporationdto.ContactInfoRequest) {
+func (corporationService *CorporationService) UpdateContactInfo(corporationID uint, contactInfo corporationdto.ContactInfoRequest) {
 	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
-
 	if corporation.Status != enums.Approved.String() {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
