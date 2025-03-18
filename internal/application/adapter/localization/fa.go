@@ -45,6 +45,9 @@ var Persian = map[string]interface{}{
 		"setBid":                  "پیشنهاد شما با موفقیت ثبت شد.",
 		"cancelBid":               "پیشنهاد شما با موفقیت لغو شد.",
 		"getBids":                 "پیشنهادات با موفقیت دریافت شد.",
-		"updateContactInfo":        "اطلاعات تماس با موفقیت به روز شد.",
+		"updateContactInfo":       "اطلاعات تماس با موفقیت به روز شد.",
+		"addAddress":              "آدرس با موفقیت اضافه شد.",
+		"editAddress":             "آدرس با موفقیت ویرایش شد.",
+		"deleteAddress":           "آدرس با موفقیت حذف شد.",
 	},
 }

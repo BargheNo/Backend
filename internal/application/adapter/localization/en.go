@@ -45,6 +45,9 @@ var English = map[string]interface{}{
 		"setBid":                  "Your bid has been successfully registered.",
 		"cancelBid":               "Your bid has been successfully canceled.",
 		"getBids":                 "Bids fetched successfully.",
-		"updateContactInfo":        "Contact information updated successfully.",
+		"updateContactInfo":       "Contact information updated successfully.",
+		"addAddress":              "Address added successfully.",
+		"editAddress":             "Address edited successfully.",
+		"deleteAddress":           "Address deleted successfully.",
 	},
 }

@@ -134,7 +134,7 @@ func (corporationService *CorporationService) UpdateContactInfo(corporationID ui
 		panic(conflictErrors)
 	}
 
-	corporation.ContactInformation = entity.ContactInformation{
+	newContactInformation := &entity.ContactInformation{
 		Phone:     contactInfo.Phone,
 		Email:     contactInfo.Email,
 		Eitaa:     contactInfo.Eitaa,
@@ -145,7 +145,93 @@ func (corporationService *CorporationService) UpdateContactInfo(corporationID ui
 		Telegram:  contactInfo.Telegram,
 		Linkedin:  contactInfo.Linkedin,
 	}
+	corporation.ContactInformation = *newContactInformation
+	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
+}
 
+func (corporationService *CorporationService) AddAddress(corporationID uint, address corporationdto.AddressRequest) {
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	var conflictErrors exception.ConflictErrors
+	if !exist {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+	if corporation.Status != enums.Approved.String() {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+
+	newAddress := &entity.Address{
+		Province:       address.Province,
+		City:           address.City,
+		StreetAddress:  address.StreetAddress,
+		PostalCode:     address.PostalCode,
+		BuildingNumber: address.BuildingNumber,
+		Unit:          address.Unit,
+	}
+
+	corporation.Addresses = append(corporation.Addresses, *newAddress)
+
+	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (corporationService *CorporationService) EditAddress(corporationID uint, addressID uint, address corporationdto.AddressRequest) {
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	var conflictErrors exception.ConflictErrors
+	if !exist {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+	if corporation.Status != enums.Approved.String() {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+
+	newAddress := &entity.Address{
+		Province:       address.Province,
+		City:           address.City,
+		StreetAddress:  address.StreetAddress,
+		PostalCode:     address.PostalCode,
+		BuildingNumber: address.BuildingNumber,
+		Unit:          address.Unit,
+	}
+
+	for i, addr := range corporation.Addresses {
+		if addr.ID == addressID {
+			corporation.Addresses[i] = *newAddress
+			break
+		}
+	}
+
+	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (corporationService *CorporationService) DeleteAddress(corporationID uint, addressID uint) {
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	var conflictErrors exception.ConflictErrors
+	if !exist {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+	if corporation.Status != enums.Approved.String() {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
+		panic(conflictErrors)
+	}
+	for i, addr := range corporation.Addresses {
+		if addr.ID == addressID {
+			corporation.Addresses = append(corporation.Addresses[:i], corporation.Addresses[i+1:]...)
+			break
+		}
+	}
 	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
 	if err != nil {
 		panic(err)

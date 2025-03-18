@@ -62,7 +62,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		CorporationController: generalCorporationController,
 	}
 	bidService := serviceimpl.NewBidService(constants, jwtService, postgresDatabase, corporationRepository)
-	memberCorporationController := corporation.NewMemberCorporationController(constants, bidService)
+	memberCorporationController := corporation.NewMemberCorporationController(constants, corporationService, bidService)
 	memberControllers := &MemberControllers{
 		CorporationController: memberCorporationController,
 	}

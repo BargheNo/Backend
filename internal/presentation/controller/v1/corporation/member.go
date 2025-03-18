@@ -9,9 +9,9 @@ import (
 )
 
 type MemberCorporationController struct {
-	constants  *bootstrap.Constants
+	constants          *bootstrap.Constants
 	corporationService service.CorporationService
-	BidService service.BidService
+	BidService         service.BidService
 }
 
 func NewMemberCorporationController(
@@ -20,37 +20,37 @@ func NewMemberCorporationController(
 	BidService service.BidService,
 ) *MemberCorporationController {
 	return &MemberCorporationController{
-		constants:  constants,
+		constants:          constants,
 		corporationService: corporationService,
-		BidService: BidService,
+		BidService:         BidService,
 	}
 }
 
 func (corporationController *MemberCorporationController) UpdateContactInfo(ctx *gin.Context) {
 	type addContactInfoParams struct {
-		Phone string `json:"phone"`
-		Email       string `json:"email"`
-		Eitaa       string `json:"eitaa"`
-		Bale        string `json:"bale"`
-		Website     string `json:"website"`
-		WhatsApp    string `json:"whatsApp"`
-		Instagram   string `json:"instagram"`
-		Telegram    string `json:"telegram"`
-		Linkedin    string `json:"linkedin"`
+		Phone     string `json:"phone"`
+		Email     string `json:"email"`
+		Eitaa     string `json:"eitaa"`
+		Bale      string `json:"bale"`
+		Website   string `json:"website"`
+		WhatsApp  string `json:"whatsApp"`
+		Instagram string `json:"instagram"`
+		Telegram  string `json:"telegram"`
+		Linkedin  string `json:"linkedin"`
 	}
 
 	params := controller.Validated[addContactInfoParams](ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	contactInfo := corporationdto.ContactInfoRequest{
-		Phone: params.Phone,
-		Email:       params.Email,
-		Eitaa:       params.Eitaa,
-		Bale:        params.Bale,
-		Website:     params.Website,
-		WhatsApp:    params.WhatsApp,
-		Instagram:   params.Instagram,
-		Telegram:    params.Telegram,
-		Linkedin:    params.Linkedin,
+		Phone:     params.Phone,
+		Email:     params.Email,
+		Eitaa:     params.Eitaa,
+		Bale:      params.Bale,
+		Website:   params.Website,
+		WhatsApp:  params.WhatsApp,
+		Instagram: params.Instagram,
+		Telegram:  params.Telegram,
+		Linkedin:  params.Linkedin,
 	}
 
 	corporationController.corporationService.UpdateContactInfo(corporationID.(uint), contactInfo)
@@ -59,6 +59,73 @@ func (corporationController *MemberCorporationController) UpdateContactInfo(ctx 
 	message, _ := trans.Translate("successMessage.UpdateContactInfo")
 	controller.Response(ctx, 200, message, nil)
 
+}
+
+func (corporationController *MemberCorporationController) AddAddress(ctx *gin.Context) {
+	type addAddressParams struct {
+		Province       string `json:"province" validate:"required"`
+		City           string `json:"city" validate:"required"`
+		StreetAddress  string `json:"streetAddress" validate:"required"`
+		PostalCode     string `json:"postalCode" validate:"required"`
+		BuildingNumber string `json:"buildingNumber" validate:"required"`
+		Unit           uint   `json:"unitNumber"`
+	}
+	params := controller.Validated[addAddressParams](ctx, &corporationController.constants.Context)
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	address := corporationdto.AddressRequest{
+		Province:       params.Province,
+		City:           params.City,
+		StreetAddress:  params.StreetAddress,
+		PostalCode:     params.PostalCode,
+		BuildingNumber: params.BuildingNumber,
+		Unit:           params.Unit,
+	}
+	corporationController.corporationService.AddAddress(corporationID.(uint), address)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.AddAddress")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *MemberCorporationController) EditAddress(ctx *gin.Context) {
+	type editAddressParams struct {
+		AddressID      uint   `json:"addressId" validate:"required"`
+		Province       string `json:"province" validate:"required"`
+		City           string `json:"city" validate:"required"`
+		StreetAddress  string `json:"streetAddress" validate:"required"`
+		PostalCode     string `json:"postalCode" validate:"required"`
+		BuildingNumber string `json:"buildingNumber" validate:"required"`
+		Unit           uint   `json:"unitNumber"`
+	}
+	params := controller.Validated[editAddressParams](ctx, &corporationController.constants.Context)
+
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	address := corporationdto.AddressRequest{
+		Province:       params.Province,
+		City:           params.City,
+		StreetAddress:  params.StreetAddress,
+		PostalCode:     params.PostalCode,
+		BuildingNumber: params.BuildingNumber,
+		Unit:           params.Unit,
+	}
+	corporationController.corporationService.EditAddress(corporationID.(uint), params.AddressID, address)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.EditAddress")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *MemberCorporationController) DeleteAddress(ctx *gin.Context) {
+	type deleteAddressParams struct {
+		AddressID uint `json:"addressId" validate:"required"`
+	}
+	params := controller.Validated[deleteAddressParams](ctx, &corporationController.constants.Context)
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	corporationController.corporationService.DeleteAddress(corporationID.(uint), params.AddressID)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.DeleteAddress")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (corporationController *MemberCorporationController) GetInstallationRequests(ctx *gin.Context) {

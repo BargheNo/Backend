@@ -39,3 +39,12 @@ type ContactInfoRequest struct {
 	Linkedin  string
 	Telegram  string
 }
+
+type AddressRequest struct {
+	Province       string
+	City           string
+	StreetAddress  string
+	PostalCode     string
+	BuildingNumber string
+	Unit           uint
+}
