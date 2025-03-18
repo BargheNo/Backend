@@ -8,7 +8,7 @@ import (
 
 type InstallationRequest struct {
 	database.Model
-	UserID         uint
+	UserID         uint `gorm:"not null"`
 	Area           float64
 	PowerRequested float64
 	MaxCost        float64
@@ -16,5 +16,5 @@ type InstallationRequest struct {
 	BuildingType   string
 	Status         string
 	Address        Address `gorm:"polymorphic:Owner;"`
-	Bids           []Bid
+	Bids           []Bid   `gorm:"foreignKey:RequestID"`
 }

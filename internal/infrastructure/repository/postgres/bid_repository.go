@@ -12,31 +12,37 @@ func NewBidRepository() *BidRepository {
 	return &BidRepository{}
 }
 
-func (repo *BidRepository) GetOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int, sortBy string, dir string) ([]*entity.InstallationRequest, error) {
+func (repo *BidRepository) GetOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int, sortBy string, dir string) []*entity.InstallationRequest {
 	var requests []*entity.InstallationRequest
-	query := db.GetDB().
-		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ?) AND status = 'open'", corporationID)
+	query := db.GetDB().Model(&entity.InstallationRequest{}).
+		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ? AND deleted_at IS NULL) AND status = 'open'", corporationID)
 	query = query.Order(sortBy + " " + dir)
 	result := query.Offset(offset).Limit(pageSize).Find(&requests)
 	if result.Error != nil {
-		return nil, result.Error
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(result.Error)
 	}
-	return requests, nil
+	return requests
 }
 
-func (repo *BidRepository) GetRandomOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int) ([]*entity.InstallationRequest, error) {
+func (repo *BidRepository) GetRandomOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int) []*entity.InstallationRequest {
 	var requests []*entity.InstallationRequest
-	result := db.GetDB().
+	result := db.GetDB().Model(&entity.InstallationRequest{}).
 		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ?) AND status = 'open'", corporationID).
+		Order("RANDOM()").
 		Offset(offset).
 		Limit(pageSize).
-		Order("RANDOM()").
 		Find(&requests)
-
 	if result.Error != nil {
-		return nil, result.Error
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(result.Error)
 	}
-	return requests, nil
+
+	return requests
 }
 
 func (repo *BidRepository) FindInstallationRequestByID(db database.Database, id uint) (*entity.InstallationRequest, bool) {
@@ -67,9 +73,9 @@ func (repo *BidRepository) FindBidByID(db database.Database, id uint) (*entity.B
 	return &bid, true
 }
 
-func (repo *BidRepository) FindBidByRequestID(db database.Database, requestID uint) (*entity.Bid, bool) {
+func (repo *BidRepository) FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint) (*entity.Bid, bool) {
 	var bid entity.Bid
-	result := db.GetDB().Where("request_id = ?", requestID).First(&bid)
+	result := db.GetDB().Where("request_id = ? AND corporation_id = ?", requestID, corporationID).First(&bid)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, false
@@ -80,18 +86,24 @@ func (repo *BidRepository) FindBidByRequestID(db database.Database, requestID ui
 }
 
 func (repo *BidRepository) DeleteBidByID(db database.Database, id uint) error {
-	return db.GetDB().Where("request_id = ?", id).Delete(&entity.Bid{}).Error
+	return db.GetDB().Where("id = ?", id).Delete(&entity.Bid{}).Error
 }
 
-func (repo *BidRepository) GetBids(db database.Database, corporationID uint, offset int, pageSize int, sortBy string, dir string) ([]*entity.Bid, error) {
+func (repo *BidRepository) GetBids(db database.Database, corporationID uint, offset int, pageSize int, sortBy string, dir string) []*entity.Bid {
 	var bids []*entity.Bid
-	query := db.GetDB().
-		Where("corporation_id = ?", corporationID).
-		Order(sortBy + " " + dir)
 
-	result := query.Offset(offset).Limit(pageSize).Find(&bids)
+	result := db.GetDB().Model(&entity.Bid{}).
+		Where("corporation_id = ?", corporationID).
+		Order(sortBy + " " + dir).
+		Offset(offset).
+		Limit(pageSize).
+		Find(&bids)
+
 	if result.Error != nil {
-		return nil, result.Error
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(result.Error)
 	}
-	return bids, nil
+	return bids
 }

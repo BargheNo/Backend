@@ -8,8 +8,8 @@ import (
 
 type Bid struct {
 	database.Model
-	CorporationID       uint
-	RequestID           uint
+	CorporationID       uint `gorm:"not null"`
+	RequestID           uint `gorm:"not null"`
 	MinCost             float64
 	MaxCost             float64
 	MinDeadline         time.Time

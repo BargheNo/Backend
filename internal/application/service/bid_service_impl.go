@@ -12,11 +12,11 @@ import (
 )
 
 type BidService struct {
-	constants             *bootstrap.Constants
-	JWTService            service.JWTService
-	db                    database.Database
-	bidRepository		  repository.BidRepository
-	corporationService   service.CorporationService
+	constants          *bootstrap.Constants
+	JWTService         service.JWTService
+	db                 database.Database
+	bidRepository      repository.BidRepository
+	corporationService service.CorporationService
 }
 
 func NewBidService(
@@ -27,21 +27,19 @@ func NewBidService(
 	corporationService service.CorporationService,
 ) *BidService {
 	return &BidService{
-		constants:             constants,
-		JWTService:            jwtService,
-		db:                    db,
-		bidRepository:         bidRepository,
-		corporationService:    corporationService,
+		constants:          constants,
+		JWTService:         jwtService,
+		db:                 db,
+		bidRepository:      bidRepository,
+		corporationService: corporationService,
 	}
 }
 
-
-
 func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, ascending bool) []corporationdto.InstallationRequestResponse {
 	offset := (page - 1) * pageSize
-	dir := "asc"
+	dir := "ASC"
 	if !ascending {
-		dir = "desc"
+		dir = "DESC"
 	}
 	_, exist := bidService.corporationService.GetCorporationByID(corporationId)
 	if !exist {
@@ -50,19 +48,12 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 		panic(conflictErrors)
 	}
 	var installationRequests []*entity.InstallationRequest
-	var err error
-	
 
 	if sortBy != "" {
-		installationRequests, err = bidService.bidRepository.GetOpenInstallationRequests(bidService.db, corporationId, offset, pageSize, sortBy, dir)
+		installationRequests = bidService.bidRepository.GetOpenInstallationRequests(bidService.db, corporationId, offset, pageSize, sortBy, dir)
 	} else {
-		installationRequests, err = bidService.bidRepository.GetRandomOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
+		installationRequests = bidService.bidRepository.GetRandomOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
 	}
-	
-	if err != nil {
-		panic(err)
-	}
-
 	installationRequestResponses := make([]corporationdto.InstallationRequestResponse, len(installationRequests))
 	for i, request := range installationRequests {
 		installationRequestResponses[i] = corporationdto.InstallationRequestResponse{
@@ -93,6 +84,12 @@ func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
 		panic(conflictErrors)
 	case installationRequest.Status != enums.Open.String():
 		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
+		panic(conflictErrors)
+	}
+
+	_, exist = bidService.bidRepository.FindBidByCorporationAndRequestID(bidService.db, bidInfo.InstallationRequestID, bidInfo.CorporationID)
+	if exist {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyExist)
 		panic(conflictErrors)
 	}
 
@@ -151,25 +148,23 @@ func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest)
 
 func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int, sortBy string, ascending bool) []corporationdto.BidsResponse {
 	offset := (page - 1) * pageSize
-	dir := "asc"
+	dir := "ASC"
 	if !ascending {
-		dir = "desc"
+		dir = "DESC"
 	}
+
 	_, exist := bidService.corporationService.GetCorporationByID(corporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
 		conflictErrors.Add(bidService.constants.Field.Corporation, bidService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
+
 	if sortBy == "" {
 		sortBy = "id"
 	}
-	
-	bids, err := bidService.bidRepository.GetBids(bidService.db, corporationID, offset, pageSize, sortBy, dir)
-	
-	if err != nil {
-		panic(err)
-	}
+
+	bids := bidService.bidRepository.GetBids(bidService.db, corporationID, offset, pageSize, sortBy, dir)
 	bidResponses := make([]corporationdto.BidsResponse, len(bids))
 	for i, bid := range bids {
 		bidResponses[i] = corporationdto.BidsResponse{

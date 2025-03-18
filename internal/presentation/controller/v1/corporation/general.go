@@ -25,9 +25,10 @@ func NewGeneralCorporationController(
 
 func (corporationController *GeneralCorporationController) Register(ctx *gin.Context) {
 	type registerParams struct {
-		Name     string `json:"name" validate:"required"`
-		CIN      string `json:"cin" validate:"required"`
-		Password string `json:"password" validate:"required"`
+		Name          string `json:"name" validate:"required"`
+		CIN           string `json:"cin" validate:"required"`
+		Password      string `json:"password" validate:"required"`
+		AcceptedTerms bool   `json:"acceptedTerms" validate:"eq=true"`
 	}
 	params := controller.Validated[registerParams](ctx, &corporationController.constants.Context)
 	registerInfo := corporationdto.RegisterRequest{

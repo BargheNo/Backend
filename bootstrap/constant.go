@@ -58,6 +58,7 @@ type ErrorTag struct {
 	AwaitingApproval       string
 	Rejected               string
 	NotExist               string
+	AlreadyExist           string
 }
 
 type SMSTemplates struct {
@@ -120,6 +121,7 @@ func NewConstants() *Constants {
 			AwaitingApproval:       "awaitingApproval",
 			Rejected:               "rejected",
 			NotExist:               "notExist",
+			AlreadyExist:           "alreadyExist",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

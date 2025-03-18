@@ -15,6 +15,6 @@ type User struct {
 	EmailVerified        bool
 	NationalCode         string
 	Address              []Address `gorm:"polymorphic:Owner;"`
-	InstallationRequests []InstallationRequest
+	InstallationRequests []InstallationRequest `gorm:"foreignKey:UserID"`
 	Roles                []Role	`gorm:"many2many:user_roles;"`
 }

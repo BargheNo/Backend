@@ -144,12 +144,12 @@ func (corporationController *MemberCorporationController) GetInstallationRequest
 func (corporationController *MemberCorporationController) SetBid(ctx *gin.Context) {
 	type setBidParams struct {
 		InstallationRequestID uint    `json:"installationRequestId" validate:"required"`
-		MinCost               float64 `json:"minCost" validate:"required"`
-		MaxCost               float64 `json:"maxCost" validate:"required"`
-		MinDeadline           time.Time  `json:"minDeadline" validate:"required"`
-		MaxDeadline           time.Time  `json:"maxDeadline" validate:"required"`
+		MinCost               float64 `json:"minCost"`
+		MaxCost               float64 `json:"maxCost"`
+		MinDeadline           time.Time  `json:"minDeadline"`
+		MaxDeadline           time.Time  `json:"maxDeadline"`
 		Description           string  `json:"description"`
-		InstallationTime      string  `json:"installationTime" validate:"required"`
+		InstallationTime      string  `json:"installationTime" `
 	}
 	params := controller.Validated[setBidParams](ctx, &corporationController.constants.Context)
 

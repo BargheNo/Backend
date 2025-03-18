@@ -12,5 +12,5 @@ type Corporation struct {
 	Password             string
 	ContactInformation   ContactInformation
 	Addresses            []Address `gorm:"polymorphic:Owner;"`
-	Bids                 []Bid
+	Bids                 []Bid	`gorm:"foreignKey:CorporationID"`
 }
