@@ -1,5 +1,7 @@
 package corporationdto
 
+import "time"
+
 type RegisterRequest struct {
 	Name     string
 	CIN      string
@@ -16,8 +18,8 @@ type SetBidRequest struct {
 	CorporationID         uint
 	MinCost               float64
 	MaxCost               float64
-	MinDeadline           string
-	MaxDeadline           string
+	MinDeadline           time.Time
+	MaxDeadline           time.Time
 	Description           string
 	InstallationTime      string
 }

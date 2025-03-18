@@ -1,6 +1,8 @@
 package corporation
 
 import (
+	"time"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -144,8 +146,8 @@ func (corporationController *MemberCorporationController) SetBid(ctx *gin.Contex
 		InstallationRequestID uint    `json:"installationRequestId" validate:"required"`
 		MinCost               float64 `json:"minCost" validate:"required"`
 		MaxCost               float64 `json:"maxCost" validate:"required"`
-		MinDeadline           string  `json:"minDeadline" validate:"required"`
-		MaxDeadline           string  `json:"maxDeadline" validate:"required"`
+		MinDeadline           time.Time  `json:"minDeadline" validate:"required"`
+		MaxDeadline           time.Time  `json:"maxDeadline" validate:"required"`
 		Description           string  `json:"description"`
 		InstallationTime      string  `json:"installationTime" validate:"required"`
 	}

@@ -1,5 +1,7 @@
 package corporationdto
 
+import "time"
+
 
 type CorporationInfoResponse struct {
 	AccessToken  string   `json:"accessToken"`
@@ -13,7 +15,7 @@ type InstallationRequestResponse struct {
 	Area 		  	float64   	`json:"area"`
 	PowerRequested 	float64   	`json:"powerRequested"`
 	MaxCost	   		float64   	`json:"maxCost"`
-	Deadline       	string 		`json:"deadline"`
+	Deadline       	time.Time 		`json:"deadline"`
 	BuildingType	string 		`json:"buildingType"`
 	Address			string 		`json:"address"`
 }
@@ -24,8 +26,8 @@ type BidsResponse struct {
 	Description 			string 		`json:"description"`
 	MinCost      			float64   	`json:"minCost"`
 	MaxCost      			float64   	`json:"maxCost"`
-	MinDeadline  			string 		`json:"minDeadline"`
-	MaxDeadline  			string 		`json:"maxDeadline"`
+	MinDeadline  			time.Time 		`json:"minDeadline"`
+	MaxDeadline  			time.Time 		`json:"maxDeadline"`
 	InstallationTime 		string 	`json:"installationTime"`
 	Status	   				string 		`json:"status"`
 }

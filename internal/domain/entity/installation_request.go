@@ -1,6 +1,10 @@
 package entity
 
-import "github.com/BargheNo/Backend/internal/infrastructure/database"
+import (
+	"time"
+
+	"github.com/BargheNo/Backend/internal/infrastructure/database"
+)
 
 type InstallationRequest struct {
 	database.Model
@@ -8,7 +12,7 @@ type InstallationRequest struct {
 	Area           float64
 	PowerRequested float64
 	MaxCost        float64
-	Deadline       string
+	Deadline       time.Time
 	BuildingType   string
 	Status         string
 	Address        Address `gorm:"polymorphic:Owner;"`

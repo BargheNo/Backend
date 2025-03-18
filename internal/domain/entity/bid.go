@@ -1,6 +1,10 @@
 package entity
 
-import "github.com/BargheNo/Backend/internal/infrastructure/database"
+import (
+	"time"
+
+	"github.com/BargheNo/Backend/internal/infrastructure/database"
+)
 
 type Bid struct {
 	database.Model
@@ -8,8 +12,8 @@ type Bid struct {
 	RequestID           uint
 	MinCost             float64
 	MaxCost             float64
-	MinDeadline         string
-	MaxDeadline         string
+	MinDeadline         time.Time
+	MaxDeadline         time.Time
 	Description         string
 	Status              string
 	InstallationTime    string
