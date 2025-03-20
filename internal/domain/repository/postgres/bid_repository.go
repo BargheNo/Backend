@@ -6,7 +6,7 @@ import (
 )
 
 type BidRepository interface {
-	GetOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int, sortBy string, dir string) []*entity.InstallationRequest
+	GetInstallationRequests(db database.Database, status string, corporationID uint, offset int, pageSize int, sortBy string, dir string) []*entity.InstallationRequest
 	GetRandomOpenInstallationRequests(db database.Database, corporationID uint, pageSize int, offset int) []*entity.InstallationRequest
 	FindInstallationRequestByID(db database.Database, id uint) (*entity.InstallationRequest, bool)
 	CreateBid(db database.Database, bid *entity.Bid) error

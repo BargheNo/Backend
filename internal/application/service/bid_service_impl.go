@@ -50,9 +50,9 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 	var installationRequests []*entity.InstallationRequest
 
 	if sortBy != "" {
-		installationRequests = bidService.bidRepository.GetOpenInstallationRequests(bidService.db, corporationId, offset, pageSize, sortBy, dir)
+		installationRequests = bidService.bidRepository.GetInstallationRequests(bidService.db, enums.Open, corporationId, offset, pageSize, sortBy, dir)
 	} else {
-		installationRequests = bidService.bidRepository.GetRandomOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
+		installationRequests = bidService.bidRepository.GetRandomInstallationRequests(bidService.db, enums.Open, corporationId, offset, pageSize)
 	}
 	installationRequestResponses := make([]biddto.InstallationRequestResponse, len(installationRequests))
 	for i, request := range installationRequests {

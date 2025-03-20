@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enums"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -12,10 +13,10 @@ func NewBidRepository() *BidRepository {
 	return &BidRepository{}
 }
 
-func (repo *BidRepository) GetOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int, sortBy string, dir string) []*entity.InstallationRequest {
+func (repo *BidRepository) GetInstallationRequests(db database.Database, status enums.InstallationRequestStatus, corporationID uint, offset int, pageSize int, sortBy string, dir string) []*entity.InstallationRequest {
 	var requests []*entity.InstallationRequest
 	query := db.GetDB().Model(&entity.InstallationRequest{}).
-		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ? AND deleted_at IS NULL) AND status = 'open'", corporationID)
+		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ? AND deleted_at IS NULL) AND status = ?", corporationID, status)
 	query = query.Order(sortBy + " " + dir)
 	result := query.Offset(offset).Limit(pageSize).Find(&requests)
 	if result.Error != nil {
@@ -27,10 +28,10 @@ func (repo *BidRepository) GetOpenInstallationRequests(db database.Database, cor
 	return requests
 }
 
-func (repo *BidRepository) GetRandomOpenInstallationRequests(db database.Database, corporationID uint, offset int, pageSize int) []*entity.InstallationRequest {
+func (repo *BidRepository) GetRandomInstallationRequests(db database.Database, status enums.InstallationRequestStatus, corporationID uint, offset int, pageSize int) []*entity.InstallationRequest {
 	var requests []*entity.InstallationRequest
 	result := db.GetDB().Model(&entity.InstallationRequest{}).
-		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ?) AND status = 'open'", corporationID).
+		Where("id NOT IN (SELECT request_id FROM bids WHERE corporation_id = ?) AND status = ?", corporationID, status).
 		Order("RANDOM()").
 		Offset(offset).
 		Limit(pageSize).
