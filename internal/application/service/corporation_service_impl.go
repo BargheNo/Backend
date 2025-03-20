@@ -11,7 +11,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	// "golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type CorporationService struct {
@@ -43,12 +43,11 @@ func (corporationService *CorporationService) GetCorporationByID(corporationID u
 	if !exist {
 		return nil, false
 	}
-	if corporation.Status != enums.Approved.String() {
+	if corporation.Status != enums.Approved {
 		return nil, false
 	}
 	return corporation, true
 }
-
 
 func (corporationService *CorporationService) validatePasswordTests(errors *[]string, test string, password string, tag string) {
 	matched, _ := regexp.MatchString(test, password)
@@ -57,37 +56,41 @@ func (corporationService *CorporationService) validatePasswordTests(errors *[]st
 	}
 }
 
-func (corporationService *CorporationService) passwordValidation(password string) []string {
-	var errors []string
+func (corporationService *CorporationService) passwordValidation(password string) error {
+	var errors exception.ValidationErrors
+	var errorTags []string
 
-	corporationService.validatePasswordTests(&errors, ".{8,}", password, corporationService.constants.Tag.MinimumLength)
-	corporationService.validatePasswordTests(&errors, "[a-z]", password, corporationService.constants.Tag.ContainsLowercase)
-	corporationService.validatePasswordTests(&errors, "[A-Z]", password, corporationService.constants.Tag.ContainsUppercase)
-	corporationService.validatePasswordTests(&errors, "[0-9]", password, corporationService.constants.Tag.ContainsNumber)
-	corporationService.validatePasswordTests(&errors, "[^\\d\\w]", password, corporationService.constants.Tag.ContainsSpecialChar)
+	corporationService.validatePasswordTests(&errorTags, ".{8,}", password, corporationService.constants.Tag.MinimumLength)
+	corporationService.validatePasswordTests(&errorTags, "[a-z]", password, corporationService.constants.Tag.ContainsLowercase)
+	corporationService.validatePasswordTests(&errorTags, "[A-Z]", password, corporationService.constants.Tag.ContainsUppercase)
+	corporationService.validatePasswordTests(&errorTags, "[0-9]", password, corporationService.constants.Tag.ContainsNumber)
+	corporationService.validatePasswordTests(&errorTags, "[^\\d\\w]", password, corporationService.constants.Tag.ContainsSpecialChar)
 
-	return errors
+	for _, tag := range errorTags {
+		errors.Add(corporationService.constants.Field.Password, tag)
+	}
+	if len(errorTags) > 0 {
+		return errors
+	}
+
+	return nil
 }
 
 func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) {
 	var conflictErrors exception.ConflictErrors
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, registerInfo.CIN)
+	if exist && corporation.Status != enums.Rejected {
+		conflictErrors.Add(corporationService.constants.Field.CIN, corporationService.constants.Tag.AlreadyRegistered)
+		panic(conflictErrors)
+	}
 	_, err := corporationService.CINService.ValidateCIN(registerInfo.CIN)
 	if err != nil {
 		panic(err)
 	}
-	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, registerInfo.CIN)
-	if exist && corporation.Status != enums.Rejected.String() {
-		conflictErrors.Add(corporationService.constants.Field.CIN, corporationService.constants.Tag.AlreadyRegistered)
-		panic(conflictErrors)
-	}
 
-	var passwordErrors exception.ValidationErrors
-	passwordErrorTags := corporationService.passwordValidation(registerInfo.Password)
-	for _, tag := range passwordErrorTags {
-		passwordErrors.Add(corporationService.constants.Field.Password, tag)
-	}
-	if len(passwordErrors.Errors) > 0 {
-		panic(passwordErrors)
+	err = corporationService.passwordValidation(registerInfo.Password)
+	if err != nil {
+		panic(err)
 	}
 
 	hashedPassword, err := hashPassword(registerInfo.Password)
@@ -99,7 +102,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		Name:     registerInfo.Name,
 		CIN:      registerInfo.CIN,
 		Password: hashedPassword,
-		Status:   enums.AwaitingApproval.String(),
+		Status:   enums.AwaitingApproval,
 	}
 
 	err = corporationService.CorporationRepository.CreateCorporation(corporationService.db, corporation)
@@ -115,16 +118,16 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
-	if corporation.Status != enums.Approved.String() {
+	if corporation.Status != enums.Approved {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
 
-	// err := bcrypt.CompareHashAndPassword([]byte(corporation.Password), []byte(loginInfo.Password))
-	// if err != nil {
-	// 	authError := exception.NewInvalidCredentialsError("cin and password not match", nil)
-	// 	panic(authError)
-	// }
+	err := bcrypt.CompareHashAndPassword([]byte(corporation.Password), []byte(loginInfo.Password))
+	if err != nil {
+		authError := exception.NewInvalidCredentialsError("cin and password not match", nil)
+		panic(authError)
+	}
 
 	accessToken, refreshToken := corporationService.JWTService.GenerateToken(corporation.ID)
 	return corporationdto.CorporationInfoResponse{
@@ -160,8 +163,8 @@ func (corporationService *CorporationService) UpdateContactInfo(corporationID ui
 	}
 }
 
-func (corporationService *CorporationService) AddAddress(corporationID uint, address corporationdto.AddressRequest) {
-	corporation, exist := corporationService.GetCorporationByID(corporationID)
+func (corporationService *CorporationService) AddAddress(address corporationdto.AddressRequest) {
+	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
@@ -174,7 +177,7 @@ func (corporationService *CorporationService) AddAddress(corporationID uint, add
 		StreetAddress:  address.StreetAddress,
 		PostalCode:     address.PostalCode,
 		BuildingNumber: address.BuildingNumber,
-		Unit:          address.Unit,
+		Unit:           address.Unit,
 	}
 
 	corporation.Addresses = append(corporation.Addresses, *newAddress)
@@ -185,8 +188,8 @@ func (corporationService *CorporationService) AddAddress(corporationID uint, add
 	}
 }
 
-func (corporationService *CorporationService) EditAddress(corporationID uint, addressID uint, address corporationdto.AddressRequest) {
-	corporation, exist := corporationService.GetCorporationByID(corporationID)
+func (corporationService *CorporationService) EditAddress(addressID uint, address corporationdto.AddressRequest) {
+	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
@@ -199,7 +202,7 @@ func (corporationService *CorporationService) EditAddress(corporationID uint, ad
 		StreetAddress:  address.StreetAddress,
 		PostalCode:     address.PostalCode,
 		BuildingNumber: address.BuildingNumber,
-		Unit:          address.Unit,
+		Unit:           address.Unit,
 	}
 
 	for i, addr := range corporation.Addresses {
@@ -222,7 +225,7 @@ func (corporationService *CorporationService) DeleteAddress(corporationID uint, 
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
 		panic(conflictErrors)
 	}
-	
+
 	for i, addr := range corporation.Addresses {
 		if addr.ID == addressID {
 			corporation.Addresses = append(corporation.Addresses[:i], corporation.Addresses[i+1:]...)

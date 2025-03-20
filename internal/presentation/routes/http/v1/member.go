@@ -9,12 +9,20 @@ func SetupMemberRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	corp := routerGroup.Group("/corp")
 	{
 		corp.POST("/update_contact_info", app.Controllers.Member.CorporationController.UpdateContactInfo)
-		corp.POST("/add_address", app.Controllers.Member.CorporationController.AddAddress)
-		corp.POST("/edit_address", app.Controllers.Member.CorporationController.EditAddress)
-		corp.POST("/delete_address", app.Controllers.Member.CorporationController.DeleteAddress)
 		corp.GET("/installation_requests", app.Controllers.Member.CorporationController.GetInstallationRequests)
-		corp.POST("/bid", app.Controllers.Member.CorporationController.SetBid)
-		corp.POST("cancel_bid", app.Controllers.Member.CorporationController.CancelBid)
-		corp.GET("/bids", app.Controllers.Member.CorporationController.GetBids)
+
+		address := corp.Group("address")
+		{
+			address.POST("/add", app.Controllers.Member.CorporationController.AddAddress)
+			address.POST("/edit", app.Controllers.Member.CorporationController.EditAddress)
+			address.POST("/delete", app.Controllers.Member.CorporationController.DeleteAddress)
+		}
+
+		bid := corp.Group("bid")
+		{
+			bid.POST("/set", app.Controllers.Member.CorporationController.SetBid)
+			bid.POST("/cancel", app.Controllers.Member.CorporationController.CancelBid)
+			bid.GET("/get", app.Controllers.Member.CorporationController.GetBids)
+		}
 	}
 }

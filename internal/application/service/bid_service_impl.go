@@ -2,7 +2,7 @@ package serviceimpl
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
+	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enums"
@@ -35,7 +35,7 @@ func NewBidService(
 	}
 }
 
-func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, ascending bool) []corporationdto.InstallationRequestResponse {
+func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, ascending bool) []biddto.InstallationRequestResponse {
 	offset := (page - 1) * pageSize
 	dir := "ASC"
 	if !ascending {
@@ -54,9 +54,9 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 	} else {
 		installationRequests = bidService.bidRepository.GetRandomOpenInstallationRequests(bidService.db, corporationId, offset, pageSize)
 	}
-	installationRequestResponses := make([]corporationdto.InstallationRequestResponse, len(installationRequests))
+	installationRequestResponses := make([]biddto.InstallationRequestResponse, len(installationRequests))
 	for i, request := range installationRequests {
-		installationRequestResponses[i] = corporationdto.InstallationRequestResponse{
+		installationRequestResponses[i] = biddto.InstallationRequestResponse{
 			ID:             request.ID,
 			UserID:         request.UserID,
 			Area:           request.Area,
@@ -70,7 +70,7 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 	return installationRequestResponses
 }
 
-func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
+func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
@@ -82,7 +82,7 @@ func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
 	case !exist:
 		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case installationRequest.Status != enums.Open.String():
+	case installationRequest.Status != enums.Open:
 		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
@@ -102,7 +102,7 @@ func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
 		MaxDeadline:      bidInfo.MaxDeadline,
 		Description:      bidInfo.Description,
 		InstallationTime: bidInfo.InstallationTime,
-		Status:           enums.Pending.String(),
+		Status:           enums.Pending,
 	}
 	err := bidService.bidRepository.CreateBid(bidService.db, bid)
 	if err != nil {
@@ -110,7 +110,7 @@ func (bidService *BidService) SetBid(bidInfo corporationdto.SetBidRequest) {
 	}
 }
 
-func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest) {
+func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
 	var conflictErrors exception.ConflictErrors
 	if !exist {
@@ -123,7 +123,7 @@ func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest)
 	case !exist:
 		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case request.Status != enums.Open.String():
+	case request.Status != enums.Open:
 		conflictErrors.Add(bidService.constants.Field.InstallationRequest, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
@@ -136,7 +136,7 @@ func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest)
 	case bid.CorporationID != bidInfo.CorporationID:
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
-	case bid.Status != enums.Pending.String():
+	case bid.Status != enums.Pending:
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.NotExist)
 		panic(conflictErrors)
 	}
@@ -146,7 +146,7 @@ func (bidService *BidService) CancelBid(bidInfo corporationdto.CancelBidRequest)
 	}
 }
 
-func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int, sortBy string, ascending bool) []corporationdto.BidsResponse {
+func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int, sortBy string, ascending bool) []biddto.BidsResponse {
 	offset := (page - 1) * pageSize
 	dir := "ASC"
 	if !ascending {
@@ -161,13 +161,13 @@ func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int
 	}
 
 	if sortBy == "" {
-		sortBy = "id"
+		sortBy = "created_at"
 	}
 
 	bids := bidService.bidRepository.GetBids(bidService.db, corporationID, offset, pageSize, sortBy, dir)
-	bidResponses := make([]corporationdto.BidsResponse, len(bids))
+	bidResponses := make([]biddto.BidsResponse, len(bids))
 	for i, bid := range bids {
-		bidResponses[i] = corporationdto.BidsResponse{
+		bidResponses[i] = biddto.BidsResponse{
 			ID:                    bid.ID,
 			InstallationRequestID: bid.RequestID,
 			MinCost:               bid.MinCost,
@@ -176,7 +176,7 @@ func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int
 			MaxDeadline:           bid.MaxDeadline,
 			Description:           bid.Description,
 			InstallationTime:      bid.InstallationTime,
-			Status:                bid.Status,
+			Status:                bid.Status.String(),
 		}
 	}
 

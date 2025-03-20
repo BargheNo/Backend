@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
@@ -75,6 +76,7 @@ func (corporationController *MemberCorporationController) AddAddress(ctx *gin.Co
 	params := controller.Validated[addAddressParams](ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	address := corporationdto.AddressRequest{
+		CorporationID:  corporationID.(uint),
 		Province:       params.Province,
 		City:           params.City,
 		StreetAddress:  params.StreetAddress,
@@ -82,7 +84,7 @@ func (corporationController *MemberCorporationController) AddAddress(ctx *gin.Co
 		BuildingNumber: params.BuildingNumber,
 		Unit:           params.Unit,
 	}
-	corporationController.corporationService.AddAddress(corporationID.(uint), address)
+	corporationController.corporationService.AddAddress(address)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.AddAddress")
@@ -103,6 +105,7 @@ func (corporationController *MemberCorporationController) EditAddress(ctx *gin.C
 
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	address := corporationdto.AddressRequest{
+		CorporationID:  corporationID.(uint),
 		Province:       params.Province,
 		City:           params.City,
 		StreetAddress:  params.StreetAddress,
@@ -110,7 +113,7 @@ func (corporationController *MemberCorporationController) EditAddress(ctx *gin.C
 		BuildingNumber: params.BuildingNumber,
 		Unit:           params.Unit,
 	}
-	corporationController.corporationService.EditAddress(corporationID.(uint), params.AddressID, address)
+	corporationController.corporationService.EditAddress(params.AddressID, address)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.EditAddress")
@@ -143,17 +146,17 @@ func (corporationController *MemberCorporationController) GetInstallationRequest
 
 func (corporationController *MemberCorporationController) SetBid(ctx *gin.Context) {
 	type setBidParams struct {
-		InstallationRequestID uint    `json:"installationRequestId" validate:"required"`
-		MinCost               float64 `json:"minCost"`
-		MaxCost               float64 `json:"maxCost"`
-		MinDeadline           time.Time  `json:"minDeadline"`
-		MaxDeadline           time.Time  `json:"maxDeadline"`
-		Description           string  `json:"description"`
-		InstallationTime      string  `json:"installationTime" `
+		InstallationRequestID uint      `json:"installationRequestId" validate:"required"`
+		MinCost               float64   `json:"minCost" validate:"omitempty,ltfield=MaxCost"`
+		MaxCost               float64   `json:"maxCost" validate:"omitempty,gtfield=MinCost"`
+		MinDeadline           time.Time `json:"minDeadline" validate:"ltfield=MaxDeadline"`
+		MaxDeadline           time.Time `json:"maxDeadline" validate:"gtfield=MinDeadline"`
+		Description           string    `json:"description"`
+		InstallationTime      string    `json:"installationTime" `
 	}
 	params := controller.Validated[setBidParams](ctx, &corporationController.constants.Context)
 
-	bidInfo := corporationdto.SetBidRequest{
+	bidInfo := biddto.SetBidRequest{
 		InstallationRequestID: params.InstallationRequestID,
 		MinCost:               params.MinCost,
 		MaxCost:               params.MaxCost,
@@ -179,7 +182,7 @@ func (corporationController *MemberCorporationController) CancelBid(ctx *gin.Con
 	}
 	params := controller.Validated[cancelBidParams](ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	bidInfo := corporationdto.CancelBidRequest{
+	bidInfo := biddto.CancelBidRequest{
 		BidID:                 params.BidID,
 		InstallationRequestID: params.InstallationRequestID,
 		CorporationID:         corporationID.(uint),

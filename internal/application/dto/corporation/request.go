@@ -1,7 +1,5 @@
 package corporationdto
 
-import "time"
-
 type RegisterRequest struct {
 	Name     string
 	CIN      string
@@ -11,23 +9,6 @@ type RegisterRequest struct {
 type LoginRequest struct {
 	CIN      string
 	Password string
-}
-
-type SetBidRequest struct {
-	InstallationRequestID uint
-	CorporationID         uint
-	MinCost               float64
-	MaxCost               float64
-	MinDeadline           time.Time
-	MaxDeadline           time.Time
-	Description           string
-	InstallationTime      string
-}
-
-type CancelBidRequest struct {
-	BidID                 uint
-	InstallationRequestID uint
-	CorporationID         uint
 }
 
 type ContactInfoRequest struct {
@@ -43,6 +24,7 @@ type ContactInfoRequest struct {
 }
 
 type AddressRequest struct {
+	CorporationID  uint
 	Province       string
 	City           string
 	StreetAddress  string
