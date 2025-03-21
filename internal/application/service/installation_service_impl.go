@@ -49,6 +49,8 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 		panic(rateLimitError)
 	}
 
+	address := installationService.addressService.CreateAddress(requestInfo.Address)
+
 	request := &entity.InstallationRequest{
 		Name:         requestInfo.Name,
 		Status:       enum.Active,
@@ -57,7 +59,7 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 		MaxCost:      requestInfo.MaxCost,
 		BuildingType: requestInfo.BuildingType,
 		OwnerID:      requestInfo.OwnerID,
-		AddressID:    requestInfo.AddressID,
+		AddressID:    address.ID,
 	}
 	err := installationService.installationRepository.CreateRequest(installationService.db, request)
 	if err != nil {

@@ -1,5 +1,7 @@
 package installationdto
 
+import addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+
 type NewInstallationRequest struct {
 	OwnerID      uint
 	Name         string
@@ -8,7 +10,7 @@ type NewInstallationRequest struct {
 	MaxCost      float64
 	BuildingType string
 	Description  string
-	AddressID    uint
+	Address      addressdto.CreateAddressRequest
 }
 
 type ListOwnerRequestsRequest struct {

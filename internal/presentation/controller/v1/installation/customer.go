@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
@@ -30,13 +31,18 @@ func NewCustomerInstallationController(
 
 func (installationController *CustomerInstallationController) CreateInstallationRequest(ctx *gin.Context) {
 	type installationRequestParams struct {
-		Name         string  `json:"name" validate:"required"`
-		Area         uint    `json:"area"`
-		Power        uint    `json:"power" validate:"required"`
-		MaxCost      float64 `json:"maxCost"`
-		BuildingType string  `json:"buildingType" validate:"required"`
-		Description  string  `json:"description"`
-		AddressID    uint    `json:"addressID" validate:"required"`
+		Name          string  `json:"name" validate:"required"`
+		Area          uint    `json:"area"`
+		Power         uint    `json:"power" validate:"required"`
+		MaxCost       float64 `json:"maxCost"`
+		BuildingType  string  `json:"buildingType" validate:"required"`
+		Description   string  `json:"description"`
+		Province      string  `json:"province" validate:"required"`
+		City          string  `json:"city" validate:"required"`
+		StreetAddress string  `json:"streetAddress" validate:"required"`
+		PostalCode    string  `json:"postalCode" validate:"required"`
+		HouseNumber   string  `json:"houseNumber" validate:"required"`
+		Unit          uint    `json:"unit" validate:"required"`
 	}
 	params := controller.Validated[installationRequestParams](ctx)
 	ownerID, _ := ctx.Get(installationController.constants.Context.ID)
@@ -48,7 +54,16 @@ func (installationController *CustomerInstallationController) CreateInstallation
 		MaxCost:      params.MaxCost,
 		BuildingType: params.BuildingType,
 		Description:  params.Description,
-		AddressID:    params.AddressID,
+		Address: addressdto.CreateAddressRequest{
+			Province:      params.Province,
+			City:          params.City,
+			StreetAddress: params.StreetAddress,
+			PostalCode:    params.PostalCode,
+			HouseNumber:   params.HouseNumber,
+			Unit:          params.Unit,
+			OwnerID:       ownerID.(uint),
+			OwnerType:     "installation_requests",
+		},
 	}
 	installationController.installationService.CreateInstallationRequest(requestInfo)
 
