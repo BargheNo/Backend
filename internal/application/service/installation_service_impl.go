@@ -32,10 +32,17 @@ func NewInstallationService(
 	}
 }
 
-func (installationService *InstallationService) InstallationRequest(requestInfo installationdto.NewInstallationRequest) {
+func (installationService *InstallationService) CreateInstallationRequest(requestInfo installationdto.NewInstallationRequest) {
 	// get user by id from user service and check complete tag and if not completed -> 403 forbidden
+	// compare installed panels names to new request name
 	allowedStatus := []enum.InstallationRequestStatus{enum.Active}
-	inProgressReqs := installationService.installationRepository.FindUserByID(installationService.db, requestInfo.OwnerID, allowedStatus)
+	_, exist := installationService.installationRepository.FindOwnerRequestByName(installationService.db, requestInfo.OwnerID, allowedStatus, requestInfo.Name)
+	if exist {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(installationService.constants.Field.Phone, installationService.constants.Tag.AlreadyRegistered)
+		panic(conflictErrors)
+	}
+	inProgressReqs := installationService.installationRepository.FindOwnerRequests(installationService.db, requestInfo.OwnerID, allowedStatus)
 	if len(inProgressReqs) >= 5 {
 		rateLimitError := exception.NewConcurrentInstallLimitError("", 5, nil)
 		panic(rateLimitError)

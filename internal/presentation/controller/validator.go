@@ -3,7 +3,6 @@ package controller
 import (
 	"reflect"
 
-	"github.com/BargheNo/Backend/bootstrap"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -11,7 +10,7 @@ import (
 
 var validate *validator.Validate = validator.New()
 
-func Validated[T any](ctx *gin.Context, constants *bootstrap.Context) T {
+func Validated[T any](ctx *gin.Context) T {
 	var params T
 	if err := ctx.ShouldBindUri(&params); err != nil {
 

@@ -32,7 +32,7 @@ func (addressController *CustomerAddressController) CreateAddress(ctx *gin.Conte
 		HouseNumber   string `json:"houseNumber" validate:"required"`
 		Unit          uint   `json:"unit" validate:"required"`
 	}
-	params := controller.Validated[createAddressParams](ctx, &addressController.constants.Context)
+	params := controller.Validated[createAddressParams](ctx)
 	ownerID, _ := ctx.Get(addressController.constants.Context.ID)
 	addressRequestInfo := addressdto.CreateAddressRequest{
 		Province:      params.Province,

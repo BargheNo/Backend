@@ -23,7 +23,7 @@ func NewCustomerInstallationController(
 	}
 }
 
-func (installationController *CustomerInstallationController) PanelInstallationRequest(ctx *gin.Context) {
+func (installationController *CustomerInstallationController) CreateInstallationRequest(ctx *gin.Context) {
 	type installationRequestParams struct {
 		Name         string  `json:"name" validate:"required"`
 		Area         uint    `json:"area"`
@@ -33,7 +33,7 @@ func (installationController *CustomerInstallationController) PanelInstallationR
 		Description  string  `json:"description"`
 		AddressID    uint    `json:"addressID" validate:"required"`
 	}
-	params := controller.Validated[installationRequestParams](ctx, &installationController.constants.Context)
+	params := controller.Validated[installationRequestParams](ctx)
 	ownerID, _ := ctx.Get(installationController.constants.Context.ID)
 	requestInfo := installationdto.NewInstallationRequest{
 		OwnerID:      ownerID.(uint),
@@ -45,9 +45,17 @@ func (installationController *CustomerInstallationController) PanelInstallationR
 		Description:  params.Description,
 		AddressID:    params.AddressID,
 	}
-	installationController.installationService.InstallationRequest(requestInfo)
+	installationController.installationService.CreateInstallationRequest(requestInfo)
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.installationRequest")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (installationController *CustomerInstallationController) GetInstallationRequests(ctx *gin.Context) {
+	// type installationRequestsListParams struct {
+	// 	Description string `json:"description"`
+	// 	AddressID   uint   `json:"addressID" validate:"required"`
+	// }
+	// params := controller.Validated[installationRequestsListParams](ctx)
 }
