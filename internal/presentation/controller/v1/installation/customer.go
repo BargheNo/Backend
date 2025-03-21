@@ -1,6 +1,8 @@
 package installation
 
 import (
+	"strconv"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -10,15 +12,18 @@ import (
 
 type CustomerInstallationController struct {
 	constants           *bootstrap.Constants
+	pagination          *bootstrap.Pagination
 	installationService service.InstallationService
 }
 
 func NewCustomerInstallationController(
 	constants *bootstrap.Constants,
+	pagination *bootstrap.Pagination,
 	installationService service.InstallationService,
 ) *CustomerInstallationController {
 	return &CustomerInstallationController{
 		constants:           constants,
+		pagination:          pagination,
 		installationService: installationService,
 	}
 }
@@ -52,10 +57,23 @@ func (installationController *CustomerInstallationController) CreateInstallation
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (installationController *CustomerInstallationController) GetInstallationRequests(ctx *gin.Context) {
-	// type installationRequestsListParams struct {
-	// 	Description string `json:"description"`
-	// 	AddressID   uint   `json:"addressID" validate:"required"`
-	// }
-	// params := controller.Validated[installationRequestsListParams](ctx)
+func (installationController *CustomerInstallationController) GetOwnerInstallationRequests(ctx *gin.Context) {
+	ownerID, _ := ctx.Get(installationController.constants.Context.ID)
+	defaultPage, err := strconv.Atoi(installationController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(installationController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := params.GetOffsetLimit()
+	listInfo := installationdto.ListOwnerRequestsRequest{
+		OwnerID: ownerID.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+	requests := installationController.installationService.GetOwnerInstallationRequests(listInfo)
+	controller.Response(ctx, 200, "", requests)
 }

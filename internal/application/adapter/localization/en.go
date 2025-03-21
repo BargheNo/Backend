@@ -9,6 +9,7 @@ var English = map[string]interface{}{
 	"isAcceptTerms":   "terms and conditions",
 	"user":            "user",
 	"address":         "address",
+	"name":            "name",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",

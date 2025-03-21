@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -13,9 +14,15 @@ func NewInstallationRepository() *InstallationRepository {
 	return &InstallationRepository{}
 }
 
-func (repo *InstallationRepository) FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus) []*entity.InstallationRequest {
+func (repo *InstallationRepository) FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) []*entity.InstallationRequest {
 	var requests []*entity.InstallationRequest
-	result := db.GetDB().Where("owner_id = ? and status IN ?", ownerID, status).Find(&requests)
+	query := db.GetDB().Where("owner_id = ? and status IN ?", ownerID, status)
+
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+
+	result := query.Find(&requests)
 	if result.Error != nil {
 		panic(result.Error)
 	}
@@ -24,7 +31,7 @@ func (repo *InstallationRepository) FindOwnerRequests(db database.Database, owne
 
 func (repo *InstallationRepository) FindOwnerRequestByName(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, name string) (*entity.InstallationRequest, bool) {
 	var request *entity.InstallationRequest
-	result := db.GetDB().Where("owner_id = ? and status IN ? and name = ?", ownerID, status, name).Find(&request)
+	result := db.GetDB().Where("owner_id = ? and name = ? and status IN ?", ownerID, name, status).First(&request)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, false

@@ -57,11 +57,12 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		UserController: generalUserController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
+	pagination := ProvidePaginationConfig(container)
 	addressRepository := repositoryimpl.NewAddressRepository()
 	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
 	installationRepository := repositoryimpl.NewInstallationRepository()
 	installationService := serviceimpl.NewInstallationService(constants, addressService, installationRepository, postgresDatabase)
-	customerInstallationController := installation.NewCustomerInstallationController(constants, installationService)
+	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
@@ -85,7 +86,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		return nil, err
 	}
 	loggerMiddleware := middleware.NewLoggerMiddleware(loggerimplLogger)
-	metrics := ProvideMetrics(constants)
+	metrics := ProvideMetrics(container)
 	prometheusMetrics := metricsimpl.NewPrometheusMetrics(metrics)
 	prometheusMiddleware := middleware.NewPrometheusMiddleware(prometheusMetrics)
 	middlewares := &Middlewares{
@@ -157,8 +158,12 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
-func ProvideMetrics(container *bootstrap.Constants) *bootstrap.Metrics {
-	return &container.Metrics
+func ProvideMetrics(container *bootstrap.Config) *bootstrap.Metrics {
+	return &container.Constants.Metrics
+}
+
+func ProvidePaginationConfig(container *bootstrap.Config) *bootstrap.Pagination {
+	return &container.Env.Pagination
 }
 
 var ProviderSet = wire.NewSet(
@@ -181,6 +186,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSMSTemplates,
 	ProvideJWTKeysPath,
 	ProvideMetrics,
+	ProvidePaginationConfig,
 )
 
 type Database struct {

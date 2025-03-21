@@ -9,6 +9,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type InstallationService struct {
@@ -39,7 +40,7 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 	_, exist := installationService.installationRepository.FindOwnerRequestByName(installationService.db, requestInfo.OwnerID, allowedStatus, requestInfo.Name)
 	if exist {
 		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(installationService.constants.Field.Phone, installationService.constants.Tag.AlreadyRegistered)
+		conflictErrors.Add(installationService.constants.Field.Name, installationService.constants.Tag.AlreadyRegistered)
 		panic(conflictErrors)
 	}
 	inProgressReqs := installationService.installationRepository.FindOwnerRequests(installationService.db, requestInfo.OwnerID, allowedStatus)
@@ -47,8 +48,6 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 		rateLimitError := exception.NewConcurrentInstallLimitError("", 5, nil)
 		panic(rateLimitError)
 	}
-
-	address := installationService.addressService.GetAddress(requestInfo.AddressID)
 
 	request := &entity.InstallationRequest{
 		Name:         requestInfo.Name,
@@ -58,10 +57,30 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 		MaxCost:      requestInfo.MaxCost,
 		BuildingType: requestInfo.BuildingType,
 		OwnerID:      requestInfo.OwnerID,
-		Address:      *address,
+		AddressID:    requestInfo.AddressID,
 	}
 	err := installationService.installationRepository.CreateRequest(installationService.db, request)
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (installationService *InstallationService) GetOwnerInstallationRequests(listInfo installationdto.ListOwnerRequestsRequest) []installationdto.ListOwnerRequestsResponse {
+	allowedStatus := []enum.InstallationRequestStatus{enum.Active, enum.Cancelled, enum.Expired}
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	requests := installationService.installationRepository.FindOwnerRequests(
+		installationService.db, listInfo.OwnerID, allowedStatus, paginationModifier, sortingModifier)
+	response := make([]installationdto.ListOwnerRequestsResponse, len(requests))
+	for i, request := range requests {
+		address := installationService.addressService.GetAddress(request.AddressID)
+		response[i] = installationdto.ListOwnerRequestsResponse{
+			ID:          request.ID,
+			Name:        request.Name,
+			Status:      request.Status.String(),
+			CreatedTime: request.CreatedAt,
+			Address:     address,
+		}
+	}
+	return response
 }

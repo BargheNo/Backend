@@ -10,3 +10,9 @@ type NewInstallationRequest struct {
 	Description  string
 	AddressID    uint
 }
+
+type ListOwnerRequestsRequest struct {
+	OwnerID uint
+	Offset  int
+	Limit   int
+}

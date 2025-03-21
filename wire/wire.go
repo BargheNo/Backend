@@ -135,8 +135,12 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
-func ProvideMetrics(container *bootstrap.Constants) *bootstrap.Metrics {
-	return &container.Metrics
+func ProvideMetrics(container *bootstrap.Config) *bootstrap.Metrics {
+	return &container.Constants.Metrics
+}
+
+func ProvidePaginationConfig(container *bootstrap.Config) *bootstrap.Pagination {
+	return &container.Env.Pagination
 }
 
 var ProviderSet = wire.NewSet(
@@ -159,6 +163,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSMSTemplates,
 	ProvideJWTKeysPath,
 	ProvideMetrics,
+	ProvidePaginationConfig,
 )
 
 type Database struct {

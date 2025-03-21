@@ -9,6 +9,7 @@ var Persian = map[string]interface{}{
 	"isAcceptTerms":   "تایید شرایط و مقررات",
 	"user":            "کاربر",
 	"address":         "آدرس",
+	"name":            "نام",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",

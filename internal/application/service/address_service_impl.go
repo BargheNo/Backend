@@ -53,13 +53,22 @@ func (addressService *AddressService) CreateAddress(addressInfo addressdto.Creat
 	}
 }
 
-func (addressService *AddressService) GetAddress(addressID uint) *entity.Address {
+func (addressService *AddressService) GetAddress(addressID uint) addressdto.AddressResponse {
 	address, exist := addressService.addressRepository.GetAddressByID(addressService.db, addressID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
 		panic(notFoundError)
 	}
-	return address
+	response := addressdto.AddressResponse{
+		ID:            address.ID,
+		Province:      address.Province,
+		City:          address.City,
+		StreetAddress: address.StreetAddress,
+		PostalCode:    address.PostalCode,
+		HouseNumber:   address.HouseNumber,
+		Unit:          address.Unit,
+	}
+	return response
 }
 
 func (addressService *AddressService) GetAddresses(addressInfo addressdto.GetOwnerAddressesRequest) []addressdto.AddressResponse {
