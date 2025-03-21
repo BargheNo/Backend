@@ -3,7 +3,7 @@ package enums
 type BidStatus uint
 
 const (
-	Pending   BidStatus = iota + 1
+	Pending BidStatus = iota + 1
 	Accepted
 	Expired
 )

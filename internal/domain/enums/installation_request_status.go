@@ -3,7 +3,7 @@ package enums
 type InstallationRequestStatus uint
 
 const (
-	Open	InstallationRequestStatus = iota + 1
+	Open InstallationRequestStatus = iota + 1
 	Closed
 )
 

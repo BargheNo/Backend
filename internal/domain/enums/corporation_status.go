@@ -3,7 +3,7 @@ package enums
 type CorporationStatus uint
 
 const (
-	Approved   CorporationStatus = iota + 1
+	Approved CorporationStatus = iota + 1
 	AwaitingApproval
 	Rejected
 )

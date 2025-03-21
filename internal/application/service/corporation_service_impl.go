@@ -112,15 +112,15 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 }
 
 func (corporationService *CorporationService) Login(loginInfo corporationdto.LoginRequest) corporationdto.CorporationInfoResponse {
+	var notFoundError exception.NotFoundError
 	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, loginInfo.CIN)
-	var conflictErrors exception.ConflictErrors
 	if !exist {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
+		notFoundError = exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
 	}
 	if corporation.Status != enums.Approved {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
+		notFoundError = exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(corporation.Password), []byte(loginInfo.Password))
@@ -140,9 +140,8 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 func (corporationService *CorporationService) UpdateContactInfo(corporationID uint, contactInfo corporationdto.ContactInfoRequest) {
 	corporation, exist := corporationService.GetCorporationByID(corporationID)
 	if !exist {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
 	}
 
 	newContactInformation := &entity.ContactInformation{
@@ -165,10 +164,9 @@ func (corporationService *CorporationService) UpdateContactInfo(corporationID ui
 
 func (corporationService *CorporationService) AddAddress(address corporationdto.AddressRequest) {
 	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
-	var conflictErrors exception.ConflictErrors
 	if !exist {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
 	}
 
 	newAddress := &entity.Address{
@@ -190,10 +188,9 @@ func (corporationService *CorporationService) AddAddress(address corporationdto.
 
 func (corporationService *CorporationService) EditAddress(addressID uint, address corporationdto.AddressRequest) {
 	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
-	var conflictErrors exception.ConflictErrors
 	if !exist {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
 	}
 
 	newAddress := &entity.Address{
@@ -220,10 +217,9 @@ func (corporationService *CorporationService) EditAddress(addressID uint, addres
 
 func (corporationService *CorporationService) DeleteAddress(corporationID uint, addressID uint) {
 	corporation, exist := corporationService.GetCorporationByID(corporationID)
-	var conflictErrors exception.ConflictErrors
 	if !exist {
-		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.NotRegistered)
-		panic(conflictErrors)
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
 	}
 
 	for i, addr := range corporation.Addresses {
