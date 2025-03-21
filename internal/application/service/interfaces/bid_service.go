@@ -5,8 +5,8 @@ import (
 )
 
 type BidService interface {
-	GetInstallationRequests(corporationID uint, page int, pageSize int, sortBy string, ascending bool) []biddto.InstallationRequestResponse
+	GetInstallationRequests(corporationID uint, page int, pageSize int, sortBy string, dir string) []biddto.InstallationRequestResponse
 	SetBid(bidInfo biddto.SetBidRequest)
 	CancelBid(bidInfo biddto.CancelBidRequest)
-	GetBids(corporationID uint, page int, pageSize int, sortBy string, ascending bool) []biddto.BidsResponse
+	GetBids(corporationID uint, page int, pageSize int, sortBy string, dir string) []biddto.BidsResponse
 }

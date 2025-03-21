@@ -35,11 +35,13 @@ func NewBidService(
 	}
 }
 
-func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, ascending bool) []biddto.InstallationRequestResponse {
+func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, dir string) []biddto.InstallationRequestResponse {
 	offset := (page - 1) * pageSize
-	dir := "ASC"
-	if !ascending {
-		dir = "DESC"
+	var order string
+	if sortBy == "" {
+		order = "RANDOM()"
+	} else {
+		order = sortBy + " " + dir
 	}
 	_, exist := bidService.corporationService.GetCorporationByID(corporationId)
 	if !exist {
@@ -47,12 +49,7 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 		panic(notFoundError)
 	}
 	var installationRequests []*entity.InstallationRequest
-
-	if sortBy != "" {
-		installationRequests = bidService.bidRepository.GetInstallationRequests(bidService.db, enums.Open, corporationId, offset, pageSize, sortBy, dir)
-	} else {
-		installationRequests = bidService.bidRepository.GetRandomInstallationRequests(bidService.db, enums.Open, corporationId, offset, pageSize)
-	}
+	installationRequests = bidService.bidRepository.GetInstallationRequests(bidService.db, enums.Open, corporationId, offset, pageSize, order)
 	installationRequestResponses := make([]biddto.InstallationRequestResponse, len(installationRequests))
 	for i, request := range installationRequests {
 		installationRequestResponses[i] = biddto.InstallationRequestResponse{
@@ -146,24 +143,21 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 	}
 }
 
-func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int, sortBy string, ascending bool) []biddto.BidsResponse {
+func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int, sortBy string, dir string) []biddto.BidsResponse {
 	offset := (page - 1) * pageSize
-	dir := "ASC"
-	if !ascending {
-		dir = "DESC"
+	var order string
+	if sortBy == "" {
+		order = "created_at" + " " + dir
+	} else {
+		order = sortBy + " " + dir
 	}
-
 	_, exist := bidService.corporationService.GetCorporationByID(corporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
 
-	if sortBy == "" {
-		sortBy = "created_at"
-	}
-
-	bids := bidService.bidRepository.GetBids(bidService.db, corporationID, offset, pageSize, sortBy, dir)
+	bids := bidService.bidRepository.GetBids(bidService.db, corporationID, offset, pageSize, order)
 	bidResponses := make([]biddto.BidsResponse, len(bids))
 	for i, bid := range bids {
 		bidResponses[i] = biddto.BidsResponse{

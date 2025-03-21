@@ -35,7 +35,8 @@ var Persian = map[string]interface{}{
 		"awaitingApproval":       "حساب شما در انتظار تایید ادمین است.",
 		"rejected":               "حساب شما توسط ادمین رد شده است.",
 		"notExist":               "این {0} وجود ندارد.",
-		"alreadyExist":            "این {0} قبلا وجود داشته است.",
+		"alreadyExist":           "این {0} قبلا وجود داشته است.",
+		"notFound":               "این {0} پیدا نشد.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":            "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",

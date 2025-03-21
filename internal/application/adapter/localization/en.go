@@ -35,7 +35,8 @@ var English = map[string]interface{}{
 		"awaitingApproval":       "Your account is awaiting admin approval.",
 		"rejected":               "Your account has been rejected by admin.",
 		"notExist":               "This {0} does not exist.",
-		"alreadyExist":            "This {0} already exists.",
+		"alreadyExist":           "This {0} already exists.",
+		"notFound":               "This {0} not found.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":            "Registration Successful! Please check your messages to verify your account and complete the registration process.",
