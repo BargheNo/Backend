@@ -38,3 +38,7 @@ type ChangePasswordRequest struct {
 	NewPassword     string
 	ConfirmPassword string
 }
+
+type IDRequest struct {
+	CorporationID uint
+}

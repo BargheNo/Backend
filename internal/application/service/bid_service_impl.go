@@ -48,8 +48,7 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
-	var installationRequests []*entity.InstallationRequest
-	installationRequests = bidService.bidRepository.GetInstallationRequests(bidService.db, enums.Open, corporationId, offset, pageSize, order)
+	installationRequests := bidService.bidRepository.GetInstallationRequests(bidService.db, enums.Open, corporationId, offset, pageSize, order)
 	installationRequestResponses := make([]biddto.InstallationRequestResponse, len(installationRequests))
 	for i, request := range installationRequests {
 		installationRequestResponses[i] = biddto.InstallationRequestResponse{

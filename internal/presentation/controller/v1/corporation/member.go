@@ -29,6 +29,18 @@ func NewMemberCorporationController(
 	}
 }
 
+func (corporationController *MemberCorporationController) GetCorporationInfo(ctx *gin.Context) {
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	corporationId := corporationdto.IDRequest{
+		CorporationID: corporationID.(uint),
+	}
+	corporationInfo := corporationController.corporationService.GetCorporationInfo(corporationId)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.getCorporationInfo")
+	controller.Response(ctx, 200, message, corporationInfo)
+}
+
 func (corporationController *MemberCorporationController) ChangePassword(ctx *gin.Context) {
 	type changePasswordParams struct {
 		NewPassword     string `json:"newPassword" validate:"required"`

@@ -111,7 +111,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 	}
 }
 
-func (corporationService *CorporationService) Login(loginInfo corporationdto.LoginRequest) corporationdto.CorporationInfoResponse {
+func (corporationService *CorporationService) Login(loginInfo corporationdto.LoginRequest) corporationdto.CorporationLoginResponse {
 	var notFoundError exception.NotFoundError
 	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, loginInfo.CIN)
 	if !exist {
@@ -130,7 +130,7 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 	}
 
 	accessToken, refreshToken := corporationService.JWTService.GenerateToken(corporation.ID)
-	return corporationdto.CorporationInfoResponse{
+	return corporationdto.CorporationLoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		Name:         corporation.Name,
@@ -255,5 +255,46 @@ func (corporationService *CorporationService) DeleteAddress(corporationID uint, 
 	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func (corporationService *CorporationService) GetCorporationInfo(idRequest corporationdto.IDRequest) corporationdto.CorporationInfoResponse {
+	corporation, exist := corporationService.GetCorporationByID(idRequest.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+
+	contactInfo := corporationdto.ContactInfoResponse{
+		Phone:     corporation.ContactInformation.Phone,
+		Email:     corporation.ContactInformation.Email,
+		Eitaa:     corporation.ContactInformation.Eitaa,
+		Bale:      corporation.ContactInformation.Bale,
+		Website:   corporation.ContactInformation.Website,
+		WhatsApp:  corporation.ContactInformation.WhatsApp,
+		Instagram: corporation.ContactInformation.Instagram,
+		Telegram:  corporation.ContactInformation.Telegram,
+		Linkedin:  corporation.ContactInformation.Linkedin,
+	}
+	addresses := make([]corporationdto.AddressResponse, len(corporation.Addresses))
+	for i, addr := range corporation.Addresses {
+		addresses[i] = corporationdto.AddressResponse{
+			ID:             addr.ID,
+			Province:       addr.Province,
+			City:           addr.City,
+			StreetAddress:  addr.StreetAddress,
+			PostalCode:     addr.PostalCode,
+			BuildingNumber: addr.BuildingNumber,
+			Unit:           addr.Unit,
+		}
+	}
+
+	return corporationdto.CorporationInfoResponse{
+		ID:          corporation.ID,
+		Name:        corporation.Name,
+		CIN:         corporation.CIN,
+		Status:      corporation.Status.String(),
+		ContactInfo: contactInfo,
+		Addresses:   addresses,
 	}
 }
