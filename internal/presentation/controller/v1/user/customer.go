@@ -28,7 +28,7 @@ func (userController *CustomerUserController) ResetPassword(ctx *gin.Context) {
 		Password        string `json:"password" validate:"required"`
 		ConfirmPassword string `json:"confirmPassword" validate:"required,eqfield=Password"`
 	}
-	params := controller.Validated[resetPasswordParams](ctx, &userController.constants.Context)
+	params := controller.Validated[resetPasswordParams](ctx)
 	userID, _ := ctx.Get(userController.constants.Context.ID)
 	resetPasswordInfo := userdto.ResetPasswordRequest{
 		ID:       userID.(uint),

@@ -45,8 +45,8 @@ func (recovery RecoveryMiddleware) handleRecoveredError(ctx *gin.Context, err er
 		handleValidationError(ctx, validationErrors, recovery.constants.Context.Translator)
 	} else if bindingError, ok := err.(exception.BindingError); ok {
 		handleBindingError(ctx, bindingError, recovery.constants.Context.Translator)
-	} else if _, ok := err.(exception.RateLimitError); ok {
-		handleRateLimitError(ctx, recovery.constants.Context.Translator)
+	} else if rateLimitError, ok := err.(*exception.RateLimitError); ok {
+		handleRateLimitError(ctx, *rateLimitError, recovery.constants.Context.Translator)
 	} else if conflictErrors, ok := err.(exception.ConflictErrors); ok {
 		handleConflictError(ctx, conflictErrors, recovery.constants.Context.Translator)
 	} else if authError, ok := err.(*exception.AuthError); ok {
@@ -87,9 +87,17 @@ func handleBindingError(ctx *gin.Context, bindingError exception.BindingError, t
 	controller.Response(ctx, 400, message, nil)
 }
 
-func handleRateLimitError(ctx *gin.Context, transKey string) {
+func handleRateLimitError(ctx *gin.Context, rateLimitError exception.RateLimitError, transKey string) {
 	trans := controller.GetTranslator(ctx, transKey)
-	message, _ := trans.Translate("errors.rateLimitExceed")
+
+	message, _ := trans.Translate(genericError)
+	switch rateLimitError.Type {
+	case exception.ErrorTypeRequestRateLimit:
+		message, _ = trans.Translate("errors.rateLimit")
+	case exception.ErrorTypeConcurrentInstallLimit:
+		message, _ = trans.Translate("errors.installRateLimit")
+	}
+
 	controller.Response(ctx, 429, message, nil)
 }
 

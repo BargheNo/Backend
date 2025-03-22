@@ -17,4 +17,10 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		auth.POST("/confirm-otp", app.Controllers.General.UserController.ConfirmOTP)
 		auth.POST("/refresh", app.Controllers.General.UserController.RefreshToken)
 	}
+
+	addresses := routerGroup.Group("/address")
+	{
+		addresses.GET("/province", app.Controllers.General.AddressController.GetProvince)
+		addresses.GET("/province/:provinceID/city", app.Controllers.General.AddressController.GetProvinceCities)
+	}
 }

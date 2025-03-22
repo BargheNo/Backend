@@ -32,7 +32,7 @@ func (userController *GeneralUserController) BasicRegister(ctx *gin.Context) {
 		ConfirmPassword string `json:"confirmPassword" validate:"required,eqfield=Password"`
 		IsAcceptTerms   bool   `json:"isAcceptTerms" validate:"required,eq=true"`
 	}
-	params := controller.Validated[registerParams](ctx, &userController.constants.Context)
+	params := controller.Validated[registerParams](ctx)
 	registerInfo := userdto.BasicRegisterRequest{
 		FirstName: params.FirstName,
 		LastName:  params.LastName,
@@ -51,7 +51,7 @@ func (userController *GeneralUserController) VerifyPhone(ctx *gin.Context) {
 		Phone string `json:"phone" validate:"required,e164"`
 		OTP   string `json:"otp" validate:"required"`
 	}
-	params := controller.Validated[verifyPhoneParams](ctx, &userController.constants.Context)
+	params := controller.Validated[verifyPhoneParams](ctx)
 	verifyOTPInfo := userdto.VerifyPhoneRequest{
 		Phone: params.Phone,
 		OTP:   params.OTP,
@@ -72,7 +72,7 @@ func (userController *GeneralUserController) Login(ctx *gin.Context) {
 		Phone    string `json:"phone" validate:"required,e164"`
 		Password string `json:"password" validate:"required"`
 	}
-	params := controller.Validated[verifyPhoneParams](ctx, &userController.constants.Context)
+	params := controller.Validated[verifyPhoneParams](ctx)
 	verifyOTPInfo := userdto.LoginRequest{
 		Phone:    params.Phone,
 		Password: params.Password,
@@ -88,7 +88,7 @@ func (userController *GeneralUserController) ForgotPassword(ctx *gin.Context) {
 	type forgotPasswordParams struct {
 		Phone string `json:"phone" validate:"required,e164"`
 	}
-	params := controller.Validated[forgotPasswordParams](ctx, &userController.constants.Context)
+	params := controller.Validated[forgotPasswordParams](ctx)
 	forgotPasswordInfo := userdto.ForgotPasswordRequest{
 		Phone: params.Phone,
 	}
@@ -104,7 +104,7 @@ func (userController *GeneralUserController) ConfirmOTP(ctx *gin.Context) {
 		Phone string `json:"phone" validate:"required,e164"`
 		OTP   string `json:"otp" validate:"required"`
 	}
-	params := controller.Validated[verifyOTPParams](ctx, &userController.constants.Context)
+	params := controller.Validated[verifyOTPParams](ctx)
 	verifyPhoneInfo := userdto.VerifyPhoneRequest{
 		Phone: params.Phone,
 		OTP:   params.OTP,

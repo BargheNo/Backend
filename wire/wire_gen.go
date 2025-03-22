@@ -22,6 +22,9 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
+	"github.com/BargheNo/Backend/internal/infrastructure/seed"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -51,12 +54,23 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	userRepository := repositoryimpl.NewUserRepository()
 	userService := serviceimpl.NewUserService(constants, otpService, smsService, jwtService, userRepository, userCacheRepository, postgresDatabase)
 	generalUserController := user.NewGeneralUserController(constants, userService)
+	addressRepository := repositoryimpl.NewAddressRepository()
+	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
+	generalAddressController := address.NewGeneralAddressController(constants, addressService)
 	generalControllers := &GeneralControllers{
-		UserController: generalUserController,
+		UserController:    generalUserController,
+		AddressController: generalAddressController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
+	pagination := ProvidePaginationConfig(container)
+	installationRepository := repositoryimpl.NewInstallationRepository()
+	installationService := serviceimpl.NewInstallationService(constants, addressService, installationRepository, postgresDatabase)
+	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
+	customerAddressController := address.NewCustomerAddressController(constants, addressService)
 	customerControllers := &CustomerControllers{
-		UserController: customerUserController,
+		UserController:         customerUserController,
+		InstallationController: customerInstallationController,
+		AddressController:      customerAddressController,
 	}
 	controllers := &Controllers{
 		General:  generalControllers,
@@ -75,7 +89,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		return nil, err
 	}
 	loggerMiddleware := middleware.NewLoggerMiddleware(loggerimplLogger)
-	metrics := ProvideMetrics(constants)
+	metrics := ProvideMetrics(container)
 	prometheusMetrics := metricsimpl.NewPrometheusMetrics(metrics)
 	prometheusMiddleware := middleware.NewPrometheusMiddleware(prometheusMetrics)
 	middlewares := &Middlewares{
@@ -87,7 +101,11 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		Logger:         loggerMiddleware,
 		Prometheus:     prometheusMiddleware,
 	}
-	application := NewApplication(wireDatabase, controllers, middlewares)
+	addressSeeder := seed.NewAddressSeeder(addressRepository, postgresDatabase)
+	seeds := &Seeds{
+		AddressSeeder: addressSeeder,
+	}
+	application := NewApplication(wireDatabase, controllers, middlewares, seeds)
 	return application, nil
 }
 
@@ -95,21 +113,23 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 
 var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.NewRedisDatabase, wire.Bind(new(database.Database), new(*database.PostgresDatabase)), wire.Bind(new(database.Cache), new(*database.RedisDatabase)), wire.Struct(new(Database), "*"))
 
-var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, cacherepositoryimpl.NewUserCacheRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)))
+var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, repositoryimpl.NewInstallationRepository, repositoryimpl.NewAddressRepository, cacherepositoryimpl.NewUserCacheRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)), wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)))
 
-var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)))
+var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, serviceimpl.NewInstallationService, serviceimpl.NewAddressService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)), wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)))
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
 
-var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wire.Struct(new(GeneralControllers), "*"))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, wire.Struct(new(CustomerControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
 var MetricsProviderSet = wire.NewSet(metricsimpl.NewPrometheusMetrics, wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)))
 
 var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, wire.Struct(new(Middlewares), "*"))
+
+var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, wire.Struct(new(Seeds), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -147,8 +167,12 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
-func ProvideMetrics(container *bootstrap.Constants) *bootstrap.Metrics {
-	return &container.Metrics
+func ProvideMetrics(container *bootstrap.Config) *bootstrap.Metrics {
+	return &container.Constants.Metrics
+}
+
+func ProvidePaginationConfig(container *bootstrap.Config) *bootstrap.Pagination {
+	return &container.Env.Pagination
 }
 
 var ProviderSet = wire.NewSet(
@@ -161,6 +185,7 @@ var ProviderSet = wire.NewSet(
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	MetricsProviderSet,
+	SeederProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -171,6 +196,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSMSTemplates,
 	ProvideJWTKeysPath,
 	ProvideMetrics,
+	ProvidePaginationConfig,
 )
 
 type Database struct {
@@ -179,11 +205,14 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController *user.GeneralUserController
+	UserController    *user.GeneralUserController
+	AddressController *address.GeneralAddressController
 }
 
 type CustomerControllers struct {
-	UserController *user.CustomerUserController
+	UserController         *user.CustomerUserController
+	InstallationController *installation.CustomerInstallationController
+	AddressController      *address.CustomerAddressController
 }
 
 type Controllers struct {
@@ -201,19 +230,26 @@ type Middlewares struct {
 	Prometheus     *middleware.PrometheusMiddleware
 }
 
+type Seeds struct {
+	AddressSeeder *seed.AddressSeeder
+}
+
 type Application struct {
 	Database    *Database
 	Controllers *Controllers
 	Middlewares *Middlewares
+	Seeds       *Seeds
 }
 
 func NewApplication(database2 *Database,
 	controllers *Controllers,
 	middlewares *Middlewares,
+	seeds *Seeds,
 ) *Application {
 	return &Application{
 		Database:    database2,
 		Controllers: controllers,
 		Middlewares: middlewares,
+		Seeds:       seeds,
 	}
 }

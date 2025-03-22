@@ -20,12 +20,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	app.Database.DB.GetDB().AutoMigrate(
 		&entity.Address{},
+		&entity.City{},
+		&entity.InstallationRequest{},
 		&entity.Permission{},
+		&entity.Province{},
 		&entity.Role{},
 		&entity.User{},
 	)
+
+	app.Seeds.AddressSeeder.SeedProvincesAndCities()
 
 	routes.Run(ginEngine, app)
 

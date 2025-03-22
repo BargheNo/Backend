@@ -14,6 +14,7 @@ type Env struct {
 	PrimaryRedis Redis
 	OTP          OTP
 	SMSGateway   SMSGateway
+	Pagination   Pagination
 }
 
 type Server struct {
@@ -57,6 +58,11 @@ type SMSGateway struct {
 	APIKey string
 }
 
+type Pagination struct {
+	DefaultPage     string
+	DefaultPageSize string
+}
+
 func NewEnvironments() *Env {
 	// godotenv.Load("../../.env")
 	godotenv.Load(".env")
@@ -94,6 +100,10 @@ func NewEnvironments() *Env {
 		},
 		SMSGateway: SMSGateway{
 			APIKey: os.Getenv("SMS_GATEWAY_API_KEY"),
+		},
+		Pagination: Pagination{
+			DefaultPage:     os.Getenv("DEFAULT_PAGE"),
+			DefaultPageSize: os.Getenv("DEFAULT_PAGE_SIZE"),
 		},
 	}
 }
