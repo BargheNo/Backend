@@ -51,5 +51,6 @@ var English = map[string]interface{}{
 		"addAddress":              "Address added successfully.",
 		"editAddress":             "Address edited successfully.",
 		"deleteAddress":           "Address deleted successfully.",
+		"changePassword":          "Password changed successfully.",
 	},
 }

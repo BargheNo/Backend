@@ -137,6 +137,30 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 	}
 }
 
+func (corporationService *CorporationService) ChangePassword(changePasswordRequest corporationdto.ChangePasswordRequest) {
+	corporation, exist := corporationService.GetCorporationByID(changePasswordRequest.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+
+	err := corporationService.passwordValidation(changePasswordRequest.NewPassword)
+	if err != nil {
+		panic(err)
+	}
+
+	hashedPassword, err := hashPassword(changePasswordRequest.NewPassword)
+	if err != nil {
+		panic(err)
+	}
+
+	corporation.Password = hashedPassword
+	err = corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (corporationService *CorporationService) UpdateContactInfo(corporationID uint, contactInfo corporationdto.ContactInfoRequest) {
 	corporation, exist := corporationService.GetCorporationByID(corporationID)
 	if !exist {

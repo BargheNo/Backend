@@ -32,3 +32,9 @@ type AddressRequest struct {
 	BuildingNumber string
 	Unit           uint
 }
+
+type ChangePasswordRequest struct {
+	CorporationID   uint
+	NewPassword     string
+	ConfirmPassword string
+}

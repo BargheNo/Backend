@@ -29,6 +29,25 @@ func NewMemberCorporationController(
 	}
 }
 
+func (corporationController *MemberCorporationController) ChangePassword(ctx *gin.Context) {
+	type changePasswordParams struct {
+		NewPassword     string `json:"newPassword" validate:"required"`
+		ConfirmPassword string `json:"confirmPassword" validate:"required,eqfield=NewPassword"`
+	}
+	params := controller.Validated[changePasswordParams](ctx, &corporationController.constants.Context)
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
+	changePasswordRequest := corporationdto.ChangePasswordRequest{
+		CorporationID:   corporationID.(uint),
+		NewPassword:     params.NewPassword,
+		ConfirmPassword: params.ConfirmPassword,
+	}
+	corporationController.corporationService.ChangePassword(changePasswordRequest)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.changePassword")
+	controller.Response(ctx, 200, message, nil)
+}
+
 func (corporationController *MemberCorporationController) UpdateContactInfo(ctx *gin.Context) {
 	type addContactInfoParams struct {
 		Phone     string `json:"phone"`
@@ -59,7 +78,7 @@ func (corporationController *MemberCorporationController) UpdateContactInfo(ctx 
 	corporationController.corporationService.UpdateContactInfo(corporationID.(uint), contactInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.UpdateContactInfo")
+	message, _ := trans.Translate("successMessage.updateContactInfo")
 	controller.Response(ctx, 200, message, nil)
 
 }
@@ -87,7 +106,7 @@ func (corporationController *MemberCorporationController) AddAddress(ctx *gin.Co
 	corporationController.corporationService.AddAddress(address)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.AddAddress")
+	message, _ := trans.Translate("successMessage.addAddress")
 	controller.Response(ctx, 200, message, nil)
 }
 
@@ -116,7 +135,7 @@ func (corporationController *MemberCorporationController) EditAddress(ctx *gin.C
 	corporationController.corporationService.EditAddress(params.AddressID, address)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.EditAddress")
+	message, _ := trans.Translate("successMessage.editAddress")
 	controller.Response(ctx, 200, message, nil)
 }
 
@@ -129,7 +148,7 @@ func (corporationController *MemberCorporationController) DeleteAddress(ctx *gin
 	corporationController.corporationService.DeleteAddress(corporationID.(uint), params.AddressID)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.DeleteAddress")
+	message, _ := trans.Translate("successMessage.deleteAddress")
 	controller.Response(ctx, 200, message, nil)
 }
 
@@ -140,7 +159,7 @@ func (corporationController *MemberCorporationController) GetInstallationRequest
 	installation_requests := corporationController.BidService.GetInstallationRequests(corporationID.(uint), pagination.Page, pagination.PageSize, sortparams.SortBy, sortparams.Dir)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.GetInstallationRequests")
+	message, _ := trans.Translate("successMessage.getInstallationRequests")
 	controller.Response(ctx, 200, message, installation_requests)
 }
 
@@ -171,7 +190,7 @@ func (corporationController *MemberCorporationController) SetBid(ctx *gin.Contex
 	corporationController.BidService.SetBid(bidInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.SetBid")
+	message, _ := trans.Translate("successMessage.setBid")
 	controller.Response(ctx, 200, message, nil)
 }
 
@@ -190,7 +209,7 @@ func (corporationController *MemberCorporationController) CancelBid(ctx *gin.Con
 	corporationController.BidService.CancelBid(bidInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.CancelBid")
+	message, _ := trans.Translate("successMessage.cancelBid")
 	controller.Response(ctx, 200, message, nil)
 }
 
@@ -201,6 +220,6 @@ func (corporationController *MemberCorporationController) GetBids(ctx *gin.Conte
 	bids := corporationController.BidService.GetBids(corporationID.(uint), pagination.Page, pagination.PageSize, sortparams.SortBy, sortparams.Dir)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.GetBids")
+	message, _ := trans.Translate("successMessage.getBids")
 	controller.Response(ctx, 200, message, bids)
 }

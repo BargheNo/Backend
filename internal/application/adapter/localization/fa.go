@@ -51,5 +51,6 @@ var Persian = map[string]interface{}{
 		"addAddress":              "آدرس با موفقیت اضافه شد.",
 		"editAddress":             "آدرس با موفقیت ویرایش شد.",
 		"deleteAddress":           "آدرس با موفقیت حذف شد.",
+		"changePassword":          "رمز عبور با موفقیت تغییر کرد.",
 	},
 }

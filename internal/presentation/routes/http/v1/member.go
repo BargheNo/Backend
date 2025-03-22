@@ -8,6 +8,7 @@ import (
 func SetupMemberRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	corp := routerGroup.Group("/corp")
 	{
+		corp.POST("/change-password", app.Controllers.Member.CorporationController.ChangePassword)
 		corp.POST("/update_contact_info", app.Controllers.Member.CorporationController.UpdateContactInfo)
 		corp.GET("/installation_requests", app.Controllers.Member.CorporationController.GetInstallationRequests)
 
