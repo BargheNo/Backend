@@ -29,6 +29,10 @@ func main() {
 		&entity.Province{},
 		&entity.Role{},
 		&entity.User{},
+		&entity.Corporation{},
+		&entity.ContactInformation{},
+		&entity.InstallationRequest{},
+		&entity.Bid{},
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()

@@ -30,7 +30,7 @@ func (userController *GeneralUserController) BasicRegister(ctx *gin.Context) {
 		Phone           string `json:"phone" validate:"required,e164"`
 		Password        string `json:"password" validate:"required"`
 		ConfirmPassword string `json:"confirmPassword" validate:"required,eqfield=Password"`
-		IsAcceptTerms   bool   `json:"isAcceptTerms" validate:"required,eq=true"`
+		AcceptedTerms   bool   `json:"acceptedTerms" validate:"required,eq=true"`
 	}
 	params := controller.Validated[registerParams](ctx)
 	registerInfo := userdto.BasicRegisterRequest{

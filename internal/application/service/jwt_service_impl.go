@@ -34,7 +34,7 @@ func NewJWTService(
 func (jwtService *JWTService) GenerateToken(userID uint) (string, string) {
 	accessTokenClaims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(time.Minute * 15).Unix(),
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
 		"iat": time.Now().Unix(),
 	}
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessTokenClaims)

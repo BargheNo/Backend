@@ -31,14 +31,18 @@ type RedisKey struct {
 }
 
 type ErrorField struct {
-	User     string
-	Phone    string
-	Password string
-	OTP      string
-	Address  string
-	Name     string
-	Province string
-	City     string
+	User                string
+	Phone               string
+	Password            string
+	OTP                 string
+	Corporation         string
+	CIN                 string
+	InstallationRequest string
+	Bid                 string
+	Address             string
+	Name                string
+	Province            string
+	City                string
 }
 
 type ErrorTag struct {
@@ -48,14 +52,18 @@ type ErrorTag struct {
 	ContainsUppercase      string
 	ContainsNumber         string
 	ContainsSpecialChar    string
-	OTPExpired             string
-	InvalidOTP             string
+	Expired                string
+	Invalid                string
 	NotRegistered          string
 	NotVerified            string
 	InvalidAuthCredentials string
 	ExpiredAuthToken       string
 	InvalidAuthToken       string
 	Unauthorized           string
+	AwaitingApproval       string
+	Rejected               string
+	NotExist               string
+	AlreadyExist           string
 }
 
 type SMSTemplates struct {
@@ -92,14 +100,18 @@ func NewConstants() *Constants {
 			Fatal: "fatal",
 		},
 		Field: ErrorField{
-			User:     "user",
-			Phone:    "phone",
-			Password: "password",
-			OTP:      "otp",
-			Address:  "address",
-			Name:     "name",
-			Province: "province",
-			City:     "city",
+			User:                "user",
+			Phone:               "phone",
+			Password:            "password",
+			OTP:                 "otp",
+			Corporation:         "corporation",
+			CIN:                 "cin",
+			InstallationRequest: "installation_request",
+			Bid:                 "bid",
+			Address:             "address",
+			Name:                "name",
+			Province:            "province",
+			City:                "city",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -108,14 +120,18 @@ func NewConstants() *Constants {
 			ContainsUppercase:      "containsUppercase",
 			ContainsNumber:         "containsNumber",
 			ContainsSpecialChar:    "containsSpecialChar",
-			OTPExpired:             "otpExpired",
-			InvalidOTP:             "invalidOTP",
+			Expired:                "Expired",
+			Invalid:                "invalid",
 			NotRegistered:          "notRegistered",
 			NotVerified:            "notVerified",
 			InvalidAuthCredentials: "invalidAuthCredentials",
 			ExpiredAuthToken:       "expiredAuthToken",
 			InvalidAuthToken:       "invalidAuthToken",
 			Unauthorized:           "unauthorized",
+			AwaitingApproval:       "awaitingApproval",
+			Rejected:               "rejected",
+			NotExist:               "notExist",
+			AlreadyExist:           "alreadyExist",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

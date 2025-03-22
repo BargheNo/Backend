@@ -19,12 +19,14 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/metrics"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/repository/redis"
+	"github.com/BargheNo/Backend/internal/infrastructure/cin"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -57,8 +59,12 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	addressRepository := repositoryimpl.NewAddressRepository()
 	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
 	generalAddressController := address.NewGeneralAddressController(constants, addressService)
+	corporationRepository := repositoryimpl.NewCorporationRepository()
+	cinService := cinimpl.NewCINService()
+	corporationService := serviceimpl.NewCorporationService(constants, jwtService, postgresDatabase, corporationRepository, cinService)
+	generalCorporationController := corporation.NewGeneralCorporationController(constants, corporationService)
 	generalControllers := &GeneralControllers{
-		UserController:    generalUserController,
+		UserController:           generalUserController,
 		AddressController: generalAddressController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
@@ -71,6 +77,13 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
 		AddressController:      customerAddressController,
+		CorporationController: generalCorporationController,
+	}
+	bidRepository := repositoryimpl.NewBidRepository()
+	bidService := serviceimpl.NewBidService(constants, jwtService, postgresDatabase, bidRepository, corporationService)
+	memberCorporationController := corporation.NewMemberCorporationController(constants, corporationService, bidService)
+	memberControllers := &MemberControllers{
+		CorporationController: memberCorporationController,
 	}
 	controllers := &Controllers{
 		General:  generalControllers,
@@ -92,6 +105,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	metrics := ProvideMetrics(container)
 	prometheusMetrics := metricsimpl.NewPrometheusMetrics(metrics)
 	prometheusMiddleware := middleware.NewPrometheusMiddleware(prometheusMetrics)
+	authMiddleware := middleware.NewAuthMiddleware(constants, jwtService, postgresDatabase)
 	middlewares := &Middlewares{
 		Authentication: authMiddleware,
 		CORS:           corsMiddleware,
@@ -113,11 +127,13 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 
 var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.NewRedisDatabase, wire.Bind(new(database.Database), new(*database.PostgresDatabase)), wire.Bind(new(database.Cache), new(*database.RedisDatabase)), wire.Struct(new(Database), "*"))
 
-var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, repositoryimpl.NewInstallationRepository, repositoryimpl.NewAddressRepository, cacherepositoryimpl.NewUserCacheRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)), wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)))
+var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, repositoryimpl.NewInstallationRepository, repositoryimpl.NewAddressRepository, cacherepositoryimpl.NewUserCacheRepository, repositoryimpl.NewCorporationRepository, repositoryimpl.NewBidRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)), wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)), wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)), wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)))
+
+var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, serviceimpl.NewCorporationService, cinimpl.NewCINService, serviceimpl.NewBidService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)), wire.Bind(new(service.CINService), new(*cinimpl.CINService)), wire.Bind(new(service.BidService), new(*serviceimpl.BidService)))
 
 var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, serviceimpl.NewInstallationService, serviceimpl.NewAddressService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)), wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)))
 
-var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, wire.Struct(new(GeneralControllers), "*"))
 

@@ -16,6 +16,8 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		auth.POST("/forgot-password", app.Controllers.General.UserController.ForgotPassword)
 		auth.POST("/confirm-otp", app.Controllers.General.UserController.ConfirmOTP)
 		auth.POST("/refresh", app.Controllers.General.UserController.RefreshToken)
+		auth.POST("/corporation/register/", app.Controllers.General.CorporationController.Register)
+		auth.POST("/corporation/login/", app.Controllers.General.CorporationController.Login)
 	}
 
 	addresses := routerGroup.Group("/address")
