@@ -1,8 +1,8 @@
 package addressdto
 
 type CreateAddressRequest struct {
-	Province      string
-	City          string
+	ProvinceID    uint
+	CityID        uint
 	StreetAddress string
 	PostalCode    string
 	HouseNumber   string
@@ -14,4 +14,8 @@ type CreateAddressRequest struct {
 type GetOwnerAddressesRequest struct {
 	OwnerID   uint
 	OwnerType string
+}
+
+type GetProvinceCitiesRequest struct {
+	ProvinceID uint
 }

@@ -9,3 +9,13 @@ type AddressResponse struct {
 	HouseNumber   string `json:"houseNumber"`
 	Unit          uint   `json:"unit"`
 }
+
+type ProvinceResponse struct {
+	ID   uint   `json:"ID"`
+	Name string `json:"name"`
+}
+
+type CityResponse struct {
+	ID   uint   `json:"ID"`
+	Name string `json:"name"`
+}

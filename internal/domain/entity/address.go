@@ -6,8 +6,10 @@ import (
 
 type Address struct {
 	database.Model
-	Province      string
-	City          string
+	ProvinceID    uint
+	Province      Province `gorm:"foreignKey:ProvinceID"`
+	CityID        uint
+	City          City `gorm:"foreignKey:CityID"`
 	StreetAddress string
 	PostalCode    string
 	HouseNumber   string

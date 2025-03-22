@@ -19,6 +19,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
+	"github.com/BargheNo/Backend/internal/infrastructure/seed"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -69,6 +70,7 @@ var AdapterProviderSet = wire.NewSet(
 
 var GeneralControllerProviderSet = wire.NewSet(
 	user.NewGeneralUserController,
+	address.NewGeneralAddressController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -97,6 +99,11 @@ var MiddlewareProviderSet = wire.NewSet(
 	middleware.NewLoggerMiddleware,
 	middleware.NewPrometheusMiddleware,
 	wire.Struct(new(Middlewares), "*"),
+)
+
+var SeederProviderSet = wire.NewSet(
+	seed.NewAddressSeeder,
+	wire.Struct(new(Seeds), "*"),
 )
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
@@ -153,6 +160,7 @@ var ProviderSet = wire.NewSet(
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	MetricsProviderSet,
+	SeederProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -172,7 +180,8 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController *user.GeneralUserController
+	UserController    *user.GeneralUserController
+	AddressController *address.GeneralAddressController
 }
 
 type CustomerControllers struct {
@@ -196,21 +205,28 @@ type Middlewares struct {
 	Prometheus     *middleware.PrometheusMiddleware
 }
 
+type Seeds struct {
+	AddressSeeder *seed.AddressSeeder
+}
+
 type Application struct {
 	Database    *Database
 	Controllers *Controllers
 	Middlewares *Middlewares
+	Seeds       *Seeds
 }
 
 func NewApplication(
 	database *Database,
 	controllers *Controllers,
 	middlewares *Middlewares,
+	seeds *Seeds,
 ) *Application {
 	return &Application{
 		Database:    database,
 		Controllers: controllers,
 		Middlewares: middlewares,
+		Seeds:       seeds,
 	}
 }
 

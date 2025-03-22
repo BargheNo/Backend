@@ -10,6 +10,8 @@ var Persian = map[string]interface{}{
 	"user":            "کاربر",
 	"address":         "آدرس",
 	"name":            "نام",
+	"province":        "استان",
+	"city":            "شهر",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",

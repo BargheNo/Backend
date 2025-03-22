@@ -28,9 +28,19 @@ func NewAddressService(
 }
 
 func (addressService *AddressService) CreateAddress(addressInfo addressdto.CreateAddressRequest) addressdto.AddressResponse {
+	province, exist := addressService.addressRepository.GetProvinceByID(addressService.db, addressInfo.ProvinceID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Province}
+		panic(notFoundError)
+	}
+	city, exist := addressService.addressRepository.GetCityByID(addressService.db, addressInfo.CityID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.City}
+		panic(notFoundError)
+	}
 	address := &entity.Address{
-		Province:      addressInfo.Province,
-		City:          addressInfo.City,
+		ProvinceID:    addressInfo.ProvinceID,
+		CityID:        addressInfo.CityID,
 		StreetAddress: addressInfo.StreetAddress,
 		PostalCode:    addressInfo.PostalCode,
 		HouseNumber:   addressInfo.HouseNumber,
@@ -44,8 +54,8 @@ func (addressService *AddressService) CreateAddress(addressInfo addressdto.Creat
 	}
 	return addressdto.AddressResponse{
 		ID:            address.ID,
-		Province:      address.Province,
-		City:          address.City,
+		Province:      province.Name,
+		City:          city.Name,
 		StreetAddress: address.StreetAddress,
 		PostalCode:    address.PostalCode,
 		HouseNumber:   address.HouseNumber,
@@ -59,10 +69,12 @@ func (addressService *AddressService) GetAddress(addressID uint) addressdto.Addr
 		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
 		panic(notFoundError)
 	}
+	province, _ := addressService.addressRepository.GetProvinceByID(addressService.db, address.ProvinceID)
+	city, _ := addressService.addressRepository.GetCityByID(addressService.db, address.CityID)
 	response := addressdto.AddressResponse{
 		ID:            address.ID,
-		Province:      address.Province,
-		City:          address.City,
+		Province:      province.Name,
+		City:          city.Name,
 		StreetAddress: address.StreetAddress,
 		PostalCode:    address.PostalCode,
 		HouseNumber:   address.HouseNumber,
@@ -75,10 +87,12 @@ func (addressService *AddressService) GetAddresses(addressInfo addressdto.GetOwn
 	addressEntities := addressService.addressRepository.GetOwnerAddresses(addressService.db, addressInfo.OwnerID, addressInfo.OwnerType)
 	addresses := make([]addressdto.AddressResponse, len(addressEntities))
 	for i, address := range addressEntities {
+		province, _ := addressService.addressRepository.GetProvinceByID(addressService.db, address.ProvinceID)
+		city, _ := addressService.addressRepository.GetCityByID(addressService.db, address.CityID)
 		addresses[i] = addressdto.AddressResponse{
 			ID:            address.ID,
-			Province:      address.Province,
-			City:          address.City,
+			Province:      province.Name,
+			City:          city.Name,
 			StreetAddress: address.StreetAddress,
 			PostalCode:    address.PostalCode,
 			HouseNumber:   address.HouseNumber,
@@ -86,4 +100,28 @@ func (addressService *AddressService) GetAddresses(addressInfo addressdto.GetOwn
 		}
 	}
 	return addresses
+}
+
+func (addressService *AddressService) GetProvinceList() []addressdto.ProvinceResponse {
+	provinces := addressService.addressRepository.GetProvinceList(addressService.db)
+	provinceList := make([]addressdto.ProvinceResponse, len(provinces))
+	for i, province := range provinces {
+		provinceList[i] = addressdto.ProvinceResponse{
+			ID:   province.ID,
+			Name: province.Name,
+		}
+	}
+	return provinceList
+}
+
+func (addressService *AddressService) GetCityProvinceCities(province addressdto.GetProvinceCitiesRequest) []addressdto.CityResponse {
+	cities := addressService.addressRepository.GetProvinceCities(addressService.db, province.ProvinceID)
+	citiesList := make([]addressdto.CityResponse, len(cities))
+	for i, city := range cities {
+		citiesList[i] = addressdto.CityResponse{
+			ID:   city.ID,
+			Name: city.Name,
+		}
+	}
+	return citiesList
 }

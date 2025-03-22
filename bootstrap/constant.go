@@ -37,6 +37,8 @@ type ErrorField struct {
 	OTP      string
 	Address  string
 	Name     string
+	Province string
+	City     string
 }
 
 type ErrorTag struct {
@@ -96,6 +98,8 @@ func NewConstants() *Constants {
 			OTP:      "otp",
 			Address:  "address",
 			Name:     "name",
+			Province: "province",
+			City:     "city",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",

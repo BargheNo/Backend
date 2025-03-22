@@ -25,8 +25,8 @@ func NewCustomerAddressController(
 
 func (addressController *CustomerAddressController) CreateAddress(ctx *gin.Context) {
 	type createAddressParams struct {
-		Province      string `json:"province" validate:"required"`
-		City          string `json:"city" validate:"required"`
+		ProvinceID    uint   `json:"provinceID" validate:"required"`
+		CityID        uint   `json:"cityID" validate:"required"`
 		StreetAddress string `json:"streetAddress" validate:"required"`
 		PostalCode    string `json:"postalCode" validate:"required"`
 		HouseNumber   string `json:"houseNumber" validate:"required"`
@@ -35,8 +35,8 @@ func (addressController *CustomerAddressController) CreateAddress(ctx *gin.Conte
 	params := controller.Validated[createAddressParams](ctx)
 	ownerID, _ := ctx.Get(addressController.constants.Context.ID)
 	addressRequestInfo := addressdto.CreateAddressRequest{
-		Province:      params.Province,
-		City:          params.City,
+		ProvinceID:    params.ProvinceID,
+		CityID:        params.CityID,
 		StreetAddress: params.StreetAddress,
 		PostalCode:    params.PostalCode,
 		HouseNumber:   params.HouseNumber,

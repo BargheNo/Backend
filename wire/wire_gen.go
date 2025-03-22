@@ -22,6 +22,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
+	"github.com/BargheNo/Backend/internal/infrastructure/seed"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -53,13 +54,15 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	userRepository := repositoryimpl.NewUserRepository()
 	userService := serviceimpl.NewUserService(constants, otpService, smsService, jwtService, userRepository, userCacheRepository, postgresDatabase)
 	generalUserController := user.NewGeneralUserController(constants, userService)
+	addressRepository := repositoryimpl.NewAddressRepository()
+	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
+	generalAddressController := address.NewGeneralAddressController(constants, addressService)
 	generalControllers := &GeneralControllers{
-		UserController: generalUserController,
+		UserController:    generalUserController,
+		AddressController: generalAddressController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
 	pagination := ProvidePaginationConfig(container)
-	addressRepository := repositoryimpl.NewAddressRepository()
-	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
 	installationRepository := repositoryimpl.NewInstallationRepository()
 	installationService := serviceimpl.NewInstallationService(constants, addressService, installationRepository, postgresDatabase)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
@@ -98,7 +101,11 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		Logger:         loggerMiddleware,
 		Prometheus:     prometheusMiddleware,
 	}
-	application := NewApplication(wireDatabase, controllers, middlewares)
+	addressSeeder := seed.NewAddressSeeder(addressRepository, postgresDatabase)
+	seeds := &Seeds{
+		AddressSeeder: addressSeeder,
+	}
+	application := NewApplication(wireDatabase, controllers, middlewares, seeds)
 	return application, nil
 }
 
@@ -112,7 +119,7 @@ var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.New
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)))
 
-var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, wire.Struct(new(GeneralControllers), "*"))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, wire.Struct(new(GeneralControllers), "*"))
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, wire.Struct(new(CustomerControllers), "*"))
 
@@ -121,6 +128,8 @@ var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 var MetricsProviderSet = wire.NewSet(metricsimpl.NewPrometheusMetrics, wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)))
 
 var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, wire.Struct(new(Middlewares), "*"))
+
+var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, wire.Struct(new(Seeds), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -176,6 +185,7 @@ var ProviderSet = wire.NewSet(
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	MetricsProviderSet,
+	SeederProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -195,7 +205,8 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController *user.GeneralUserController
+	UserController    *user.GeneralUserController
+	AddressController *address.GeneralAddressController
 }
 
 type CustomerControllers struct {
@@ -219,19 +230,26 @@ type Middlewares struct {
 	Prometheus     *middleware.PrometheusMiddleware
 }
 
+type Seeds struct {
+	AddressSeeder *seed.AddressSeeder
+}
+
 type Application struct {
 	Database    *Database
 	Controllers *Controllers
 	Middlewares *Middlewares
+	Seeds       *Seeds
 }
 
 func NewApplication(database2 *Database,
 	controllers *Controllers,
 	middlewares *Middlewares,
+	seeds *Seeds,
 ) *Application {
 	return &Application{
 		Database:    database2,
 		Controllers: controllers,
 		Middlewares: middlewares,
+		Seeds:       seeds,
 	}
 }
