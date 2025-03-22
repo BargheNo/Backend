@@ -64,8 +64,6 @@ jobs:
 
 
 
-            docker container prune
+            docker compose down
             docker compose pull
-            docker compose down --remove-orphans
             docker compose up -d
-            docker image prune -f
