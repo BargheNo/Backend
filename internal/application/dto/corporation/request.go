@@ -12,15 +12,16 @@ type LoginRequest struct {
 }
 
 type ContactInfoRequest struct {
-	Phone     string
-	Email     string
-	Eitaa     string
-	Bale      string
-	Website   string
-	WhatsApp  string
-	Instagram string
-	Linkedin  string
-	Telegram  string
+	CorporationID uint
+	Phone         string
+	Email         string
+	Eitaa         string
+	Bale          string
+	Website       string
+	WhatsApp      string
+	Instagram     string
+	Linkedin      string
+	Telegram      string
 }
 
 type AddressRequest struct {

@@ -18,3 +18,11 @@ type CancelBidRequest struct {
 	InstallationRequestID uint
 	CorporationID         uint
 }
+
+type GetBidsRequest struct {
+	CorporationID uint
+	Offset        int
+	Limit         int
+	SortBy        string
+	Dir           string
+}

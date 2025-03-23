@@ -30,7 +30,7 @@ func (corporationController *GeneralCorporationController) Register(ctx *gin.Con
 		Password      string `json:"password" validate:"required"`
 		AcceptedTerms bool   `json:"acceptedTerms" validate:"eq=true"`
 	}
-	params := controller.Validated[registerParams](ctx, &corporationController.constants.Context)
+	params := controller.Validated[registerParams](ctx)
 	registerInfo := corporationdto.RegisterRequest{
 		Name:     params.Name,
 		CIN:      params.CIN,
@@ -47,7 +47,7 @@ func (corporationController *GeneralCorporationController) Login(ctx *gin.Contex
 		CIN      string `json:"cin" validate:"required"`
 		Password string `json:"password" validate:"required"`
 	}
-	params := controller.Validated[loginParams](ctx, &corporationController.constants.Context)
+	params := controller.Validated[loginParams](ctx)
 	loginInfo := corporationdto.LoginRequest{
 		CIN:      params.CIN,
 		Password: params.Password,

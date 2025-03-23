@@ -15,30 +15,13 @@ func GetTranslator(ctx *gin.Context, key string) localization.TranslatorInstance
 	return translator.(localization.TranslatorInstance)
 }
 
-type PaginationParams struct {
-	Page     int `form:"page"`
-	PageSize int `form:"pageSize"`
-}
-
-func GetPagination(c *gin.Context, context *bootstrap.Context) PaginationParams {
-	param := Validated[PaginationParams](c, context)
-
-	if param.Page == 0 {
-		param.Page = 1
-	}
-	if param.PageSize == 0 {
-		param.PageSize = 10
-	}
-	return param
-}
-
 type SortParams struct {
 	SortBy string `form:"sortBy"`
 	Dir    string `form:"dir"`
 }
 
 func GetSort(c *gin.Context, context *bootstrap.Context) SortParams {
-	param := Validated[SortParams](c, context)
+	param := Validated[SortParams](c)
 	if param.Dir == "" {
 		param.Dir = "ASC"
 	}

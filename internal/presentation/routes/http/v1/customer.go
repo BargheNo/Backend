@@ -27,7 +27,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	bids := routerGroup.Group("/bids")
 	{
-		bids.POST("/set", app.Controllers.Customer.BidController.SetBid)
-		bids.POST("/cancel", app.Controllers.Customer.BidController.CancelBid)
+		bids.POST("/set", app.Controllers.Customer.CorporationController.SetBid)
+		bids.POST("/cancel", app.Controllers.Customer.CorporationController.CancelBid)
 	}
 }

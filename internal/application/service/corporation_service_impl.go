@@ -161,8 +161,8 @@ func (corporationService *CorporationService) ChangePassword(changePasswordReque
 	}
 }
 
-func (corporationService *CorporationService) UpdateContactInfo(corporationID uint, contactInfo corporationdto.ContactInfoRequest) {
-	corporation, exist := corporationService.GetCorporationByID(corporationID)
+func (corporationService *CorporationService) UpdateContactInfo(contactInfo corporationdto.ContactInfoRequest) {
+	corporation, exist := corporationService.GetCorporationByID(contactInfo.CorporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
 		panic(notFoundError)
@@ -186,77 +186,77 @@ func (corporationService *CorporationService) UpdateContactInfo(corporationID ui
 	}
 }
 
-func (corporationService *CorporationService) AddAddress(address corporationdto.AddressRequest) {
-	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		panic(notFoundError)
-	}
+// func (corporationService *CorporationService) AddAddress(address corporationdto.AddressRequest) {
+// 	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
+// 	if !exist {
+// 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+// 		panic(notFoundError)
+// 	}
 
-	newAddress := &entity.Address{
-		Province:       address.Province,
-		City:           address.City,
-		StreetAddress:  address.StreetAddress,
-		PostalCode:     address.PostalCode,
-		BuildingNumber: address.BuildingNumber,
-		Unit:           address.Unit,
-	}
+// 	newAddress := &entity.Address{
+// 		Province:       address.Province,
+// 		City:           address.City,
+// 		StreetAddress:  address.StreetAddress,
+// 		PostalCode:     address.PostalCode,
+// 		BuildingNumber: address.BuildingNumber,
+// 		Unit:           address.Unit,
+// 	}
 
-	corporation.Addresses = append(corporation.Addresses, *newAddress)
+// 	corporation.Addresses = append(corporation.Addresses, *newAddress)
 
-	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
-	if err != nil {
-		panic(err)
-	}
-}
+// 	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
-func (corporationService *CorporationService) EditAddress(addressID uint, address corporationdto.AddressRequest) {
-	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		panic(notFoundError)
-	}
+// func (corporationService *CorporationService) EditAddress(addressID uint, address corporationdto.AddressRequest) {
+// 	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
+// 	if !exist {
+// 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+// 		panic(notFoundError)
+// 	}
 
-	newAddress := &entity.Address{
-		Province:       address.Province,
-		City:           address.City,
-		StreetAddress:  address.StreetAddress,
-		PostalCode:     address.PostalCode,
-		BuildingNumber: address.BuildingNumber,
-		Unit:           address.Unit,
-	}
+// 	newAddress := &entity.Address{
+// 		Province:       address.Province,
+// 		City:           address.City,
+// 		StreetAddress:  address.StreetAddress,
+// 		PostalCode:     address.PostalCode,
+// 		BuildingNumber: address.BuildingNumber,
+// 		Unit:           address.Unit,
+// 	}
 
-	for i, addr := range corporation.Addresses {
-		if addr.ID == addressID {
-			corporation.Addresses[i] = *newAddress
-			break
-		}
-	}
+// 	for i, addr := range corporation.Addresses {
+// 		if addr.ID == addressID {
+// 			corporation.Addresses[i] = *newAddress
+// 			break
+// 		}
+// 	}
 
-	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
-	if err != nil {
-		panic(err)
-	}
-}
+// 	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
-func (corporationService *CorporationService) DeleteAddress(corporationID uint, addressID uint) {
-	corporation, exist := corporationService.GetCorporationByID(corporationID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		panic(notFoundError)
-	}
+// func (corporationService *CorporationService) DeleteAddress(corporationID uint, addressID uint) {
+// 	corporation, exist := corporationService.GetCorporationByID(corporationID)
+// 	if !exist {
+// 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+// 		panic(notFoundError)
+// 	}
 
-	for i, addr := range corporation.Addresses {
-		if addr.ID == addressID {
-			corporation.Addresses = append(corporation.Addresses[:i], corporation.Addresses[i+1:]...)
-			break
-		}
-	}
-	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
-	if err != nil {
-		panic(err)
-	}
-}
+// 	for i, addr := range corporation.Addresses {
+// 		if addr.ID == addressID {
+// 			corporation.Addresses = append(corporation.Addresses[:i], corporation.Addresses[i+1:]...)
+// 			break
+// 		}
+// 	}
+// 	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
 func (corporationService *CorporationService) GetCorporationInfo(idRequest corporationdto.IDRequest) corporationdto.CorporationInfoResponse {
 	corporation, exist := corporationService.GetCorporationByID(idRequest.CorporationID)
@@ -276,18 +276,18 @@ func (corporationService *CorporationService) GetCorporationInfo(idRequest corpo
 		Telegram:  corporation.ContactInformation.Telegram,
 		Linkedin:  corporation.ContactInformation.Linkedin,
 	}
-	addresses := make([]corporationdto.AddressResponse, len(corporation.Addresses))
-	for i, addr := range corporation.Addresses {
-		addresses[i] = corporationdto.AddressResponse{
-			ID:             addr.ID,
-			Province:       addr.Province,
-			City:           addr.City,
-			StreetAddress:  addr.StreetAddress,
-			PostalCode:     addr.PostalCode,
-			BuildingNumber: addr.BuildingNumber,
-			Unit:           addr.Unit,
-		}
-	}
+	// addresses := make([]corporationdto.AddressResponse, len(corporation.Addresses))
+	// for i, addr := range corporation.Addresses {
+	// 	addresses[i] = corporationdto.AddressResponse{
+	// 		ID:             addr.ID,
+	// 		Province:       addr.Province,
+	// 		City:           addr.City,
+	// 		StreetAddress:  addr.StreetAddress,
+	// 		PostalCode:     addr.PostalCode,
+	// 		BuildingNumber: addr.BuildingNumber,
+	// 		Unit:           addr.Unit,
+	// 	}
+	// }
 
 	return corporationdto.CorporationInfoResponse{
 		ID:          corporation.ID,
@@ -295,6 +295,6 @@ func (corporationService *CorporationService) GetCorporationInfo(idRequest corpo
 		CIN:         corporation.CIN,
 		Status:      corporation.Status.String(),
 		ContactInfo: contactInfo,
-		Addresses:   addresses,
+		// Addresses:   addresses,
 	}
 }

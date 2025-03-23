@@ -35,35 +35,33 @@ func NewBidService(
 	}
 }
 
-func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, dir string) []biddto.InstallationRequestResponse {
-	offset := (page - 1) * pageSize
-	var order string
-	if sortBy == "" {
-		order = "RANDOM()"
-	} else {
-		order = sortBy + " " + dir
-	}
-	_, exist := bidService.corporationService.GetCorporationByID(corporationId)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Corporation}
-		panic(notFoundError)
-	}
-	installationRequests := bidService.bidRepository.GetInstallationRequests(bidService.db, enum.Active, corporationId, offset, pageSize, order)
-	installationRequestResponses := make([]biddto.InstallationRequestResponse, len(installationRequests))
-	for i, request := range installationRequests {
-		installationRequestResponses[i] = biddto.InstallationRequestResponse{
-			ID:             request.ID,
-			UserID:         request.UserID,
-			Area:           request.Area,
-			PowerRequested: request.PowerRequested,
-			MaxCost:        request.MaxCost,
-			Deadline:       request.Deadline,
-			BuildingType:   request.BuildingType,
-			Address:        request.Address.String(),
-		}
-	}
-	return installationRequestResponses
-}
+// func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, dir string) []biddto.InstallationRequestResponse {
+// 	offset := (page - 1) * pageSize
+// 	var order string
+// 	if sortBy == "" {
+// 		order = "RANDOM()"
+// 	} else {
+// 		order = sortBy + " " + dir
+// 	}
+// 	_, exist := bidService.corporationService.GetCorporationByID(corporationId)
+// 	if !exist {
+// 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Corporation}
+// 		panic(notFoundError)
+// 	}
+// 	installationRequests := bidService.bidRepository.GetInstallationRequests(bidService.db, enum.Active, corporationId, offset, pageSize, order)
+// 	installationRequestResponses := make([]biddto.InstallationRequestResponse, len(installationRequests))
+// 	for i, request := range installationRequests {
+// 		installationRequestResponses[i] = biddto.InstallationRequestResponse{
+// 			ID:             request.ID,
+// 			UserID:         request.OwnerID,
+// 			Area:           request.Area,
+// 			PowerRequested: request.PowerRequest,
+// 			MaxCost:        request.MaxCost,
+// 			BuildingType:   request.BuildingType,
+// 		}
+// 	}
+// 	return installationRequestResponses
+// }
 
 func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
@@ -142,21 +140,20 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 	}
 }
 
-func (bidService *BidService) GetBids(corporationID uint, page int, pageSize int, sortBy string, dir string) []biddto.BidsResponse {
-	offset := (page - 1) * pageSize
+func (bidService *BidService) GetBids(bidsRequest biddto.GetBidsRequest) []biddto.BidsResponse {
 	var order string
-	if sortBy == "" {
-		order = "created_at" + " " + dir
+	if bidsRequest.SortBy == "" {
+		order = "created_at" + " " + bidsRequest.Dir
 	} else {
-		order = sortBy + " " + dir
+		order = bidsRequest.SortBy + " " + bidsRequest.Dir
 	}
-	_, exist := bidService.corporationService.GetCorporationByID(corporationID)
+	_, exist := bidService.corporationService.GetCorporationByID(bidsRequest.CorporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
 
-	bids := bidService.bidRepository.GetBids(bidService.db, corporationID, offset, pageSize, order)
+	bids := bidService.bidRepository.GetBids(bidService.db, bidsRequest.CorporationID, bidsRequest.Offset, bidsRequest.Limit, order)
 	bidResponses := make([]biddto.BidsResponse, len(bids))
 	for i, bid := range bids {
 		bidResponses[i] = biddto.BidsResponse{

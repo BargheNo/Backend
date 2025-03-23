@@ -109,7 +109,6 @@ var MiddlewareProviderSet = wire.NewSet(
 	middleware.NewRateLimit,
 	middleware.NewLoggerMiddleware,
 	middleware.NewPrometheusMiddleware,
-	middleware.NewAuthMiddleware,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -171,7 +170,6 @@ var ProviderSet = wire.NewSet(
 	CustomerControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
-	MetricsProviderSet,
 	SeederProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
@@ -192,15 +190,16 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController    *user.GeneralUserController
-	AddressController *address.GeneralAddressController
+	UserController        *user.GeneralUserController
+	AddressController     *address.GeneralAddressController
+	CorporationController *corporation.GeneralCorporationController
 }
 
 type CustomerControllers struct {
 	UserController         *user.CustomerUserController
 	InstallationController *installation.CustomerInstallationController
 	AddressController      *address.CustomerAddressController
-	CorporationController  *corporation.GeneralCorporationController
+	CorporationController  *corporation.CustomerCorporationController
 }
 
 type Controllers struct {
