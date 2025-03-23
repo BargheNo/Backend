@@ -102,6 +102,18 @@ func (addressService *AddressService) GetAddresses(addressInfo addressdto.GetOwn
 	return addresses
 }
 
+func (addressService *AddressService) DeleteAddress(addressID uint) {
+	address, exist := addressService.addressRepository.GetAddressByID(addressService.db, addressID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
+		panic(notFoundError)
+	}
+	err := addressService.addressRepository.DeleteAddress(addressService.db, address)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (addressService *AddressService) GetProvinceList() []addressdto.ProvinceResponse {
 	provinces := addressService.addressRepository.GetProvinceList(addressService.db)
 	provinceList := make([]addressdto.ProvinceResponse, len(provinces))

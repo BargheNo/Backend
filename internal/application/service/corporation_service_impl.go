@@ -1,0 +1,225 @@
+package serviceimpl
+
+import (
+	"regexp"
+
+	"github.com/BargheNo/Backend/bootstrap"
+	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
+	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/exception"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type CorporationService struct {
+	constants             *bootstrap.Constants
+	JWTService            service.JWTService
+	db                    database.Database
+	CorporationRepository repository.CorporationRepository
+	AddressService        service.AddressService
+	CINService            service.CINService
+}
+
+func NewCorporationService(
+	constants *bootstrap.Constants,
+	jwtService service.JWTService,
+	db database.Database,
+	corporationRepository repository.CorporationRepository,
+	addressService service.AddressService,
+	cinService service.CINService,
+) *CorporationService {
+	return &CorporationService{
+		constants:             constants,
+		JWTService:            jwtService,
+		db:                    db,
+		CorporationRepository: corporationRepository,
+		AddressService:        addressService,
+		CINService:            cinService,
+	}
+}
+
+func (corporationService *CorporationService) GetCorporationByID(corporationID uint) (*entity.Corporation, bool) {
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	if !exist {
+		return nil, false
+	}
+	if corporation.Status != enum.Approved {
+		return nil, false
+	}
+	return corporation, true
+}
+
+func (corporationService *CorporationService) validatePasswordTests(errors *[]string, test string, password string, tag string) {
+	matched, _ := regexp.MatchString(test, password)
+	if !matched {
+		*errors = append(*errors, tag)
+	}
+}
+
+func (corporationService *CorporationService) passwordValidation(password string) error {
+	var errors exception.ValidationErrors
+	var errorTags []string
+
+	corporationService.validatePasswordTests(&errorTags, ".{8,}", password, corporationService.constants.Tag.MinimumLength)
+	corporationService.validatePasswordTests(&errorTags, "[a-z]", password, corporationService.constants.Tag.ContainsLowercase)
+	corporationService.validatePasswordTests(&errorTags, "[A-Z]", password, corporationService.constants.Tag.ContainsUppercase)
+	corporationService.validatePasswordTests(&errorTags, "[0-9]", password, corporationService.constants.Tag.ContainsNumber)
+	corporationService.validatePasswordTests(&errorTags, "[^\\d\\w]", password, corporationService.constants.Tag.ContainsSpecialChar)
+
+	for _, tag := range errorTags {
+		errors.Add(corporationService.constants.Field.Password, tag)
+	}
+	if len(errorTags) > 0 {
+		return errors
+	}
+
+	return nil
+}
+
+func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) {
+	var conflictErrors exception.ConflictErrors
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, registerInfo.CIN)
+	if exist && corporation.Status != enum.Rejected {
+		conflictErrors.Add(corporationService.constants.Field.CIN, corporationService.constants.Tag.AlreadyRegistered)
+		panic(conflictErrors)
+	}
+	_, err := corporationService.CINService.ValidateCIN(registerInfo.CIN)
+	if err != nil {
+		panic(err)
+	}
+
+	err = corporationService.passwordValidation(registerInfo.Password)
+	if err != nil {
+		panic(err)
+	}
+
+	hashesPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(registerInfo.Password), 14)
+	if err != nil {
+		panic(err)
+	}
+
+	corporation = &entity.Corporation{
+		Name:     registerInfo.Name,
+		CIN:      registerInfo.CIN,
+		Password: string(hashesPasswordBytes),
+		Status:   enum.AwaitingApproval,
+	}
+
+	err = corporationService.CorporationRepository.CreateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (corporationService *CorporationService) Login(loginInfo corporationdto.LoginRequest) corporationdto.CorporationLoginResponse {
+	var notFoundError exception.NotFoundError
+	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, loginInfo.CIN)
+	if !exist {
+		notFoundError = exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+	if corporation.Status != enum.Approved {
+		notFoundError = exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(corporation.Password), []byte(loginInfo.Password))
+	if err != nil {
+		authError := exception.NewInvalidCredentialsError("cin and password not match", nil)
+		panic(authError)
+	}
+
+	accessToken, refreshToken := corporationService.JWTService.GenerateToken(corporation.ID)
+	return corporationdto.CorporationLoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		Name:         corporation.Name,
+	}
+}
+
+func (corporationService *CorporationService) ChangePassword(changePasswordRequest corporationdto.ChangePasswordRequest) {
+	corporation, exist := corporationService.GetCorporationByID(changePasswordRequest.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+
+	err := corporationService.passwordValidation(changePasswordRequest.NewPassword)
+	if err != nil {
+		panic(err)
+	}
+
+	hashesPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(changePasswordRequest.NewPassword), 14)
+	if err != nil {
+		panic(err)
+	}
+
+	corporation.Password = string(hashesPasswordBytes)
+	err = corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (corporationService *CorporationService) UpdateContactInfo(contactInfo corporationdto.ContactInfoRequest) {
+	corporation, exist := corporationService.GetCorporationByID(contactInfo.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+
+	newContactInformation := &entity.ContactInformation{
+		Phone:     contactInfo.Phone,
+		Email:     contactInfo.Email,
+		Eitaa:     contactInfo.Eitaa,
+		Bale:      contactInfo.Bale,
+		Website:   contactInfo.Website,
+		WhatsApp:  contactInfo.WhatsApp,
+		Instagram: contactInfo.Instagram,
+		Telegram:  contactInfo.Telegram,
+		Linkedin:  contactInfo.Linkedin,
+	}
+	corporation.ContactInformation = *newContactInformation
+	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (corporationService *CorporationService) GetCorporationInfo(idRequest corporationdto.IDRequest) corporationdto.CorporationInfoResponse {
+	corporation, exist := corporationService.GetCorporationByID(idRequest.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+
+	contactInfo := corporationdto.ContactInfoResponse{
+		Phone:     corporation.ContactInformation.Phone,
+		Email:     corporation.ContactInformation.Email,
+		Eitaa:     corporation.ContactInformation.Eitaa,
+		Bale:      corporation.ContactInformation.Bale,
+		Website:   corporation.ContactInformation.Website,
+		WhatsApp:  corporation.ContactInformation.WhatsApp,
+		Instagram: corporation.ContactInformation.Instagram,
+		Telegram:  corporation.ContactInformation.Telegram,
+		Linkedin:  corporation.ContactInformation.Linkedin,
+	}
+	addressRequest := addressdto.GetOwnerAddressesRequest{
+		OwnerID:   corporation.ID,
+		OwnerType: "corporation",
+	}
+	addresses := corporationService.AddressService.GetAddresses(addressRequest)
+
+	return corporationdto.CorporationInfoResponse{
+		ID:          corporation.ID,
+		Name:        corporation.Name,
+		CIN:         corporation.CIN,
+		Status:      corporation.Status.String(),
+		ContactInfo: contactInfo,
+		Addresses:   addresses,
+	}
+}
