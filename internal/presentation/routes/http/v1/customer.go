@@ -24,4 +24,10 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		addresses.POST("/user", app.Controllers.Customer.AddressController.CreateAddress)
 		addresses.GET("/user", app.Controllers.Customer.AddressController.GetCustomerAddresses)
 	}
+
+	bids := routerGroup.Group("/bids")
+	{
+		bids.POST("/set", app.Controllers.Customer.BidController.SetBid)
+		bids.POST("/cancel", app.Controllers.Customer.BidController.CancelBid)
+	}
 }

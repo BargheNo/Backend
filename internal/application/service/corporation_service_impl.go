@@ -93,7 +93,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		panic(err)
 	}
 
-	hashedPassword, err := hashPassword(registerInfo.Password)
+	hashesPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(registerInfo.Password), 14)
 	if err != nil {
 		panic(err)
 	}
@@ -101,7 +101,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 	corporation = &entity.Corporation{
 		Name:     registerInfo.Name,
 		CIN:      registerInfo.CIN,
-		Password: hashedPassword,
+		Password: string(hashesPasswordBytes),
 		Status:   enum.AwaitingApproval,
 	}
 
@@ -149,12 +149,12 @@ func (corporationService *CorporationService) ChangePassword(changePasswordReque
 		panic(err)
 	}
 
-	hashedPassword, err := hashPassword(changePasswordRequest.NewPassword)
+	hashesPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(changePasswordRequest.NewPassword), 14)
 	if err != nil {
 		panic(err)
 	}
 
-	corporation.Password = hashedPassword
+	corporation.Password = string(hashesPasswordBytes)
 	err = corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
 	if err != nil {
 		panic(err)
