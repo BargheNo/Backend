@@ -53,7 +53,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	jwtService := serviceimpl.NewJWTService(keyManager, jwtKeysPath)
 	userRepository := repositoryimpl.NewUserRepository()
 	userService := serviceimpl.NewUserService(constants, otpService, smsService, jwtService, userRepository, userCacheRepository, postgresDatabase)
-	generalUserController := user.NewGeneralUserController(constants, userService)
+	generalUserController := user.NewGeneralUserController(constants, userService, jwtService)
 	addressRepository := repositoryimpl.NewAddressRepository()
 	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
 	generalAddressController := address.NewGeneralAddressController(constants, addressService)

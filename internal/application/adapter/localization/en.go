@@ -45,5 +45,6 @@ var English = map[string]interface{}{
 		"forgotPassword":      "Please check your messages to verify your phone number.",
 		"resetPassword":       "Password reset successfully.",
 		"installationRequest": "Installation request has been successfully stored.",
+		"refreshToken":        "Your session has been successfully refreshed.",
 	},
 }
