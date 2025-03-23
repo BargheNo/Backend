@@ -11,15 +11,18 @@ import (
 type GeneralUserController struct {
 	constants   *bootstrap.Constants
 	userService service.UserService
+	jwtService  service.JWTService
 }
 
 func NewGeneralUserController(
 	constants *bootstrap.Constants,
 	userService service.UserService,
+	jwtService service.JWTService,
 ) *GeneralUserController {
 	return &GeneralUserController{
 		constants:   constants,
 		userService: userService,
+		jwtService:  jwtService,
 	}
 }
 
@@ -117,5 +120,19 @@ func (userController *GeneralUserController) ConfirmOTP(ctx *gin.Context) {
 }
 
 func (userController *GeneralUserController) RefreshToken(ctx *gin.Context) {
-	// some code here ...
+	type refreshTokenParams struct {
+		RefreshToken string `json:"refreshToken" validate:"required"`
+	}
+	params := controller.Validated[refreshTokenParams](ctx)
+	claims, err := userController.jwtService.ValidateToken(params.RefreshToken)
+	if err != nil {
+		panic(err)
+	}
+
+	userID := uint(claims["sub"].(float64))
+	accessToken, _ := userController.jwtService.GenerateToken(userID)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.refreshToken")
+	controller.Response(ctx, 200, message, accessToken)
 }

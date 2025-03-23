@@ -64,5 +64,6 @@ var Persian = map[string]interface{}{
 		"forgotPassword":          "لطفا پیامک های خود را بررسی کنید تا تلفن خود را تایید نمایید .",
 		"resetPassword":           "گذرواژه با موفقیت تغییر کرد.",
 		"installationRequest":     "درخواست نصب شما با موفقیت ثبت شد.",
+    "refreshToken":        "نشست شما با موفقیت تمدید شد.",
 	},
 }
