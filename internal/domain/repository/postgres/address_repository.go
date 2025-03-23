@@ -17,4 +17,5 @@ type AddressRepository interface {
 	GetCityByName(db database.Database, name string) (*entity.City, bool)
 	GetAddressByID(db database.Database, id uint) (*entity.Address, bool)
 	GetOwnerAddresses(db database.Database, ownerID uint, ownerType string) []*entity.Address
+	DeleteAddress(db database.Database, address *entity.Address) error
 }

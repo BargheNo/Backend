@@ -61,7 +61,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	generalAddressController := address.NewGeneralAddressController(constants, addressService)
 	corporationRepository := repositoryimpl.NewCorporationRepository()
 	cinService := cinimpl.NewCINService()
-	corporationService := serviceimpl.NewCorporationService(constants, jwtService, postgresDatabase, corporationRepository, cinService)
+	corporationService := serviceimpl.NewCorporationService(constants, jwtService, postgresDatabase, corporationRepository, addressService, cinService)
 	generalCorporationController := corporation.NewGeneralCorporationController(constants, corporationService)
 	generalControllers := &GeneralControllers{
 		UserController:        generalUserController,
@@ -75,8 +75,8 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
 	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, jwtService, postgresDatabase, bidRepository, corporationService)
-	customerCorporationController := corporation.NewCustomerCorporationController(constants, corporationService, bidService)
+	bidService := serviceimpl.NewBidService(constants, jwtService, postgresDatabase, bidRepository, addressService, corporationService)
+	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService, bidService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,

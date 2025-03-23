@@ -5,7 +5,6 @@ import (
 )
 
 type BidService interface {
-	// GetInstallationRequests(corporationID uint, page int, pageSize int, sortBy string, dir string) []biddto.InstallationRequestResponse
 	SetBid(bidInfo biddto.SetBidRequest)
 	CancelBid(bidInfo biddto.CancelBidRequest)
 	GetBids(bidsRequest biddto.GetBidsRequest) []biddto.BidsResponse

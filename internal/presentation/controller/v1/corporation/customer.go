@@ -21,11 +21,13 @@ type CustomerCorporationController struct {
 
 func NewCustomerCorporationController(
 	constants *bootstrap.Constants,
+	pagination *bootstrap.Pagination,
 	corporationService service.CorporationService,
 	BidService service.BidService,
 ) *CustomerCorporationController {
 	return &CustomerCorporationController{
 		constants:          constants,
+		pagination:         pagination,
 		corporationService: corporationService,
 		BidService:         BidService,
 	}
@@ -98,112 +100,23 @@ func (corporationController *CustomerCorporationController) UpdateContactInfo(ct
 
 }
 
-// func (corporationController *CustomerCorporationController) AddAddress(ctx *gin.Context) {
-// 	type addAddressParams struct {
-// 		Province       string `json:"province" validate:"required"`
-// 		City           string `json:"city" validate:"required"`
-// 		StreetAddress  string `json:"streetAddress" validate:"required"`
-// 		PostalCode     string `json:"postalCode" validate:"required"`
-// 		BuildingNumber string `json:"buildingNumber" validate:"required"`
-// 		Unit           uint   `json:"unitNumber"`
-// 	}
-// 	params := controller.Validated[addAddressParams](ctx)
-// 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-// 	address := corporationdto.AddressRequest{
-// 		CorporationID:  corporationID.(uint),
-// 		Province:       params.Province,
-// 		City:           params.City,
-// 		StreetAddress:  params.StreetAddress,
-// 		PostalCode:     params.PostalCode,
-// 		BuildingNumber: params.BuildingNumber,
-// 		Unit:           params.Unit,
-// 	}
-// 	corporationController.corporationService.AddAddress(address)
-
-// 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-// 	message, _ := trans.Translate("successMessage.addAddress")
-// 	controller.Response(ctx, 200, message, nil)
-// }
-
-// func (corporationController *CustomerCorporationController) EditAddress(ctx *gin.Context) {
-// 	type editAddressParams struct {
-// 		AddressID      uint   `json:"addressId" validate:"required"`
-// 		Province       string `json:"province" validate:"required"`
-// 		City           string `json:"city" validate:"required"`
-// 		StreetAddress  string `json:"streetAddress" validate:"required"`
-// 		PostalCode     string `json:"postalCode" validate:"required"`
-// 		BuildingNumber string `json:"buildingNumber" validate:"required"`
-// 		Unit           uint   `json:"unitNumber"`
-// 	}
-// 	params := controller.Validated[editAddressParams](ctx)
-
-// 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-// 	address := corporationdto.AddressRequest{
-// 		CorporationID:  corporationID.(uint),
-// 		Province:       params.Province,
-// 		City:           params.City,
-// 		StreetAddress:  params.StreetAddress,
-// 		PostalCode:     params.PostalCode,
-// 		BuildingNumber: params.BuildingNumber,
-// 		Unit:           params.Unit,
-// 	}
-// 	corporationController.corporationService.EditAddress(params.AddressID, address)
-
-// 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-// 	message, _ := trans.Translate("successMessage.editAddress")
-// 	controller.Response(ctx, 200, message, nil)
-// }
-
-// func (corporationController *CustomerCorporationController) DeleteAddress(ctx *gin.Context) {
-// 	type deleteAddressParams struct {
-// 		AddressID uint `json:"addressId" validate:"required"`
-// 	}
-// 	params := controller.Validated[deleteAddressParams](ctx)
-// 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-// 	corporationController.corporationService.DeleteAddress(corporationID.(uint), params.AddressID)
-
-// 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-// 	message, _ := trans.Translate("successMessage.deleteAddress")
-// 	controller.Response(ctx, 200, message, nil)
-// }
-
-// func (corporationController *CustomerCorporationController) GetInstallationRequests(ctx *gin.Context) {
-// 	pagination := controller.GetPagination(ctx, &corporationController.constants.Context)
-// 	sortparams := controller.GetSort(ctx, &corporationController.constants.Context)
-// 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-// 	installation_requests := corporationController.BidService.GetInstallationRequests(corporationID.(uint), pagination.Page, pagination.PageSize, sortparams.SortBy, sortparams.Dir)
-
-// 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-// 	message, _ := trans.Translate("successMessage.getInstallationRequests")
-// 	controller.Response(ctx, 200, message, installation_requests)
-// }
-
 func (corporationController *CustomerCorporationController) SetBid(ctx *gin.Context) {
 	type setBidParams struct {
 		InstallationRequestID uint      `json:"installationRequestId" validate:"required"`
-		MinCost               float64   `json:"minCost" validate:"omitempty,ltfield=MaxCost"`
-		MaxCost               float64   `json:"maxCost" validate:"omitempty,gtfield=MinCost"`
-		MinDeadline           time.Time `json:"minDeadline" validate:"ltfield=MaxDeadline"`
-		MaxDeadline           time.Time `json:"maxDeadline" validate:"gtfield=MinDeadline"`
+		Cost                  uint      `json:"cost" validate:"required"`
 		Description           string    `json:"description"`
-		InstallationTime      string    `json:"installationTime" `
+		InstallationDate      time.Time `json:"installationDate" validate:"required"`
 	}
 	params := controller.Validated[setBidParams](ctx)
-
+	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	bidInfo := biddto.SetBidRequest{
 		InstallationRequestID: params.InstallationRequestID,
-		MinCost:               params.MinCost,
-		MaxCost:               params.MaxCost,
-		MinDeadline:           params.MinDeadline,
-		MaxDeadline:           params.MaxDeadline,
+		CorporationID:         corporationID.(uint),
+		Cost:                  params.Cost,
+		InstallationDate:      params.InstallationDate,
 		Description:           params.Description,
-		InstallationTime:      params.InstallationTime,
 	}
-
-	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	bidInfo.CorporationID = corporationID.(uint)
 	corporationController.BidService.SetBid(bidInfo)
-
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.setBid")
 	controller.Response(ctx, 200, message, nil)
@@ -239,14 +152,11 @@ func (corporationController *CustomerCorporationController) GetBids(ctx *gin.Con
 	}
 	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
 	offset, limit := params.GetOffsetLimit()
-	sortparams := controller.GetSort(ctx, &corporationController.constants.Context)
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	bidsRequest := biddto.GetBidsRequest{
 		CorporationID: corporationID.(uint),
 		Offset:        offset,
 		Limit:         limit,
-		SortBy:        sortparams.SortBy,
-		Dir:           sortparams.Dir,
 	}
 	bids := corporationController.BidService.GetBids(bidsRequest)
 

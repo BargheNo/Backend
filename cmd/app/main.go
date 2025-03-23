@@ -24,14 +24,13 @@ func main() {
 	app.Database.DB.GetDB().AutoMigrate(
 		&entity.Address{},
 		&entity.City{},
-		&entity.InstallationRequest{},
 		&entity.Permission{},
 		&entity.Province{},
 		&entity.Role{},
 		&entity.User{},
+		&entity.InstallationRequest{},
 		&entity.Corporation{},
 		&entity.ContactInformation{},
-		&entity.InstallationRequest{},
 		&entity.Bid{},
 	)
 

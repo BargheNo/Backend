@@ -1,26 +1,24 @@
 package biddto
 
-import "time"
+import (
+	"time"
 
-type InstallationRequestResponse struct {
-	ID             uint      `json:"id"`
-	UserID         uint      `json:"userId"`
-	Area           uint      `json:"area"`
-	PowerRequested uint      `json:"powerRequested"`
-	MaxCost        float64   `json:"maxCost"`
-	Deadline       time.Time `json:"deadline"`
-	BuildingType   string    `json:"buildingType"`
-	Address        string    `json:"address"`
+	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+)
+
+type InstallationRequestDetails struct {
+	ID           uint                       `json:"id"`
+	Name         string                     `json:"name"`
+	CustomerName string                     `json:"customerName"`
+	Address      addressdto.AddressResponse `json:"address"`
+	PowerRequest uint                       `json:"powerRequest"`
 }
 
 type BidsResponse struct {
-	ID                    uint      `json:"id"`
-	InstallationRequestID uint      `json:"installationRequestId"`
-	Description           string    `json:"description"`
-	MinCost               float64   `json:"minCost"`
-	MaxCost               float64   `json:"maxCost"`
-	MinDeadline           time.Time `json:"minDeadline"`
-	MaxDeadline           time.Time `json:"maxDeadline"`
-	InstallationTime      string    `json:"installationTime"`
-	Status                string    `json:"status"`
+	ID                         uint                       `json:"id"`
+	InstallationRequestDetails InstallationRequestDetails `json:"installationRequestId"`
+	Description                string                     `json:"description"`
+	Cost                       uint                       `json:"cost"`
+	InstallationDate           time.Time                  `json:"installationTime"`
+	Status                     string                     `json:"status"`
 }

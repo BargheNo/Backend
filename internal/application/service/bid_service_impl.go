@@ -16,6 +16,7 @@ type BidService struct {
 	JWTService         service.JWTService
 	db                 database.Database
 	bidRepository      repository.BidRepository
+	addressService     service.AddressService
 	corporationService service.CorporationService
 }
 
@@ -24,6 +25,7 @@ func NewBidService(
 	jwtService service.JWTService,
 	db database.Database,
 	bidRepository repository.BidRepository,
+	addressService service.AddressService,
 	corporationService service.CorporationService,
 ) *BidService {
 	return &BidService{
@@ -31,37 +33,10 @@ func NewBidService(
 		JWTService:         jwtService,
 		db:                 db,
 		bidRepository:      bidRepository,
+		addressService:     addressService,
 		corporationService: corporationService,
 	}
 }
-
-// func (bidService *BidService) GetInstallationRequests(corporationId uint, page int, pageSize int, sortBy string, dir string) []biddto.InstallationRequestResponse {
-// 	offset := (page - 1) * pageSize
-// 	var order string
-// 	if sortBy == "" {
-// 		order = "RANDOM()"
-// 	} else {
-// 		order = sortBy + " " + dir
-// 	}
-// 	_, exist := bidService.corporationService.GetCorporationByID(corporationId)
-// 	if !exist {
-// 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Corporation}
-// 		panic(notFoundError)
-// 	}
-// 	installationRequests := bidService.bidRepository.GetInstallationRequests(bidService.db, enum.Active, corporationId, offset, pageSize, order)
-// 	installationRequestResponses := make([]biddto.InstallationRequestResponse, len(installationRequests))
-// 	for i, request := range installationRequests {
-// 		installationRequestResponses[i] = biddto.InstallationRequestResponse{
-// 			ID:             request.ID,
-// 			UserID:         request.OwnerID,
-// 			Area:           request.Area,
-// 			PowerRequested: request.PowerRequest,
-// 			MaxCost:        request.MaxCost,
-// 			BuildingType:   request.BuildingType,
-// 		}
-// 	}
-// 	return installationRequestResponses
-// }
 
 func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
@@ -90,12 +65,9 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	bid := &entity.Bid{
 		RequestID:        bidInfo.InstallationRequestID,
 		CorporationID:    bidInfo.CorporationID,
-		MinCost:          bidInfo.MinCost,
-		MaxCost:          bidInfo.MaxCost,
-		MinDeadline:      bidInfo.MinDeadline,
-		MaxDeadline:      bidInfo.MaxDeadline,
+		Cost:             bidInfo.Cost,
 		Description:      bidInfo.Description,
-		InstallationTime: bidInfo.InstallationTime,
+		InstallationDate: bidInfo.InstallationDate,
 		Status:           enum.Pending,
 	}
 	err := bidService.bidRepository.CreateBid(bidService.db, bid)
@@ -141,33 +113,33 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 }
 
 func (bidService *BidService) GetBids(bidsRequest biddto.GetBidsRequest) []biddto.BidsResponse {
-	var order string
-	if bidsRequest.SortBy == "" {
-		order = "created_at" + " " + bidsRequest.Dir
-	} else {
-		order = bidsRequest.SortBy + " " + bidsRequest.Dir
-	}
 	_, exist := bidService.corporationService.GetCorporationByID(bidsRequest.CorporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
 
-	bids := bidService.bidRepository.GetBids(bidService.db, bidsRequest.CorporationID, bidsRequest.Offset, bidsRequest.Limit, order)
+	bids := bidService.bidRepository.GetBids(bidService.db, bidsRequest.CorporationID, bidsRequest.Offset, bidsRequest.Limit)
+	installationRequests := make([]biddto.InstallationRequestDetails, len(bids))
+	for i, bid := range bids {
+		installationRequests[i] = biddto.InstallationRequestDetails{
+			ID:           bid.Request.ID,
+			Name:         bid.Request.Name,
+			CustomerName: bid.Request.Owner.FirstName + " " + bid.Request.Owner.LastName,
+			Address:      bidService.addressService.GetAddress(bid.Request.AddressID),
+			PowerRequest: bid.Request.PowerRequest,
+		}
+	}
 	bidResponses := make([]biddto.BidsResponse, len(bids))
 	for i, bid := range bids {
 		bidResponses[i] = biddto.BidsResponse{
-			ID:                    bid.ID,
-			InstallationRequestID: bid.RequestID,
-			MinCost:               bid.MinCost,
-			MaxCost:               bid.MaxCost,
-			MinDeadline:           bid.MinDeadline,
-			MaxDeadline:           bid.MaxDeadline,
-			Description:           bid.Description,
-			InstallationTime:      bid.InstallationTime,
-			Status:                bid.Status.String(),
+			ID:                         bid.ID,
+			InstallationRequestDetails: installationRequests[i],
+			Description:                bid.Description,
+			Cost:                       bid.Cost,
+			InstallationDate:           bid.InstallationDate,
+			Status:                     bid.Status.String(),
 		}
 	}
-
 	return bidResponses
 }

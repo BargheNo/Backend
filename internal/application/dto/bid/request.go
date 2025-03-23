@@ -5,12 +5,9 @@ import "time"
 type SetBidRequest struct {
 	InstallationRequestID uint
 	CorporationID         uint
-	MinCost               float64
-	MaxCost               float64
-	MinDeadline           time.Time
-	MaxDeadline           time.Time
+	Cost                  uint
 	Description           string
-	InstallationTime      string
+	InstallationDate      time.Time
 }
 
 type CancelBidRequest struct {
@@ -23,6 +20,4 @@ type GetBidsRequest struct {
 	CorporationID uint
 	Offset        int
 	Limit         int
-	SortBy        string
-	Dir           string
 }

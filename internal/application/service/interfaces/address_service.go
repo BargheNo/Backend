@@ -10,4 +10,5 @@ type AddressService interface {
 	GetAddresses(addressInfo addressdto.GetOwnerAddressesRequest) []addressdto.AddressResponse
 	GetProvinceList() []addressdto.ProvinceResponse
 	GetCityProvinceCities(province addressdto.GetProvinceCitiesRequest) []addressdto.CityResponse
+	DeleteAddress(addressID uint)
 }

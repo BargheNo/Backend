@@ -11,11 +11,9 @@ type Bid struct {
 	database.Model
 	CorporationID    uint `gorm:"not null"`
 	RequestID        uint `gorm:"not null"`
-	MinCost          float64
-	MaxCost          float64
-	MinDeadline      time.Time
-	MaxDeadline      time.Time
+	Request          InstallationRequest
+	Cost             uint
 	Description      string
 	Status           enum.BidStatus
-	InstallationTime string
+	InstallationDate time.Time
 }

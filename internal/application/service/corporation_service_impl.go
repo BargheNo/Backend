@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
@@ -19,6 +20,7 @@ type CorporationService struct {
 	JWTService            service.JWTService
 	db                    database.Database
 	CorporationRepository repository.CorporationRepository
+	AddressService        service.AddressService
 	CINService            service.CINService
 }
 
@@ -27,6 +29,7 @@ func NewCorporationService(
 	jwtService service.JWTService,
 	db database.Database,
 	corporationRepository repository.CorporationRepository,
+	addressService service.AddressService,
 	cinService service.CINService,
 ) *CorporationService {
 	return &CorporationService{
@@ -34,6 +37,7 @@ func NewCorporationService(
 		JWTService:            jwtService,
 		db:                    db,
 		CorporationRepository: corporationRepository,
+		AddressService:        addressService,
 		CINService:            cinService,
 	}
 }
@@ -186,78 +190,6 @@ func (corporationService *CorporationService) UpdateContactInfo(contactInfo corp
 	}
 }
 
-// func (corporationService *CorporationService) AddAddress(address corporationdto.AddressRequest) {
-// 	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
-// 	if !exist {
-// 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-// 		panic(notFoundError)
-// 	}
-
-// 	newAddress := &entity.Address{
-// 		Province:       address.Province,
-// 		City:           address.City,
-// 		StreetAddress:  address.StreetAddress,
-// 		PostalCode:     address.PostalCode,
-// 		BuildingNumber: address.BuildingNumber,
-// 		Unit:           address.Unit,
-// 	}
-
-// 	corporation.Addresses = append(corporation.Addresses, *newAddress)
-
-// 	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
-
-// func (corporationService *CorporationService) EditAddress(addressID uint, address corporationdto.AddressRequest) {
-// 	corporation, exist := corporationService.GetCorporationByID(address.CorporationID)
-// 	if !exist {
-// 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-// 		panic(notFoundError)
-// 	}
-
-// 	newAddress := &entity.Address{
-// 		Province:       address.Province,
-// 		City:           address.City,
-// 		StreetAddress:  address.StreetAddress,
-// 		PostalCode:     address.PostalCode,
-// 		BuildingNumber: address.BuildingNumber,
-// 		Unit:           address.Unit,
-// 	}
-
-// 	for i, addr := range corporation.Addresses {
-// 		if addr.ID == addressID {
-// 			corporation.Addresses[i] = *newAddress
-// 			break
-// 		}
-// 	}
-
-// 	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
-
-// func (corporationService *CorporationService) DeleteAddress(corporationID uint, addressID uint) {
-// 	corporation, exist := corporationService.GetCorporationByID(corporationID)
-// 	if !exist {
-// 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-// 		panic(notFoundError)
-// 	}
-
-// 	for i, addr := range corporation.Addresses {
-// 		if addr.ID == addressID {
-// 			corporation.Addresses = append(corporation.Addresses[:i], corporation.Addresses[i+1:]...)
-// 			break
-// 		}
-// 	}
-// 	err := corporationService.CorporationRepository.UpdateCorporation(corporationService.db, corporation)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
-
 func (corporationService *CorporationService) GetCorporationInfo(idRequest corporationdto.IDRequest) corporationdto.CorporationInfoResponse {
 	corporation, exist := corporationService.GetCorporationByID(idRequest.CorporationID)
 	if !exist {
@@ -276,18 +208,11 @@ func (corporationService *CorporationService) GetCorporationInfo(idRequest corpo
 		Telegram:  corporation.ContactInformation.Telegram,
 		Linkedin:  corporation.ContactInformation.Linkedin,
 	}
-	// addresses := make([]corporationdto.AddressResponse, len(corporation.Addresses))
-	// for i, addr := range corporation.Addresses {
-	// 	addresses[i] = corporationdto.AddressResponse{
-	// 		ID:             addr.ID,
-	// 		Province:       addr.Province,
-	// 		City:           addr.City,
-	// 		StreetAddress:  addr.StreetAddress,
-	// 		PostalCode:     addr.PostalCode,
-	// 		BuildingNumber: addr.BuildingNumber,
-	// 		Unit:           addr.Unit,
-	// 	}
-	// }
+	addressRequest := addressdto.GetOwnerAddressesRequest{
+		OwnerID:   corporation.ID,
+		OwnerType: "corporation",
+	}
+	addresses := corporationService.AddressService.GetAddresses(addressRequest)
 
 	return corporationdto.CorporationInfoResponse{
 		ID:          corporation.ID,
@@ -295,6 +220,6 @@ func (corporationService *CorporationService) GetCorporationInfo(idRequest corpo
 		CIN:         corporation.CIN,
 		Status:      corporation.Status.String(),
 		ContactInfo: contactInfo,
-		// Addresses:   addresses,
+		Addresses:   addresses,
 	}
 }

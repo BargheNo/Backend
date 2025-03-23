@@ -110,3 +110,7 @@ func (repo *AddressRepository) CreateCity(db database.Database, city *entity.Cit
 func (repo *AddressRepository) CreateAddress(db database.Database, address *entity.Address) error {
 	return db.GetDB().Create(&address).Error
 }
+
+func (repo *AddressRepository) DeleteAddress(db database.Database, address *entity.Address) error {
+	return db.GetDB().Delete(&address).Error
+}
