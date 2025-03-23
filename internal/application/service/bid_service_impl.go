@@ -5,7 +5,7 @@ import (
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
-	"github.com/BargheNo/Backend/internal/domain/enums"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -48,7 +48,7 @@ func (bidService *BidService) GetInstallationRequests(corporationId uint, page i
 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
-	installationRequests := bidService.bidRepository.GetInstallationRequests(bidService.db, enums.Open, corporationId, offset, pageSize, order)
+	installationRequests := bidService.bidRepository.GetInstallationRequests(bidService.db, enum.Active, corporationId, offset, pageSize, order)
 	installationRequestResponses := make([]biddto.InstallationRequestResponse, len(installationRequests))
 	for i, request := range installationRequests {
 		installationRequestResponses[i] = biddto.InstallationRequestResponse{
@@ -78,7 +78,7 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	case !exist:
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
 		panic(notFoundError)
-	case installationRequest.Status != enums.Open:
+	case installationRequest.Status != enum.Active:
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
 		panic(notFoundError)
 	}
@@ -98,7 +98,7 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 		MaxDeadline:      bidInfo.MaxDeadline,
 		Description:      bidInfo.Description,
 		InstallationTime: bidInfo.InstallationTime,
-		Status:           enums.Pending,
+		Status:           enum.Pending,
 	}
 	err := bidService.bidRepository.CreateBid(bidService.db, bid)
 	if err != nil {
@@ -119,7 +119,7 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 	case !exist:
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
 		panic(notFoundError)
-	case request.Status != enums.Open:
+	case request.Status != enum.Active:
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
 		panic(notFoundError)
 	}
@@ -132,7 +132,7 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 	case bid.CorporationID != bidInfo.CorporationID:
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.Bid}
 		panic(notFoundError)
-	case bid.Status != enums.Pending:
+	case bid.Status != enum.Pending:
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.Bid}
 		panic(notFoundError)
 	}

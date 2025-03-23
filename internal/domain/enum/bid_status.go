@@ -1,11 +1,11 @@
-package enums
+package enum
 
 type BidStatus uint
 
 const (
 	Pending BidStatus = iota + 1
 	Accepted
-	Expired
+	// Expired
 )
 
 func (s BidStatus) String() string {
@@ -14,8 +14,8 @@ func (s BidStatus) String() string {
 		return "pending"
 	case Accepted:
 		return "accepted"
-	case Expired:
-		return "expired"
+		// case Expired:
+		// return "expired"
 	}
 	return "unknown"
 }
@@ -24,6 +24,6 @@ func GetAllBidStatuses() []BidStatus {
 	return []BidStatus{
 		Pending,
 		Accepted,
-		Expired,
+		// Expired,
 	}
 }

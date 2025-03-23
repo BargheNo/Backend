@@ -2,12 +2,12 @@ package repository
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
-	"github.com/BargheNo/Backend/internal/domain/enums"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
 type BidRepository interface {
-	GetInstallationRequests(db database.Database, status enums.InstallationRequestStatus, corporationID uint, offset int, pageSize int, order string) []*entity.InstallationRequest
+	GetInstallationRequests(db database.Database, status enum.InstallationRequestStatus, corporationID uint, offset int, pageSize int, order string) []*entity.InstallationRequest
 	FindInstallationRequestByID(db database.Database, id uint) (*entity.InstallationRequest, bool)
 	CreateBid(db database.Database, bid *entity.Bid) error
 	FindBidByID(db database.Database, id uint) (*entity.Bid, bool)

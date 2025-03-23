@@ -7,7 +7,7 @@ import (
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
-	"github.com/BargheNo/Backend/internal/domain/enums"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -43,7 +43,7 @@ func (corporationService *CorporationService) GetCorporationByID(corporationID u
 	if !exist {
 		return nil, false
 	}
-	if corporation.Status != enums.Approved {
+	if corporation.Status != enum.Approved {
 		return nil, false
 	}
 	return corporation, true
@@ -79,7 +79,7 @@ func (corporationService *CorporationService) passwordValidation(password string
 func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) {
 	var conflictErrors exception.ConflictErrors
 	corporation, exist := corporationService.CorporationRepository.FindCorporationByCIN(corporationService.db, registerInfo.CIN)
-	if exist && corporation.Status != enums.Rejected {
+	if exist && corporation.Status != enum.Rejected {
 		conflictErrors.Add(corporationService.constants.Field.CIN, corporationService.constants.Tag.AlreadyRegistered)
 		panic(conflictErrors)
 	}
@@ -102,7 +102,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		Name:     registerInfo.Name,
 		CIN:      registerInfo.CIN,
 		Password: hashedPassword,
-		Status:   enums.AwaitingApproval,
+		Status:   enum.AwaitingApproval,
 	}
 
 	err = corporationService.CorporationRepository.CreateCorporation(corporationService.db, corporation)
@@ -118,7 +118,7 @@ func (corporationService *CorporationService) Login(loginInfo corporationdto.Log
 		notFoundError = exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
-	if corporation.Status != enums.Approved {
+	if corporation.Status != enum.Approved {
 		notFoundError = exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
 		panic(notFoundError)
 	}

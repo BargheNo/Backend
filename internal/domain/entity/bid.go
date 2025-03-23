@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"github.com/BargheNo/Backend/internal/domain/enums"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
@@ -16,6 +16,6 @@ type Bid struct {
 	MinDeadline      time.Time
 	MaxDeadline      time.Time
 	Description      string
-	Status           enums.BidStatus
+	Status           enum.BidStatus
 	InstallationTime string
 }
