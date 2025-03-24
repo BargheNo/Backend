@@ -20,7 +20,7 @@ services:
       - db
 
   db:
-    image: postgres:17
+    image: postgres:latest
     container_name: db
     restart: unless-stopped
     env_file:
@@ -39,7 +39,7 @@ services:
           memory: 256M
 
   rdb:
-    image: redis:7.4
+    image: redis:latestm
     container_name: rdb
     restart: unless-stopped
     ports:
