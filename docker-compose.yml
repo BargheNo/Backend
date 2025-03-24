@@ -39,7 +39,7 @@ services:
           memory: 256M
 
   rdb:
-    image: redis:latestm
+    image: redis:latest
     container_name: rdb
     restart: unless-stopped
     ports:
