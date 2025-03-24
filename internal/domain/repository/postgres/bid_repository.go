@@ -6,7 +6,6 @@ import (
 )
 
 type BidRepository interface {
-	FindInstallationRequestByID(db database.Database, id uint) (*entity.InstallationRequest, bool)
 	CreateBid(db database.Database, bid *entity.Bid) error
 	FindBidByID(db database.Database, id uint) (*entity.Bid, bool)
 	FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint) (*entity.Bid, bool)

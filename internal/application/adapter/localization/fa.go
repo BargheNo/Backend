@@ -46,6 +46,7 @@ var Persian = map[string]interface{}{
 		"rateLimitExceed":        "بیشتر از حد مجاز درخواست ثبت کرده اید.",
 		"installRateLimit":       "تعداد درخواست های فعال شما از حدنساب عبور کرده است.",
 		"forbiddenError":         "اجازه دسترسی به این {0} وجود ندارد.",
+		"forbiddenStatus":        "اجازه انجام این کار را در این وضعیت ندارید.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":            "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",

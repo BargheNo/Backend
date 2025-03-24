@@ -12,25 +12,13 @@ func NewBidRepository() *BidRepository {
 	return &BidRepository{}
 }
 
-func (repo *BidRepository) FindInstallationRequestByID(db database.Database, id uint) (*entity.InstallationRequest, bool) {
-	var request entity.InstallationRequest
-	result := db.GetDB().Where("id = ?", id).First(&request)
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
-		}
-		panic(result.Error)
-	}
-	return &request, true
-}
-
 func (repo *BidRepository) CreateBid(db database.Database, bid *entity.Bid) error {
 	return db.GetDB().Create(&bid).Error
 }
 
 func (repo *BidRepository) FindBidByID(db database.Database, id uint) (*entity.Bid, bool) {
 	var bid entity.Bid
-	result := db.GetDB().Where("id = ?", id).First(&bid)
+	result := db.GetDB().First(&bid, id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, false

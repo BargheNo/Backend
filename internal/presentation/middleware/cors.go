@@ -17,7 +17,7 @@ func (cm *CORSMiddleware) CORS() gin.HandlerFunc {
 	corsConfig := cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://185.110.189.68:3001"},
 		AllowMethods:     []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "ngrok-skip-browser-warning"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,

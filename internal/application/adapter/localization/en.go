@@ -46,6 +46,7 @@ var English = map[string]interface{}{
 		"rateLimitExceed":        "Rate limit exceeded. try again later.",
 		"installRateLimit":       "Active installation requests has been exceeded the limit.",
 		"forbiddenError":         "Forbidden: Access to {0} is not allowed",
+		"forbiddenStatus":        "Cannot do this action with this status.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":            "Registration Successful! Please check your messages to verify your account and complete the registration process.",
