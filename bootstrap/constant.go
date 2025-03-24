@@ -64,6 +64,7 @@ type ErrorTag struct {
 	Rejected               string
 	NotExist               string
 	AlreadyExist           string
+	ForbiddenStatus        string
 }
 
 type SMSTemplates struct {
@@ -106,7 +107,7 @@ func NewConstants() *Constants {
 			OTP:                 "otp",
 			Corporation:         "corporation",
 			CIN:                 "cin",
-			InstallationRequest: "installation_request",
+			InstallationRequest: "installationRequest",
 			Bid:                 "bid",
 			Address:             "address",
 			Name:                "name",
@@ -132,6 +133,7 @@ func NewConstants() *Constants {
 			Rejected:               "rejected",
 			NotExist:               "notExist",
 			AlreadyExist:           "alreadyExist",
+			ForbiddenStatus:        "forbiddenStatus",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

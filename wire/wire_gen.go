@@ -71,11 +71,11 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	customerUserController := user.NewCustomerUserController(constants, userService)
 	pagination := ProvidePaginationConfig(container)
 	installationRepository := repositoryimpl.NewInstallationRepository()
-	installationService := serviceimpl.NewInstallationService(constants, addressService, installationRepository, postgresDatabase)
+	installationService := serviceimpl.NewInstallationService(constants, addressService, userService, installationRepository, postgresDatabase)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
 	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, jwtService, postgresDatabase, bidRepository, addressService, corporationService)
+	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
 	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService, bidService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
@@ -83,9 +83,14 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		AddressController:      customerAddressController,
 		CorporationController:  customerCorporationController,
 	}
+	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
+	corporationControllers := &CorporationControllers{
+		InstallationController: corporationInstallationController,
+	}
 	controllers := &Controllers{
-		General:  generalControllers,
-		Customer: customerControllers,
+		General:     generalControllers,
+		Customer:    customerControllers,
+		Corporation: corporationControllers,
 	}
 	authMiddleware := middleware.NewAuthMiddleware(constants, jwtService, userRepository, postgresDatabase)
 	corsMiddleware := middleware.NewCorsMiddleware()
@@ -133,6 +138,8 @@ var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, log
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, wire.Struct(new(CustomerControllers), "*"))
+
+var CorporationControllerProviderSet = wire.NewSet(installation.NewCorporationInstallationController, wire.Struct(new(CorporationControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -191,6 +198,7 @@ var ProviderSet = wire.NewSet(
 	AdapterProviderSet,
 	GeneralControllerProviderSet,
 	CustomerControllerProviderSet,
+	CorporationControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	SeederProviderSet,
@@ -225,9 +233,14 @@ type CustomerControllers struct {
 	CorporationController  *corporation.CustomerCorporationController
 }
 
+type CorporationControllers struct {
+	InstallationController *installation.CorporationInstallationController
+}
+
 type Controllers struct {
-	General  *GeneralControllers
-	Customer *CustomerControllers
+	General     *GeneralControllers
+	Customer    *CustomerControllers
+	Corporation *CorporationControllers
 }
 
 type Middlewares struct {

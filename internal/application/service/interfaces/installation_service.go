@@ -4,5 +4,8 @@ import installationdto "github.com/BargheNo/Backend/internal/application/dto/ins
 
 type InstallationService interface {
 	CreateInstallationRequest(requestInfo installationdto.NewInstallationRequest)
-	GetOwnerInstallationRequests(listInfo installationdto.ListOwnerRequestsRequest) []installationdto.ListOwnerRequestsResponse
+	GetOwnerInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.OwnerRequestsResponse
+	GetInstallationRequest(requestID uint) installationdto.RequestDetailsResponse
+	GetOwnerInstallationRequest(requestInfo installationdto.GetOwnerRequest) installationdto.OwnerRequestsResponse
+	GetInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.RequestDetailsResponse
 }

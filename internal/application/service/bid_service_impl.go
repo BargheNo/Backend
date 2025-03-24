@@ -12,48 +12,50 @@ import (
 )
 
 type BidService struct {
-	constants          *bootstrap.Constants
-	JWTService         service.JWTService
-	db                 database.Database
-	bidRepository      repository.BidRepository
-	addressService     service.AddressService
-	corporationService service.CorporationService
+	constants           *bootstrap.Constants
+	installationService service.InstallationService
+	jwtService          service.JWTService
+	corporationService  service.CorporationService
+	bidRepository       repository.BidRepository
+	db                  database.Database
 }
 
 func NewBidService(
 	constants *bootstrap.Constants,
+	installationService service.InstallationService,
 	jwtService service.JWTService,
-	db database.Database,
-	bidRepository repository.BidRepository,
-	addressService service.AddressService,
 	corporationService service.CorporationService,
+	bidRepository repository.BidRepository,
+	db database.Database,
 ) *BidService {
 	return &BidService{
-		constants:          constants,
-		JWTService:         jwtService,
-		db:                 db,
-		bidRepository:      bidRepository,
-		addressService:     addressService,
-		corporationService: corporationService,
+		constants:           constants,
+		installationService: installationService,
+		jwtService:          jwtService,
+		corporationService:  corporationService,
+		bidRepository:       bidRepository,
+		db:                  db,
 	}
 }
 
 func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
-	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
 	var notFoundError exception.NotFoundError
 	var conflictErrors exception.ConflictErrors
+
+	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
 	if !exist {
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
-	installationRequest, exist := bidService.bidRepository.FindInstallationRequestByID(bidService.db, bidInfo.InstallationRequestID)
+
+	installationRequest := bidService.installationService.GetInstallationRequest(bidInfo.InstallationRequestID)
 	switch {
 	case !exist:
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
 		panic(notFoundError)
-	case installationRequest.Status != enum.Active:
-		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
-		panic(notFoundError)
+	case installationRequest.Status != enum.Active.String():
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
+		panic(conflictErrors)
 	}
 
 	_, exist = bidService.bidRepository.FindBidByCorporationAndRequestID(bidService.db, bidInfo.InstallationRequestID, bidInfo.CorporationID)
@@ -77,21 +79,18 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 }
 
 func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
+	var conflictErrors exception.ConflictErrors
+
 	_, exist := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
 	var notFoundError exception.NotFoundError
 	if !exist {
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
-
-	request, exist := bidService.bidRepository.FindInstallationRequestByID(bidService.db, bidInfo.InstallationRequestID)
-	switch {
-	case !exist:
-		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
-		panic(notFoundError)
-	case request.Status != enum.Active:
-		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
-		panic(notFoundError)
+	request := bidService.installationService.GetInstallationRequest(bidInfo.InstallationRequestID)
+	if request.Status != enum.Active.String() {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
+		panic(conflictErrors)
 	}
 
 	bid, exist := bidService.bidRepository.FindBidByID(bidService.db, bidInfo.BidID)
@@ -100,11 +99,14 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.Bid}
 		panic(notFoundError)
 	case bid.CorporationID != bidInfo.CorporationID:
-		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.Bid}
-		panic(notFoundError)
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: bidService.constants.Field.Bid,
+		}
+		panic(forbiddenError)
 	case bid.Status != enum.Pending:
-		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.Bid}
-		panic(notFoundError)
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
+		panic(conflictErrors)
 	}
 	err := bidService.bidRepository.DeleteBidByID(bidService.db, bidInfo.BidID)
 	if err != nil {
@@ -120,26 +122,19 @@ func (bidService *BidService) GetBids(bidsRequest biddto.GetBidsRequest) []biddt
 	}
 
 	bids := bidService.bidRepository.GetBids(bidService.db, bidsRequest.CorporationID, bidsRequest.Offset, bidsRequest.Limit)
-	installationRequests := make([]biddto.InstallationRequestDetails, len(bids))
-	for i, bid := range bids {
-		installationRequests[i] = biddto.InstallationRequestDetails{
-			ID:           bid.Request.ID,
-			Name:         bid.Request.Name,
-			CustomerName: bid.Request.Owner.FirstName + " " + bid.Request.Owner.LastName,
-			Address:      bidService.addressService.GetAddress(bid.Request.AddressID),
-			PowerRequest: bid.Request.PowerRequest,
-		}
-	}
+
 	bidResponses := make([]biddto.BidsResponse, len(bids))
 	for i, bid := range bids {
+		installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
 		bidResponses[i] = biddto.BidsResponse{
 			ID:                         bid.ID,
-			InstallationRequestDetails: installationRequests[i],
+			InstallationRequestDetails: installationRequest,
 			Description:                bid.Description,
 			Cost:                       bid.Cost,
 			InstallationDate:           bid.InstallationDate,
 			Status:                     bid.Status.String(),
 		}
 	}
+
 	return bidResponses
 }

@@ -15,6 +15,7 @@ import (
 type InstallationService struct {
 	constants              *bootstrap.Constants
 	addressService         service.AddressService
+	userService            service.UserService
 	installationRepository repository.InstallationRepository
 	db                     database.Database
 }
@@ -22,12 +23,14 @@ type InstallationService struct {
 func NewInstallationService(
 	constants *bootstrap.Constants,
 	addressService service.AddressService,
+	userService service.UserService,
 	installationRepository repository.InstallationRepository,
 	db database.Database,
 ) *InstallationService {
 	return &InstallationService{
 		constants:              constants,
 		addressService:         addressService,
+		userService:            userService,
 		installationRepository: installationRepository,
 		db:                     db,
 	}
@@ -67,21 +70,95 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 	}
 }
 
-func (installationService *InstallationService) GetOwnerInstallationRequests(listInfo installationdto.ListOwnerRequestsRequest) []installationdto.ListOwnerRequestsResponse {
+func (installationService *InstallationService) GetOwnerInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.OwnerRequestsResponse {
 	allowedStatus := []enum.InstallationRequestStatus{enum.Active, enum.Cancelled, enum.Expired}
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	requests := installationService.installationRepository.FindOwnerRequests(
 		installationService.db, listInfo.OwnerID, allowedStatus, paginationModifier, sortingModifier)
-	response := make([]installationdto.ListOwnerRequestsResponse, len(requests))
+	response := make([]installationdto.OwnerRequestsResponse, len(requests))
 	for i, request := range requests {
 		address := installationService.addressService.GetAddress(request.AddressID)
-		response[i] = installationdto.ListOwnerRequestsResponse{
-			ID:          request.ID,
-			Name:        request.Name,
-			Status:      request.Status.String(),
-			CreatedTime: request.CreatedAt,
-			Address:     address,
+		response[i] = installationdto.OwnerRequestsResponse{
+			ID:           request.ID,
+			Name:         request.Name,
+			CreatedTime:  request.CreatedAt,
+			Status:       request.Status.String(),
+			PowerRequest: request.PowerRequest,
+			MaxCost:      request.MaxCost,
+			BuildingType: request.BuildingType,
+			Address:      address,
+		}
+	}
+	return response
+}
+
+func (installationService *InstallationService) GetInstallationRequest(requestID uint) installationdto.RequestDetailsResponse {
+	request, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+		panic(notFoundError)
+	}
+	address := installationService.addressService.GetAddress(request.AddressID)
+	customer := installationService.userService.GetUserCredential(request.OwnerID)
+	return installationdto.RequestDetailsResponse{
+		ID:           request.ID,
+		Name:         request.Name,
+		CreatedTime:  request.CreatedAt,
+		Status:       request.Status.String(),
+		PowerRequest: request.PowerRequest,
+		MaxCost:      request.MaxCost,
+		BuildingType: request.BuildingType,
+		Address:      address,
+		Customer:     customer,
+	}
+}
+
+func (installationService *InstallationService) GetOwnerInstallationRequest(requestInfo installationdto.GetOwnerRequest) installationdto.OwnerRequestsResponse {
+	installationRequest, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestInfo.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+		panic(notFoundError)
+	}
+	if installationRequest.OwnerID != requestInfo.OwnerID {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: installationService.constants.Field.InstallationRequest,
+		}
+		panic(forbiddenError)
+	}
+	address := installationService.addressService.GetAddress(installationRequest.AddressID)
+	return installationdto.OwnerRequestsResponse{
+		ID:           installationRequest.ID,
+		Name:         installationRequest.Name,
+		CreatedTime:  installationRequest.CreatedAt,
+		Status:       installationRequest.Status.String(),
+		PowerRequest: installationRequest.PowerRequest,
+		MaxCost:      installationRequest.MaxCost,
+		BuildingType: installationRequest.BuildingType,
+		Address:      address,
+	}
+}
+
+func (installationService *InstallationService) GetInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.RequestDetailsResponse {
+	allowedStatus := []enum.InstallationRequestStatus{enum.Active}
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	requests := installationService.installationRepository.FindRequestByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)
+	response := make([]installationdto.RequestDetailsResponse, len(requests))
+	for i, request := range requests {
+		address := installationService.addressService.GetAddress(request.AddressID)
+		customer := installationService.userService.GetUserCredential(request.OwnerID)
+		response[i] = installationdto.RequestDetailsResponse{
+			ID:           request.ID,
+			Name:         request.Name,
+			CreatedTime:  request.CreatedAt,
+			Status:       request.Status.String(),
+			PowerRequest: request.PowerRequest,
+			MaxCost:      request.MaxCost,
+			BuildingType: request.BuildingType,
+			Address:      address,
+			Customer:     customer,
 		}
 	}
 	return response

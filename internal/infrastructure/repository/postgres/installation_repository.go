@@ -14,6 +14,33 @@ func NewInstallationRepository() *InstallationRepository {
 	return &InstallationRepository{}
 }
 
+func (repo *InstallationRepository) FindRequestByID(db database.Database, requestID uint) (*entity.InstallationRequest, bool) {
+	var request entity.InstallationRequest
+	result := db.GetDB().First(&request, requestID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &request, true
+}
+
+func (repo *InstallationRepository) FindRequestByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) []*entity.InstallationRequest {
+	var requests []*entity.InstallationRequest
+	query := db.GetDB().Where("status IN ?", status)
+
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+
+	result := query.Find(&requests)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return requests
+}
+
 func (repo *InstallationRepository) FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) []*entity.InstallationRequest {
 	var requests []*entity.InstallationRequest
 	query := db.GetDB().Where("owner_id = ? and status IN ?", ownerID, status)

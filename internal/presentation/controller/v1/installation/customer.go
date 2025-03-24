@@ -84,11 +84,26 @@ func (installationController *CustomerInstallationController) GetOwnerInstallati
 	}
 	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
 	offset, limit := params.GetOffsetLimit()
-	listInfo := installationdto.ListOwnerRequestsRequest{
+	listInfo := installationdto.InstallationListRequest{
 		OwnerID: ownerID.(uint),
 		Offset:  offset,
 		Limit:   limit,
 	}
 	requests := installationController.installationService.GetOwnerInstallationRequests(listInfo)
 	controller.Response(ctx, 200, "", requests)
+}
+
+func (installationController *CustomerInstallationController) GetInstallationRequest(ctx *gin.Context) {
+	type installationRequestParams struct {
+		RequestID uint `uri:"requestID" validate:"required"`
+	}
+	params := controller.Validated[installationRequestParams](ctx)
+	ownerID, _ := ctx.Get(installationController.constants.Context.ID)
+	requestInfo := installationdto.GetOwnerRequest{
+		RequestID: params.RequestID,
+		OwnerID:   ownerID.(uint),
+	}
+	installationRequest := installationController.installationService.GetOwnerInstallationRequest(requestInfo)
+
+	controller.Response(ctx, 200, "", installationRequest)
 }

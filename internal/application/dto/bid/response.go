@@ -4,6 +4,7 @@ import (
 	"time"
 
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 )
 
 type InstallationRequestDetails struct {
@@ -15,10 +16,10 @@ type InstallationRequestDetails struct {
 }
 
 type BidsResponse struct {
-	ID                         uint                       `json:"id"`
-	InstallationRequestDetails InstallationRequestDetails `json:"installationRequestId"`
-	Description                string                     `json:"description"`
-	Cost                       uint                       `json:"cost"`
-	InstallationDate           time.Time                  `json:"installationTime"`
-	Status                     string                     `json:"status"`
+	ID                         uint                                   `json:"id"`
+	InstallationRequestDetails installationdto.RequestDetailsResponse `json:"installationRequest"`
+	Description                string                                 `json:"description"`
+	Cost                       uint                                   `json:"cost"`
+	InstallationDate           time.Time                              `json:"installationTime"`
+	Status                     string                                 `json:"status"`
 }
