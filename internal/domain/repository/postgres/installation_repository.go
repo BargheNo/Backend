@@ -7,6 +7,7 @@ import (
 )
 
 type InstallationRepository interface {
+	FindRequestByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...QueryModifier) []*entity.InstallationRequest
 	FindRequestByID(db database.Database, requestID uint) (*entity.InstallationRequest, bool)
 	FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, opts ...QueryModifier) []*entity.InstallationRequest
 	FindOwnerRequestByName(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, name string) (*entity.InstallationRequest, bool)

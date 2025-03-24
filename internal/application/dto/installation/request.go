@@ -13,7 +13,7 @@ type NewInstallationRequest struct {
 	Address      addressdto.CreateAddressRequest
 }
 
-type ListOwnerRequestsRequest struct {
+type InstallationListRequest struct {
 	OwnerID uint
 	Offset  int
 	Limit   int

@@ -44,5 +44,6 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		corp.GET("/info", app.Controllers.Customer.CorporationController.GetCorporationInfo)
 		corp.POST("/contact-info", app.Controllers.Customer.CorporationController.UpdateContactInfo)
+		corp.GET("/installation", app.Controllers.Corporation.InstallationController.GetInstallationRequests) // SHOULD HANDLE THIS !!
 	}
 }

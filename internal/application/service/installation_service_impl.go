@@ -70,7 +70,7 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 	}
 }
 
-func (installationService *InstallationService) GetOwnerInstallationRequests(listInfo installationdto.ListOwnerRequestsRequest) []installationdto.OwnerRequestsResponse {
+func (installationService *InstallationService) GetOwnerInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.OwnerRequestsResponse {
 	allowedStatus := []enum.InstallationRequestStatus{enum.Active, enum.Cancelled, enum.Expired}
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
@@ -138,4 +138,28 @@ func (installationService *InstallationService) GetOwnerInstallationRequest(requ
 		BuildingType: installationRequest.BuildingType,
 		Address:      address,
 	}
+}
+
+func (installationService *InstallationService) GetInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.RequestDetailsResponse {
+	allowedStatus := []enum.InstallationRequestStatus{enum.Active}
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	requests := installationService.installationRepository.FindRequestByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)
+	response := make([]installationdto.RequestDetailsResponse, len(requests))
+	for i, request := range requests {
+		address := installationService.addressService.GetAddress(request.AddressID)
+		customer := installationService.userService.GetUserCredential(request.OwnerID)
+		response[i] = installationdto.RequestDetailsResponse{
+			ID:           request.ID,
+			Name:         request.Name,
+			CreatedTime:  request.CreatedAt,
+			Status:       request.Status.String(),
+			PowerRequest: request.PowerRequest,
+			MaxCost:      request.MaxCost,
+			BuildingType: request.BuildingType,
+			Address:      address,
+			Customer:     customer,
+		}
+	}
+	return response
 }

@@ -84,7 +84,7 @@ func (installationController *CustomerInstallationController) GetOwnerInstallati
 	}
 	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
 	offset, limit := params.GetOffsetLimit()
-	listInfo := installationdto.ListOwnerRequestsRequest{
+	listInfo := installationdto.InstallationListRequest{
 		OwnerID: ownerID.(uint),
 		Offset:  offset,
 		Limit:   limit,
