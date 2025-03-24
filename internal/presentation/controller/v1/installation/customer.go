@@ -92,3 +92,18 @@ func (installationController *CustomerInstallationController) GetOwnerInstallati
 	requests := installationController.installationService.GetOwnerInstallationRequests(listInfo)
 	controller.Response(ctx, 200, "", requests)
 }
+
+func (installationController *CustomerInstallationController) GetInstallationRequest(ctx *gin.Context) {
+	type installationRequestParams struct {
+		RequestID uint `uri:"requestID" validate:"required"`
+	}
+	params := controller.Validated[installationRequestParams](ctx)
+	ownerID, _ := ctx.Get(installationController.constants.Context.ID)
+	requestInfo := installationdto.GetOwnerRequest{
+		RequestID: params.RequestID,
+		OwnerID:   ownerID.(uint),
+	}
+	installationRequest := installationController.installationService.GetOwnerInstallationRequest(requestInfo)
+
+	controller.Response(ctx, 200, "", installationRequest)
+}

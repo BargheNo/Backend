@@ -4,20 +4,28 @@ import (
 	"time"
 
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
-type ListOwnerRequestsResponse struct {
-	ID          uint                       `json:"id"`
-	Name        string                     `json:"name"`
-	Status      string                     `json:"status"`
-	CreatedTime time.Time                  `json:"createdTime"`
-	Address     addressdto.AddressResponse `json:"address"`
-}
-
-type InstallationRequestDetails struct {
+type OwnerRequestsResponse struct {
 	ID           uint                       `json:"id"`
 	Name         string                     `json:"name"`
-	CustomerName string                     `json:"customerName"`
-	Address      addressdto.AddressResponse `json:"address"`
+	CreatedTime  time.Time                  `json:"createdTime"`
+	Status       string                     `json:"status"`
 	PowerRequest uint                       `json:"powerRequest"`
+	MaxCost      float64                    `json:"maxCost"`
+	BuildingType string                     `json:"buildingType"`
+	Address      addressdto.AddressResponse `json:"address"`
+}
+
+type RequestDetailsResponse struct {
+	ID           uint                       `json:"id"`
+	Name         string                     `json:"name"`
+	CreatedTime  time.Time                  `json:"createdTime"`
+	Status       string                     `json:"status"`
+	PowerRequest uint                       `json:"powerRequest"`
+	MaxCost      float64                    `json:"maxCost"`
+	BuildingType string                     `json:"buildingType"`
+	Address      addressdto.AddressResponse `json:"address"`
+	Customer     userdto.CredentialResponse `json:"customer"`
 }

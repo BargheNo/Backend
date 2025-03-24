@@ -45,7 +45,7 @@ var English = map[string]interface{}{
 		"notVerified":            "You have to verify your account first.",
 		"rateLimitExceed":        "Rate limit exceeded. try again later.",
 		"installRateLimit":       "Active installation requests has been exceeded the limit.",
-		"createAddress":          "Address created successfully.",
+		"forbiddenError":         "Forbidden: Access to {0} is not allowed",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":            "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -64,6 +64,7 @@ var English = map[string]interface{}{
 		"forgotPassword":          "Please check your messages to verify your phone number.",
 		"resetPassword":           "Password reset successfully.",
 		"installationRequest":     "Installation request has been successfully stored.",
-    "refreshToken":        "Your session has been successfully refreshed.",
+		"createAddress":           "Address created successfully.",
+		"refreshToken":            "Your session has been successfully refreshed.",
 	},
 }

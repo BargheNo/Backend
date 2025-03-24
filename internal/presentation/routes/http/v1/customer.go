@@ -22,6 +22,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		orders.POST("/request", app.Controllers.Customer.InstallationController.CreateInstallationRequest)
 		orders.GET("/request", app.Controllers.Customer.InstallationController.GetOwnerInstallationRequests)
+		orders.GET("/request/:requestID", app.Controllers.Customer.InstallationController.GetInstallationRequest)
 	}
 
 	addresses := routerGroup.Group("/address")

@@ -106,7 +106,7 @@ func NewConstants() *Constants {
 			OTP:                 "otp",
 			Corporation:         "corporation",
 			CIN:                 "cin",
-			InstallationRequest: "installation_request",
+			InstallationRequest: "installationRequest",
 			Bid:                 "bid",
 			Address:             "address",
 			Name:                "name",

@@ -18,3 +18,8 @@ type ListOwnerRequestsRequest struct {
 	Offset  int
 	Limit   int
 }
+
+type GetOwnerRequest struct {
+	OwnerID   uint
+	RequestID uint
+}

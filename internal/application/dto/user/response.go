@@ -12,3 +12,9 @@ type UserInfoResponse struct {
 	LastName     string   `json:"lastName"`
 	Permissions  []string `json:"permissions"`
 }
+
+type CredentialResponse struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Phone     string `json:"phone"`
+}

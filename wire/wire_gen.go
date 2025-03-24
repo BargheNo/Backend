@@ -71,11 +71,11 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	customerUserController := user.NewCustomerUserController(constants, userService)
 	pagination := ProvidePaginationConfig(container)
 	installationRepository := repositoryimpl.NewInstallationRepository()
-	installationService := serviceimpl.NewInstallationService(constants, addressService, installationRepository, postgresDatabase)
+	installationService := serviceimpl.NewInstallationService(constants, addressService, userService, installationRepository, postgresDatabase)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
 	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, jwtService, postgresDatabase, bidRepository, addressService, corporationService)
+	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
 	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService, bidService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,

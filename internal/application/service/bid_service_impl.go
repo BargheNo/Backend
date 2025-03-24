@@ -12,29 +12,29 @@ import (
 )
 
 type BidService struct {
-	constants          *bootstrap.Constants
-	JWTService         service.JWTService
-	db                 database.Database
-	bidRepository      repository.BidRepository
-	addressService     service.AddressService
-	corporationService service.CorporationService
+	constants           *bootstrap.Constants
+	installationService service.InstallationService
+	jwtService          service.JWTService
+	corporationService  service.CorporationService
+	bidRepository       repository.BidRepository
+	db                  database.Database
 }
 
 func NewBidService(
 	constants *bootstrap.Constants,
+	installationService service.InstallationService,
 	jwtService service.JWTService,
-	db database.Database,
-	bidRepository repository.BidRepository,
-	addressService service.AddressService,
 	corporationService service.CorporationService,
+	bidRepository repository.BidRepository,
+	db database.Database,
 ) *BidService {
 	return &BidService{
-		constants:          constants,
-		JWTService:         jwtService,
-		db:                 db,
-		bidRepository:      bidRepository,
-		addressService:     addressService,
-		corporationService: corporationService,
+		constants:           constants,
+		installationService: installationService,
+		jwtService:          jwtService,
+		corporationService:  corporationService,
+		bidRepository:       bidRepository,
+		db:                  db,
 	}
 }
 
@@ -120,26 +120,19 @@ func (bidService *BidService) GetBids(bidsRequest biddto.GetBidsRequest) []biddt
 	}
 
 	bids := bidService.bidRepository.GetBids(bidService.db, bidsRequest.CorporationID, bidsRequest.Offset, bidsRequest.Limit)
-	installationRequests := make([]biddto.InstallationRequestDetails, len(bids))
-	for i, bid := range bids {
-		installationRequests[i] = biddto.InstallationRequestDetails{
-			ID:           bid.Request.ID,
-			Name:         bid.Request.Name,
-			CustomerName: bid.Request.Owner.FirstName + " " + bid.Request.Owner.LastName,
-			Address:      bidService.addressService.GetAddress(bid.Request.AddressID),
-			PowerRequest: bid.Request.PowerRequest,
-		}
-	}
+
 	bidResponses := make([]biddto.BidsResponse, len(bids))
 	for i, bid := range bids {
+		installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
 		bidResponses[i] = biddto.BidsResponse{
 			ID:                         bid.ID,
-			InstallationRequestDetails: installationRequests[i],
+			InstallationRequestDetails: installationRequest,
 			Description:                bid.Description,
 			Cost:                       bid.Cost,
 			InstallationDate:           bid.InstallationDate,
 			Status:                     bid.Status.String(),
 		}
 	}
+
 	return bidResponses
 }

@@ -45,7 +45,7 @@ var Persian = map[string]interface{}{
 		"notVerified":            "باید ابتدا حساب خود را فعال کنید.",
 		"rateLimitExceed":        "بیشتر از حد مجاز درخواست ثبت کرده اید.",
 		"installRateLimit":       "تعداد درخواست های فعال شما از حدنساب عبور کرده است.",
-		"createAddress":          "آدرس مورد نظر با موفقیت اضافه شد.",
+		"forbiddenError":         "اجازه دسترسی به این {0} وجود ندارد.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":            "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
@@ -64,6 +64,7 @@ var Persian = map[string]interface{}{
 		"forgotPassword":          "لطفا پیامک های خود را بررسی کنید تا تلفن خود را تایید نمایید .",
 		"resetPassword":           "گذرواژه با موفقیت تغییر کرد.",
 		"installationRequest":     "درخواست نصب شما با موفقیت ثبت شد.",
-    "refreshToken":        "نشست شما با موفقیت تمدید شد.",
+		"createAddress":           "آدرس مورد نظر با موفقیت اضافه شد.",
+		"refreshToken":            "نشست شما با موفقیت تمدید شد.",
 	},
 }

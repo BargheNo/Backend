@@ -90,6 +90,19 @@ func (userService *UserService) validateRegisterInfo(phone, password string) err
 	return userService.passwordValidation(password)
 }
 
+func (userService *UserService) GetUserCredential(userID uint) userdto.CredentialResponse {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	return userdto.CredentialResponse{
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Phone:     user.Phone,
+	}
+}
+
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) {
 	err := userService.validateRegisterInfo(registerInfo.Phone, registerInfo.Password)
 	if err != nil {
