@@ -19,9 +19,9 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 
 	bids := routerGroup.Group("/bids")
 	{
-		bids.POST("/set", app.Controllers.Corporation.CorporationController.SetBid)
-		bids.POST("/cancel", app.Controllers.Corporation.CorporationController.CancelBid)
-		bids.GET("/list", app.Controllers.Corporation.CorporationController.GetBids)
+		bids.POST("/set", app.Controllers.Corporation.BidController.SetBid)
+		bids.POST("/cancel", app.Controllers.Corporation.BidController.CancelBid)
+		bids.GET("/list", app.Controllers.Corporation.BidController.GetBids)
 	}
 
 	corp := routerGroup.Group("/corp")

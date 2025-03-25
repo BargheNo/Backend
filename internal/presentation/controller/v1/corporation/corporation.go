@@ -1,11 +1,7 @@
 package corporation
 
 import (
-	"strconv"
-	"time"
-
 	"github.com/BargheNo/Backend/bootstrap"
-	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
@@ -16,20 +12,17 @@ type CorporationController struct {
 	constants          *bootstrap.Constants
 	pagination         *bootstrap.Pagination
 	corporationService service.CorporationService
-	BidService         service.BidService
 }
 
 func NewCorporationController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
 	corporationService service.CorporationService,
-	BidService service.BidService,
 ) *CorporationController {
 	return &CorporationController{
 		constants:          constants,
 		pagination:         pagination,
 		corporationService: corporationService,
-		BidService:         BidService,
 	}
 }
 
@@ -98,69 +91,4 @@ func (corporationController *CorporationController) UpdateContactInfo(ctx *gin.C
 	message, _ := trans.Translate("successMessage.updateContactInfo")
 	controller.Response(ctx, 200, message, nil)
 
-}
-
-func (corporationController *CorporationController) SetBid(ctx *gin.Context) {
-	type setBidParams struct {
-		InstallationRequestID uint      `json:"installationRequestId" validate:"required"`
-		Cost                  uint      `json:"cost" validate:"required"`
-		Description           string    `json:"description"`
-		InstallationDate      time.Time `json:"installationDate" validate:"required"`
-	}
-	params := controller.Validated[setBidParams](ctx)
-	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	bidInfo := biddto.SetBidRequest{
-		InstallationRequestID: params.InstallationRequestID,
-		CorporationID:         corporationID.(uint),
-		Cost:                  params.Cost,
-		InstallationDate:      params.InstallationDate,
-		Description:           params.Description,
-	}
-	corporationController.BidService.SetBid(bidInfo)
-	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.setBid")
-	controller.Response(ctx, 200, message, nil)
-}
-
-func (corporationController *CorporationController) CancelBid(ctx *gin.Context) {
-	type cancelBidParams struct {
-		BidID                 uint `json:"bidId" validate:"required"`
-		InstallationRequestID uint `json:"installationRequestId" validate:"required"`
-	}
-	params := controller.Validated[cancelBidParams](ctx)
-	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	bidInfo := biddto.CancelBidRequest{
-		BidID:                 params.BidID,
-		InstallationRequestID: params.InstallationRequestID,
-		CorporationID:         corporationID.(uint),
-	}
-	corporationController.BidService.CancelBid(bidInfo)
-
-	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.cancelBid")
-	controller.Response(ctx, 200, message, nil)
-}
-
-func (corporationController *CorporationController) GetBids(ctx *gin.Context) {
-	defaultPage, err := strconv.Atoi(corporationController.pagination.DefaultPage)
-	if err != nil {
-		defaultPage = 1
-	}
-	defaultPageSize, err := strconv.Atoi(corporationController.pagination.DefaultPageSize)
-	if err != nil {
-		defaultPageSize = 10
-	}
-	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
-	offset, limit := params.GetOffsetLimit()
-	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
-	bidsRequest := biddto.GetBidsRequest{
-		CorporationID: corporationID.(uint),
-		Offset:        offset,
-		Limit:         limit,
-	}
-	bids := corporationController.BidService.GetBids(bidsRequest)
-
-	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.getBids")
-	controller.Response(ctx, 200, message, bids)
 }

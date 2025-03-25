@@ -25,6 +25,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -79,15 +80,17 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 		InstallationController: customerInstallationController,
 		AddressController:      customerAddressController,
 	}
-	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
-	corporationController := corporation.NewCorporationController(constants, pagination, corporationService, bidService)
+	corporationController := corporation.NewCorporationController(constants, pagination, corporationService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
 	corporationAddressController := address.NewCorporationAddressController(constants, addressService)
+	bidRepository := repositoryimpl.NewBidRepository()
+	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
+	bidController := bid.NewBidController(constants, pagination, bidService)
 	corporationControllers := &CorporationControllers{
 		CorporationController:  corporationController,
 		InstallationController: corporationInstallationController,
 		AddressController:      corporationAddressController,
+		BidController:          bidController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -141,7 +144,7 @@ var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, ad
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, wire.Struct(new(CustomerControllers), "*"))
 
-var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationController, installation.NewCorporationInstallationController, address.NewCorporationAddressController, wire.Struct(new(CorporationControllers), "*"))
+var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationController, installation.NewCorporationInstallationController, address.NewCorporationAddressController, bid.NewBidController, wire.Struct(new(CorporationControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -238,6 +241,7 @@ type CorporationControllers struct {
 	CorporationController  *corporation.CorporationController
 	InstallationController *installation.CorporationInstallationController
 	AddressController      *address.CorporationAddressController
+	BidController          *bid.BidController
 }
 
 type Controllers struct {
