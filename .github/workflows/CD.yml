@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix/deployment
+      - refactor/installation-service
   pull_request:
     branches:
       - develop
