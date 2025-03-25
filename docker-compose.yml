@@ -114,7 +114,7 @@ services:
           memory: 32M
 
   cadvisor:
-    image: google/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor
     container_name: cadvisor
     restart: unless-stopped
     ports:
