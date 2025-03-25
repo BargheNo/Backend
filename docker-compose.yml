@@ -20,7 +20,7 @@ services:
       - db
 
   db:
-    image: postgres:17
+    image: postgres:latest
     container_name: db
     restart: unless-stopped
     env_file:
@@ -39,7 +39,7 @@ services:
           memory: 256M
 
   rdb:
-    image: redis:7.4
+    image: redis:latest
     container_name: rdb
     restart: unless-stopped
     ports:
@@ -114,16 +114,16 @@ services:
           memory: 32M
 
   cadvisor:
-    image: google/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor
     container_name: cadvisor
     restart: unless-stopped
     ports:
       - "8081:8080"
     volumes:
-      - /var/run:/var/run:ro
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - rdb
     deploy:
