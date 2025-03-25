@@ -74,18 +74,20 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	installationService := serviceimpl.NewInstallationService(constants, addressService, userService, installationRepository, postgresDatabase)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
-	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
-	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService, bidService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
 		AddressController:      customerAddressController,
-		CorporationController:  customerCorporationController,
 	}
+	bidRepository := repositoryimpl.NewBidRepository()
+	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
+	corporationController := corporation.NewCorporationController(constants, pagination, corporationService, bidService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
+	corporationAddressController := address.NewCorporationAddressController(constants, addressService)
 	corporationControllers := &CorporationControllers{
+		CorporationController:  corporationController,
 		InstallationController: corporationInstallationController,
+		AddressController:      corporationAddressController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -137,9 +139,9 @@ var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, log
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, wire.Struct(new(CustomerControllers), "*"))
 
-var CorporationControllerProviderSet = wire.NewSet(installation.NewCorporationInstallationController, wire.Struct(new(CorporationControllers), "*"))
+var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationController, installation.NewCorporationInstallationController, address.NewCorporationAddressController, wire.Struct(new(CorporationControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -230,11 +232,12 @@ type CustomerControllers struct {
 	UserController         *user.CustomerUserController
 	InstallationController *installation.CustomerInstallationController
 	AddressController      *address.CustomerAddressController
-	CorporationController  *corporation.CustomerCorporationController
 }
 
 type CorporationControllers struct {
+	CorporationController  *corporation.CorporationController
 	InstallationController *installation.CorporationInstallationController
+	AddressController      *address.CorporationAddressController
 }
 
 type Controllers struct {

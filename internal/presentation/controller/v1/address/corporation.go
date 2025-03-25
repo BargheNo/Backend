@@ -8,22 +8,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CustomerAddressController struct {
+type CorporationAddressController struct {
 	constants      *bootstrap.Constants
 	addressService service.AddressService
 }
 
-func NewCustomerAddressController(
+func NewCorporationAddressController(
 	constants *bootstrap.Constants,
 	addressService service.AddressService,
-) *CustomerAddressController {
-	return &CustomerAddressController{
+) *CorporationAddressController {
+	return &CorporationAddressController{
 		constants:      constants,
 		addressService: addressService,
 	}
 }
 
-func (addressController *CustomerAddressController) CreateUserAddress(ctx *gin.Context) {
+func (addressController *CorporationAddressController) CreateCorporationAddress(ctx *gin.Context) {
 	type createAddressParams struct {
 		ProvinceID    uint   `json:"provinceID" validate:"required"`
 		CityID        uint   `json:"cityID" validate:"required"`
@@ -42,7 +42,7 @@ func (addressController *CustomerAddressController) CreateUserAddress(ctx *gin.C
 		HouseNumber:   params.HouseNumber,
 		Unit:          params.Unit,
 		OwnerID:       ownerID.(uint),
-		OwnerType:     "users",
+		OwnerType:     "corporations",
 	}
 	createdAddress := addressController.addressService.CreateAddress(addressRequestInfo)
 
@@ -51,13 +51,14 @@ func (addressController *CustomerAddressController) CreateUserAddress(ctx *gin.C
 	controller.Response(ctx, 200, message, createdAddress)
 }
 
-func (addressController *CustomerAddressController) GetCustomerAddresses(ctx *gin.Context) {
-	ownerID, _ := ctx.Get(addressController.constants.Context.ID)
-	ownerInfo := addressdto.GetOwnerAddressesRequest{
-		OwnerID:   ownerID.(uint),
-		OwnerType: "users",
+func (addressController *CorporationAddressController) DeleteCorporationAddress(ctx *gin.Context) {
+	type deleteAddressParams struct {
+		AddressID uint `json:"addressID" validate:"required"`
 	}
-	addresses := addressController.addressService.GetAddresses(ownerInfo)
+	params := controller.Validated[deleteAddressParams](ctx)
+	addressController.addressService.DeleteAddress(params.AddressID)
 
-	controller.Response(ctx, 200, "", addresses)
+	trans := controller.GetTranslator(ctx, addressController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteAddress")
+	controller.Response(ctx, 200, message, nil)
 }

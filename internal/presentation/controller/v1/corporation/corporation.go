@@ -12,20 +12,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CustomerCorporationController struct {
+type CorporationController struct {
 	constants          *bootstrap.Constants
 	pagination         *bootstrap.Pagination
 	corporationService service.CorporationService
 	BidService         service.BidService
 }
 
-func NewCustomerCorporationController(
+func NewCorporationController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
 	corporationService service.CorporationService,
 	BidService service.BidService,
-) *CustomerCorporationController {
-	return &CustomerCorporationController{
+) *CorporationController {
+	return &CorporationController{
 		constants:          constants,
 		pagination:         pagination,
 		corporationService: corporationService,
@@ -33,7 +33,7 @@ func NewCustomerCorporationController(
 	}
 }
 
-func (corporationController *CustomerCorporationController) GetCorporationInfo(ctx *gin.Context) {
+func (corporationController *CorporationController) GetCorporationInfo(ctx *gin.Context) {
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	corporationId := corporationdto.IDRequest{
 		CorporationID: corporationID.(uint),
@@ -45,7 +45,7 @@ func (corporationController *CustomerCorporationController) GetCorporationInfo(c
 	controller.Response(ctx, 200, message, corporationInfo)
 }
 
-func (corporationController *CustomerCorporationController) ChangePassword(ctx *gin.Context) {
+func (corporationController *CorporationController) ChangePassword(ctx *gin.Context) {
 	type changePasswordParams struct {
 		NewPassword     string `json:"newPassword" validate:"required"`
 		ConfirmPassword string `json:"confirmPassword" validate:"required,eqfield=NewPassword"`
@@ -64,7 +64,7 @@ func (corporationController *CustomerCorporationController) ChangePassword(ctx *
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (corporationController *CustomerCorporationController) UpdateContactInfo(ctx *gin.Context) {
+func (corporationController *CorporationController) UpdateContactInfo(ctx *gin.Context) {
 	type addContactInfoParams struct {
 		Phone     string `json:"phone"`
 		Email     string `json:"email"`
@@ -100,7 +100,7 @@ func (corporationController *CustomerCorporationController) UpdateContactInfo(ct
 
 }
 
-func (corporationController *CustomerCorporationController) SetBid(ctx *gin.Context) {
+func (corporationController *CorporationController) SetBid(ctx *gin.Context) {
 	type setBidParams struct {
 		InstallationRequestID uint      `json:"installationRequestId" validate:"required"`
 		Cost                  uint      `json:"cost" validate:"required"`
@@ -122,7 +122,7 @@ func (corporationController *CustomerCorporationController) SetBid(ctx *gin.Cont
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (corporationController *CustomerCorporationController) CancelBid(ctx *gin.Context) {
+func (corporationController *CorporationController) CancelBid(ctx *gin.Context) {
 	type cancelBidParams struct {
 		BidID                 uint `json:"bidId" validate:"required"`
 		InstallationRequestID uint `json:"installationRequestId" validate:"required"`
@@ -141,7 +141,7 @@ func (corporationController *CustomerCorporationController) CancelBid(ctx *gin.C
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (corporationController *CustomerCorporationController) GetBids(ctx *gin.Context) {
+func (corporationController *CorporationController) GetBids(ctx *gin.Context) {
 	defaultPage, err := strconv.Atoi(corporationController.pagination.DefaultPage)
 	if err != nil {
 		defaultPage = 1
