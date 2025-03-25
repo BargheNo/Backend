@@ -28,15 +28,15 @@ services:
     ports:
       - ${DB_PORT}:${DB_PORT}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - ./db_data:/var/lib/postgresql/data
     deploy:
       resources:
         limits:
           cpus: "0.5"
-          memory: 1G
+          memory: 2G
         reservations:
           cpus: "0.2"
-          memory: 256M
+          memory: 512M
 
   rdb:
     image: redis:latest
