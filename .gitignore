@@ -4,3 +4,4 @@ app.exe
 db-data
 *.pem
 .DS_Store
+db_data

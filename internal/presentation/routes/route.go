@@ -20,6 +20,7 @@ func Run(ginEngine *gin.Engine, app *wire.Application) {
 	v1 := ginEngine.Group("/v1")
 	registerGeneralRoutes(v1, app)
 	registerCustomerRoutes(v1, app)
+	registerCorporationRoutes(v1, app)
 }
 
 func registerGeneralRoutes(v1 *gin.RouterGroup, app *wire.Application) {
@@ -29,4 +30,9 @@ func registerGeneralRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 func registerCustomerRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	v1.Use(app.Middlewares.Authentication.AuthRequired)
 	httpv1.SetupCustomerRoutes(v1, app)
+}
+
+func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {
+	v1.Use(app.Middlewares.Authentication.AuthRequired)
+	httpv1.SetupCorporationRoutes(v1, app)
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -74,18 +75,22 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	installationService := serviceimpl.NewInstallationService(constants, addressService, userService, installationRepository, postgresDatabase)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
-	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
-	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService, bidService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
 		AddressController:      customerAddressController,
-		CorporationController:  customerCorporationController,
 	}
+	corporationController := corporation.NewCorporationController(constants, pagination, corporationService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
+	corporationAddressController := address.NewCorporationAddressController(constants, addressService)
+	bidRepository := repositoryimpl.NewBidRepository()
+	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
+	bidController := bid.NewBidController(constants, pagination, bidService)
 	corporationControllers := &CorporationControllers{
+		CorporationController:  corporationController,
 		InstallationController: corporationInstallationController,
+		AddressController:      corporationAddressController,
+		BidController:          bidController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -137,9 +142,9 @@ var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, log
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, wire.Struct(new(CustomerControllers), "*"))
 
-var CorporationControllerProviderSet = wire.NewSet(installation.NewCorporationInstallationController, wire.Struct(new(CorporationControllers), "*"))
+var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationController, installation.NewCorporationInstallationController, address.NewCorporationAddressController, bid.NewBidController, wire.Struct(new(CorporationControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -230,11 +235,13 @@ type CustomerControllers struct {
 	UserController         *user.CustomerUserController
 	InstallationController *installation.CustomerInstallationController
 	AddressController      *address.CustomerAddressController
-	CorporationController  *corporation.CustomerCorporationController
 }
 
 type CorporationControllers struct {
+	CorporationController  *corporation.CorporationController
 	InstallationController *installation.CorporationInstallationController
+	AddressController      *address.CorporationAddressController
+	BidController          *bid.BidController
 }
 
 type Controllers struct {
