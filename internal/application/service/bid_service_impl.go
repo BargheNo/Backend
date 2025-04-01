@@ -53,7 +53,7 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	case !exist:
 		notFoundError = exception.NotFoundError{Item: bidService.constants.Field.InstallationRequest}
 		panic(notFoundError)
-	case installationRequest.Status != enum.Active.String():
+	case installationRequest.Status != enum.InstallationRequestStatusActive.String():
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
 		panic(conflictErrors)
 	}
@@ -69,8 +69,8 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 		CorporationID:    bidInfo.CorporationID,
 		Cost:             bidInfo.Cost,
 		Description:      bidInfo.Description,
-		InstallationDate: bidInfo.InstallationDate,
-		Status:           enum.Pending,
+		InstallationTime: bidInfo.InstallationDate,
+		Status:           enum.BidStatusPending,
 	}
 	err := bidService.bidRepository.CreateBid(bidService.db, bid)
 	if err != nil {
@@ -88,7 +88,7 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 		panic(notFoundError)
 	}
 	request := bidService.installationService.GetInstallationRequest(bidInfo.InstallationRequestID)
-	if request.Status != enum.Active.String() {
+	if request.Status != enum.InstallationRequestStatusActive.String() {
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
 		panic(conflictErrors)
 	}
@@ -104,7 +104,7 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 			Resource: bidService.constants.Field.Bid,
 		}
 		panic(forbiddenError)
-	case bid.Status != enum.Pending:
+	case bid.Status != enum.BidStatusPending:
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
 		panic(conflictErrors)
 	}
@@ -131,7 +131,7 @@ func (bidService *BidService) GetBids(bidsRequest biddto.GetBidsRequest) []biddt
 			InstallationRequestDetails: installationRequest,
 			Description:                bid.Description,
 			Cost:                       bid.Cost,
-			InstallationDate:           bid.InstallationDate,
+			InstallationTime:           bid.InstallationTime,
 			Status:                     bid.Status.String(),
 		}
 	}

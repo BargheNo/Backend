@@ -3,18 +3,18 @@ package enum
 type CorporationStatus uint
 
 const (
-	Approved CorporationStatus = iota + 1
-	AwaitingApproval
-	Rejected
+	CorpStatusApproved CorporationStatus = iota + 1
+	CorpStatusAwaitingApproval
+	CorpStatusRejected
 )
 
 func (s CorporationStatus) String() string {
 	switch s {
-	case Approved:
+	case CorpStatusApproved:
 		return "approved"
-	case AwaitingApproval:
+	case CorpStatusAwaitingApproval:
 		return "awaiting_approval"
-	case Rejected:
+	case CorpStatusRejected:
 		return "rejected"
 	}
 	return "unknown"
@@ -22,8 +22,8 @@ func (s CorporationStatus) String() string {
 
 func GetAllCorporationStatuses() []CorporationStatus {
 	return []CorporationStatus{
-		Approved,
-		AwaitingApproval,
-		Rejected,
+		CorpStatusApproved,
+		CorpStatusAwaitingApproval,
+		CorpStatusRejected,
 	}
 }

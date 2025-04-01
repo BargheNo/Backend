@@ -6,7 +6,8 @@ import (
 )
 
 func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
-	auth := routerGroup.Group("/auth")
+	// TODO: fix API URLs
+	auth := routerGroup.Group("/auth") // cancel
 	{
 		auth.POST("/corporation/reset-password", app.Controllers.Corporation.CorporationController.ChangePassword)
 	}

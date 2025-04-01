@@ -3,18 +3,18 @@ package enum
 type InstallationRequestStatus uint
 
 const (
-	Active InstallationRequestStatus = iota + 1
-	Expired
-	Cancelled
+	InstallationRequestStatusActive InstallationRequestStatus = iota + 1
+	InstallationRequestStatusExpired
+	InstallationRequestStatusCancelled
 )
 
 func (status InstallationRequestStatus) String() string {
 	switch status {
-	case Active:
+	case InstallationRequestStatusActive:
 		return "active"
-	case Expired:
+	case InstallationRequestStatusExpired:
 		return "expired"
-	case Cancelled:
+	case InstallationRequestStatusCancelled:
 		return "cancelled"
 	}
 	return ""
@@ -22,8 +22,8 @@ func (status InstallationRequestStatus) String() string {
 
 func GetAllBucketTypes() []InstallationRequestStatus {
 	return []InstallationRequestStatus{
-		Active,
-		Expired,
-		Cancelled,
+		InstallationRequestStatusActive,
+		InstallationRequestStatusExpired,
+		InstallationRequestStatusCancelled,
 	}
 }

@@ -23,6 +23,7 @@ func NewGeneralCorporationController(
 	}
 }
 
+// TODO: corporation/vendor will be just a physical entity -> moderate by some users (RBAC)
 func (corporationController *GeneralCorporationController) Register(ctx *gin.Context) {
 	type registerParams struct {
 		Name          string `json:"name" validate:"required"`

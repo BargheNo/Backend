@@ -26,6 +26,7 @@ func NewCorporationController(
 	}
 }
 
+// TODO: corporation/vendor will be just a physical entity -> moderate by some users (RBAC)
 func (corporationController *CorporationController) GetCorporationInfo(ctx *gin.Context) {
 	corporationID, _ := ctx.Get(corporationController.constants.Context.ID)
 	corporationId := corporationdto.IDRequest{

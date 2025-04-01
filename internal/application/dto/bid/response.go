@@ -20,6 +20,6 @@ type BidsResponse struct {
 	InstallationRequestDetails installationdto.RequestDetailsResponse `json:"installationRequest"`
 	Description                string                                 `json:"description"`
 	Cost                       uint                                   `json:"cost"`
-	InstallationDate           time.Time                              `json:"installationTime"`
+	InstallationTime           time.Time                              `json:"installationTime"`
 	Status                     string                                 `json:"status"`
 }
