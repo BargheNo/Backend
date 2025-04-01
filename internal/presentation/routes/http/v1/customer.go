@@ -15,9 +15,12 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	orders := routerGroup.Group("/installation")
 	{
-		orders.POST("/request", app.Controllers.Customer.InstallationController.CreateInstallationRequest)
-		orders.GET("/request", app.Controllers.Customer.InstallationController.GetOwnerInstallationRequests)
-		orders.GET("/request/:requestID", app.Controllers.Customer.InstallationController.GetInstallationRequest)
+		requests := orders.Group("/request")
+		{
+			requests.POST("", app.Controllers.Customer.InstallationController.CreateInstallationRequest)
+			requests.GET("", app.Controllers.Customer.InstallationController.GetOwnerInstallationRequests)
+			requests.GET("/:requestID", app.Controllers.Customer.InstallationController.GetInstallationRequest)
+		}
 	}
 
 	addresses := routerGroup.Group("/address")

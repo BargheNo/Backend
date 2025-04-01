@@ -16,11 +16,13 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/metrics"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
+	"github.com/BargheNo/Backend/internal/domain/s3"
 	cinimpl "github.com/BargheNo/Backend/internal/infrastructure/cin"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
+	"github.com/BargheNo/Backend/internal/infrastructure/storage"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
@@ -79,8 +81,10 @@ var AdapterProviderSet = wire.NewSet(
 	loggerimpl.NewLogger,
 	jwtimpl.NewJWTKeyManager,
 	metricsimpl.NewPrometheusMetrics,
+	storage.NewS3Storage,
 	wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)),
 	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
+	wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)),
 )
 
 var GeneralControllerProviderSet = wire.NewSet(
@@ -169,6 +173,10 @@ func ProvidePaginationConfig(container *bootstrap.Config) *bootstrap.Pagination 
 	return &container.Env.Pagination
 }
 
+func ProvideStorageConfig(container *bootstrap.Config) *bootstrap.S3 {
+	return &container.Env.Storage
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -191,6 +199,7 @@ var ProviderSet = wire.NewSet(
 	ProvideJWTKeysPath,
 	ProvideMetrics,
 	ProvidePaginationConfig,
+	ProvideStorageConfig,
 )
 
 type Database struct {

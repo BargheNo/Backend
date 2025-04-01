@@ -20,7 +20,7 @@ func (status InstallationRequestStatus) String() string {
 	return ""
 }
 
-func GetAllBucketTypes() []InstallationRequestStatus {
+func GetAllInstallationRequests() []InstallationRequestStatus {
 	return []InstallationRequestStatus{
 		InstallationRequestStatusActive,
 		InstallationRequestStatusExpired,
