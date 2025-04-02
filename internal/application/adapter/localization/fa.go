@@ -8,7 +8,9 @@ var Persian = map[string]interface{}{
 	"confirmPassword":     "تایید رمز عیور",
 	"isAcceptTerms":       "تایید شرایط و مقررات",
 	"corporation":         "شرکت",
-	"cin":                 "شناسه ملی",
+	"nationalID":          "شناسه ملی",
+	"registrationNumber":  "شماره ثبت",
+	"iban":                "شماره شبا",
 	"installationRequest": "درخواست نصب",
 	"bid":                 "پیشنهاد",
 	"user":                "کاربر",
@@ -17,6 +19,7 @@ var Persian = map[string]interface{}{
 	"province":            "استان",
 	"city":                "شهر",
 	"page":                "صفحه",
+	"contactType":         "راه ارتباطی",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",

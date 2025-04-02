@@ -8,7 +8,9 @@ var English = map[string]interface{}{
 	"confirmPassword":     "confirm password",
 	"isAcceptTerms":       "terms and conditions",
 	"corporation":         "corporation",
-	"cin":                 "cin",
+	"nationalID":          "national ID",
+	"registrationNumber":  "registration number",
+	"iban":                "iban",
 	"installationRequest": "installation request",
 	"bid":                 "bid",
 	"user":                "user",
@@ -17,6 +19,7 @@ var English = map[string]interface{}{
 	"province":            "province",
 	"city":                "city",
 	"page":                "page",
+	"contactType":         "contact type",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",

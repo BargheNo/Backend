@@ -1,45 +1,47 @@
 package corporationdto
 
+import (
+	"mime/multipart"
+
+	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+)
+
+type Signatory struct {
+	Name               string
+	NationalCardNumber string
+	Position           string
+}
+
 type RegisterRequest struct {
-	Name     string
-	CIN      string
-	Password string
+	ApplicantID            uint
+	Name                   string
+	NationalID             string
+	RegistrationNumber     string
+	VATTaxpayerCertificate *multipart.FileHeader
+	OfficialNewspaperAD    *multipart.FileHeader
+	IBAN                   string
+	Signatories            []Signatory
 }
 
-type LoginRequest struct {
-	CIN      string
-	Password string
+type ContactInformation struct {
+	ContactTypeID uint
+	ContactValue  string
 }
 
-type ContactInfoRequest struct {
+type AddContactInformationRequest struct {
+	ApplicantID        uint
+	CorporationID      uint
+	ContactInformation []ContactInformation
+}
+
+type AddCorporationAddressRequest struct {
+	ApplicantID   uint
 	CorporationID uint
-	Phone         string
-	Email         string
-	Eitaa         string
-	Bale          string
-	Website       string
-	WhatsApp      string
-	Instagram     string
-	Linkedin      string
-	Telegram      string
+	Addresses     []addressdto.CreateAddressRequest
 }
 
-type AddressRequest struct {
-	CorporationID  uint
-	Province       string
-	City           string
-	StreetAddress  string
-	PostalCode     string
-	BuildingNumber string
-	Unit           uint
-}
-
-type ChangePasswordRequest struct {
-	CorporationID   uint
-	NewPassword     string
-	ConfirmPassword string
-}
-
-type IDRequest struct {
+type DeleteAddressRequest struct {
+	UserID        uint
 	CorporationID uint
+	AddressID     uint
 }

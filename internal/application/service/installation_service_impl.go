@@ -36,6 +36,15 @@ func NewInstallationService(
 	}
 }
 
+func (installationService *InstallationService) GetInstallationRequestModel(requestID uint) *entity.InstallationRequest {
+	request, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+		panic(notFoundError)
+	}
+	return request
+}
+
 func (installationService *InstallationService) CreateInstallationRequest(requestInfo installationdto.NewInstallationRequest) {
 	// get user by id from user service and check complete tag and if not completed -> 403 forbidden
 	// compare installed panels names to new request name
@@ -94,11 +103,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequests(lis
 }
 
 func (installationService *InstallationService) GetInstallationRequest(requestID uint) installationdto.RequestDetailsResponse {
-	request, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
-		panic(notFoundError)
-	}
+	request := installationService.GetInstallationRequestModel(requestID)
 	address := installationService.addressService.GetAddress(request.AddressID)
 	customer := installationService.userService.GetUserCredential(request.OwnerID)
 	return installationdto.RequestDetailsResponse{
@@ -115,11 +120,7 @@ func (installationService *InstallationService) GetInstallationRequest(requestID
 }
 
 func (installationService *InstallationService) GetOwnerInstallationRequest(requestInfo installationdto.GetOwnerRequest) installationdto.OwnerRequestsResponse {
-	installationRequest, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestInfo.RequestID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
-		panic(notFoundError)
-	}
+	installationRequest := installationService.GetInstallationRequestModel(requestInfo.RequestID)
 	if installationRequest.OwnerID != requestInfo.OwnerID {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
@@ -128,6 +129,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequest(requ
 		panic(forbiddenError)
 	}
 	address := installationService.addressService.GetAddress(installationRequest.AddressID)
+
 	return installationdto.OwnerRequestsResponse{
 		ID:           installationRequest.ID,
 		Name:         installationRequest.Name,

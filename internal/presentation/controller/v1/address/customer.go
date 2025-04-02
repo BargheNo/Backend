@@ -23,7 +23,7 @@ func NewCustomerAddressController(
 	}
 }
 
-// TODO: read users from table name maybe ? or use enums or constants instead ?
+// read users from table name maybe ? or use enums or constants instead ?
 func (addressController *CustomerAddressController) CreateUserAddress(ctx *gin.Context) {
 	type createAddressParams struct {
 		ProvinceID    uint   `json:"provinceID" validate:"required"`

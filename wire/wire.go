@@ -98,14 +98,15 @@ var CustomerControllerProviderSet = wire.NewSet(
 	user.NewCustomerUserController,
 	installation.NewCustomerInstallationController,
 	address.NewCustomerAddressController,
+	corporation.NewCustomerCorporationController,
+	bid.NewCustomerBidController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
 var CorporationControllerProviderSet = wire.NewSet(
-	corporation.NewCorporationController,
+	corporation.NewCorporationCorporationController,
 	installation.NewCorporationInstallationController,
-	address.NewCorporationAddressController,
-	bid.NewBidController,
+	bid.NewCorporationBidController,
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
@@ -217,13 +218,14 @@ type CustomerControllers struct {
 	UserController         *user.CustomerUserController
 	InstallationController *installation.CustomerInstallationController
 	AddressController      *address.CustomerAddressController
+	CorporationController  *corporation.CustomerCorporationController
+	BidController          *bid.CustomerBidController
 }
 
 type CorporationControllers struct {
-	CorporationController  *corporation.CorporationController
+	CorporationController  *corporation.CorporationCorporationController
 	InstallationController *installation.CorporationInstallationController
-	AddressController      *address.CorporationAddressController
-	BidController          *bid.BidController
+	BidController          *bid.CorporationBidController
 }
 
 type Controllers struct {

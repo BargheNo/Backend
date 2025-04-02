@@ -62,9 +62,10 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	addressRepository := repositoryimpl.NewAddressRepository()
 	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
 	generalAddressController := address.NewGeneralAddressController(constants, addressService)
+	s3 := ProvideStorageConfig(container)
+	s3Storage := storage.NewS3Storage(constants, s3)
 	corporationRepository := repositoryimpl.NewCorporationRepository()
-	cinService := cinimpl.NewCINService()
-	corporationService := serviceimpl.NewCorporationService(constants, jwtService, postgresDatabase, corporationRepository, addressService, cinService)
+	corporationService := serviceimpl.NewCorporationService(constants, userService, addressService, s3Storage, corporationRepository, postgresDatabase)
 	generalCorporationController := corporation.NewGeneralCorporationController(constants, corporationService)
 	generalControllers := &GeneralControllers{
 		UserController:        generalUserController,
@@ -77,22 +78,24 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	installationService := serviceimpl.NewInstallationService(constants, addressService, userService, installationRepository, postgresDatabase)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
+	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService)
+	bidRepository := repositoryimpl.NewBidRepository()
+	bidService := serviceimpl.NewBidService(constants, installationService, userService, corporationService, bidRepository, postgresDatabase)
+	customerBidController := bid.NewCustomerBidController(constants, pagination, bidService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
 		AddressController:      customerAddressController,
+		CorporationController:  customerCorporationController,
+		BidController:          customerBidController,
 	}
-	corporationController := corporation.NewCorporationController(constants, pagination, corporationService)
+	corporationCorporationController := corporation.NewCorporationCorporationController(constants, pagination, corporationService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
-	corporationAddressController := address.NewCorporationAddressController(constants, addressService)
-	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, installationService, jwtService, corporationService, bidRepository, postgresDatabase)
-	bidController := bid.NewBidController(constants, pagination, bidService)
+	corporationBidController := bid.NewCorporationBidController(constants, pagination, bidService)
 	corporationControllers := &CorporationControllers{
-		CorporationController:  corporationController,
+		CorporationController:  corporationCorporationController,
 		InstallationController: corporationInstallationController,
-		AddressController:      corporationAddressController,
-		BidController:          bidController,
+		BidController:          corporationBidController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -144,9 +147,9 @@ var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, log
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, wire.Struct(new(CustomerControllers), "*"))
 
-var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationController, installation.NewCorporationInstallationController, address.NewCorporationAddressController, bid.NewBidController, wire.Struct(new(CorporationControllers), "*"))
+var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, bid.NewCorporationBidController, wire.Struct(new(CorporationControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -242,13 +245,14 @@ type CustomerControllers struct {
 	UserController         *user.CustomerUserController
 	InstallationController *installation.CustomerInstallationController
 	AddressController      *address.CustomerAddressController
+	CorporationController  *corporation.CustomerCorporationController
+	BidController          *bid.CustomerBidController
 }
 
 type CorporationControllers struct {
-	CorporationController  *corporation.CorporationController
+	CorporationController  *corporation.CorporationCorporationController
 	InstallationController *installation.CorporationInstallationController
-	AddressController      *address.CorporationAddressController
-	BidController          *bid.BidController
+	BidController          *bid.CorporationBidController
 }
 
 type Controllers struct {
