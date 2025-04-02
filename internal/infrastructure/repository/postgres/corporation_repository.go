@@ -121,9 +121,9 @@ func (repo *CorporationRepository) FindContactInformationTypeValue(db database.D
 	return &contact, true
 }
 
-func (repo *CorporationRepository) FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID string) (*entity.Signatory, bool) {
+func (repo *CorporationRepository) FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool) {
 	var signatory entity.Signatory
-	result := db.GetDB().Where("corporation_id = ? AND national_card_number = ?", corporationID, nationalID).First(&signatory)
+	result := db.GetDB().Where("corporation_id = ? AND national_card_number = ? AND position = ?", corporationID, nationalID, position).First(&signatory)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, false

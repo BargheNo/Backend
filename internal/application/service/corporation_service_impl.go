@@ -111,7 +111,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 	}
 
 	for _, signatory := range registerInfo.Signatories {
-		_, exist = corporationService.corporationRepository.FindCorporationSignatoryByNationalID(corporationService.db, corporation.ID, signatory.NationalCardNumber)
+		_, exist = corporationService.corporationRepository.FindCorporationSignatoryByNationalID(corporationService.db, corporation.ID, signatory.NationalCardNumber, signatory.Position)
 		signatoryEntity := &entity.Signatory{
 			CorporationID:      corporation.ID,
 			Name:               signatory.Name,
