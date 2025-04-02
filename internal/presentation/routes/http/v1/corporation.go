@@ -12,9 +12,10 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		addresses.DELETE("", app.Controllers.Corporation.CorporationController.DeleteAddress)
 	}
 
-	contacts := routerGroup.Group(":corporationID/contact")
+	profileComplete := routerGroup.Group(":corporationID")
 	{
-		contacts.POST("", app.Controllers.Corporation.CorporationController.AddContactInformation)
+		profileComplete.POST("/certificates", app.Controllers.Corporation.CorporationController.SubmitCertificateFiles)
+		profileComplete.POST("/contact", app.Controllers.Corporation.CorporationController.AddContactInformation)
 	}
 
 	bids := routerGroup.Group(":corporationID/bids")
