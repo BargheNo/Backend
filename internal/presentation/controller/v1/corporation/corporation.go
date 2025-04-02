@@ -1,6 +1,8 @@
 package corporation
 
 import (
+	"mime/multipart"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
@@ -25,6 +27,28 @@ func NewCorporationCorporationController(
 		pagination:         pagination,
 		corporationService: corporationService,
 	}
+}
+
+func (corporationController *CorporationCorporationController) SubmitCertificateFiles(ctx *gin.Context) {
+	type certificatesParams struct {
+		CorporationID          uint                  `uri:"corporationID" validate:"required"`
+		VATTaxpayerCertificate *multipart.FileHeader `json:"vatTaxpayerCertificate"`
+		OfficialNewspaperAD    *multipart.FileHeader `json:"officialNewspaperAD"`
+	}
+	params := controller.Validated[certificatesParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	requestInfo := corporationdto.AddCertificatesRequest{
+		CorporationID:          params.CorporationID,
+		ApplicantID:            userID.(uint),
+		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
+		OfficialNewspaperAD:    params.OfficialNewspaperAD,
+	}
+	corporationController.corporationService.AddCertificateFiles(requestInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addCorporationCertificate")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (corporationController *CorporationCorporationController) AddContactInformation(ctx *gin.Context) {
@@ -97,7 +121,7 @@ func (corporationController *CorporationCorporationController) AddAddress(ctx *g
 	corporationController.corporationService.AddAddress(addressInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.updateContactInformation")
+	message, _ := trans.Translate("successMessage.addAddress")
 	controller.Response(ctx, 200, message, nil)
 }
 

@@ -1,8 +1,6 @@
 package corporation
 
 import (
-	"mime/multipart"
-
 	"github.com/BargheNo/Backend/bootstrap"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -35,13 +33,11 @@ func (corporationController *CustomerCorporationController) Register(ctx *gin.Co
 		Position           string `json:"position"`
 	}
 	type registerParams struct {
-		Name                   string                `json:"name" validate:"required"`
-		RegistrationNumber     string                `json:"registrationNumber" validate:"required"`
-		NationalID             string                `json:"nationalID" validate:"required"`
-		VATTaxpayerCertificate *multipart.FileHeader `json:"vatTaxpayerCertificate"`
-		OfficialNewspaperAD    *multipart.FileHeader `json:"officialNewspaperAD"`
-		IBAN                   string                `json:"iban"`
-		Signatories            []signatory           `json:"signatories" validate:"required"`
+		Name               string      `json:"name" validate:"required"`
+		RegistrationNumber string      `json:"registrationNumber" validate:"required"`
+		NationalID         string      `json:"nationalID" validate:"required"`
+		IBAN               string      `json:"iban"`
+		Signatories        []signatory `json:"signatories" validate:"required"`
 	}
 	params := controller.Validated[registerParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
@@ -54,14 +50,12 @@ func (corporationController *CustomerCorporationController) Register(ctx *gin.Co
 		}
 	}
 	registerInfo := corporationdto.RegisterRequest{
-		ApplicantID:            userID.(uint),
-		Name:                   params.Name,
-		NationalID:             params.NationalID,
-		RegistrationNumber:     params.RegistrationNumber,
-		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
-		OfficialNewspaperAD:    params.OfficialNewspaperAD,
-		IBAN:                   params.IBAN,
-		Signatories:            signatories,
+		ApplicantID:        userID.(uint),
+		Name:               params.Name,
+		NationalID:         params.NationalID,
+		RegistrationNumber: params.RegistrationNumber,
+		IBAN:               params.IBAN,
+		Signatories:        signatories,
 	}
 
 	corporationInfo := corporationController.corporationService.Register(registerInfo)

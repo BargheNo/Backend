@@ -110,22 +110,6 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		panic(err)
 	}
 
-	if registerInfo.VATTaxpayerCertificate != nil {
-		taxPayerPath := corporationService.constants.S3BucketPath.GetVATTaxpayerCertificatePath(corporation.ID, registerInfo.VATTaxpayerCertificate.Filename)
-		corporationService.s3Storage.UploadObject(enum.VATTaxpayerCertificate, taxPayerPath, registerInfo.VATTaxpayerCertificate)
-		corporation.VATTaxpayerCertificate = taxPayerPath
-	}
-	if registerInfo.OfficialNewspaperAD != nil {
-		newspaperADPath := corporationService.constants.S3BucketPath.GetOfficialNewspaperADPath(corporation.ID, registerInfo.OfficialNewspaperAD.Filename)
-		corporationService.s3Storage.UploadObject(enum.OfficialNewspaperAD, newspaperADPath, registerInfo.OfficialNewspaperAD)
-		corporation.OfficialNewspaperAD = newspaperADPath
-	}
-
-	err = corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
-	if err != nil {
-		panic(err)
-	}
-
 	for _, signatory := range registerInfo.Signatories {
 		signatoryEntity := &entity.Signatory{
 			CorporationID:      corporation.ID,
@@ -141,6 +125,25 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 	}
 
 	return corporationdto.CorporationDetailsResponse{ID: corporation.ID, Name: corporation.Name}
+}
+
+func (corporationService *CorporationService) AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest) {
+	corporation := corporationService.GetCorporationByID(requestInfo.CorporationID)
+	corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID)
+	if requestInfo.VATTaxpayerCertificate != nil {
+		taxPayerPath := corporationService.constants.S3BucketPath.GetVATTaxpayerCertificatePath(corporation.ID, requestInfo.VATTaxpayerCertificate.Filename)
+		corporationService.s3Storage.UploadObject(enum.VATTaxpayerCertificate, taxPayerPath, requestInfo.VATTaxpayerCertificate)
+		corporation.VATTaxpayerCertificate = taxPayerPath
+	}
+	if requestInfo.OfficialNewspaperAD != nil {
+		newspaperADPath := corporationService.constants.S3BucketPath.GetOfficialNewspaperADPath(corporation.ID, requestInfo.OfficialNewspaperAD.Filename)
+		corporationService.s3Storage.UploadObject(enum.OfficialNewspaperAD, newspaperADPath, requestInfo.OfficialNewspaperAD)
+		corporation.OfficialNewspaperAD = newspaperADPath
+	}
+	err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (corporationService *CorporationService) AddContactInfo(contactInfo corporationdto.AddContactInformationRequest) {

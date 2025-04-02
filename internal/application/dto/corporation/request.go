@@ -13,14 +13,19 @@ type Signatory struct {
 }
 
 type RegisterRequest struct {
+	ApplicantID        uint
+	Name               string
+	NationalID         string
+	RegistrationNumber string
+	IBAN               string
+	Signatories        []Signatory
+}
+
+type AddCertificatesRequest struct {
+	CorporationID          uint
 	ApplicantID            uint
-	Name                   string
-	NationalID             string
-	RegistrationNumber     string
 	VATTaxpayerCertificate *multipart.FileHeader
 	OfficialNewspaperAD    *multipart.FileHeader
-	IBAN                   string
-	Signatories            []Signatory
 }
 
 type ContactInformation struct {
