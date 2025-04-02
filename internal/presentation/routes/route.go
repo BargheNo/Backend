@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"github.com/BargheNo/Backend/internal/domain/enum"
 	httpv1 "github.com/BargheNo/Backend/internal/presentation/routes/http/v1"
 	"github.com/BargheNo/Backend/wire"
 	"github.com/gin-gonic/gin"
@@ -37,6 +36,6 @@ func registerCustomerRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	corporation := v1.Group("/corp")
 	corporation.Use(app.Middlewares.Authentication.AuthRequired)
-	corporation.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.AccessCorporation}))
+	// corporation.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.AccessCorporation}))
 	httpv1.SetupCorporationRoutes(corporation, app)
 }

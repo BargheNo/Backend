@@ -13,7 +13,7 @@ type Corporation struct {
 	VATTaxpayerCertificate string                 `gorm:"type:varchar(255)"`
 	OfficialNewspaperAD    string                 `gorm:"type:varchar(255)"`
 	IBAN                   string                 `gorm:"type:varchar(34)"`
-	Status                 enum.CorporationStatus `gorm:"type:varchar(20);index"`
+	Status                 enum.CorporationStatus `gorm:"index"`
 	Signatories            []Signatory            `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	ContactInformation     []ContactInformation   `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Addresses              []Address              `gorm:"polymorphic:Owner;polymorphicValue:corporation"`

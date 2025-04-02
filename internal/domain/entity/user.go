@@ -12,9 +12,9 @@ type User struct {
 	Phone         string          `gorm:"type:varchar(20);uniqueIndex"`
 	PhoneVerified bool            `gorm:"default:false"`
 	Password      string          `gorm:"type:varchar(255);not null"`
-	Email         string          `gorm:"type:varchar(100);uniqueIndex"`
+	Email         string          `gorm:"type:varchar(100);Index"`
 	EmailVerified bool            `gorm:"default:false"`
-	NationalCode  string          `gorm:"type:varchar(20);uniqueIndex"`
+	NationalCode  string          `gorm:"type:varchar(20);Index"`
 	Status        enum.UserStatus `gorm:"index"`
 	Addresses     []Address       `gorm:"polymorphic:Owner"`
 	Roles         []Role          `gorm:"many2many:user_roles;"`

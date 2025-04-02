@@ -32,8 +32,8 @@ func NewCorporationCorporationController(
 func (corporationController *CorporationCorporationController) SubmitCertificateFiles(ctx *gin.Context) {
 	type certificatesParams struct {
 		CorporationID          uint                  `uri:"corporationID" validate:"required"`
-		VATTaxpayerCertificate *multipart.FileHeader `json:"vatTaxpayerCertificate"`
-		OfficialNewspaperAD    *multipart.FileHeader `json:"officialNewspaperAD"`
+		VATTaxpayerCertificate *multipart.FileHeader `form:"vatTaxpayerCertificate"`
+		OfficialNewspaperAD    *multipart.FileHeader `form:"officialNewspaperAD"`
 	}
 	params := controller.Validated[certificatesParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
@@ -78,7 +78,7 @@ func (corporationController *CorporationCorporationController) AddContactInforma
 	corporationController.corporationService.AddContactInfo(contactInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.updateContactInformation")
+	message, _ := trans.Translate("successMessage.updateContactInfo")
 	controller.Response(ctx, 200, message, nil)
 }
 
