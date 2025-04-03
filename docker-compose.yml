@@ -1,6 +1,5 @@
 services:
   app:
-    build: .
     image: ghcr.io/bargheno/backend
     container_name: backend
     restart: unless-stopped
