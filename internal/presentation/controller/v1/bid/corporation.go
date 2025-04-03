@@ -11,57 +11,64 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type BidController struct {
+type CorporationBidController struct {
 	constants  *bootstrap.Constants
 	pagination *bootstrap.Pagination
 	BidService service.BidService
 }
 
-func NewBidController(
+func NewCorporationBidController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
 	BidService service.BidService,
-) *BidController {
-	return &BidController{
+) *CorporationBidController {
+	return &CorporationBidController{
 		constants:  constants,
 		pagination: pagination,
 		BidService: BidService,
 	}
 }
 
-func (bidController *BidController) SetBid(ctx *gin.Context) {
+func (bidController *CorporationBidController) SetBid(ctx *gin.Context) {
 	type setBidParams struct {
+		CorporationID         uint      `uri:"corporationID" validate:"required"`
 		InstallationRequestID uint      `json:"installationRequestId" validate:"required"`
 		Cost                  uint      `json:"cost" validate:"required"`
 		Description           string    `json:"description"`
-		InstallationDate      time.Time `json:"installationDate" validate:"required"`
+		InstallationTime      time.Time `json:"installationTime" validate:"required"`
 	}
 	params := controller.Validated[setBidParams](ctx)
-	corporationID, _ := ctx.Get(bidController.constants.Context.ID)
+	userID, _ := ctx.Get(bidController.constants.Context.ID)
+
 	bidInfo := biddto.SetBidRequest{
-		InstallationRequestID: params.InstallationRequestID,
-		CorporationID:         corporationID.(uint),
+		CorporationID:         params.CorporationID,
+		BidderID:              userID.(uint),
 		Cost:                  params.Cost,
-		InstallationDate:      params.InstallationDate,
+		InstallationRequestID: params.InstallationRequestID,
+		InstallationTime:      params.InstallationTime,
 		Description:           params.Description,
 	}
 	bidController.BidService.SetBid(bidInfo)
+
 	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.setBid")
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (bidController *BidController) CancelBid(ctx *gin.Context) {
+func (bidController *CorporationBidController) CancelBid(ctx *gin.Context) {
 	type cancelBidParams struct {
+		CorporationID         uint `uri:"corporationID" validate:"required"`
 		BidID                 uint `json:"bidId" validate:"required"`
 		InstallationRequestID uint `json:"installationRequestId" validate:"required"`
 	}
 	params := controller.Validated[cancelBidParams](ctx)
-	corporationID, _ := ctx.Get(bidController.constants.Context.ID)
+	userID, _ := ctx.Get(bidController.constants.Context.ID)
+
 	bidInfo := biddto.CancelBidRequest{
+		CorporationID:         params.CorporationID,
+		BidderID:              userID.(uint),
 		BidID:                 params.BidID,
 		InstallationRequestID: params.InstallationRequestID,
-		CorporationID:         corporationID.(uint),
 	}
 	bidController.BidService.CancelBid(bidInfo)
 
@@ -70,7 +77,13 @@ func (bidController *BidController) CancelBid(ctx *gin.Context) {
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (bidController *BidController) GetBids(ctx *gin.Context) {
+func (bidController *CorporationBidController) GetBids(ctx *gin.Context) {
+	type getBidsParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getBidsParams](ctx)
+	userID, _ := ctx.Get(bidController.constants.Context.ID)
+
 	defaultPage, err := strconv.Atoi(bidController.pagination.DefaultPage)
 	if err != nil {
 		defaultPage = 1
@@ -79,17 +92,16 @@ func (bidController *BidController) GetBids(ctx *gin.Context) {
 	if err != nil {
 		defaultPageSize = 10
 	}
-	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
-	offset, limit := params.GetOffsetLimit()
-	corporationID, _ := ctx.Get(bidController.constants.Context.ID)
-	bidsRequest := biddto.GetBidsRequest{
-		CorporationID: corporationID.(uint),
+	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	bidsRequest := biddto.GetCorporationBidsRequest{
+		CorporationID: params.CorporationID,
+		UserID:        userID.(uint),
 		Offset:        offset,
 		Limit:         limit,
 	}
-	bids := bidController.BidService.GetBids(bidsRequest)
+	bids := bidController.BidService.GetCorporationBids(bidsRequest)
 
-	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.getBids")
-	controller.Response(ctx, 200, message, bids)
+	controller.Response(ctx, 200, "", bids)
 }

@@ -3,27 +3,31 @@ package enum
 type BidStatus uint
 
 const (
-	Pending BidStatus = iota + 1
-	Accepted
-	// Expired
+	BidStatusPending BidStatus = iota + 1
+	BidStatusAccepted
+	BidStatusExpired
+	BidStatusRejected
 )
 
 func (s BidStatus) String() string {
 	switch s {
-	case Pending:
+	case BidStatusPending:
 		return "pending"
-	case Accepted:
+	case BidStatusAccepted:
 		return "accepted"
-		// case Expired:
-		// return "expired"
+	case BidStatusExpired:
+		return "expired"
+	case BidStatusRejected:
+		return "rejected"
 	}
 	return "unknown"
 }
 
 func GetAllBidStatuses() []BidStatus {
 	return []BidStatus{
-		Pending,
-		Accepted,
-		// Expired,
+		BidStatusPending,
+		BidStatusAccepted,
+		BidStatusExpired,
+		BidStatusRejected,
 	}
 }

@@ -13,16 +13,25 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		// auth.POST("/register/complete", app.Controllers.General.UserController.CompleteRegister)
 	}
 
+	corp := routerGroup.Group("/corp")
+	{
+		corp.POST("/register", app.Controllers.Customer.CorporationController.Register)
+	}
+
 	orders := routerGroup.Group("/installation")
 	{
-		orders.POST("/request", app.Controllers.Customer.InstallationController.CreateInstallationRequest)
-		orders.GET("/request", app.Controllers.Customer.InstallationController.GetOwnerInstallationRequests)
-		orders.GET("/request/:requestID", app.Controllers.Customer.InstallationController.GetInstallationRequest)
+		requests := orders.Group("/request")
+		{
+			requests.POST("", app.Controllers.Customer.InstallationController.CreateInstallationRequest)
+			requests.GET("", app.Controllers.Customer.InstallationController.GetOwnerInstallationRequests)
+			requests.GET("/:requestID", app.Controllers.Customer.InstallationController.GetInstallationRequest)
+			requests.GET("/:requestID/bids", app.Controllers.Customer.BidController.GetBids)
+		}
 	}
 
 	addresses := routerGroup.Group("/address")
 	{
-		addresses.POST("/user", app.Controllers.Customer.AddressController.CreateUserAddress)
-		addresses.GET("/user", app.Controllers.Customer.AddressController.GetCustomerAddresses)
+		addresses.POST("", app.Controllers.Customer.AddressController.CreateUserAddress)
+		addresses.GET("", app.Controllers.Customer.AddressController.GetCustomerAddresses)
 	}
 }

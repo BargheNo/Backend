@@ -178,7 +178,7 @@ func (userService *UserService) FindUserPermissions(user *entity.User) []string 
 		}
 		permissions := role.Permissions
 		for _, permission := range permissions {
-			permissionNames = append(permissionNames, permission.Name)
+			permissionNames = append(permissionNames, permission.Type.String())
 		}
 	}
 	return permissionNames

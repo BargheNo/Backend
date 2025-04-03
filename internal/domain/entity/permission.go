@@ -1,10 +1,13 @@
 package entity
 
-import "github.com/BargheNo/Backend/internal/infrastructure/database"
+import (
+	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/infrastructure/database"
+)
 
 type Permission struct {
 	database.Model
-	Name        string
-	Description string
-	Roles       []Role `gorm:"many2many:role_permissions;"`
+	Type        enum.PermissionType `gorm:"not null;uniqueIndex"`
+	Description string              `gorm:"type:text"`
+	Roles       []Role              `gorm:"many2many:role_permissions;"`
 }

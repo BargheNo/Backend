@@ -28,11 +28,14 @@ func registerGeneralRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 }
 
 func registerCustomerRoutes(v1 *gin.RouterGroup, app *wire.Application) {
-	v1.Use(app.Middlewares.Authentication.AuthRequired)
-	httpv1.SetupCustomerRoutes(v1, app)
+	user := v1.Group("/user")
+	user.Use(app.Middlewares.Authentication.AuthRequired)
+	httpv1.SetupCustomerRoutes(user, app)
 }
 
 func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {
-	v1.Use(app.Middlewares.Authentication.AuthRequired)
-	httpv1.SetupCorporationRoutes(v1, app)
+	corporation := v1.Group("/corp")
+	corporation.Use(app.Middlewares.Authentication.AuthRequired)
+	// corporation.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.AccessCorporation}))
+	httpv1.SetupCorporationRoutes(corporation, app)
 }

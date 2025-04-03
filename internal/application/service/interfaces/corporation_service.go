@@ -6,13 +6,11 @@ import (
 )
 
 type CorporationService interface {
-	GetCorporationByID(corporationID uint) (*entity.Corporation, bool)
-	Register(registerInfo corporationdto.RegisterRequest)
-	Login(loginInfo corporationdto.LoginRequest) corporationdto.CorporationLoginResponse
-	ChangePassword(changePasswordRequest corporationdto.ChangePasswordRequest)
-	UpdateContactInfo(contactInfo corporationdto.ContactInfoRequest)
-	GetCorporationInfo(idRequest corporationdto.IDRequest) corporationdto.CorporationInfoResponse
-	// AddAddress(address corporationdto.AddressRequest)
-	// EditAddress(addressID uint, address corporationdto.AddressRequest)
-	// DeleteAddress(corporationID uint, addressID uint)
+	GetCorporationByID(corporationID uint) *entity.Corporation
+	CheckApplicantAccess(corporationID, applicantID uint)
+	Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationDetailsResponse
+	AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest)
+	AddContactInfo(contactInfo corporationdto.AddContactInformationRequest)
+	AddAddress(addressInfo corporationdto.AddCorporationAddressRequest)
+	DeleteAddress(addressInfo corporationdto.DeleteAddressRequest)
 }

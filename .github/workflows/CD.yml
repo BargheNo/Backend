@@ -5,6 +5,7 @@ on:
     branches:
       - fix/deployment
       - refactor/installation-service
+      - feat/rbac
   pull_request:
     branches:
       - develop

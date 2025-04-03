@@ -36,10 +36,19 @@ func NewInstallationService(
 	}
 }
 
+func (installationService *InstallationService) GetInstallationRequestModel(requestID uint) *entity.InstallationRequest {
+	request, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+		panic(notFoundError)
+	}
+	return request
+}
+
 func (installationService *InstallationService) CreateInstallationRequest(requestInfo installationdto.NewInstallationRequest) {
 	// get user by id from user service and check complete tag and if not completed -> 403 forbidden
 	// compare installed panels names to new request name
-	allowedStatus := []enum.InstallationRequestStatus{enum.Active}
+	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
 	_, exist := installationService.installationRepository.FindOwnerRequestByName(installationService.db, requestInfo.OwnerID, allowedStatus, requestInfo.Name)
 	if exist {
 		var conflictErrors exception.ConflictErrors
@@ -56,7 +65,7 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 
 	request := &entity.InstallationRequest{
 		Name:         requestInfo.Name,
-		Status:       enum.Active,
+		Status:       enum.InstallationRequestStatusActive,
 		Area:         requestInfo.Area,
 		PowerRequest: requestInfo.Power,
 		MaxCost:      requestInfo.MaxCost,
@@ -71,7 +80,7 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 }
 
 func (installationService *InstallationService) GetOwnerInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.OwnerRequestsResponse {
-	allowedStatus := []enum.InstallationRequestStatus{enum.Active, enum.Cancelled, enum.Expired}
+	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive, enum.InstallationRequestStatusCancelled, enum.InstallationRequestStatusExpired}
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	requests := installationService.installationRepository.FindOwnerRequests(
@@ -94,11 +103,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequests(lis
 }
 
 func (installationService *InstallationService) GetInstallationRequest(requestID uint) installationdto.RequestDetailsResponse {
-	request, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
-		panic(notFoundError)
-	}
+	request := installationService.GetInstallationRequestModel(requestID)
 	address := installationService.addressService.GetAddress(request.AddressID)
 	customer := installationService.userService.GetUserCredential(request.OwnerID)
 	return installationdto.RequestDetailsResponse{
@@ -115,11 +120,7 @@ func (installationService *InstallationService) GetInstallationRequest(requestID
 }
 
 func (installationService *InstallationService) GetOwnerInstallationRequest(requestInfo installationdto.GetOwnerRequest) installationdto.OwnerRequestsResponse {
-	installationRequest, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestInfo.RequestID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
-		panic(notFoundError)
-	}
+	installationRequest := installationService.GetInstallationRequestModel(requestInfo.RequestID)
 	if installationRequest.OwnerID != requestInfo.OwnerID {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
@@ -128,6 +129,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequest(requ
 		panic(forbiddenError)
 	}
 	address := installationService.addressService.GetAddress(installationRequest.AddressID)
+
 	return installationdto.OwnerRequestsResponse{
 		ID:           installationRequest.ID,
 		Name:         installationRequest.Name,
@@ -141,7 +143,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequest(requ
 }
 
 func (installationService *InstallationService) GetInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.RequestDetailsResponse {
-	allowedStatus := []enum.InstallationRequestStatus{enum.Active}
+	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	requests := installationService.installationRepository.FindRequestByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)

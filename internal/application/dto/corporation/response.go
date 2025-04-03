@@ -4,6 +4,11 @@ import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 )
 
+type CorporationDetailsResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
 type CorporationLoginResponse struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`

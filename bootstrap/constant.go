@@ -6,6 +6,7 @@ type Constants struct {
 	Context      Context
 	LogLevel     LogLevel
 	RedisKey     RedisKey
+	S3BucketPath BucketPath
 	Field        ErrorField
 	Tag          ErrorTag
 	SMSTemplates SMSTemplates
@@ -30,19 +31,26 @@ type LogLevel struct {
 type RedisKey struct {
 }
 
+type BucketPath struct {
+}
+
 type ErrorField struct {
 	User                string
 	Phone               string
 	Password            string
 	OTP                 string
 	Corporation         string
-	CIN                 string
+	NationalID          string
+	RegistrationNumber  string
+	IBAN                string
 	InstallationRequest string
 	Bid                 string
 	Address             string
 	Name                string
 	Province            string
 	City                string
+	Page                string
+	ContactType         string
 }
 
 type ErrorTag struct {
@@ -106,13 +114,17 @@ func NewConstants() *Constants {
 			Password:            "password",
 			OTP:                 "otp",
 			Corporation:         "corporation",
-			CIN:                 "cin",
+			NationalID:          "nationalID",
+			RegistrationNumber:  "registrationNumber",
+			IBAN:                "iban",
 			InstallationRequest: "installationRequest",
 			Bid:                 "bid",
 			Address:             "address",
 			Name:                "name",
 			Province:            "province",
 			City:                "city",
+			Page:                "page",
+			ContactType:         "contactType",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -157,4 +169,12 @@ func NewConstants() *Constants {
 
 func (r *RedisKey) GenerateOTPKey(value string) string {
 	return fmt.Sprintf("otp:%s", value)
+}
+
+func (path *BucketPath) GetVATTaxpayerCertificatePath(corporationID uint, certificateFilename string) string {
+	return fmt.Sprintf("corporation/%d/taxpayer/%s", corporationID, certificateFilename)
+}
+
+func (path *BucketPath) GetOfficialNewspaperADPath(corporationID uint, certificateFilename string) string {
+	return fmt.Sprintf("corporation/%d/newspaper-ad/%s", corporationID, certificateFilename)
 }

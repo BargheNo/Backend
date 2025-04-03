@@ -6,28 +6,27 @@ import (
 )
 
 func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
-	auth := routerGroup.Group("/auth")
+	addresses := routerGroup.Group(":corporationID/address")
 	{
-		auth.POST("/corporation/reset-password", app.Controllers.Corporation.CorporationController.ChangePassword)
+		addresses.POST("", app.Controllers.Corporation.CorporationController.AddAddress)
+		addresses.DELETE("", app.Controllers.Corporation.CorporationController.DeleteAddress)
 	}
 
-	addresses := routerGroup.Group("/address")
+	profileComplete := routerGroup.Group(":corporationID")
 	{
-		addresses.POST("/corp", app.Controllers.Corporation.AddressController.CreateCorporationAddress)
-		addresses.DELETE("/corp", app.Controllers.Corporation.AddressController.DeleteCorporationAddress)
+		profileComplete.POST("/certificates", app.Controllers.Corporation.CorporationController.SubmitCertificateFiles)
+		profileComplete.POST("/contact", app.Controllers.Corporation.CorporationController.AddContactInformation)
 	}
 
-	bids := routerGroup.Group("/bids")
+	bids := routerGroup.Group(":corporationID/bids")
 	{
 		bids.POST("/set", app.Controllers.Corporation.BidController.SetBid)
-		bids.POST("/cancel", app.Controllers.Corporation.BidController.CancelBid)
+		bids.PUT("/cancel", app.Controllers.Corporation.BidController.CancelBid)
 		bids.GET("/list", app.Controllers.Corporation.BidController.GetBids)
 	}
 
-	corp := routerGroup.Group("/corp")
+	requests := routerGroup.Group("/requests")
 	{
-		corp.GET("/info", app.Controllers.Corporation.CorporationController.GetCorporationInfo)
-		corp.POST("/contact-info", app.Controllers.Corporation.CorporationController.UpdateContactInfo)
-		corp.GET("/installation", app.Controllers.Corporation.InstallationController.GetInstallationRequests)
+		requests.GET("/installation", app.Controllers.Corporation.InstallationController.GetInstallationRequests)
 	}
 }

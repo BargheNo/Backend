@@ -7,5 +7,6 @@ import (
 type BidService interface {
 	SetBid(bidInfo biddto.SetBidRequest)
 	CancelBid(bidInfo biddto.CancelBidRequest)
-	GetBids(bidsRequest biddto.GetBidsRequest) []biddto.BidsResponse
+	GetCorporationBids(bidsRequest biddto.GetCorporationBidsRequest) []biddto.BidsResponse
+	GetRequestBids(requestInfo biddto.GetRequestBidsRequest) []biddto.BidsResponse
 }

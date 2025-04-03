@@ -7,11 +7,15 @@ import (
 
 type Corporation struct {
 	database.Model
-	Name               string
-	CIN                string
-	Status             enum.CorporationStatus
-	Password           string
-	ContactInformation ContactInformation
-	Addresses          []Address `gorm:"polymorphic:Owner;"`
-	Bids               []Bid     `gorm:"foreignKey:CorporationID"`
+	Name                   string                 `gorm:"type:varchar(100);unique;not null"`
+	RegistrationNumber     string                 `gorm:"type:varchar(50);unique;not null"`
+	NationalID             string                 `gorm:"type:varchar(50);unique;not null"`
+	VATTaxpayerCertificate string                 `gorm:"type:varchar(255)"`
+	OfficialNewspaperAD    string                 `gorm:"type:varchar(255)"`
+	IBAN                   string                 `gorm:"type:varchar(34)"`
+	Status                 enum.CorporationStatus `gorm:"index"`
+	Signatories            []Signatory            `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	ContactInformation     []ContactInformation   `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Addresses              []Address              `gorm:"polymorphic:Owner;polymorphicValue:corporation"`
+	Bids                   []Bid                  `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
