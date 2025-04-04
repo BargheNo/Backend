@@ -72,5 +72,6 @@ var English = map[string]interface{}{
 		"createAddress":             "Address created successfully.",
 		"refreshToken":              "Your session has been successfully refreshed.",
 		"addCorporationCertificate": "Your certificate has been uploaded successfully.",
+		"addPanel":                  "Panel added successfully.",
 	},
 }

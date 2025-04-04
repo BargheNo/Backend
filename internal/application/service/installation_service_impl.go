@@ -16,6 +16,7 @@ type InstallationService struct {
 	constants              *bootstrap.Constants
 	addressService         service.AddressService
 	userService            service.UserService
+	corporationService     service.CorporationService
 	installationRepository repository.InstallationRepository
 	db                     database.Database
 }
@@ -24,6 +25,7 @@ func NewInstallationService(
 	constants *bootstrap.Constants,
 	addressService service.AddressService,
 	userService service.UserService,
+	corporationService service.CorporationService,
 	installationRepository repository.InstallationRepository,
 	db database.Database,
 ) *InstallationService {
@@ -31,6 +33,7 @@ func NewInstallationService(
 		constants:              constants,
 		addressService:         addressService,
 		userService:            userService,
+		corporationService:     corporationService,
 		installationRepository: installationRepository,
 		db:                     db,
 	}
@@ -164,4 +167,27 @@ func (installationService *InstallationService) GetInstallationRequests(listInfo
 		}
 	}
 	return response
+}
+
+func (installationService *InstallationService) AddPanel(panelInfo installationdto.AddPanelRequest) {
+	installationService.corporationService.CheckApplicantAccess(panelInfo.CorporationID, panelInfo.OperatorID)
+	installationService.userService.FindUserByPhone(panelInfo.CustomerPhone)
+
+	address := installationService.addressService.CreateAddress(panelInfo.Address)
+	panel := &entity.Panel{
+		Name:                 panelInfo.PanelName,
+		CorporationID:        panelInfo.CorporationID,
+		OperatorID:           panelInfo.OperatorID,
+		Power:                panelInfo.Power,
+		Area:                 panelInfo.Area,
+		BuildingType:         panelInfo.BuildingType,
+		Tilt:                 panelInfo.Tilt,
+		Azimuth:              panelInfo.Azimuth,
+		TotalNumberOfModules: panelInfo.TotalNumberOfModules,
+		AddressID:            address.ID,
+	}
+	err := installationService.installationRepository.CreatePanel(installationService.db, panel)
+	if err != nil {
+		panic(err)
+	}
 }

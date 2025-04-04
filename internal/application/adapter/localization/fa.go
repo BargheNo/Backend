@@ -72,5 +72,6 @@ var Persian = map[string]interface{}{
 		"createAddress":             "آدرس مورد نظر با موفقیت اضافه شد.",
 		"refreshToken":              "نشست شما با موفقیت تمدید شد.",
 		"addCorporationCertificate": "مدارک شما با موفقیت آپلود شد.",
+		"addPanel":                  "پنل با موفقیت اضافه شد.",
 	},
 }

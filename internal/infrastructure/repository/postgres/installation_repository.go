@@ -70,5 +70,8 @@ func (repo *InstallationRepository) FindOwnerRequestByName(db database.Database,
 
 func (repo *InstallationRepository) CreateRequest(db database.Database, request *entity.InstallationRequest) error {
 	return db.GetDB().Create(&request).Error
+}
 
+func (repo *InstallationRepository) CreatePanel(db database.Database, panel *entity.Panel) error {
+	return db.GetDB().Create(&panel).Error
 }

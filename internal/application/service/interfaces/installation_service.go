@@ -12,4 +12,5 @@ type InstallationService interface {
 	GetInstallationRequest(requestID uint) installationdto.RequestDetailsResponse
 	GetOwnerInstallationRequest(requestInfo installationdto.GetOwnerRequest) installationdto.OwnerRequestsResponse
 	GetInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.RequestDetailsResponse
+	AddPanel(panelInfo installationdto.AddPanelRequest)
 }
