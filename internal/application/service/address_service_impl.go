@@ -63,8 +63,8 @@ func (addressService *AddressService) CreateAddress(addressInfo addressdto.Creat
 	}
 }
 
-func (addressService *AddressService) GetAddress(addressID uint) addressdto.AddressResponse {
-	address, exist := addressService.addressRepository.GetAddressByID(addressService.db, addressID)
+func (addressService *AddressService) GetAddress(ownerID uint, ownerType string) addressdto.AddressResponse {
+	address, exist := addressService.addressRepository.GetOwnerAddress(addressService.db, ownerID, ownerType)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
 		panic(notFoundError)
@@ -83,8 +83,8 @@ func (addressService *AddressService) GetAddress(addressID uint) addressdto.Addr
 	return response
 }
 
-func (addressService *AddressService) GetAddresses(addressInfo addressdto.GetOwnerAddressesRequest) []addressdto.AddressResponse {
-	addressEntities := addressService.addressRepository.GetOwnerAddresses(addressService.db, addressInfo.OwnerID, addressInfo.OwnerType)
+func (addressService *AddressService) GetAddresses(ownerAddressInfo addressdto.GetOwnerAddressesRequest) []addressdto.AddressResponse {
+	addressEntities := addressService.addressRepository.GetOwnerAddresses(addressService.db, ownerAddressInfo.OwnerID, ownerAddressInfo.OwnerType)
 	addresses := make([]addressdto.AddressResponse, len(addressEntities))
 	for i, address := range addressEntities {
 		province, _ := addressService.addressRepository.GetProvinceByID(addressService.db, address.ProvinceID)

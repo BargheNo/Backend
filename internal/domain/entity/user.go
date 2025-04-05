@@ -16,6 +16,6 @@ type User struct {
 	EmailVerified bool            `gorm:"default:false"`
 	NationalCode  string          `gorm:"type:varchar(20);Index"`
 	Status        enum.UserStatus `gorm:"index"`
-	Addresses     []Address       `gorm:"polymorphic:Owner"`
+	Addresses     []Address       `gorm:"polymorphic:Owner;polymorphicValue:users"`
 	Roles         []Role          `gorm:"many2many:user_roles;"`
 }

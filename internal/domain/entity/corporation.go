@@ -16,6 +16,6 @@ type Corporation struct {
 	Status                 enum.CorporationStatus `gorm:"index"`
 	Signatories            []Signatory            `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	ContactInformation     []ContactInformation   `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Addresses              []Address              `gorm:"polymorphic:Owner;polymorphicValue:corporation"`
+	Addresses              []Address              `gorm:"polymorphic:Owner;polymorphicValue:corporations"`
 	Bids                   []Bid                  `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }

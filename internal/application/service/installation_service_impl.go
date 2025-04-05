@@ -64,8 +64,6 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 		panic(rateLimitError)
 	}
 
-	address := installationService.addressService.CreateAddress(requestInfo.Address)
-
 	request := &entity.InstallationRequest{
 		Name:         requestInfo.Name,
 		Status:       enum.InstallationRequestStatusActive,
@@ -74,7 +72,14 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 		MaxCost:      requestInfo.MaxCost,
 		BuildingType: requestInfo.BuildingType,
 		OwnerID:      requestInfo.OwnerID,
-		AddressID:    address.ID,
+		Address: entity.Address{
+			ProvinceID:    requestInfo.Address.ProvinceID,
+			CityID:        requestInfo.Address.CityID,
+			StreetAddress: requestInfo.Address.StreetAddress,
+			PostalCode:    requestInfo.Address.PostalCode,
+			HouseNumber:   requestInfo.Address.HouseNumber,
+			Unit:          requestInfo.Address.Unit,
+		},
 	}
 	err := installationService.installationRepository.CreateRequest(installationService.db, request)
 	if err != nil {
@@ -89,8 +94,9 @@ func (installationService *InstallationService) GetOwnerInstallationRequests(lis
 	requests := installationService.installationRepository.FindOwnerRequests(
 		installationService.db, listInfo.OwnerID, allowedStatus, paginationModifier, sortingModifier)
 	response := make([]installationdto.OwnerRequestsResponse, len(requests))
+
 	for i, request := range requests {
-		address := installationService.addressService.GetAddress(request.AddressID)
+		address := installationService.addressService.GetAddress(request.OwnerID, "installation_requests")
 		response[i] = installationdto.OwnerRequestsResponse{
 			ID:           request.ID,
 			Name:         request.Name,
@@ -107,7 +113,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequests(lis
 
 func (installationService *InstallationService) GetInstallationRequest(requestID uint) installationdto.RequestDetailsResponse {
 	request := installationService.GetInstallationRequestModel(requestID)
-	address := installationService.addressService.GetAddress(request.AddressID)
+	address := installationService.addressService.GetAddress(request.OwnerID, "installation_requests")
 	customer := installationService.userService.GetUserCredential(request.OwnerID)
 	return installationdto.RequestDetailsResponse{
 		ID:           request.ID,
@@ -131,7 +137,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequest(requ
 		}
 		panic(forbiddenError)
 	}
-	address := installationService.addressService.GetAddress(installationRequest.AddressID)
+	address := installationService.addressService.GetAddress(requestInfo.OwnerID, "installation_requests")
 
 	return installationdto.OwnerRequestsResponse{
 		ID:           installationRequest.ID,
@@ -152,7 +158,7 @@ func (installationService *InstallationService) GetInstallationRequests(listInfo
 	requests := installationService.installationRepository.FindRequestByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)
 	response := make([]installationdto.RequestDetailsResponse, len(requests))
 	for i, request := range requests {
-		address := installationService.addressService.GetAddress(request.AddressID)
+		address := installationService.addressService.GetAddress(request.OwnerID, "installation_requests")
 		customer := installationService.userService.GetUserCredential(request.OwnerID)
 		response[i] = installationdto.RequestDetailsResponse{
 			ID:           request.ID,

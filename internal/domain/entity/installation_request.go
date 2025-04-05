@@ -14,8 +14,7 @@ type InstallationRequest struct {
 	BuildingType string                         `gorm:"type:varchar(50);not null"`
 	OwnerID      uint                           `gorm:"index"`
 	Owner        User                           `gorm:"foreignKey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	AddressID    uint                           `gorm:"not null;index"`
-	Address      Address                        `gorm:"foreignKey:AddressID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
+	Address      Address                        `gorm:"polymorphic:Owner;polymorphicValue:installation_requests"`
 	Area         uint
 	MaxCost      float64
 }
