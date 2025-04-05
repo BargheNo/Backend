@@ -3,15 +3,16 @@ package bootstrap
 import "fmt"
 
 type Constants struct {
-	Context      Context
-	LogLevel     LogLevel
-	RedisKey     RedisKey
-	S3BucketPath BucketPath
-	Field        ErrorField
-	Tag          ErrorTag
-	SMSTemplates SMSTemplates
-	JWTKeysPath  JWTKeysPath
-	Metrics      Metrics
+	Context       Context
+	LogLevel      LogLevel
+	RedisKey      RedisKey
+	S3BucketPath  BucketPath
+	Field         ErrorField
+	Tag           ErrorTag
+	SMSTemplates  SMSTemplates
+	JWTKeysPath   JWTKeysPath
+	Metrics       Metrics
+	AddressOwners AddressOwners
 }
 
 type Context struct {
@@ -94,6 +95,12 @@ type Options struct {
 	Help string
 }
 
+type AddressOwners struct {
+	User                string
+	Corporation         string
+	InstallationRequest string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
@@ -163,6 +170,11 @@ func NewConstants() *Constants {
 				Name: "http_request_duration_seconds",
 				Help: "HTTP request duration in seconds",
 			},
+		},
+		AddressOwners: AddressOwners{
+			User:                "users",
+			Corporation:         "Corporation",
+			InstallationRequest: "installation_requests",
 		},
 	}
 }

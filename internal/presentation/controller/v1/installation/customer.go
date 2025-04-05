@@ -61,8 +61,6 @@ func (installationController *CustomerInstallationController) CreateInstallation
 			PostalCode:    params.PostalCode,
 			HouseNumber:   params.HouseNumber,
 			Unit:          params.Unit,
-			OwnerID:       ownerID.(uint),
-			OwnerType:     "installation_requests",
 		},
 	}
 	installationController.installationService.CreateInstallationRequest(requestInfo)
