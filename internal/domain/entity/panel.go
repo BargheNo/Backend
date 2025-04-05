@@ -1,6 +1,9 @@
 package entity
 
+import "github.com/BargheNo/Backend/internal/infrastructure/database"
+
 type Panel struct {
+	database.Model
 	Name                 string      `gorm:"type:varchar(50);not null"`
 	BuildingType         string      `gorm:"type:varchar(50);not null"`
 	Area                 uint        `gorm:"not null"`
