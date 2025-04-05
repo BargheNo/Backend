@@ -173,7 +173,7 @@ func NewConstants() *Constants {
 		},
 		AddressOwners: AddressOwners{
 			User:                "users",
-			Corporation:         "Corporation",
+			Corporation:         "corporations",
 			InstallationRequest: "installation_requests",
 		},
 	}
