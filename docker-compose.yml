@@ -1,5 +1,8 @@
 services:
   app:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: ghcr.io/bargheno/backend
     container_name: backend
     restart: unless-stopped
