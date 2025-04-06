@@ -3,7 +3,6 @@ name: CD
 on:
   push:
     branches:
-      - fix/deployment
       - feat/add-panel
   pull_request:
     branches:
