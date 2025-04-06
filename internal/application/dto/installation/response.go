@@ -30,7 +30,7 @@ type RequestDetailsResponse struct {
 	Customer     userdto.CredentialResponse `json:"customer"`
 }
 
-type PanelListResponse struct {
+type CorporationPanelListResponse struct {
 	ID                   uint                       `json:"id"`
 	PanelName            string                     `json:"panelName"`
 	CustomerName         string                     `json:"customerName"`
@@ -43,4 +43,17 @@ type PanelListResponse struct {
 	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
 	Address              addressdto.AddressResponse `json:"address"`
 	OperatorName         string                     `json:"operatorName"`
+}
+
+type CustomerPanelListResponse struct {
+	ID                   uint                       `json:"id"`
+	PanelName            string                     `json:"panelName"`
+	CorporationName      string                     `json:"corporationName"`
+	Power                uint                       `json:"power"`
+	Area                 uint                       `json:"area"`
+	BuildingType         string                     `json:"buildingType"`
+	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
+	Tilt                 uint                       `json:"tilt"`
+	Azimuth              uint                       `json:"azimuth"`
+	Address              addressdto.AddressResponse `json:"address"`
 }

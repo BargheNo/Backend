@@ -205,16 +205,17 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 	}
 }
 
-func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.PanelListRequest) []installationdto.PanelListResponse {
+func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelListResponse {
+	installationService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	panels := installationService.installationRepository.FindCorporationPanels(installationService.db, listInfo.CorporationID, paginationModifier, sortingModifier)
-	response := make([]installationdto.PanelListResponse, len(panels))
+	response := make([]installationdto.CorporationPanelListResponse, len(panels))
 	for i, panel := range panels {
 		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
 		customer := installationService.userService.GetUserCredential(panel.CustomerID)
 		operatior := installationService.userService.GetUserCredential(panel.OperatorID)
-		response[i] = installationdto.PanelListResponse{
+		response[i] = installationdto.CorporationPanelListResponse{
 			ID:                   panel.ID,
 			PanelName:            panel.Name,
 			CustomerName:         customer.FirstName + " " + customer.LastName,
@@ -230,5 +231,28 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 		}
 	}
 	return response
+}
 
+func (installationService *InstallationService) GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelListResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	panels := installationService.installationRepository.FindCorporationPanels(installationService.db, listInfo.OwnerID, paginationModifier, sortingModifier)
+	response := make([]installationdto.CustomerPanelListResponse, len(panels))
+	for i, panel := range panels {
+		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+		corporation := installationService.userService.GetUserCredential(panel.CorporationID)
+		response[i] = installationdto.CustomerPanelListResponse{
+			ID:                   panel.ID,
+			PanelName:            panel.Name,
+			CorporationName:      corporation.FirstName + " " + corporation.LastName,
+			Power:                panel.Power,
+			Area:                 panel.Area,
+			BuildingType:         panel.BuildingType,
+			Tilt:                 panel.Tilt,
+			Azimuth:              panel.Azimuth,
+			TotalNumberOfModules: panel.TotalNumberOfModules,
+			Address:              address,
+		}
+	}
+	return response
 }

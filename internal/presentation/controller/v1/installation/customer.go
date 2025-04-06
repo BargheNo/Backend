@@ -105,3 +105,25 @@ func (installationController *CustomerInstallationController) GetInstallationReq
 
 	controller.Response(ctx, 200, "", installationRequest)
 }
+
+func (installationController *CustomerInstallationController) GetCustomerPanels(ctx *gin.Context) {
+	ownerId, _ := ctx.Get(installationController.constants.Context.ID)
+	defaultPage, err := strconv.Atoi(installationController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(installationController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := params.GetOffsetLimit()
+	listInfo := installationdto.CustomerPanelListRequest{
+		OwnerID: ownerId.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+	panels := installationController.installationService.GetCustomerPanels(listInfo)
+
+	controller.Response(ctx, 200, "", panels)
+}

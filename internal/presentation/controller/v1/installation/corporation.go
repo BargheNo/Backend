@@ -74,6 +74,7 @@ func (installationController *CorporationInstallationController) AddPanel(ctx *g
 	operatorID, _ := ctx.Get(installationController.constants.Context.ID)
 
 	panelInfo := installationdto.AddPanelRequest{
+		PanelName:            params.PanelName,
 		CorporationID:        params.CorporationID,
 		OperatorID:           operatorID.(uint),
 		CustomerPhone:        params.CustomerPhone,
@@ -115,8 +116,11 @@ func (installationController *CorporationInstallationController) GetCorporationP
 	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 
-	listInfo := installationdto.PanelListRequest{
+	operatorID, _ := ctx.Get(installationController.constants.Context.ID)
+
+	listInfo := installationdto.CorporationPanelListRequest{
 		CorporationID: params.CorporationID,
+		OperatorID:    operatorID.(uint),
 		Offset:        offset,
 		Limit:         limit,
 	}
