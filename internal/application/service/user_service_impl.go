@@ -124,7 +124,7 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 		LastName:      registerInfo.LastName,
 		Phone:         registerInfo.Phone,
 		Password:      string(hashesPasswordBytes),
-		PhoneVerified: false,
+		PhoneVerified: true,
 		EmailVerified: false,
 	}
 	err = userService.userRepository.CreateUser(userService.db, user)
