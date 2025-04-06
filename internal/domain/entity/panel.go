@@ -15,6 +15,7 @@ type Panel struct {
 	Corporation          Corporation `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	OperatorID           uint        `gorm:"not null;index"`
 	Operator             User        `gorm:"foreignKey:OperatorID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	AddressID            uint        `gorm:"not null;index"`
-	Address              Address     `gorm:"foreignKey:AddressID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
+	CustomerID           uint        `gorm:"not null;index"`
+	Customer             User        `gorm:"foreignKey:CustomerID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Address              Address     `gorm:"polymorphic:Owner;polymorphicValue:panels"`
 }

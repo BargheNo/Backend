@@ -287,7 +287,7 @@ func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswor
 	}
 }
 
-func (userService *UserService) FindUserByPhone(phone string) userdto.CredentialResponse {
+func (userService *UserService) FindUserByPhone(phone string) userdto.UserResponse {
 	user, userExist := userService.userRepository.FindUserByPhone(userService.db, phone)
 	if !userExist {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
@@ -298,9 +298,7 @@ func (userService *UserService) FindUserByPhone(phone string) userdto.Credential
 		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
 		panic(conflictErrors)
 	}
-	return userdto.CredentialResponse{
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Phone:     user.Phone,
+	return userdto.UserResponse{
+		ID: user.ID,
 	}
 }

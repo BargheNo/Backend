@@ -177,20 +177,27 @@ func (installationService *InstallationService) GetInstallationRequests(listInfo
 
 func (installationService *InstallationService) AddPanel(panelInfo installationdto.AddPanelRequest) {
 	installationService.corporationService.CheckApplicantAccess(panelInfo.CorporationID, panelInfo.OperatorID)
-	installationService.userService.FindUserByPhone(panelInfo.CustomerPhone)
+	customer := installationService.userService.FindUserByPhone(panelInfo.CustomerPhone)
 
-	address := installationService.addressService.CreateAddress(panelInfo.Address)
 	panel := &entity.Panel{
 		Name:                 panelInfo.PanelName,
 		CorporationID:        panelInfo.CorporationID,
 		OperatorID:           panelInfo.OperatorID,
+		CustomerID:           customer.ID,
 		Power:                panelInfo.Power,
 		Area:                 panelInfo.Area,
 		BuildingType:         panelInfo.BuildingType,
 		Tilt:                 panelInfo.Tilt,
 		Azimuth:              panelInfo.Azimuth,
 		TotalNumberOfModules: panelInfo.TotalNumberOfModules,
-		AddressID:            address.ID,
+		Address: entity.Address{
+			ProvinceID:    panelInfo.Address.ProvinceID,
+			CityID:        panelInfo.Address.CityID,
+			StreetAddress: panelInfo.Address.StreetAddress,
+			PostalCode:    panelInfo.Address.PostalCode,
+			HouseNumber:   panelInfo.Address.HouseNumber,
+			Unit:          panelInfo.Address.Unit,
+		},
 	}
 	err := installationService.installationRepository.CreatePanel(installationService.db, panel)
 	if err != nil {
