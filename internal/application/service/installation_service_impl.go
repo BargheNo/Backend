@@ -204,3 +204,31 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 		panic(err)
 	}
 }
+
+func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.PanelListRequest) []installationdto.PanelListResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	panels := installationService.installationRepository.FindCorporationPanels(installationService.db, listInfo.CorporationID, paginationModifier, sortingModifier)
+	response := make([]installationdto.PanelListResponse, len(panels))
+	for i, panel := range panels {
+		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+		customer := installationService.userService.GetUserCredential(panel.CustomerID)
+		operatior := installationService.userService.GetUserCredential(panel.OperatorID)
+		response[i] = installationdto.PanelListResponse{
+			ID:                   panel.ID,
+			PanelName:            panel.Name,
+			CustomerName:         customer.FirstName + " " + customer.LastName,
+			CustomerPhone:        customer.Phone,
+			Power:                panel.Power,
+			Area:                 panel.Area,
+			BuildingType:         panel.BuildingType,
+			Tilt:                 panel.Tilt,
+			Azimuth:              panel.Azimuth,
+			TotalNumberOfModules: panel.TotalNumberOfModules,
+			Address:              address,
+			OperatorName:         operatior.FirstName + " " + operatior.LastName,
+		}
+	}
+	return response
+
+}

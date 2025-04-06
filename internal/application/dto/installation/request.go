@@ -19,6 +19,12 @@ type InstallationListRequest struct {
 	Limit   int
 }
 
+type PanelListRequest struct {
+	CorporationID uint
+	Offset        int
+	Limit         int
+}
+
 type GetOwnerRequest struct {
 	OwnerID   uint
 	RequestID uint

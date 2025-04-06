@@ -98,3 +98,29 @@ func (installationController *CorporationInstallationController) AddPanel(ctx *g
 	message, _ := trans.Translate("successMessage.addPanel")
 	controller.Response(ctx, 200, message, nil)
 }
+
+func (installationController *CorporationInstallationController) GetCorporationPanels(ctx *gin.Context) {
+	type getPanelParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getPanelParams](ctx)
+	defaultPage, err := strconv.Atoi(installationController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(installationController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	listInfo := installationdto.PanelListRequest{
+		CorporationID: params.CorporationID,
+		Offset:        offset,
+		Limit:         limit,
+	}
+	panels := installationController.installationService.GetCorporationPanels(listInfo)
+
+	controller.Response(ctx, 200, "", panels)
+}

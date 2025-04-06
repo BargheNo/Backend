@@ -33,5 +33,6 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 	panels := routerGroup.Group(":corporationID/panels")
 	{
 		panels.POST("add", app.Controllers.Corporation.InstallationController.AddPanel)
+		panels.GET("list", app.Controllers.Corporation.InstallationController.GetCorporationPanels)
 	}
 }

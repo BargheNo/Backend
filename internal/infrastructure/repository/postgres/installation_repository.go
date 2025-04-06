@@ -75,3 +75,16 @@ func (repo *InstallationRepository) CreateRequest(db database.Database, request 
 func (repo *InstallationRepository) CreatePanel(db database.Database, panel *entity.Panel) error {
 	return db.GetDB().Create(&panel).Error
 }
+
+func (repo *InstallationRepository) FindCorporationPanels(db database.Database, corporationID uint, opts ...repository.QueryModifier) []*entity.Panel {
+	var panels []*entity.Panel
+	query := db.GetDB().Where("corporation_id = ?", corporationID)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&panels)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return panels
+}

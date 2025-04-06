@@ -99,6 +99,7 @@ type AddressOwners struct {
 	User                string
 	Corporation         string
 	InstallationRequest string
+	Panel               string
 }
 
 func NewConstants() *Constants {
@@ -175,6 +176,7 @@ func NewConstants() *Constants {
 			User:                "users",
 			Corporation:         "corporations",
 			InstallationRequest: "installation_requests",
+			Panel:               "panels",
 		},
 	}
 }
