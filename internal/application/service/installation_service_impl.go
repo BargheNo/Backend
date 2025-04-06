@@ -178,6 +178,13 @@ func (installationService *InstallationService) GetInstallationRequests(listInfo
 func (installationService *InstallationService) AddPanel(panelInfo installationdto.AddPanelRequest) {
 	installationService.corporationService.CheckApplicantAccess(panelInfo.CorporationID, panelInfo.OperatorID)
 	customer := installationService.userService.FindUserByPhone(panelInfo.CustomerPhone)
+	_, exist := installationService.installationRepository.FindPanelByNameAndCustomerID(
+		installationService.db, panelInfo.PanelName, customer.ID)
+	if exist {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(installationService.constants.Field.PanelName, installationService.constants.Tag.AlreadyExist)
+		panic(conflictErrors)
+	}
 
 	panel := &entity.Panel{
 		Name:                 panelInfo.PanelName,
@@ -236,7 +243,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 func (installationService *InstallationService) GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelListResponse {
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	panels := installationService.installationRepository.FindCorporationPanels(installationService.db, listInfo.OwnerID, paginationModifier, sortingModifier)
+	panels := installationService.installationRepository.FindCustomerPanels(installationService.db, listInfo.OwnerID, paginationModifier, sortingModifier)
 	response := make([]installationdto.CustomerPanelListResponse, len(panels))
 	for i, panel := range panels {
 		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)

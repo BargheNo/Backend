@@ -14,5 +14,6 @@ type InstallationRepository interface {
 	CreateRequest(db database.Database, request *entity.InstallationRequest) error
 	CreatePanel(db database.Database, panel *entity.Panel) error
 	FindCorporationPanels(db database.Database, corporationID uint, opts ...QueryModifier) []*entity.Panel
-	// FindOwnerPanels(db database.Database, ownerID uint, opts ...QueryModifier) []*entity.Panel
+	FindCustomerPanels(db database.Database, customerID uint, opts ...QueryModifier) []*entity.Panel
+	FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool)
 }

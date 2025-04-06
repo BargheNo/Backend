@@ -52,6 +52,7 @@ type ErrorField struct {
 	City                string
 	Page                string
 	ContactType         string
+	PanelName           string
 }
 
 type ErrorTag struct {
@@ -133,6 +134,7 @@ func NewConstants() *Constants {
 			City:                "city",
 			Page:                "page",
 			ContactType:         "contactType",
+			PanelName:           "panelName",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
