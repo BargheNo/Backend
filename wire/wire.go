@@ -27,6 +27,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -47,12 +48,14 @@ var RepositoryProviderSet = wire.NewSet(
 	cacherepositoryimpl.NewUserCacheRepository,
 	repositoryimpl.NewCorporationRepository,
 	repositoryimpl.NewBidRepository,
+	repositoryimpl.NewMaintenanceRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
 	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
 	wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)),
 	wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)),
+	wire.Bind(new(repository.MaintenanceRepository), new(*repositoryimpl.MaintenanceRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -65,6 +68,7 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewCorporationService,
 	cinimpl.NewCINService,
 	serviceimpl.NewBidService,
+	serviceimpl.NewMaintenanceService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
@@ -74,6 +78,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
 	wire.Bind(new(service.CINService), new(*cinimpl.CINService)),
 	wire.Bind(new(service.BidService), new(*serviceimpl.BidService)),
+	wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -100,6 +105,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 	address.NewCustomerAddressController,
 	corporation.NewCustomerCorporationController,
 	bid.NewCustomerBidController,
+	maintenance.NewCustomerMaintenanceController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -107,6 +113,7 @@ var CorporationControllerProviderSet = wire.NewSet(
 	corporation.NewCorporationCorporationController,
 	installation.NewCorporationInstallationController,
 	bid.NewCorporationBidController,
+	maintenance.NewCorporationMaintenanceController,
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
@@ -220,12 +227,14 @@ type CustomerControllers struct {
 	AddressController      *address.CustomerAddressController
 	CorporationController  *corporation.CustomerCorporationController
 	BidController          *bid.CustomerBidController
+	MaintenanceController  *maintenance.CustomerMaintenanceController
 }
 
 type CorporationControllers struct {
 	CorporationController  *corporation.CorporationCorporationController
 	InstallationController *installation.CorporationInstallationController
 	BidController          *bid.CorporationBidController
+	MaintenanceController  *maintenance.CorporationMaintenanceController
 }
 
 type Controllers struct {

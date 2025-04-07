@@ -16,6 +16,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	corp := routerGroup.Group("/corp")
 	{
 		corp.POST("/register", app.Controllers.Customer.CorporationController.Register)
+		corp.GET("/list", app.Controllers.Customer.CorporationController.GetCorporations)
 	}
 
 	orders := routerGroup.Group("/installation")
@@ -38,5 +39,14 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	panels := routerGroup.Group("/panels")
 	{
 		panels.GET("/list", app.Controllers.Customer.InstallationController.GetCustomerPanels)
+	}
+
+	maintenance := routerGroup.Group("/maintenance")
+	{
+		requests := maintenance.Group("/request")
+		{
+			requests.POST("/", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
+			requests.GET("/list", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequests)
+		}
 	}
 }

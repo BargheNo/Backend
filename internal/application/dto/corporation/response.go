@@ -30,8 +30,11 @@ type ContactInfoResponse struct {
 type CorporationInfoResponse struct {
 	ID          uint                         `json:"id"`
 	Name        string                       `json:"name"`
-	CIN         string                       `json:"cin"`
-	Status      string                       `json:"status"`
-	ContactInfo ContactInfoResponse          `json:"contactInfo"`
+	ContactInfo []ContactInformationResponse `json:"contactInfo"`
 	Addresses   []addressdto.AddressResponse `json:"addresses"`
+}
+
+type ContactInformationResponse struct {
+	ContactTypeID uint
+	ContactValue  string
 }

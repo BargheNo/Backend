@@ -67,7 +67,7 @@ func (installationController *CustomerInstallationController) CreateInstallation
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.installationRequest")
-	controller.Response(ctx, 200, message, nil)
+	controller.Response(ctx, 201, message, nil)
 }
 
 func (installationController *CustomerInstallationController) GetOwnerInstallationRequests(ctx *gin.Context) {

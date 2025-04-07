@@ -35,4 +35,12 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		panels.POST("add", app.Controllers.Corporation.InstallationController.AddPanel)
 		panels.GET("list", app.Controllers.Corporation.InstallationController.GetCorporationPanels)
 	}
+
+	maintenance := routerGroup.Group(":corporationID/maintenance")
+	{
+		requests := maintenance.Group("/requests")
+		{
+			requests.GET("/list", app.Controllers.Corporation.MaintenanceController.GetMaintenanceRequests)
+		}
+	}
 }

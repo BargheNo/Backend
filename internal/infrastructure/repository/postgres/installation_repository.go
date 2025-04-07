@@ -113,3 +113,15 @@ func (repo *InstallationRepository) FindPanelByNameAndCustomerID(db database.Dat
 	}
 	return panel, true
 }
+
+func (repo *InstallationRepository) FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool) {
+	var panel *entity.Panel
+	result := db.GetDB().First(&panel, panelID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return panel, true
+}

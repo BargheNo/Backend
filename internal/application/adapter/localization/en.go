@@ -21,6 +21,8 @@ var English = map[string]interface{}{
 	"page":                "page",
 	"contactType":         "contact type",
 	"panelName":           "panel name",
+	"panel":               "panel",
+	"maintenanceRequest":  "maintenance request",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -52,6 +54,7 @@ var English = map[string]interface{}{
 		"installRateLimit":       "Active installation requests has been exceeded the limit.",
 		"forbiddenError":         "Forbidden: Access to {0} is not allowed",
 		"forbiddenStatus":        "Cannot do this action with this status.",
+		"pending":                "Your request is pending.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -74,5 +77,6 @@ var English = map[string]interface{}{
 		"refreshToken":              "Your session has been successfully refreshed.",
 		"addCorporationCertificate": "Your certificate has been uploaded successfully.",
 		"addPanel":                  "Panel added successfully.",
+		"maintenanceRequest":        "Maintenance request has been successfully stored.",
 	},
 }
