@@ -88,7 +88,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 	var maintenanceResponses []maintenancedto.MaintenanceResponse
 	for _, request := range maintenanceRequests {
 		panel := maintenanceService.installationService.GetPanel(request.PanelID)
-		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.Field.Panel)
+		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
 		maintenanceResponse := maintenancedto.MaintenanceResponse{
 			ID:            request.ID,
 			PanelID:       request.PanelID,
@@ -126,7 +126,7 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 	var maintenanceResponses []maintenancedto.CorporationMaintenanceResponse
 	for _, request := range maintenanceRequests {
 		panel := maintenanceService.installationService.GetPanel(request.PanelID)
-		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.Field.Panel)
+		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
 		maintenanceResponse := maintenancedto.CorporationMaintenanceResponse{
 			ID:           request.ID,
 			PanelID:      request.PanelID,

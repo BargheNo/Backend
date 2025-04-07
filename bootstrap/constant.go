@@ -104,6 +104,7 @@ type AddressOwners struct {
 	Corporation         string
 	InstallationRequest string
 	Panel               string
+	MaintenanceRequest  string
 }
 
 func NewConstants() *Constants {

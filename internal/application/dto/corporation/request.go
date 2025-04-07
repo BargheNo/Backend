@@ -50,3 +50,9 @@ type DeleteAddressRequest struct {
 	CorporationID uint
 	AddressID     uint
 }
+
+type CorporationListRequest struct {
+	UserID uint
+	Offset int
+	Limit  int
+}

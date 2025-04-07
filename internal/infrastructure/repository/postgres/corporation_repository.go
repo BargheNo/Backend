@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -155,4 +156,26 @@ func (repo *CorporationRepository) DeleteCorporationByCIN(db database.Database, 
 
 func (repo *CorporationRepository) UpdateCorporation(db database.Database, corporation *entity.Corporation) error {
 	return db.GetDB().Save(&corporation).Error
+}
+
+func (repo *CorporationRepository) FindCorporationByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) []*entity.Corporation {
+	var corporations []*entity.Corporation
+	query := db.GetDB().Where("status IN ?", status)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&corporations)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return corporations
+}
+
+func (repo *CorporationRepository) FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation {
+	var contactInfo []*entity.ContactInformation
+	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&contactInfo)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return contactInfo
 }

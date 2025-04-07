@@ -13,4 +13,6 @@ type CorporationService interface {
 	AddContactInfo(contactInfo corporationdto.AddContactInformationRequest)
 	AddAddress(addressInfo corporationdto.AddCorporationAddressRequest)
 	DeleteAddress(addressInfo corporationdto.DeleteAddressRequest)
+	GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationInfoResponse
+	GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse
 }

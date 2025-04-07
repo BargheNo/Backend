@@ -2,6 +2,7 @@ package serviceimpl
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
@@ -10,6 +11,7 @@ import (
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type CorporationService struct {
@@ -186,4 +188,42 @@ func (corporationService *CorporationService) DeleteAddress(addressInfo corporat
 	corporationService.GetCorporationByID(addressInfo.CorporationID)
 	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID)
 	corporationService.addressService.DeleteAddress(addressInfo.AddressID)
+}
+
+func (corporationService *CorporationService) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationInfoResponse {
+	corporationService.userService.GetUserCredential(requestInfo.UserID)
+	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
+	corporations := corporationService.corporationRepository.FindCorporationByStatus(corporationService.db, allowedStatuses, paginationModifier, sortingModifier)
+	response := make([]corporationdto.CorporationInfoResponse, len(corporations))
+	for i, corporation := range corporations {
+		ownerInfo := addressdto.GetOwnerAddressesRequest{
+			OwnerID:   corporation.ID,
+			OwnerType: corporationService.constants.AddressOwners.Corporation,
+		}
+		addresses := corporationService.addressService.GetAddresses(ownerInfo)
+		contactInfo := corporationService.GetContactInfo(corporation.ID)
+		response[i] = corporationdto.CorporationInfoResponse{
+			ID:          corporation.ID,
+			Name:        corporation.Name,
+			ContactInfo: contactInfo,
+			Addresses:   addresses,
+		}
+	}
+
+	return response
+}
+
+func (corporationService *CorporationService) GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse {
+	corporation := corporationService.GetCorporationByID(corporationID)
+	contactInfo := corporationService.corporationRepository.FindContactInformation(corporationService.db, corporation.ID)
+	response := make([]corporationdto.ContactInformationResponse, len(contactInfo))
+	for i, contact := range contactInfo {
+		response[i] = corporationdto.ContactInformationResponse{
+			ContactTypeID: contact.TypeID,
+			ContactValue:  contact.Value,
+		}
+	}
+	return response
 }

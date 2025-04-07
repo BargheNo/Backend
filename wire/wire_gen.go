@@ -84,7 +84,7 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	bidService := serviceimpl.NewBidService(constants, installationService, userService, corporationService, bidRepository, postgresDatabase)
 	customerBidController := bid.NewCustomerBidController(constants, pagination, bidService)
 	maintenanceRepository := repositoryimpl.NewMaintenanceRepository()
-	maintenanceService := serviceimpl.NewMaintenanceService(constants, userService, installationService, corporationService, maintenanceRepository, postgresDatabase)
+	maintenanceService := serviceimpl.NewMaintenanceService(constants, userService, installationService, corporationService, addressService, maintenanceRepository, postgresDatabase)
 	customerMaintenanceController := maintenance.NewCustomerMaintenanceController(constants, pagination, maintenanceService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,

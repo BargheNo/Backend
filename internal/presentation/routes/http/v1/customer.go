@@ -16,6 +16,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	corp := routerGroup.Group("/corp")
 	{
 		corp.POST("/register", app.Controllers.Customer.CorporationController.Register)
+		corp.GET("/list", app.Controllers.Customer.CorporationController.GetCorporations)
 	}
 
 	orders := routerGroup.Group("/installation")
