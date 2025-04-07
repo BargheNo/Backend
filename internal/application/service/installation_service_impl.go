@@ -263,3 +263,12 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 	}
 	return response
 }
+
+func (installationService *InstallationService) GetPanel(panelID uint) *entity.Panel {
+	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+	return panel
+}

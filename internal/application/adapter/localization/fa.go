@@ -21,6 +21,8 @@ var Persian = map[string]interface{}{
 	"page":                "صفحه",
 	"contactType":         "راه ارتباطی",
 	"panelName":           "نام پنل",
+	"panel":               "پنل",
+	"maintenanceRequest":  "درخواست تعمیر",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -52,6 +54,7 @@ var Persian = map[string]interface{}{
 		"installRateLimit":       "تعداد درخواست های فعال شما از حدنساب عبور کرده است.",
 		"forbiddenError":         "اجازه دسترسی به این {0} وجود ندارد.",
 		"forbiddenStatus":        "اجازه انجام این کار را در این وضعیت ندارید.",
+		"pending":                "این {0} حال بررسی است.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
@@ -74,5 +77,6 @@ var Persian = map[string]interface{}{
 		"refreshToken":              "نشست شما با موفقیت تمدید شد.",
 		"addCorporationCertificate": "مدارک شما با موفقیت آپلود شد.",
 		"addPanel":                  "پنل با موفقیت اضافه شد.",
+		"maintenanceRequest":        "درخواست نگهداری شما با موفقیت ثبت شد.",
 	},
 }

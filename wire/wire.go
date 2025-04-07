@@ -48,12 +48,14 @@ var RepositoryProviderSet = wire.NewSet(
 	cacherepositoryimpl.NewUserCacheRepository,
 	repositoryimpl.NewCorporationRepository,
 	repositoryimpl.NewBidRepository,
+	repositoryimpl.NewMaintenanceRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
 	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
 	wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)),
 	wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)),
+	wire.Bind(new(repository.MaintenanceRepository), new(*repositoryimpl.MaintenanceRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -66,6 +68,7 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewCorporationService,
 	cinimpl.NewCINService,
 	serviceimpl.NewBidService,
+	serviceimpl.NewMaintenanceService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
@@ -75,6 +78,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
 	wire.Bind(new(service.CINService), new(*cinimpl.CINService)),
 	wire.Bind(new(service.BidService), new(*serviceimpl.BidService)),
+	wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)),
 )
 
 var AdapterProviderSet = wire.NewSet(

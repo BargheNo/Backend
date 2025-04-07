@@ -53,6 +53,8 @@ type ErrorField struct {
 	Page                string
 	ContactType         string
 	PanelName           string
+	Panel               string
+	MaintenanceRequest  string
 }
 
 type ErrorTag struct {
@@ -75,6 +77,7 @@ type ErrorTag struct {
 	NotExist               string
 	AlreadyExist           string
 	ForbiddenStatus        string
+	Pending                string
 }
 
 type SMSTemplates struct {
@@ -135,6 +138,8 @@ func NewConstants() *Constants {
 			Page:                "page",
 			ContactType:         "contactType",
 			PanelName:           "panelName",
+			Panel:               "panel",
+			MaintenanceRequest:  "maintenanceRequest",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -156,6 +161,7 @@ func NewConstants() *Constants {
 			NotExist:               "notExist",
 			AlreadyExist:           "alreadyExist",
 			ForbiddenStatus:        "forbiddenStatus",
+			Pending:                "pending",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
