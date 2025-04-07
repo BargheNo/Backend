@@ -23,3 +23,10 @@ type CorporationMaintenanceListRequest struct {
 	Offset        int
 	Limit         int
 }
+
+type HandleRequest struct {
+	CorporationID uint
+	RequestID     uint
+	OperatorID    uint
+	Accept        bool
+}

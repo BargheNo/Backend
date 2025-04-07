@@ -56,3 +56,15 @@ func (repo *MaintenanceRepository) FindMaintenanceRequestsByCorporationID(db dat
 
 	return requests
 }
+
+func (repo *MaintenanceRepository) FindMaintenanceRequestByID(db database.Database, requestID uint) *entity.MaintenanceRequest {
+	var request entity.MaintenanceRequest
+	if err := db.GetDB().First(&request, requestID).Error; err != nil {
+		return nil
+	}
+	return &request
+}
+
+func (repo *MaintenanceRepository) UpdateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error {
+	return db.GetDB().Save(maintenanceRequest).Error
+}

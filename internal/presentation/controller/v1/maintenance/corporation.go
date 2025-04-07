@@ -56,3 +56,26 @@ func (maintenanceController *CorporationMaintenanceController) GetMaintenanceReq
 	requests := maintenanceController.maintenanceService.GetCorporationMaintenanceRequests(listInfo)
 	controller.Response(ctx, 200, "success", requests)
 }
+
+func (maintenanceController *CorporationMaintenanceController) HandleMaintenanceRequest(ctx *gin.Context) {
+	type handleMaintenanceRequestParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+		RequestID     uint `json:"requestID" validate:"required"`
+		Accept        bool `json:"accept" validate:"required"`
+	}
+	operatorID, _ := ctx.Get(maintenanceController.constants.Context.ID)
+	params := controller.Validated[handleMaintenanceRequestParams](ctx)
+
+	handleRequestInfo := maintenancedto.HandleRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    operatorID.(uint),
+		RequestID:     params.RequestID,
+		Accept:        params.Accept,
+	}
+
+	maintenanceController.maintenanceService.HandleRequest(handleRequestInfo)
+
+	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.maintenanceRequestHandled")
+	controller.Response(ctx, 200, message, nil)
+}

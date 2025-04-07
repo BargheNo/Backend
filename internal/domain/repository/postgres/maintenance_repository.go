@@ -10,4 +10,6 @@ type MaintenanceRepository interface {
 	CreateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error
 	FindMaintenanceRequestsByOwnerID(db database.Database, ownerID uint, opts ...QueryModifier) []*entity.MaintenanceRequest
 	FindMaintenanceRequestsByCorporationID(db database.Database, corporationID uint, opts ...QueryModifier) []*entity.MaintenanceRequest
+	FindMaintenanceRequestByID(db database.Database, requestID uint) *entity.MaintenanceRequest
+	UpdateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error
 }

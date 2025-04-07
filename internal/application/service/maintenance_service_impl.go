@@ -153,3 +153,28 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 	}
 	return maintenanceResponses
 }
+
+func (maintenanceService *MaintenanceService) HandleRequest(handleRequestInfo maintenancedto.HandleRequest) {
+	maintenanceService.corporationService.CheckApplicantAccess(handleRequestInfo.OperatorID, handleRequestInfo.CorporationID)
+	request := maintenanceService.maintenanceRepository.FindMaintenanceRequestByID(maintenanceService.db, handleRequestInfo.RequestID)
+	if request == nil {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
+	}
+	if request.Status != enum.MaintenanceRequestStatusPending {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: maintenanceService.constants.Field.MaintenanceRequest,
+		}
+		panic(forbiddenError)
+	}
+	if handleRequestInfo.Accept {
+		request.Status = enum.MaintenanceRequestStatusAccepted
+	} else {
+		request.Status = enum.MaintenanceRequestStatusRejected
+	}
+	err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, request)
+	if err != nil {
+		panic(err)
+	}
+}

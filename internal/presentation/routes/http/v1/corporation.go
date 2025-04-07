@@ -41,6 +41,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		requests := maintenance.Group("/requests")
 		{
 			requests.GET("/list", app.Controllers.Corporation.MaintenanceController.GetMaintenanceRequests)
+			requests.POST("/handle", app.Controllers.Corporation.MaintenanceController.HandleMaintenanceRequest)
 		}
 	}
 }
