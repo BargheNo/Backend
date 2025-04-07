@@ -6,6 +6,7 @@ import (
 )
 
 type MaintenanceRepository interface {
-	FindRequestsByPanelID(db database.Database, panelID uint) ([]*entity.MaintenanceRequest, bool)
+	FindRequestsByPanelID(db database.Database, panelID uint) []*entity.MaintenanceRequest
 	CreateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error
+	FindMaintenanceRequestsByOwnerID(db database.Database, ownerID uint, opts ...QueryModifier) []*entity.MaintenanceRequest
 }

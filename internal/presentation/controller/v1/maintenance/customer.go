@@ -1,6 +1,8 @@
 package maintenance
 
 import (
+	"strconv"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	maintenancedto "github.com/BargheNo/Backend/internal/application/dto/maintenance"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -51,4 +53,25 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.maintenanceRequest")
 	controller.Response(ctx, 201, message, nil)
+}
+
+func (maintenanceController *CustomerMaintenanceController) GetCustomerMaintenanceRequests(ctx *gin.Context) {
+	ownerID, _ := ctx.Get(maintenanceController.constants.Context.ID)
+	defaultPage, err := strconv.Atoi(maintenanceController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(maintenanceController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := params.GetOffsetLimit()
+	listInfo := maintenancedto.MaintenanceListRequest{
+		OwnerID: ownerID.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+	requests := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
+	controller.Response(ctx, 200, "", requests)
 }

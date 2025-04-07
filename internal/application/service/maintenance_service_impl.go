@@ -9,6 +9,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type MaintenanceService struct {
@@ -52,7 +53,7 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestIn
 		panic(forbiddenError)
 	}
 
-	maintenanceRequests, _ := maintenanceService.maintenanceRepository.FindRequestsByPanelID(maintenanceService.db, requestInfo.PanelID)
+	maintenanceRequests := maintenanceService.maintenanceRepository.FindRequestsByPanelID(maintenanceService.db, requestInfo.PanelID)
 	for _, request := range maintenanceRequests {
 		if request.Status == enum.MaintenanceRequestStatusPending {
 			conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.Pending)
@@ -73,4 +74,27 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestIn
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.MaintenanceListRequest) []maintenancedto.MaintenanceResponse {
+	maintenanceService.userService.GetUserCredential(listInfo.OwnerID)
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByOwnerID(maintenanceService.db, listInfo.OwnerID, paginationModifier, sortingModifier)
+	var maintenanceResponses []maintenancedto.MaintenanceResponse
+	for _, request := range maintenanceRequests {
+		maintenanceResponse := maintenancedto.MaintenanceResponse{
+			ID:            request.ID,
+			PanelID:       request.PanelID,
+			CorporationID: request.CorporationID,
+			OwnerID:       request.OwnerID,
+			Subject:       request.Subject,
+			Description:   request.Description,
+			UrgencyLevel:  request.UrgencyLevel.String(),
+			Status:        request.Status.String(),
+			CreatedAt:     request.CreatedAt,
+		}
+		maintenanceResponses = append(maintenanceResponses, maintenanceResponse)
+	}
+	return maintenanceResponses
 }

@@ -30,7 +30,7 @@ type RequestDetailsResponse struct {
 	Customer     userdto.CredentialResponse `json:"customer"`
 }
 
-type CorporationPanelListResponse struct {
+type CorporationPanelResponse struct {
 	ID                   uint                       `json:"id"`
 	PanelName            string                     `json:"panelName"`
 	CustomerName         string                     `json:"customerName"`
@@ -45,7 +45,7 @@ type CorporationPanelListResponse struct {
 	OperatorName         string                     `json:"operatorName"`
 }
 
-type CustomerPanelListResponse struct {
+type CustomerPanelResponse struct {
 	ID                   uint                       `json:"id"`
 	PanelName            string                     `json:"panelName"`
 	CorporationName      string                     `json:"corporationName"`

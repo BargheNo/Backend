@@ -42,6 +42,10 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	maintenance := routerGroup.Group("/maintenance")
 	{
-		maintenance.POST("/request", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
+		requests := maintenance.Group("/request")
+		{
+			requests.POST("/", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
+			requests.GET("/list", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequests)
+		}
 	}
 }
