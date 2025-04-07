@@ -124,8 +124,8 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 		LastName:      registerInfo.LastName,
 		Phone:         registerInfo.Phone,
 		Password:      string(hashesPasswordBytes),
-		PhoneVerified: false,
-		EmailVerified: false,
+		PhoneVerified: true,
+		EmailVerified: true,
 	}
 	err = userService.userRepository.CreateUser(userService.db, user)
 	if err != nil {
@@ -284,5 +284,21 @@ func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswor
 	err = userService.userRepository.UpdateUser(userService.db, user)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func (userService *UserService) FindUserByPhone(phone string) userdto.UserResponse {
+	user, userExist := userService.userRepository.FindUserByPhone(userService.db, phone)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
+		panic(conflictErrors)
+	}
+	return userdto.UserResponse{
+		ID: user.ID,
 	}
 }

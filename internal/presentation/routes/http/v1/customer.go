@@ -34,4 +34,9 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		addresses.POST("", app.Controllers.Customer.AddressController.CreateUserAddress)
 		addresses.GET("", app.Controllers.Customer.AddressController.GetCustomerAddresses)
 	}
+
+	panels := routerGroup.Group("/panels")
+	{
+		panels.GET("/list", app.Controllers.Customer.InstallationController.GetCustomerPanels)
+	}
 }

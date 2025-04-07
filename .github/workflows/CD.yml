@@ -3,9 +3,7 @@ name: CD
 on:
   push:
     branches:
-      - fix/deployment
-      - refactor/installation-service
-      - feat/rbac
+      - feat/add-panel
   pull_request:
     branches:
       - develop

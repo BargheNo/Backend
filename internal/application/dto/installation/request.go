@@ -19,7 +19,34 @@ type InstallationListRequest struct {
 	Limit   int
 }
 
+type CorporationPanelListRequest struct {
+	CorporationID uint
+	OperatorID    uint
+	Offset        int
+	Limit         int
+}
+
+type CustomerPanelListRequest struct {
+	OwnerID uint
+	Offset  int
+	Limit   int
+}
+
 type GetOwnerRequest struct {
 	OwnerID   uint
 	RequestID uint
+}
+
+type AddPanelRequest struct {
+	CorporationID        uint
+	OperatorID           uint
+	PanelName            string
+	CustomerPhone        string
+	Power                uint
+	Area                 uint
+	BuildingType         string
+	Tilt                 uint
+	Azimuth              uint
+	TotalNumberOfModules uint
+	Address              addressdto.CreateAddressRequest
 }

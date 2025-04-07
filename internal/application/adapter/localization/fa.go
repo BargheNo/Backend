@@ -20,6 +20,7 @@ var Persian = map[string]interface{}{
 	"city":                "شهر",
 	"page":                "صفحه",
 	"contactType":         "راه ارتباطی",
+	"panelName":           "نام پنل",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -72,5 +73,6 @@ var Persian = map[string]interface{}{
 		"createAddress":             "آدرس مورد نظر با موفقیت اضافه شد.",
 		"refreshToken":              "نشست شما با موفقیت تمدید شد.",
 		"addCorporationCertificate": "مدارک شما با موفقیت آپلود شد.",
+		"addPanel":                  "پنل با موفقیت اضافه شد.",
 	},
 }

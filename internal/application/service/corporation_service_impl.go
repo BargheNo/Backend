@@ -91,7 +91,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		RegistrationNumber: registerInfo.RegistrationNumber,
 		NationalID:         registerInfo.NationalID,
 		IBAN:               registerInfo.IBAN,
-		Status:             enum.CorpStatusAwaitingApproval,
+		Status:             enum.CorpStatusApproved,
 	}
 
 	err := corporationService.corporationRepository.CreateCorporation(corporationService.db, corporation)

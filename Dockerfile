@@ -15,7 +15,7 @@ COPY ./internal/application/adapter/jwt/privateKey.pem ./internal/application/ad
 COPY ./internal/application/adapter/jwt/publicKey.pem /internal/application/adapter/jwt/
 
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o main ./cmd/app
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o main ./cmd/app
 
 FROM alpine:3.19
 

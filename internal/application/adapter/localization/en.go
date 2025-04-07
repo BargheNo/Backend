@@ -20,6 +20,7 @@ var English = map[string]interface{}{
 	"city":                "city",
 	"page":                "page",
 	"contactType":         "contact type",
+	"panelName":           "panel name",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -72,5 +73,6 @@ var English = map[string]interface{}{
 		"createAddress":             "Address created successfully.",
 		"refreshToken":              "Your session has been successfully refreshed.",
 		"addCorporationCertificate": "Your certificate has been uploaded successfully.",
+		"addPanel":                  "Panel added successfully.",
 	},
 }
