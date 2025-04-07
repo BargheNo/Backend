@@ -39,4 +39,9 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		panels.GET("/list", app.Controllers.Customer.InstallationController.GetCustomerPanels)
 	}
+
+	maintenance := routerGroup.Group("/maintenance")
+	{
+		maintenance.POST("/request", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
+	}
 }

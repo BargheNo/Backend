@@ -27,6 +27,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -100,6 +101,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 	address.NewCustomerAddressController,
 	corporation.NewCustomerCorporationController,
 	bid.NewCustomerBidController,
+	maintenance.NewCustomerMaintenanceController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -220,6 +222,7 @@ type CustomerControllers struct {
 	AddressController      *address.CustomerAddressController
 	CorporationController  *corporation.CustomerCorporationController
 	BidController          *bid.CustomerBidController
+	MaintenanceController  *maintenance.CustomerMaintenanceController
 }
 
 type CorporationControllers struct {
