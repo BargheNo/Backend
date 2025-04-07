@@ -97,10 +97,12 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	corporationCorporationController := corporation.NewCorporationCorporationController(constants, pagination, corporationService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
 	corporationBidController := bid.NewCorporationBidController(constants, pagination, bidService)
+	corporationMaintenanceController := maintenance.NewCorporationMaintenanceController(constants, pagination, maintenanceService)
 	corporationControllers := &CorporationControllers{
 		CorporationController:  corporationCorporationController,
 		InstallationController: corporationInstallationController,
 		BidController:          corporationBidController,
+		MaintenanceController:  corporationMaintenanceController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -154,7 +156,7 @@ var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, ad
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, maintenance.NewCustomerMaintenanceController, wire.Struct(new(CustomerControllers), "*"))
 
-var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, bid.NewCorporationBidController, wire.Struct(new(CorporationControllers), "*"))
+var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, wire.Struct(new(CorporationControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -259,6 +261,7 @@ type CorporationControllers struct {
 	CorporationController  *corporation.CorporationCorporationController
 	InstallationController *installation.CorporationInstallationController
 	BidController          *bid.CorporationBidController
+	MaintenanceController  *maintenance.CorporationMaintenanceController
 }
 
 type Controllers struct {

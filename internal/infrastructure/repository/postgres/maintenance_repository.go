@@ -42,3 +42,17 @@ func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.
 	}
 	return requests
 }
+
+func (repo *MaintenanceRepository) FindMaintenanceRequestsByCorporationID(db database.Database, corporationID uint, opts ...repository.QueryModifier) []*entity.MaintenanceRequest {
+	var requests []*entity.MaintenanceRequest
+	query := db.GetDB().Where("corporation_id = ?", corporationID)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&requests)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+
+	return requests
+}

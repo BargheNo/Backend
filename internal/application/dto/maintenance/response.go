@@ -1,6 +1,10 @@
 package maintenancedto
 
-import "time"
+import (
+	"time"
+
+	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
+)
 
 type MaintenanceResponse struct {
 	ID            uint
@@ -12,4 +16,17 @@ type MaintenanceResponse struct {
 	UrgencyLevel  string
 	Status        string
 	CreatedAt     time.Time
+	Panel         installationdto.CustomerPanelResponse
+}
+
+type CorporationMaintenanceResponse struct {
+	ID           uint
+	PanelID      uint
+	Subject      string
+	Description  string
+	UrgencyLevel string
+	Status       string
+	CreatedAt    time.Time
+	OwnerPhone   string
+	Panel        installationdto.CorporationPanelResponse
 }

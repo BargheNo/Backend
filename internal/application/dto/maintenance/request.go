@@ -16,3 +16,10 @@ type MaintenanceListRequest struct {
 	Offset  int
 	Limit   int
 }
+
+type CorporationMaintenanceListRequest struct {
+	CorporationID uint
+	OperatorID    uint
+	Offset        int
+	Limit         int
+}
