@@ -79,5 +79,6 @@ var English = map[string]interface{}{
 		"addPanel":                  "Panel added successfully.",
 		"maintenanceRequest":        "Maintenance request has been successfully stored.",
 		"addMaintenanceRecord":      "Maintenance record has been successfully added.",
+		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
 	},
 }

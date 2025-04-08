@@ -48,5 +48,11 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			requests.POST("/", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
 			requests.GET("/list", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequests)
 		}
+
+		records := maintenance.Group("/record")
+		{
+			records.GET("/list", app.Controllers.Customer.MaintenanceController.GetMaintenanceRecords)
+			records.GET("/list/:panelID", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequestsByPanelID)
+		}
 	}
 }

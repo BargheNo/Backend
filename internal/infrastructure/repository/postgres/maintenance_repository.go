@@ -99,3 +99,31 @@ func (repo *MaintenanceRepository) FindMaintenanceRecordsByPanelAndCorporationID
 	}
 	return records
 }
+
+func (repo *MaintenanceRepository) FindMaintenanceRecordsByCustomerID(db database.Database, customerID uint, opts ...repository.QueryModifier) []*entity.MaintenanceRecord {
+	var records []*entity.MaintenanceRecord
+	query := db.GetDB().Where("customer_id = ?", customerID)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&records)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return records
+}
+
+func (repo *MaintenanceRepository) FindCustomerMaintenanceRecordsByPanelID(db database.Database, customerID uint, panelID uint, opts ...repository.QueryModifier) []*entity.MaintenanceRecord {
+	var records []*entity.MaintenanceRecord
+	print("customerID", customerID)
+	print("panelID", panelID)
+	query := db.GetDB().Where("customer_id = ? AND panel_id = ?", customerID, panelID)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&records)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return records
+}

@@ -106,7 +106,7 @@ func (maintenanceController *CorporationMaintenanceController) AddMaintenanceRec
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (maintenanceController *CorporationMaintenanceController) GetMaintenanceRecords(ctx *gin.Context) {
+func (maintenanceController *CorporationMaintenanceController) GetCorporationMaintenanceRecords(ctx *gin.Context) {
 	type maintenanceRecordsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
@@ -130,11 +130,11 @@ func (maintenanceController *CorporationMaintenanceController) GetMaintenanceRec
 		Limit:         limit,
 	}
 
-	requests := maintenanceController.maintenanceService.GetMaintenanceRecords(listInfo)
+	requests := maintenanceController.maintenanceService.GetCorporationMaintenanceRecords(listInfo)
 	controller.Response(ctx, 200, "success", requests)
 }
 
-func (maintenanceController *CorporationMaintenanceController) GetMaintenanceRecordsByPanelID(ctx *gin.Context) {
+func (maintenanceController *CorporationMaintenanceController) GetCorporationMaintenanceRecordsByPanel(ctx *gin.Context) {
 	type maintenanceRecordsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
 		PanelID       uint `uri:"panelID" validate:"required"`
@@ -152,7 +152,7 @@ func (maintenanceController *CorporationMaintenanceController) GetMaintenanceRec
 	}
 	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
-	listInfo := maintenancedto.MaintenanceRecordByPanelRequest{
+	listInfo := maintenancedto.CorporationMaintenanceRecordByPanelRequest{
 		CorporationID: params.CorporationID,
 		OperatorID:    operatorID.(uint),
 		PanelID:       params.PanelID,
@@ -160,6 +160,6 @@ func (maintenanceController *CorporationMaintenanceController) GetMaintenanceRec
 		Limit:         limit,
 	}
 
-	requests := maintenanceController.maintenanceService.GetMaintenanceRecordsByPanelAndCorporationID(listInfo)
+	requests := maintenanceController.maintenanceService.GetCorporationMaintenanceRecordsByPanel(listInfo)
 	controller.Response(ctx, 200, "success", requests)
 }

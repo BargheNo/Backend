@@ -41,3 +41,13 @@ type MaintenanceRecordResponse struct {
 	Details       string
 	Date          time.Time
 }
+
+type CustomerMaintenanceRecordResponse struct {
+	ID            uint
+	Panel         installationdto.CustomerPanelResponse
+	OperatorID    uint
+	OperatorPhone string
+	Title         string
+	Details       string
+	Date          time.Time
+}

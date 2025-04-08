@@ -15,4 +15,6 @@ type MaintenanceRepository interface {
 	CreateMaintenanceRecord(db database.Database, maintenanceRecord *entity.MaintenanceRecord) error
 	FindMaintenanceRecordsByCorporationID(db database.Database, corporationID uint, opts ...QueryModifier) []*entity.MaintenanceRecord
 	FindMaintenanceRecordsByPanelAndCorporationID(db database.Database, panelID uint, corporationID uint, opts ...QueryModifier) []*entity.MaintenanceRecord
+	FindMaintenanceRecordsByCustomerID(db database.Database, customerID uint, opts ...QueryModifier) []*entity.MaintenanceRecord
+	FindCustomerMaintenanceRecordsByPanelID(db database.Database, customerID uint, panelID uint, opts ...QueryModifier) []*entity.MaintenanceRecord
 }

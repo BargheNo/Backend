@@ -44,10 +44,17 @@ type AddMaintenanceRecordRequest struct {
 	Details       string
 }
 
-type MaintenanceRecordByPanelRequest struct {
+type CorporationMaintenanceRecordByPanelRequest struct {
 	CorporationID uint
 	OperatorID    uint
 	PanelID       uint
 	Offset        int
 	Limit         int
+}
+
+type CustomerMaintenanceRecordByPanelRequest struct {
+	OwnerID uint
+	PanelID uint
+	Offset  int
+	Limit   int
 }
