@@ -78,5 +78,7 @@ var English = map[string]interface{}{
 		"addCorporationCertificate": "Your certificate has been uploaded successfully.",
 		"addPanel":                  "Panel added successfully.",
 		"maintenanceRequest":        "Maintenance request has been successfully stored.",
+		"addMaintenanceRecord":      "Maintenance record has been successfully added.",
+		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
 	},
 }

@@ -78,5 +78,7 @@ var Persian = map[string]interface{}{
 		"addCorporationCertificate": "مدارک شما با موفقیت آپلود شد.",
 		"addPanel":                  "پنل با موفقیت اضافه شد.",
 		"maintenanceRequest":        "درخواست نگهداری شما با موفقیت ثبت شد.",
+		"addMaintenanceRecord":      "سابقه نگهداری با موفقیت ثبت شد.",
+		"maintenanceRequestHandled": "درخواست نگهداری با موفقیت انجام شد.",
 	},
 }

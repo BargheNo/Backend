@@ -30,3 +30,24 @@ type CorporationMaintenanceResponse struct {
 	OwnerPhone   string
 	Panel        installationdto.CorporationPanelResponse
 }
+
+type MaintenanceRecordResponse struct {
+	ID            uint
+	RequestID     uint
+	Panel         installationdto.CorporationPanelResponse
+	OperatorID    uint
+	CorporationID uint
+	Title         string
+	Details       string
+	Date          time.Time
+}
+
+type CustomerMaintenanceRecordResponse struct {
+	ID            uint
+	Panel         installationdto.CustomerPanelResponse
+	OperatorID    uint
+	OperatorPhone string
+	Title         string
+	Details       string
+	Date          time.Time
+}

@@ -38,9 +38,16 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 
 	maintenance := routerGroup.Group(":corporationID/maintenance")
 	{
-		requests := maintenance.Group("/requests")
+		requests := maintenance.Group("/request")
 		{
 			requests.GET("/list", app.Controllers.Corporation.MaintenanceController.GetMaintenanceRequests)
+			requests.POST("/handle", app.Controllers.Corporation.MaintenanceController.HandleMaintenanceRequest)
+		}
+		records := maintenance.Group("/record")
+		{
+			records.POST("/add", app.Controllers.Corporation.MaintenanceController.AddMaintenanceRecord)
+			records.GET("/list", app.Controllers.Corporation.MaintenanceController.GetCorporationMaintenanceRecords)
+			records.GET("/list/:panelID", app.Controllers.Corporation.MaintenanceController.GetCorporationMaintenanceRecordsByPanel)
 		}
 	}
 }

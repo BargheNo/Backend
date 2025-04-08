@@ -75,3 +75,52 @@ func (maintenanceController *CustomerMaintenanceController) GetCustomerMaintenan
 	requests := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
 	controller.Response(ctx, 200, "", requests)
 }
+
+func (maintenanceController *CustomerMaintenanceController) GetMaintenanceRecords(ctx *gin.Context) {
+	ownerID, _ := ctx.Get(maintenanceController.constants.Context.ID)
+	defaultPage, err := strconv.Atoi(maintenanceController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(maintenanceController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := params.GetOffsetLimit()
+	listInfo := maintenancedto.MaintenanceListRequest{
+		OwnerID: ownerID.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+	records := maintenanceController.maintenanceService.GetCustomerMaintenanceRecords(listInfo)
+	controller.Response(ctx, 200, "", records)
+}
+
+func (maintenanceController *CustomerMaintenanceController) GetCustomerMaintenanceRequestsByPanelID(ctx *gin.Context) {
+	type maintenanceRecordsParams struct {
+		PanelID uint `uri:"panelID" validate:"required"`
+	}
+	ownerID, _ := ctx.Get(maintenanceController.constants.Context.ID)
+	params := controller.Validated[maintenanceRecordsParams](ctx)
+
+	defaultPage, err := strconv.Atoi(maintenanceController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(maintenanceController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+	listInfo := maintenancedto.CustomerMaintenanceRecordByPanelRequest{
+		OwnerID: ownerID.(uint),
+		PanelID: params.PanelID,
+		Offset:  offset,
+		Limit:   limit,
+	}
+
+	requests := maintenanceController.maintenanceService.GetCustomerMaintenanceRecordsByPanel(listInfo)
+	controller.Response(ctx, 200, "", requests)
+}
