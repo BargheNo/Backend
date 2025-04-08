@@ -2,6 +2,7 @@ package maintenance
 
 import (
 	"strconv"
+	"time"
 
 	bootstrap "github.com/BargheNo/Backend/bootstrap"
 
@@ -78,4 +79,87 @@ func (maintenanceController *CorporationMaintenanceController) HandleMaintenance
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.maintenanceRequestHandled")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (maintenanceController *CorporationMaintenanceController) AddMaintenanceRecord(ctx *gin.Context) {
+	type addMaintenanceParams struct {
+		CorporationID uint      `uri:"corporationID" validate:"required"`
+		RequestID     uint      `json:"requestID" validate:"required"`
+		Date          time.Time `json:"date" validate:"required"`
+		Title         string    `json:"title" validate:"required"`
+		Details       string    `json:"details" validate:"required"`
+	}
+	operatorID, _ := ctx.Get(maintenanceController.constants.Context.ID)
+	params := controller.Validated[addMaintenanceParams](ctx)
+	maintenanceRecordInfo := maintenancedto.AddMaintenanceRecordRequest{
+		CorporationID: params.CorporationID,
+		RequestID:     params.RequestID,
+		OperatorID:    operatorID.(uint),
+		Date:          params.Date,
+		Title:         params.Title,
+		Details:       params.Details,
+	}
+	maintenanceController.maintenanceService.AddMaintenanceRecord(maintenanceRecordInfo)
+
+	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addMaintenanceRecord")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (maintenanceController *CorporationMaintenanceController) GetMaintenanceRecords(ctx *gin.Context) {
+	type maintenanceRecordsParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	operatorID, _ := ctx.Get(maintenanceController.constants.Context.ID)
+	params := controller.Validated[maintenanceRecordsParams](ctx)
+
+	defaultPage, err := strconv.Atoi(maintenanceController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(maintenanceController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+	listInfo := maintenancedto.CorporationMaintenanceListRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    operatorID.(uint),
+		Offset:        offset,
+		Limit:         limit,
+	}
+
+	requests := maintenanceController.maintenanceService.GetMaintenanceRecords(listInfo)
+	controller.Response(ctx, 200, "success", requests)
+}
+
+func (maintenanceController *CorporationMaintenanceController) GetMaintenanceRecordsByPanelID(ctx *gin.Context) {
+	type maintenanceRecordsParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+		PanelID       uint `uri:"panelID" validate:"required"`
+	}
+	operatorID, _ := ctx.Get(maintenanceController.constants.Context.ID)
+	params := controller.Validated[maintenanceRecordsParams](ctx)
+
+	defaultPage, err := strconv.Atoi(maintenanceController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(maintenanceController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+	listInfo := maintenancedto.MaintenanceRecordByPanelRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    operatorID.(uint),
+		PanelID:       params.PanelID,
+		Offset:        offset,
+		Limit:         limit,
+	}
+
+	requests := maintenanceController.maintenanceService.GetMaintenanceRecordsByPanelAndCorporationID(listInfo)
+	controller.Response(ctx, 200, "success", requests)
 }
