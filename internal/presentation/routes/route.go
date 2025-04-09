@@ -2,6 +2,7 @@ package routes
 
 import (
 	httpv1 "github.com/BargheNo/Backend/internal/presentation/routes/http/v1"
+	wsv1 "github.com/BargheNo/Backend/internal/presentation/routes/ws/v1"
 	"github.com/BargheNo/Backend/wire"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -31,6 +32,10 @@ func registerCustomerRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	user := v1.Group("/user")
 	user.Use(app.Middlewares.Authentication.AuthRequired)
 	httpv1.SetupCustomerRoutes(user, app)
+
+	wsUser := v1.Group("/user")
+	wsUser.Use(app.Middlewares.WebsocketMiddleware.UpgradeToWebSocket)
+	wsv1.SetupCustomerRoutes(wsUser, app)
 }
 
 func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {

@@ -118,14 +118,16 @@ func InitializeApplication(container *bootstrap.Config) (*Application, error) {
 	metrics := ProvideMetrics(container)
 	prometheusMetrics := metricsimpl.NewPrometheusMetrics(metrics)
 	prometheusMiddleware := middleware.NewPrometheusMiddleware(prometheusMetrics)
+	websocketMiddleware := middleware.NewWebsocketMiddleware(constants)
 	middlewares := &Middlewares{
-		Authentication: authMiddleware,
-		CORS:           corsMiddleware,
-		Recovery:       recoveryMiddleware,
-		Localization:   localizationMiddleware,
-		RateLimit:      rateLimitMiddleware,
-		Logger:         loggerMiddleware,
-		Prometheus:     prometheusMiddleware,
+		Authentication:      authMiddleware,
+		CORS:                corsMiddleware,
+		Recovery:            recoveryMiddleware,
+		Localization:        localizationMiddleware,
+		RateLimit:           rateLimitMiddleware,
+		Logger:              loggerMiddleware,
+		Prometheus:          prometheusMiddleware,
+		WebsocketMiddleware: websocketMiddleware,
 	}
 	addressSeeder := seed.NewAddressSeeder(addressRepository, postgresDatabase)
 	seeds := &Seeds{
@@ -153,7 +155,7 @@ var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCor
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
-var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, wire.Struct(new(Middlewares), "*"))
+var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, middleware.NewWebsocketMiddleware, wire.Struct(new(Middlewares), "*"))
 
 var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, wire.Struct(new(Seeds), "*"))
 
@@ -262,13 +264,14 @@ type Controllers struct {
 }
 
 type Middlewares struct {
-	Authentication *middleware.AuthMiddleware
-	CORS           *middleware.CORSMiddleware
-	Recovery       *middleware.RecoveryMiddleware
-	Localization   *middleware.LocalizationMiddleware
-	RateLimit      *middleware.RateLimitMiddleware
-	Logger         *middleware.LoggerMiddleware
-	Prometheus     *middleware.PrometheusMiddleware
+	Authentication      *middleware.AuthMiddleware
+	CORS                *middleware.CORSMiddleware
+	Recovery            *middleware.RecoveryMiddleware
+	Localization        *middleware.LocalizationMiddleware
+	RateLimit           *middleware.RateLimitMiddleware
+	Logger              *middleware.LoggerMiddleware
+	Prometheus          *middleware.PrometheusMiddleware
+	WebsocketMiddleware *middleware.WebsocketMiddleware
 }
 
 type Seeds struct {

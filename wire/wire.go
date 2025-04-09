@@ -122,6 +122,7 @@ var MiddlewareProviderSet = wire.NewSet(
 	middleware.NewRateLimit,
 	middleware.NewLoggerMiddleware,
 	middleware.NewPrometheusMiddleware,
+	middleware.NewWebsocketMiddleware,
 	wire.Struct(new(Middlewares), "*"),
 )
 
@@ -235,13 +236,14 @@ type Controllers struct {
 }
 
 type Middlewares struct {
-	Authentication *middleware.AuthMiddleware
-	CORS           *middleware.CORSMiddleware
-	Recovery       *middleware.RecoveryMiddleware
-	Localization   *middleware.LocalizationMiddleware
-	RateLimit      *middleware.RateLimitMiddleware
-	Logger         *middleware.LoggerMiddleware
-	Prometheus     *middleware.PrometheusMiddleware
+	Authentication      *middleware.AuthMiddleware
+	CORS                *middleware.CORSMiddleware
+	Recovery            *middleware.RecoveryMiddleware
+	Localization        *middleware.LocalizationMiddleware
+	RateLimit           *middleware.RateLimitMiddleware
+	Logger              *middleware.LoggerMiddleware
+	Prometheus          *middleware.PrometheusMiddleware
+	WebsocketMiddleware *middleware.WebsocketMiddleware
 }
 
 type Seeds struct {
