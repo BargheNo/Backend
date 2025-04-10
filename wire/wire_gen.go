@@ -32,6 +32,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -52,14 +53,14 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	otp := ProvideOTPConfig(container)
 	userCacheRepository := cacherepositoryimpl.NewUserCacheRepository(redisDatabase)
 	otpService := serviceimpl.NewOTPService(constants, otp, userCacheRepository)
-	smsGateway := ProvideSMSGatewayConfig(container)
-	smsTemplates := ProvideSMSTemplates(container)
-	smsService := communicationService.NewSMSService(smsGateway, smsTemplates)
 	keyManager := jwtimpl.NewJWTKeyManager()
 	jwtKeysPath := ProvideJWTKeysPath(container)
 	jwtService := serviceimpl.NewJWTService(keyManager, jwtKeysPath)
+	smsGateway := ProvideSMSGatewayConfig(container)
+	smsTemplates := ProvideSMSTemplates(container)
+	smsService := communicationService.NewSMSService(smsGateway, smsTemplates)
 	userRepository := repositoryimpl.NewUserRepository()
-	userService := serviceimpl.NewUserService(constants, otpService, smsService, jwtService, userRepository, userCacheRepository, postgresDatabase)
+	userService := serviceimpl.NewUserService(constants, otpService, jwtService, smsService, userRepository, userCacheRepository, postgresDatabase)
 	generalUserController := user.NewGeneralUserController(constants, userService, jwtService)
 	addressRepository := repositoryimpl.NewAddressRepository()
 	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
@@ -88,6 +89,9 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	chatRepository := repositoryimpl.NewChatRepository()
 	chatService := serviceimpl.NewChatService(constants, userService, corporationService, chatRepository, postgresDatabase)
 	customerChatController := chat.NewCustomerChatController(constants, websocketSetting, chatService, jwtService, hub)
+	notificationRepository := repositoryimpl.NewNotificationRepository()
+	notificationService := serviceimpl.NewNotificationService(constants, userService, notificationRepository, hub, postgresDatabase)
+	customerNotificationController := notification.NewCustomerNotificationController(constants, websocketSetting, notificationService, jwtService, hub)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
@@ -95,6 +99,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		CorporationController:  customerCorporationController,
 		BidController:          customerBidController,
 		ChatController:         customerChatController,
+		NotificationController: customerNotificationController,
 	}
 	corporationCorporationController := corporation.NewCorporationCorporationController(constants, pagination, corporationService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
@@ -148,15 +153,15 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 
 var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.NewRedisDatabase, wire.Bind(new(database.Database), new(*database.PostgresDatabase)), wire.Bind(new(database.Cache), new(*database.RedisDatabase)), wire.Struct(new(Database), "*"))
 
-var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, repositoryimpl.NewInstallationRepository, repositoryimpl.NewAddressRepository, cacherepositoryimpl.NewUserCacheRepository, repositoryimpl.NewCorporationRepository, repositoryimpl.NewBidRepository, repositoryimpl.NewChatRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)), wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)), wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)), wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)), wire.Bind(new(repository.ChatRepository), new(*repositoryimpl.ChatRepository)))
+var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, repositoryimpl.NewInstallationRepository, repositoryimpl.NewAddressRepository, cacherepositoryimpl.NewUserCacheRepository, repositoryimpl.NewCorporationRepository, repositoryimpl.NewBidRepository, repositoryimpl.NewChatRepository, repositoryimpl.NewNotificationRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)), wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)), wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)), wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)), wire.Bind(new(repository.ChatRepository), new(*repositoryimpl.ChatRepository)), wire.Bind(new(repository.NotificationRepository), new(*repositoryimpl.NotificationRepository)))
 
-var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, serviceimpl.NewInstallationService, serviceimpl.NewAddressService, serviceimpl.NewCorporationService, cinimpl.NewCINService, serviceimpl.NewBidService, serviceimpl.NewChatService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)), wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)), wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)), wire.Bind(new(service.CINService), new(*cinimpl.CINService)), wire.Bind(new(service.BidService), new(*serviceimpl.BidService)), wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)))
+var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, serviceimpl.NewInstallationService, serviceimpl.NewAddressService, serviceimpl.NewCorporationService, cinimpl.NewCINService, serviceimpl.NewBidService, serviceimpl.NewChatService, serviceimpl.NewNotificationService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)), wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)), wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)), wire.Bind(new(service.CINService), new(*cinimpl.CINService)), wire.Bind(new(service.BidService), new(*serviceimpl.BidService)), wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)), wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)))
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, storage.NewS3Storage, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, wire.Struct(new(CustomerControllers), "*"))
 
 var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, bid.NewCorporationBidController, wire.Struct(new(CorporationControllers), "*"))
 
@@ -262,6 +267,7 @@ type CustomerControllers struct {
 	CorporationController  *corporation.CustomerCorporationController
 	BidController          *bid.CustomerBidController
 	ChatController         *chat.CustomerChatController
+	NotificationController *notification.CustomerNotificationController
 }
 
 type CorporationControllers struct {

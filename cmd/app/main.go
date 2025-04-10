@@ -32,7 +32,7 @@ func main() {
 		&entity.ChatRoom{},
 		&entity.NotificationSetting{},
 		&entity.NotificationType{},
-		&entity.NotificationType{},
+		&entity.Notification{},
 		&entity.Permission{},
 		&entity.Province{},
 		&entity.Role{},

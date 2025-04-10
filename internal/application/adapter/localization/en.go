@@ -21,6 +21,8 @@ var English = map[string]interface{}{
 	"page":                "page",
 	"contactType":         "contact type",
 	"room":                "chat room",
+	"NotificationType":    "notification type",
+	"Notification":        "notification",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",

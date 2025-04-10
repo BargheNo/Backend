@@ -79,9 +79,6 @@ func (client *Client) ReadPump() error {
 		switch message.Type {
 		case MessageTypeChat:
 			client.processAndSaveChatMessage(&message)
-		case MessageTypeNotification:
-			// process and save notification message
-
 		}
 
 		client.Hub.broadcast <- &message

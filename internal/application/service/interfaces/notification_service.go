@@ -6,10 +6,11 @@ import (
 )
 
 type NotificationService interface {
-	CreateNotification(typeID, senderID, recipientID uint, additionalData map[string]interface{}) (uint, error)
-	MarkAsRead(notificationdto.NotificationInfoRequest) error
-	GetUserNotifications(userID uint, limit, offset int) []notificationdto.NotificationListResponse
+	CreateNotification(typeID uint, recipientID uint, additionalData map[string]string)
+	CreateNotificationSettings(userID uint)
 	GetUserNotificationSettings(userID uint) []notificationdto.NotificationSettingResponse
-	UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest) error
+	GetUserNotifications(userID uint) []notificationdto.NotificationListResponse
+	MarkAsRead(notificationInfo notificationdto.NotificationInfoRequest)
 	SendNotification(notification *entity.Notification) error
+	UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest)
 }

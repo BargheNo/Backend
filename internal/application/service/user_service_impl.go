@@ -19,8 +19,8 @@ import (
 type UserService struct {
 	constants           *bootstrap.Constants
 	otpService          service.OTPService
-	smsService          service.SMSService
 	jwtService          service.JWTService
+	smsService          service.SMSService
 	userRepository      repository.UserRepository
 	userCacheRepository cacherepository.UserCacheRepository
 	db                  database.Database
@@ -29,8 +29,8 @@ type UserService struct {
 func NewUserService(
 	constants *bootstrap.Constants,
 	otpService service.OTPService,
-	smsService service.SMSService,
 	jwtService service.JWTService,
+	smsService service.SMSService,
 	userRepository repository.UserRepository,
 	userCacheRepository cacherepository.UserCacheRepository,
 	db database.Database,
@@ -38,8 +38,8 @@ func NewUserService(
 	return &UserService{
 		constants:           constants,
 		otpService:          otpService,
-		smsService:          smsService,
 		jwtService:          jwtService,
+		smsService:          smsService,
 		userRepository:      userRepository,
 		userCacheRepository: userCacheRepository,
 		db:                  db,

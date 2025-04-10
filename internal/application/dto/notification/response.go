@@ -3,7 +3,6 @@ package notificationdto
 type NotificationListResponse struct {
 	ID             uint                     `json:"id"`
 	Type           NotificationTypeResponse `json:"type"`
-	Message        string                   `json:"message"`
 	AdditionalData string                   `json:"additionalData"`
 	IsRead         bool                     `json:"isRead"`
 }

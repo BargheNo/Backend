@@ -21,6 +21,8 @@ var Persian = map[string]interface{}{
 	"page":                "صفحه",
 	"contactType":         "راه ارتباطی",
 	"room":                "اتاق گفتگو",
+	"NotificationType":    "نوع اعلانات",
+	"Notification":        "اعلان",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
