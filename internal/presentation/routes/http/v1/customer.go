@@ -34,4 +34,11 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		addresses.POST("", app.Controllers.Customer.AddressController.CreateUserAddress)
 		addresses.GET("", app.Controllers.Customer.AddressController.GetCustomerAddresses)
 	}
+
+	chat := routerGroup.Group("/chat")
+	{
+		chat.POST("/room/:corporationID", app.Controllers.Customer.ChatController.CreateOrGetRoom)
+		chat.GET("/room", app.Controllers.Customer.ChatController.GetUserRooms)
+		chat.GET("/room/:roomID/messages", app.Controllers.Customer.ChatController.GetMessages)
+	}
 }

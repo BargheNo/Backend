@@ -7,7 +7,7 @@ import (
 
 type ChatRoomDetailsResponse struct {
 	RoomID                uint                                      `json:"roomID"`
-	UserCredential        userdto.CredentialResponse                `json:"user"`
+	CustomerCredential    userdto.CredentialResponse                `json:"customer"`
 	CorporationCredential corporationdto.CorporationDetailsResponse `json:"corporation"`
 }
 

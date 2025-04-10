@@ -74,10 +74,11 @@ func (client *Client) ReadPump() error {
 		}
 		message.Client = client
 		message.Timestamp = time.Now()
+		message.RoomID = client.roomID
 
 		switch message.Type {
 		case MessageTypeChat:
-			// process and save chat message
+			client.processAndSaveChatMessage(&message)
 		case MessageTypeNotification:
 			// process and save notification message
 
@@ -139,29 +140,13 @@ func (client *Client) WritePump() error {
 	}
 }
 
-// func (client *Client) processAndSaveChatMessage(message *Message) error {
-// 	var chatPayload ChatPayload
-// 	if err := json.Unmarshal(message.Content, &chatPayload); err != nil {
-// 		return err
-// 	}
-
-// 	// Save using application service
-// 	messageID, err := c.chatService.SaveMessage(message.RoomID, c.UserID, chatPayload.Content)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// Update the message ID in the payload
-// 	chatPayload.MessageID = messageID
-// 	updatedContent, err := json.Marshal(chatPayload)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// Update message content with the persisted message ID
-// 	message.Content = updatedContent
-// 	return nil
-// }
+func (client *Client) processAndSaveChatMessage(message *Message) {
+	var content string
+	if err := json.Unmarshal(message.Content, &content); err != nil {
+		panic(err)
+	}
+	client.chatService.SaveMessage(client.roomID, client.userID, content)
+}
 
 // func (client *Client) processAndSaveNotificationMessage(message *Message) error {
 // }

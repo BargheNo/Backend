@@ -23,8 +23,10 @@ import (
 	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
 	"github.com/BargheNo/Backend/internal/infrastructure/storage"
+	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -47,12 +49,14 @@ var RepositoryProviderSet = wire.NewSet(
 	cacherepositoryimpl.NewUserCacheRepository,
 	repositoryimpl.NewCorporationRepository,
 	repositoryimpl.NewBidRepository,
+	repositoryimpl.NewChatRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
 	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
 	wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)),
 	wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)),
+	wire.Bind(new(repository.ChatRepository), new(*repositoryimpl.ChatRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -65,6 +69,7 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewCorporationService,
 	cinimpl.NewCINService,
 	serviceimpl.NewBidService,
+	serviceimpl.NewChatService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
@@ -74,6 +79,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
 	wire.Bind(new(service.CINService), new(*cinimpl.CINService)),
 	wire.Bind(new(service.BidService), new(*serviceimpl.BidService)),
+	wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -100,6 +106,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 	address.NewCustomerAddressController,
 	corporation.NewCustomerCorporationController,
 	bid.NewCustomerBidController,
+	chat.NewCustomerChatController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -179,6 +186,10 @@ func ProvideStorageConfig(container *bootstrap.Config) *bootstrap.S3 {
 	return &container.Env.Storage
 }
 
+func ProvideWebsocketSetting(container *bootstrap.Config) *bootstrap.WebsocketSetting {
+	return &container.Env.WebsocketSetting
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -202,6 +213,7 @@ var ProviderSet = wire.NewSet(
 	ProvideMetrics,
 	ProvidePaginationConfig,
 	ProvideStorageConfig,
+	ProvideWebsocketSetting,
 )
 
 type Database struct {
@@ -221,6 +233,7 @@ type CustomerControllers struct {
 	AddressController      *address.CustomerAddressController
 	CorporationController  *corporation.CustomerCorporationController
 	BidController          *bid.CustomerBidController
+	ChatController         *chat.CustomerChatController
 }
 
 type CorporationControllers struct {
@@ -271,7 +284,7 @@ func NewApplication(
 	}
 }
 
-func InitializeApplication(container *bootstrap.Config) (*Application, error) {
+func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Application, error) {
 	wire.Build(
 		ProviderSet,
 		NewApplication,

@@ -2,6 +2,7 @@ package chat
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
@@ -33,41 +34,41 @@ func NewCustomerChatController(
 }
 
 func (chatController *CustomerChatController) CreateOrGetRoom(ctx *gin.Context) {
-	// type roomParams struct {
-	// 	CorporationID uint `uri:"corporationID" validate:"required"`
-	// }
-	// params := controller.Validated[roomParams](ctx)
-	// userID, _ := ctx.Get(chatController.constants.Context.ID)
+	type roomParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[roomParams](ctx)
+	userID, _ := ctx.Get(chatController.constants.Context.ID)
 
-	// roomInfo := chatdto.CreateOrGetRoomRequest{
-	// 	CorporationID: params.CorporationID,
-	// 	UserID:        userID.(uint),
-	// }
-	// roomsDetails := chatController.chatService.CreateOrGetRoom(userID.(uint))
+	roomInfo := chatdto.CreateOrGetRoomRequest{
+		CorporationID: params.CorporationID,
+		UserID:        userID.(uint),
+	}
+	roomsDetails := chatController.chatService.CreateOrGetRoom(roomInfo)
 
-	// controller.Response(ctx, 200, "", roomsDetails)
+	controller.Response(ctx, 200, "", roomsDetails)
 }
 
 func (chatController *CustomerChatController) GetUserRooms(ctx *gin.Context) {
-	// userID, _ := ctx.Get(chatController.constants.Context.ID)
-	// roomsDetails := chatController.chatService.GetUserRooms(userID.(uint))
-	// controller.Response(ctx, 200, "", roomsDetails)
+	userID, _ := ctx.Get(chatController.constants.Context.ID)
+	roomsDetails := chatController.chatService.GetUserRooms(userID.(uint))
+	controller.Response(ctx, 200, "", roomsDetails)
 }
 
 func (chatController *CustomerChatController) GetMessages(ctx *gin.Context) {
-	// type getMessagesParams struct {
-	// 	RoomID uint `uri:"roomID" validate:"required"`
-	// }
-	// userID, _ := ctx.Get(chatController.constants.Context.ID)
-	// param := controller.Validated[getMessagesParams](ctx)
+	type getMessagesParams struct {
+		RoomID uint `uri:"roomID" validate:"required"`
+	}
+	userID, _ := ctx.Get(chatController.constants.Context.ID)
+	param := controller.Validated[getMessagesParams](ctx)
 
-	// roomInfo := chatdto.GetRoomMessageRequest{
-	// 	RoomID: param.RoomID,
-	// 	UserID: userID.(uint),
-	// }
-	// messages := chatController.chatService.GetRoomMessages(param.RoomID)
+	roomInfo := chatdto.GetRoomMessageRequest{
+		RoomID: param.RoomID,
+		UserID: userID.(uint),
+	}
+	messages := chatController.chatService.GetRoomMessages(roomInfo)
 
-	// controller.Response(ctx, 200, "", messages)
+	controller.Response(ctx, 200, "", messages)
 }
 
 func (chatController *CustomerChatController) HandleWebsocket(ctx *gin.Context) {

@@ -6,10 +6,6 @@ import (
 )
 
 func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
-	// chat := routerGroup.Group("/chat")
-	// {
-	// 	chat.GET("/room/:roomID/token/:token", app.CustomerControllers.ChatController.HandleWebsocket)
-	// }
-	routerGroup.GET("/chat/room/:roomID/token/:token")
+	routerGroup.GET("/chat/room/:roomID/token/:token", app.Controllers.Customer.ChatController.HandleWebsocket)
 	routerGroup.GET("/notifications/token/:token")
 }

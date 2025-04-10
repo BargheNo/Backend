@@ -5,10 +5,8 @@ import (
 )
 
 type ChatService interface {
-	CreateOrGetRoom(chatdto.CreateOrGetRoomRequest) chatdto.ChatRoomDetailsResponse
-	GetUserRooms(chatdto.GetRoomMessageRequest) []chatdto.ChatRoomDetailsResponse
-	SaveMessage(roomID, senderID uint, content string) error
-	GetRoomMessages(roomID uint) []chatdto.RoomMessagesResponse
-	AddParticipant(roomID, userID uint) error
-	RemoveParticipant(roomID, userID uint) error
+	CreateOrGetRoom(request chatdto.CreateOrGetRoomRequest) chatdto.ChatRoomDetailsResponse
+	GetUserRooms(userID uint) []chatdto.ChatRoomDetailsResponse
+	SaveMessage(roomID, senderID uint, content string)
+	GetRoomMessages(request chatdto.GetRoomMessageRequest) []chatdto.RoomMessagesResponse
 }

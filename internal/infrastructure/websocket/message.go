@@ -20,11 +20,6 @@ type Message struct {
 	Client    *Client         `json:"-"`
 }
 
-type ChatPayload struct {
-	MessageID uint   `json:"message_id,omitempty"`
-	Content   string `json:"content"`
-}
-
 type NotificationPayload struct {
 	ID          uint   `json:"id"`
 	Title       string `json:"title"`
@@ -33,9 +28,3 @@ type NotificationPayload struct {
 	IsRead      bool   `json:"is_read"`
 	CreatedAt   string `json:"created_at"`
 }
-
-// type Message struct {
-// 	RoomID  uint
-// 	Content []byte
-// 	Client  *Client
-// }

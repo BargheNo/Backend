@@ -52,6 +52,7 @@ type ErrorField struct {
 	City                string
 	Page                string
 	ContactType         string
+	Room                string
 }
 
 type ErrorTag struct {
@@ -127,6 +128,7 @@ func NewConstants() *Constants {
 			City:                "city",
 			Page:                "page",
 			ContactType:         "contactType",
+			Room:                "room",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -155,6 +157,8 @@ func NewConstants() *Constants {
 		JWTKeysPath: JWTKeysPath{
 			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
 			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
+			// PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
+			// PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
 		},
 		Metrics: Metrics{
 			HTTPRequestsTotal: Options{
