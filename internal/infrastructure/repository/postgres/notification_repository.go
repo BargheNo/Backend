@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -96,6 +97,18 @@ func (repo *NotificationRepository) GetNotificationTypeByID(db database.Database
 	return notificationType, true
 }
 
+func (repo *NotificationRepository) GetNotificationTypeByName(db database.Database, name enum.NotificationType) (*entity.NotificationType, bool) {
+	var notificationType *entity.NotificationType
+	result := db.GetDB().Where("name = ?", name).First(&notificationType)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return notificationType, true
+}
+
 func (repo *NotificationRepository) CreateNotification(db database.Database, notification *entity.Notification) error {
 	return db.GetDB().Create(&notification).Error
 }
@@ -110,4 +123,8 @@ func (repo *NotificationRepository) CreateNotificationSetting(db database.Databa
 
 func (repo *NotificationRepository) UpdateNotificationSetting(db database.Database, setting *entity.NotificationSetting) error {
 	return db.GetDB().Save(&setting).Error
+}
+
+func (repo *NotificationRepository) CreateNotificationType(db database.Database, notificationType *entity.NotificationType) error {
+	return db.GetDB().Create(&notificationType).Error
 }

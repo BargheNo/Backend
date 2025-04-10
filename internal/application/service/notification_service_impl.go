@@ -85,10 +85,10 @@ func (notificationService *NotificationService) SendNotification(notification *e
 
 	payload := websocket.NotificationPayload{
 		ID:             notification.ID,
-		Title:          notificationType.Name,
+		Title:          notificationType.Name.String(),
 		Description:    notificationType.Description,
 		AdditionalData: additionalData,
-		Type:           notificationType.Name,
+		Type:           notificationType.Name.String(),
 		IsRead:         notification.IsRead,
 		CreatedAt:      notification.CreatedAt.Format(time.RFC3339),
 	}
@@ -137,7 +137,7 @@ func (notificationService *NotificationService) GetUserNotifications(userID uint
 		}
 		notificationsResponse[i] = notificationdto.NotificationListResponse{
 			ID:             notification.ID,
-			Type:           notificationdto.NotificationTypeResponse{Name: notificationType.Name, Description: notificationType.Description},
+			Type:           notificationdto.NotificationTypeResponse{Name: notificationType.Name.String(), Description: notificationType.Description},
 			AdditionalData: notification.AdditionalData,
 			IsRead:         notification.IsRead,
 		}
@@ -176,7 +176,7 @@ func (notificationService *NotificationService) GetUserNotificationSettings(user
 		settingsResponse[i] = notificationdto.NotificationSettingResponse{
 			UserID:           userID,
 			TypeID:           setting.TypeID,
-			NotificationType: notificationdto.NotificationTypeResponse{Name: notificationType.Name, Description: notificationType.Description},
+			NotificationType: notificationdto.NotificationTypeResponse{Name: notificationType.Name.String(), Description: notificationType.Description},
 			IsEmailEnabled:   setting.IsEmailEnabled,
 			IsPushEnabled:    setting.IsPushEnabled,
 		}

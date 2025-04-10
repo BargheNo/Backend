@@ -8,7 +8,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
-var ProvinceWithCities = map[string][]string{
+var provinceWithCities = map[string][]string{
 	"آذربايجان شرقی": {
 		"تبريز",
 		"مراغه",
@@ -433,7 +433,7 @@ func NewAddressSeeder(
 }
 
 func (seeder *AddressSeeder) SeedProvincesAndCities() {
-	for provinceName, cityNames := range ProvinceWithCities {
+	for provinceName, cityNames := range provinceWithCities {
 		province, provinceExist := seeder.addressRepository.GetProvinceByName(seeder.db, provinceName)
 		if !provinceExist {
 			province = &entity.Province{

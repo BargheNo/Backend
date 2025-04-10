@@ -142,8 +142,10 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		WebsocketMiddleware: websocketMiddleware,
 	}
 	addressSeeder := seed.NewAddressSeeder(addressRepository, postgresDatabase)
+	notificationTypeSeeder := seed.NewNotificationTypeSeeder(notificationRepository, postgresDatabase)
 	seeds := &Seeds{
-		AddressSeeder: addressSeeder,
+		AddressSeeder:          addressSeeder,
+		NotificationTypeSeeder: notificationTypeSeeder,
 	}
 	application := NewApplication(wireDatabase, controllers, middlewares, seeds)
 	return application, nil
@@ -169,7 +171,7 @@ var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, middleware.NewWebsocketMiddleware, wire.Struct(new(Middlewares), "*"))
 
-var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, wire.Struct(new(Seeds), "*"))
+var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, seed.NewNotificationTypeSeeder, wire.Struct(new(Seeds), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -294,7 +296,8 @@ type Middlewares struct {
 }
 
 type Seeds struct {
-	AddressSeeder *seed.AddressSeeder
+	AddressSeeder          *seed.AddressSeeder
+	NotificationTypeSeeder *seed.NotificationTypeSeeder
 }
 
 type Application struct {

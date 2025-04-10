@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
@@ -13,8 +14,10 @@ type NotificationRepository interface {
 	GetNotificationSettingByUserID(db database.Database, userID uint) []*entity.NotificationSetting
 	GetNotificationTypeByID(db database.Database, typeID uint) (*entity.NotificationType, bool)
 	GetNotificationTypes(db database.Database) []*entity.NotificationType
+	GetNotificationTypeByName(db database.Database, name enum.NotificationType) (*entity.NotificationType, bool)
 	CreateNotification(db database.Database, notification *entity.Notification) error
 	UpdateNotification(db database.Database, notification *entity.Notification) error
 	CreateNotificationSetting(db database.Database, setting *entity.NotificationSetting) error
 	UpdateNotificationSetting(db database.Database, setting *entity.NotificationSetting) error
+	CreateNotificationType(db database.Database, notificationType *entity.NotificationType) error
 }
