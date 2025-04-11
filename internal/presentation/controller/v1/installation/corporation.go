@@ -95,15 +95,7 @@ func (installationController *CorporationInstallationController) GetCorporationP
 		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
 	params := controller.Validated[getPanelParams](ctx)
-	defaultPage, err := strconv.Atoi(installationController.pagination.DefaultPage)
-	if err != nil {
-		defaultPage = 1
-	}
-	defaultPageSize, err := strconv.Atoi(installationController.pagination.DefaultPageSize)
-	if err != nil {
-		defaultPageSize = 10
-	}
-	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 
 	operatorID, _ := ctx.Get(installationController.constants.Context.ID)
