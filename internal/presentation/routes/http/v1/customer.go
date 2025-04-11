@@ -16,6 +16,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	corp := routerGroup.Group("/corp")
 	{
 		corp.POST("/register", app.Controllers.Customer.CorporationController.Register)
+		corp.GET("/list", app.Controllers.Customer.CorporationController.GetCorporations)
 	}
 
 	orders := routerGroup.Group("/installation")
@@ -48,5 +49,25 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		notification.GET("", app.Controllers.Customer.NotificationController.GetUserNotifications)
 		notification.GET("/setting", app.Controllers.Customer.NotificationController.GetUserNotificationSettings)
 		notification.PUT("/setting/:settingID", app.Controllers.Customer.NotificationController.UpdateSettings)
+  }
+  
+	panels := routerGroup.Group("/panels")
+	{
+		panels.GET("/list", app.Controllers.Customer.InstallationController.GetCustomerPanels)
+	}
+
+	maintenance := routerGroup.Group("/maintenance")
+	{
+		requests := maintenance.Group("/request")
+		{
+			requests.POST("/", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
+			requests.GET("/list", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequests)
+		}
+
+		records := maintenance.Group("/record")
+		{
+			records.GET("/list", app.Controllers.Customer.MaintenanceController.GetMaintenanceRecords)
+			records.GET("/list/:panelID", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequestsByPanelID)
+		}
 	}
 }

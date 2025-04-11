@@ -59,15 +59,13 @@ func (installationController *CustomerInstallationController) CreateInstallation
 			PostalCode:    params.PostalCode,
 			HouseNumber:   params.HouseNumber,
 			Unit:          params.Unit,
-			OwnerID:       ownerID.(uint),
-			OwnerType:     "installation_requests",
 		},
 	}
 	installationController.installationService.CreateInstallationRequest(requestInfo)
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.installationRequest")
-	controller.Response(ctx, 200, message, nil)
+	controller.Response(ctx, 201, message, nil)
 }
 
 func (installationController *CustomerInstallationController) GetOwnerInstallationRequests(ctx *gin.Context) {
@@ -96,4 +94,26 @@ func (installationController *CustomerInstallationController) GetInstallationReq
 	installationRequest := installationController.installationService.GetOwnerInstallationRequest(requestInfo)
 
 	controller.Response(ctx, 200, "", installationRequest)
+}
+
+func (installationController *CustomerInstallationController) GetCustomerPanels(ctx *gin.Context) {
+	ownerId, _ := ctx.Get(installationController.constants.Context.ID)
+	defaultPage, err := strconv.Atoi(installationController.pagination.DefaultPage)
+	if err != nil {
+		defaultPage = 1
+	}
+	defaultPageSize, err := strconv.Atoi(installationController.pagination.DefaultPageSize)
+	if err != nil {
+		defaultPageSize = 10
+	}
+	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	offset, limit := params.GetOffsetLimit()
+	listInfo := installationdto.CustomerPanelListRequest{
+		OwnerID: ownerId.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+	panels := installationController.installationService.GetCustomerPanels(listInfo)
+
+	controller.Response(ctx, 200, "", panels)
 }

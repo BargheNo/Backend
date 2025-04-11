@@ -29,4 +29,25 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 	{
 		requests.GET("/installation", app.Controllers.Corporation.InstallationController.GetInstallationRequests)
 	}
+
+	panels := routerGroup.Group(":corporationID/panels")
+	{
+		panels.POST("add", app.Controllers.Corporation.InstallationController.AddPanel)
+		panels.GET("list", app.Controllers.Corporation.InstallationController.GetCorporationPanels)
+	}
+
+	maintenance := routerGroup.Group(":corporationID/maintenance")
+	{
+		requests := maintenance.Group("/request")
+		{
+			requests.GET("/list", app.Controllers.Corporation.MaintenanceController.GetMaintenanceRequests)
+			requests.POST("/handle", app.Controllers.Corporation.MaintenanceController.HandleMaintenanceRequest)
+		}
+		records := maintenance.Group("/record")
+		{
+			records.POST("/add", app.Controllers.Corporation.MaintenanceController.AddMaintenanceRecord)
+			records.GET("/list", app.Controllers.Corporation.MaintenanceController.GetCorporationMaintenanceRecords)
+			records.GET("/list/:panelID", app.Controllers.Corporation.MaintenanceController.GetCorporationMaintenanceRecordsByPanel)
+		}
+	}
 }

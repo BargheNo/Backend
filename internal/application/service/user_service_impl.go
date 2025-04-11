@@ -286,3 +286,19 @@ func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswor
 		panic(err)
 	}
 }
+
+func (userService *UserService) FindUserByPhone(phone string) userdto.UserResponse {
+	user, userExist := userService.userRepository.FindUserByPhone(userService.db, phone)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
+		panic(conflictErrors)
+	}
+	return userdto.UserResponse{
+		ID: user.ID,
+	}
+}

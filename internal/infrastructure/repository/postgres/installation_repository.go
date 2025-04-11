@@ -70,5 +70,58 @@ func (repo *InstallationRepository) FindOwnerRequestByName(db database.Database,
 
 func (repo *InstallationRepository) CreateRequest(db database.Database, request *entity.InstallationRequest) error {
 	return db.GetDB().Create(&request).Error
+}
 
+func (repo *InstallationRepository) CreatePanel(db database.Database, panel *entity.Panel) error {
+	return db.GetDB().Create(&panel).Error
+}
+
+func (repo *InstallationRepository) FindCorporationPanels(db database.Database, corporationID uint, opts ...repository.QueryModifier) []*entity.Panel {
+	var panels []*entity.Panel
+	query := db.GetDB().Where("corporation_id = ?", corporationID)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&panels)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return panels
+}
+
+func (repo *InstallationRepository) FindCustomerPanels(db database.Database, customerID uint, opts ...repository.QueryModifier) []*entity.Panel {
+	var panels []*entity.Panel
+	query := db.GetDB().Where("customer_id = ?", customerID)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&panels)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return panels
+}
+
+func (repo *InstallationRepository) FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool) {
+	var panel *entity.Panel
+	result := db.GetDB().Where("name = ? and customer_id = ?", panelName, customerID).First(&panel)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return panel, true
+}
+
+func (repo *InstallationRepository) FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool) {
+	var panel *entity.Panel
+	result := db.GetDB().First(&panel, panelID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return panel, true
 }

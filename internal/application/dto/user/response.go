@@ -18,3 +18,7 @@ type CredentialResponse struct {
 	LastName  string `json:"lastName"`
 	Phone     string `json:"phone"`
 }
+
+type UserResponse struct {
+	ID uint `json:"id"`
+}

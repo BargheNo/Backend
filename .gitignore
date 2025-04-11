@@ -5,3 +5,5 @@ db-data
 *.pem
 .DS_Store
 db_data
+.air.toml
+tmp

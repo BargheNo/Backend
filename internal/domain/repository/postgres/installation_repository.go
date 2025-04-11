@@ -12,4 +12,9 @@ type InstallationRepository interface {
 	FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, opts ...QueryModifier) []*entity.InstallationRequest
 	FindOwnerRequestByName(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, name string) (*entity.InstallationRequest, bool)
 	CreateRequest(db database.Database, request *entity.InstallationRequest) error
+	CreatePanel(db database.Database, panel *entity.Panel) error
+	FindCorporationPanels(db database.Database, corporationID uint, opts ...QueryModifier) []*entity.Panel
+	FindCustomerPanels(db database.Database, customerID uint, opts ...QueryModifier) []*entity.Panel
+	FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool)
+	FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool)
 }

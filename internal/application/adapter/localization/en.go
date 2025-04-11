@@ -23,6 +23,9 @@ var English = map[string]interface{}{
 	"room":                "chat room",
 	"NotificationType":    "notification type",
 	"Notification":        "notification",
+	"panelName":           "panel name",
+	"panel":               "panel",
+	"maintenanceRequest":  "maintenance request",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -54,6 +57,7 @@ var English = map[string]interface{}{
 		"installRateLimit":       "Active installation requests has been exceeded the limit.",
 		"forbiddenError":         "Forbidden: Access to {0} is not allowed",
 		"forbiddenStatus":        "Cannot do this action with this status.",
+		"pending":                "Your request is pending.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -77,5 +81,9 @@ var English = map[string]interface{}{
 		"addCorporationCertificate": "Your certificate has been uploaded successfully.",
 		"readNotification":          "notification marked as read",
 		"updateNotificationSetting": "notification setting has been updated successfully",
+		"addPanel":                  "Panel added successfully.",
+		"maintenanceRequest":        "Maintenance request has been successfully stored.",
+		"addMaintenanceRecord":      "Maintenance record has been successfully added.",
+		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
 	},
 }

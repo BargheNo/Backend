@@ -108,7 +108,7 @@ func (corporationController *CorporationCorporationController) AddAddress(ctx *g
 			HouseNumber:   address.HouseNumber,
 			Unit:          address.Unit,
 			OwnerID:       params.CorporationID,
-			OwnerType:     "corporations",
+			OwnerType:     corporationController.constants.AddressOwners.Corporation,
 		}
 	}
 

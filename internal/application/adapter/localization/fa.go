@@ -23,6 +23,9 @@ var Persian = map[string]interface{}{
 	"room":                "اتاق گفتگو",
 	"NotificationType":    "نوع اعلانات",
 	"Notification":        "اعلان",
+	"panelName":           "نام پنل",
+	"panel":               "پنل",
+	"maintenanceRequest":  "درخواست تعمیر",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -54,6 +57,7 @@ var Persian = map[string]interface{}{
 		"installRateLimit":       "تعداد درخواست های فعال شما از حدنساب عبور کرده است.",
 		"forbiddenError":         "اجازه دسترسی به این {0} وجود ندارد.",
 		"forbiddenStatus":        "اجازه انجام این کار را در این وضعیت ندارید.",
+		"pending":                "این {0} حال بررسی است.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
@@ -77,5 +81,9 @@ var Persian = map[string]interface{}{
 		"addCorporationCertificate": "مدارک شما با موفقیت آپلود شد.",
 		"readNotification":          "اعلان با موفقیت خوانده شد.",
 		"updateNotificationSetting": "تنظیمات اعلان های شما به روزرسانی شد.",
+		"addPanel":                  "پنل با موفقیت اضافه شد.",
+		"maintenanceRequest":        "درخواست نگهداری شما با موفقیت ثبت شد.",
+		"addMaintenanceRecord":      "سابقه نگهداری با موفقیت ثبت شد.",
+		"maintenanceRequestHandled": "درخواست نگهداری با موفقیت انجام شد.",
 	},
 }

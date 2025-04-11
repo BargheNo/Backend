@@ -23,4 +23,6 @@ type CorporationRepository interface {
 	FindContactInformationTypeValue(db database.Database, typeID uint, value string) (*entity.ContactInformation, bool)
 	FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool)
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
+	FindCorporationByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) []*entity.Corporation
+	FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation
 }

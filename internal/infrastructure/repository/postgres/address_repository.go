@@ -90,6 +90,18 @@ func (repo *AddressRepository) GetAddressByID(db database.Database, id uint) (*e
 	return &address, true
 }
 
+func (repo *AddressRepository) GetOwnerAddress(db database.Database, ownerID uint, ownerType string) (*entity.Address, bool) {
+	var address entity.Address
+	result := db.GetDB().Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).First(&address)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &address, true
+}
+
 func (repo *AddressRepository) GetOwnerAddresses(db database.Database, ownerID uint, ownerType string) []*entity.Address {
 	var addresses []*entity.Address
 	err := db.GetDB().Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).Find(&addresses).Error

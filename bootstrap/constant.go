@@ -3,15 +3,16 @@ package bootstrap
 import "fmt"
 
 type Constants struct {
-	Context      Context
-	LogLevel     LogLevel
-	RedisKey     RedisKey
-	S3BucketPath BucketPath
-	Field        ErrorField
-	Tag          ErrorTag
-	SMSTemplates SMSTemplates
-	JWTKeysPath  JWTKeysPath
-	Metrics      Metrics
+	Context       Context
+	LogLevel      LogLevel
+	RedisKey      RedisKey
+	S3BucketPath  BucketPath
+	Field         ErrorField
+	Tag           ErrorTag
+	SMSTemplates  SMSTemplates
+	JWTKeysPath   JWTKeysPath
+	Metrics       Metrics
+	AddressOwners AddressOwners
 }
 
 type Context struct {
@@ -55,6 +56,9 @@ type ErrorField struct {
 	Room                string
 	NotificationType    string
 	Notification        string
+	PanelName           string
+	Panel               string
+	MaintenanceRequest  string
 }
 
 type ErrorTag struct {
@@ -77,6 +81,7 @@ type ErrorTag struct {
 	NotExist               string
 	AlreadyExist           string
 	ForbiddenStatus        string
+	Pending                string
 }
 
 type SMSTemplates struct {
@@ -96,6 +101,14 @@ type Metrics struct {
 type Options struct {
 	Name string
 	Help string
+}
+
+type AddressOwners struct {
+	User                string
+	Corporation         string
+	InstallationRequest string
+	Panel               string
+	MaintenanceRequest  string
 }
 
 func NewConstants() *Constants {
@@ -133,6 +146,9 @@ func NewConstants() *Constants {
 			Room:                "room",
 			NotificationType:    "notificationType",
 			Notification:        "notification",
+			PanelName:           "panelName",
+			Panel:               "panel",
+			MaintenanceRequest:  "maintenanceRequest",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -154,6 +170,7 @@ func NewConstants() *Constants {
 			NotExist:               "notExist",
 			AlreadyExist:           "alreadyExist",
 			ForbiddenStatus:        "forbiddenStatus",
+			Pending:                "pending",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
@@ -173,6 +190,12 @@ func NewConstants() *Constants {
 				Name: "http_request_duration_seconds",
 				Help: "HTTP request duration in seconds",
 			},
+		},
+		AddressOwners: AddressOwners{
+			User:                "users",
+			Corporation:         "corporations",
+			InstallationRequest: "installation_requests",
+			Panel:               "panels",
 		},
 	}
 }
