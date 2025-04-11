@@ -2,20 +2,23 @@ package bootstrap
 
 import (
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 type Env struct {
-	Server       Server
-	Logger       Logger
-	RateLimit    RateLimit
-	PrimaryDB    Database
-	PrimaryRedis Redis
-	Storage      S3
-	OTP          OTP
-	SMSGateway   SMSGateway
-	Pagination   Pagination
+	Server           Server
+	Logger           Logger
+	RateLimit        RateLimit
+	PrimaryDB        Database
+	PrimaryRedis     Redis
+	Storage          S3
+	OTP              OTP
+	SMSGateway       SMSGateway
+	Pagination       Pagination
+	WebsocketSetting WebsocketSetting
 }
 
 type Server struct {
@@ -63,9 +66,9 @@ type BucketName struct {
 }
 
 type OTP struct {
-	Length       string
-	ExpiryMinute string
-	MaxAttempts  string
+	Length       int
+	ExpiryMinute int
+	MaxAttempts  int
 }
 
 type SMSGateway struct {
@@ -73,8 +76,16 @@ type SMSGateway struct {
 }
 
 type Pagination struct {
-	DefaultPage     string
-	DefaultPageSize string
+	DefaultPage     int
+	DefaultPageSize int
+}
+
+type WebsocketSetting struct {
+	WriteTimeout      time.Duration
+	ReadTimeout       time.Duration
+	PingPeriod        time.Duration
+	MaxMessageSize    int
+	MessageBufferSize int
 }
 
 func NewEnvironments() *Env {
@@ -118,16 +129,41 @@ func NewEnvironments() *Env {
 			Endpoint:  os.Getenv("BUCKET_ENDPOINT"),
 		},
 		OTP: OTP{
-			Length:       os.Getenv("OTP_LENGTH"),
-			ExpiryMinute: os.Getenv("OTP_EXPIRY_MINUTES"),
-			MaxAttempts:  os.Getenv("OTP_MAX_ATTEMPTS"),
+			Length:       getEnvInt("OTP_LENGTH", 6),
+			ExpiryMinute: getEnvInt("OTP_EXPIRY_MINUTES", 2),
+			MaxAttempts:  getEnvInt("OTP_MAX_ATTEMPTS", 3),
 		},
 		SMSGateway: SMSGateway{
 			APIKey: os.Getenv("SMS_GATEWAY_API_KEY"),
 		},
 		Pagination: Pagination{
-			DefaultPage:     os.Getenv("DEFAULT_PAGE"),
-			DefaultPageSize: os.Getenv("DEFAULT_PAGE_SIZE"),
+			DefaultPage:     getEnvInt("DEFAULT_PAGE", 6),
+			DefaultPageSize: getEnvInt("DEFAULT_PAGE_SIZE", 2),
+		},
+		WebsocketSetting: WebsocketSetting{
+			WriteTimeout:      getEnvDuration("WRITE_TIMEOUT", 10*time.Second),
+			ReadTimeout:       getEnvDuration("READ_TIMEOUT", 60*time.Second),
+			PingPeriod:        getEnvDuration("PING_PERIOD", 54*time.Second),
+			MaxMessageSize:    getEnvInt("MAX_MESSAGE_SIZE", 524288),
+			MessageBufferSize: getEnvInt("MESSAGE_BUFFER_SIZE", 256),
 		},
 	}
+}
+
+func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
+	if val := os.Getenv(key); val != "" {
+		if parsed, err := time.ParseDuration(val); err == nil {
+			return parsed
+		}
+	}
+	return defaultVal
+}
+
+func getEnvInt(key string, defaultVal int) int {
+	if val := os.Getenv(key); val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil {
+			return parsed
+		}
+	}
+	return defaultVal
 }

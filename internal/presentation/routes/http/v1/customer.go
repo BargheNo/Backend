@@ -36,6 +36,21 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		addresses.GET("", app.Controllers.Customer.AddressController.GetCustomerAddresses)
 	}
 
+	chat := routerGroup.Group("/chat")
+	{
+		chat.POST("/room/:corporationID", app.Controllers.Customer.ChatController.CreateOrGetRoom)
+		chat.GET("/room", app.Controllers.Customer.ChatController.GetUserRooms)
+		chat.GET("/room/:roomID/messages", app.Controllers.Customer.ChatController.GetMessages)
+	}
+
+	notification := routerGroup.Group("/notification")
+	{
+		notification.POST("/:notificationID/read", app.Controllers.Customer.NotificationController.MarkAsRead)
+		notification.GET("", app.Controllers.Customer.NotificationController.GetUserNotifications)
+		notification.GET("/setting", app.Controllers.Customer.NotificationController.GetUserNotificationSettings)
+		notification.PUT("/setting/:settingID", app.Controllers.Customer.NotificationController.UpdateSettings)
+  }
+  
 	panels := routerGroup.Group("/panels")
 	{
 		panels.GET("/list", app.Controllers.Customer.InstallationController.GetCustomerPanels)

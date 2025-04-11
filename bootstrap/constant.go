@@ -19,6 +19,7 @@ type Context struct {
 	Translator                   string
 	IsLoadedValidationTranslator string
 	ID                           string
+	WebsocketConnection          string
 }
 
 type LogLevel struct {
@@ -52,6 +53,9 @@ type ErrorField struct {
 	City                string
 	Page                string
 	ContactType         string
+	Room                string
+	NotificationType    string
+	Notification        string
 	PanelName           string
 	Panel               string
 	MaintenanceRequest  string
@@ -113,6 +117,7 @@ func NewConstants() *Constants {
 			Translator:                   "translator",
 			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
 			ID:                           "ID",
+			WebsocketConnection:          "wsConnection",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",
@@ -138,6 +143,9 @@ func NewConstants() *Constants {
 			City:                "city",
 			Page:                "page",
 			ContactType:         "contactType",
+			Room:                "room",
+			NotificationType:    "notificationType",
+			Notification:        "notification",
 			PanelName:           "panelName",
 			Panel:               "panel",
 			MaintenanceRequest:  "maintenanceRequest",
@@ -170,6 +178,8 @@ func NewConstants() *Constants {
 		JWTKeysPath: JWTKeysPath{
 			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
 			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
+			// PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
+			// PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
 		},
 		Metrics: Metrics{
 			HTTPRequestsTotal: Options{

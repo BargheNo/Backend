@@ -5,6 +5,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/routes"
 	"github.com/BargheNo/Backend/wire"
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,10 @@ func main() {
 
 	config := bootstrap.Run()
 
-	app, err := wire.InitializeApplication(config)
+	hub := websocket.NewHub()
+	go hub.Run()
+
+	app, err := wire.InitializeApplication(config, hub)
 	if err != nil {
 		panic(err)
 	}
@@ -24,6 +28,11 @@ func main() {
 	app.Database.DB.GetDB().AutoMigrate(
 		&entity.Address{},
 		&entity.City{},
+		&entity.ChatMessage{},
+		&entity.ChatRoom{},
+		&entity.NotificationSetting{},
+		&entity.NotificationType{},
+		&entity.Notification{},
 		&entity.Permission{},
 		&entity.Province{},
 		&entity.Role{},
@@ -41,6 +50,7 @@ func main() {
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()
+	app.Seeds.NotificationTypeSeeder.SeedNotificationTypes()
 
 	routes.Run(ginEngine, app)
 

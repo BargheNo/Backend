@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"io"
-	"strconv"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -32,24 +31,15 @@ func NewOTPService(
 var table = []byte("123456789")
 
 func (otpService *OTPService) GenerateOTP() (string, int) {
-	otpLength, err := strconv.Atoi(otpService.otpConfig.Length)
-	if err != nil {
-		otpLength = 6
-	}
-
-	otp := make([]byte, otpLength)
-	n, err := io.ReadAtLeast(rand.Reader, otp, otpLength)
-	if n != otpLength {
+	otp := make([]byte, otpService.otpConfig.Length)
+	n, err := io.ReadAtLeast(rand.Reader, otp, otpService.otpConfig.Length)
+	if n != otpService.otpConfig.Length {
 		panic(err)
 	}
 	for i := 0; i < len(otp); i++ {
 		otp[i] = table[int(otp[i])%len(table)]
 	}
-	expiryMinute, err := strconv.Atoi(otpService.otpConfig.ExpiryMinute)
-	if err != nil {
-		expiryMinute = 2
-	}
-	return string(otp), expiryMinute
+	return string(otp), otpService.otpConfig.ExpiryMinute
 }
 
 func (otpService *OTPService) VerifyOTP(redisKey, otp string) error {
