@@ -96,7 +96,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequests(lis
 	response := make([]installationdto.OwnerRequestsResponse, len(requests))
 
 	for i, request := range requests {
-		address := installationService.addressService.GetAddress(request.OwnerID, installationService.constants.AddressOwners.InstallationRequest)
+		address := installationService.addressService.GetAddress(request.ID, installationService.constants.AddressOwners.InstallationRequest)
 		response[i] = installationdto.OwnerRequestsResponse{
 			ID:           request.ID,
 			Name:         request.Name,
