@@ -52,15 +52,7 @@ func (corporationService *CorporationService) GetCorporationByID(corporationID u
 }
 
 func (corporationService *CorporationService) CheckApplicantAccess(corporationID, applicantID uint) {
-	_, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
-	if !exist {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: corporationService.constants.Field.Corporation,
-		}
-		panic(forbiddenError)
-	}
-	_, exist = corporationService.corporationRepository.FindCorporationStaff(corporationService.db, applicantID, corporationID)
+	_, exist := corporationService.corporationRepository.FindCorporationStaff(corporationService.db, applicantID, corporationID)
 	if !exist {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
