@@ -28,12 +28,16 @@ func NewCorporationInstallationController(
 }
 
 func (installationController *CorporationInstallationController) GetInstallationRequests(ctx *gin.Context) {
-	// refactor to support status
-	corporationID, _ := ctx.Get(installationController.constants.Context.ID)
-	params := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
-	offset, limit := params.GetOffsetLimit()
+	type getInstallationRequestParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getInstallationRequestParams](ctx)
+	corporationID := params.CorporationID
+
+	pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
 	listInfo := installationdto.InstallationListRequest{
-		OwnerID: corporationID.(uint),
+		OwnerID: corporationID,
 		Offset:  offset,
 		Limit:   limit,
 	}
