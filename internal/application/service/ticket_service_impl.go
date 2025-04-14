@@ -44,6 +44,7 @@ func (ticketService *TicketService) CreateTicket(requestInfo ticketdto.CreateTic
 		OwnerID:     requestInfo.OwnerID,
 		Subject:     requestInfo.Subject,
 		Description: requestInfo.Description,
+		Status:      enum.TicketStatusNotAnswered,
 	}
 	err := ticketService.ticketRepository.CreateTicket(ticketService.db, ticket)
 	if err != nil {
@@ -73,6 +74,7 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 			OwnerID:     ticket.OwnerID,
 			Subject:     ticket.Subject.String(),
 			Description: ticket.Description,
+			Status:      ticket.Status.String(),
 			CreatedAt:   ticket.CreatedAt,
 		}
 		if ticket.Image != "" {

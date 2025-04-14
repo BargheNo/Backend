@@ -7,6 +7,7 @@ type TicketResponse struct {
 	OwnerID     uint      `json:"owner_id"`
 	Subject     string    `json:"subject"`
 	Description string    `json:"description"`
+	Status      string    `json:"status"`
 	Image       string    `json:"image"`
 	CreatedAt   time.Time `json:"created_at"`
 }
