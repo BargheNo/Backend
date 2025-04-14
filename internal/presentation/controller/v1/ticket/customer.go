@@ -2,6 +2,7 @@ package ticket
 
 import (
 	"mime/multipart"
+	"strconv"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
@@ -14,30 +15,37 @@ import (
 type CustomerTicketController struct {
 	constants     *bootstrap.Constants
 	ticketService service.TicketService
+	pagination    *bootstrap.Pagination
 }
 
 func NewCustomerTicketController(
 	constants *bootstrap.Constants,
 	ticketService service.TicketService,
+	pagination *bootstrap.Pagination,
 ) *CustomerTicketController {
 	return &CustomerTicketController{
 		constants:     constants,
 		ticketService: ticketService,
+		pagination:    pagination,
 	}
 }
 
 func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context) {
 	type createTicketParams struct {
-		Subject     uint                  `json:"subject" validate:"required"`
-		Description string                `json:"description" validate:"required"`
+		Subject     string                `form:"subject" validate:"required"`
+		Description string                `form:"description" validate:"required"`
 		Image       *multipart.FileHeader `form:"image"`
 	}
 
 	params := controller.Validated[createTicketParams](ctx)
+	subject, err := strconv.Atoi(params.Subject)
+	if err != nil {
+		subject = 2
+	}
 	userID, _ := ctx.Get(ticketController.constants.Context.ID)
 	requestInfo := ticketdto.CreateTicketRequest{
 		OwnerID:     userID.(uint),
-		Subject:     enum.TicketSubject(params.Subject),
+		Subject:     enum.TicketSubject(subject),
 		Description: params.Description,
 		Image:       params.Image,
 	}
@@ -47,4 +55,19 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicket")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
+	ownerID, _ := ctx.Get(ticketController.constants.Context.ID)
+	params := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
+	offset, limit := params.GetOffsetLimit()
+	listInfo := ticketdto.TicketListRequest{
+		OwnerID: ownerID.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+
+	tickets := ticketController.ticketService.GetCustomerTickets(listInfo)
+
+	controller.Response(ctx, 200, "success", tickets)
 }

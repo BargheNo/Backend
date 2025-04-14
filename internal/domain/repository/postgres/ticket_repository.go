@@ -8,4 +8,5 @@ import (
 type TicketRepository interface {
 	CreateTicket(db database.Database, ticket *entity.Ticket) error
 	UpdateTicket(db database.Database, ticket *entity.Ticket) error
+	GetCustomerTickets(db database.Database, ownerID uint) []*entity.Ticket
 }

@@ -60,7 +60,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		requests := maintenance.Group("/request")
 		{
-			requests.POST("/", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
+			requests.POST("", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
 			requests.GET("/list", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequests)
 		}
 
@@ -73,7 +73,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	ticket := routerGroup.Group("/ticket")
 	{
-		ticket.POST("/create", app.Controllers.Customer.TicketController.CreateTicket)
-		// ticket.GET("/list", app.Controllers.Customer.TicketController.GetCustomerTickets)
+		ticket.POST("", app.Controllers.Customer.TicketController.CreateTicket)
+		ticket.GET("/list", app.Controllers.Customer.TicketController.GetTickets)
 	}
 }

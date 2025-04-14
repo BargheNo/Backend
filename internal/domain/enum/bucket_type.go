@@ -14,6 +14,8 @@ func (bt BucketType) String() string {
 		return "vatTaxpayerCertificate"
 	case OfficialNewspaperAD:
 		return "officialNewspaperAD"
+	case TicketImage:
+		return "ticketImage"
 	}
 	return ""
 }
@@ -22,5 +24,6 @@ func GetAllBucketTypes() []BucketType {
 	return []BucketType{
 		VATTaxpayerCertificate,
 		OfficialNewspaperAD,
+		TicketImage,
 	}
 }

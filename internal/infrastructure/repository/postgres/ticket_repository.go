@@ -19,3 +19,9 @@ func (ticketRepo *TicketRepository) CreateTicket(db database.Database, ticket *e
 func (ticketRepo *TicketRepository) UpdateTicket(db database.Database, ticket *entity.Ticket) error {
 	return db.GetDB().Save(ticket).Error
 }
+
+func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, ownerID uint) []*entity.Ticket {
+	var tickets []*entity.Ticket
+	db.GetDB().Where("owner_id = ?", ownerID).Find(&tickets)
+	return tickets
+}

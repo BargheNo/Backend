@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"time"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -55,4 +57,29 @@ func (ticketService *TicketService) CreateTicket(requestInfo ticketdto.CreateTic
 	}
 
 	err = ticketService.ticketRepository.UpdateTicket(ticketService.db, ticket)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.TicketListRequest) []ticketdto.TicketResponse {
+	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
+
+	tickets := ticketService.ticketRepository.GetCustomerTickets(ticketService.db, requestInfo.OwnerID)
+	responses := make([]ticketdto.TicketResponse, len(tickets))
+	for i, ticket := range tickets {
+		responses[i] = ticketdto.TicketResponse{
+			ID:          ticket.ID,
+			OwnerID:     ticket.OwnerID,
+			Subject:     ticket.Subject.String(),
+			Description: ticket.Description,
+			CreatedAt:   ticket.CreatedAt,
+		}
+		if ticket.Image != "" {
+			image := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
+			responses[i].Image = image
+		}
+	}
+
+	return responses
 }

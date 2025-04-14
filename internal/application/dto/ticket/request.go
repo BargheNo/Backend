@@ -12,3 +12,9 @@ type CreateTicketRequest struct {
 	Description string
 	Image       *multipart.FileHeader
 }
+
+type TicketListRequest struct {
+	OwnerID uint
+	Offset  int
+	Limit   int
+}
