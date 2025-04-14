@@ -87,5 +87,6 @@ var English = map[string]interface{}{
 		"addMaintenanceRecord":      "Maintenance record has been successfully added.",
 		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
 		"createTicket":              "Ticket has been successfully created.",
+		"createTicketComment":       "Ticket comment has been successfully created.",
 	},
 }
