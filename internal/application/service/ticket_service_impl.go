@@ -5,6 +5,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
@@ -69,9 +70,14 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 	tickets := ticketService.ticketRepository.GetCustomerTickets(ticketService.db, requestInfo.OwnerID)
 	responses := make([]ticketdto.TicketResponse, len(tickets))
 	for i, ticket := range tickets {
+		owner := ticketService.userService.GetUserCredential(ticket.OwnerID)
 		responses[i] = ticketdto.TicketResponse{
-			ID:          ticket.ID,
-			OwnerID:     ticket.OwnerID,
+			ID: ticket.ID,
+			Owner: userdto.CredentialResponse{
+				FirstName: owner.FirstName,
+				LastName:  owner.LastName,
+				Phone:     owner.Phone,
+			},
 			Subject:     ticket.Subject.String(),
 			Description: ticket.Description,
 			Status:      ticket.Status.String(),

@@ -1,10 +1,14 @@
 package ticketdto
 
-import "time"
+import (
+	"time"
+
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
+)
 
 type TicketResponse struct {
-	ID          uint      `json:"id"`
-	OwnerID     uint      `json:"owner_id"`
+	ID          uint `json:"id"`
+	Owner       userdto.CredentialResponse
 	Subject     string    `json:"subject"`
 	Description string    `json:"description"`
 	Status      string    `json:"status"`
