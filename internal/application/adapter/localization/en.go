@@ -41,6 +41,7 @@ var English = map[string]interface{}{
 		"eqfield":                "Password and {0} are not the same.",
 		"eq":                     "Field {0} should be true.",
 		"Expired":                "OTP is expired.",
+		"email":                  "Email format is wrong.",
 		"invalid":                "OTP is invalid.",
 		"notRegistered":          "You have to register first.",
 		"invalidAuthCredentials": "Username and password not matched",
@@ -85,5 +86,6 @@ var English = map[string]interface{}{
 		"maintenanceRequest":        "Maintenance request has been successfully stored.",
 		"addMaintenanceRecord":      "Maintenance record has been successfully added.",
 		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
+		"completeRegister":          "Your registration has been completed successfully.",
 	},
 }

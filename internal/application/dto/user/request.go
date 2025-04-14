@@ -1,5 +1,7 @@
 package userdto
 
+import "mime/multipart"
+
 type BasicRegisterRequest struct {
 	FirstName string
 	LastName  string
@@ -19,6 +21,13 @@ type LoginRequest struct {
 
 type ForgotPasswordRequest struct {
 	Phone string
+}
+
+type CompleteRegisterRequest struct {
+	UserID       uint
+	Email        string
+	NationalCode string
+	ProfilePic   *multipart.FileHeader
 }
 
 type ResetPasswordRequest struct {

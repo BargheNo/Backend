@@ -31,6 +31,7 @@ func NewS3Storage(
 	buckets := make(map[enum.BucketType]string)
 	buckets[enum.VATTaxpayerCertificate] = storage.Buckets.VATTaxpayerCertificate
 	buckets[enum.OfficialNewspaperAD] = storage.Buckets.OfficialNewspaperAD
+	buckets[enum.ProfilePic] = storage.Buckets.ProfilePic
 	return &S3Storage{
 		constants: constants,
 		storage:   storage,

@@ -6,11 +6,11 @@ import (
 )
 
 func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
-	auth := routerGroup.Group("/auth")
+	auth := routerGroup.Group("/profile")
 	{
-		auth.POST("/reset-password", app.Controllers.Customer.UserController.ResetPassword)
+		auth.PUT("/password", app.Controllers.Customer.UserController.ResetPassword)
+		auth.POST("/complete", app.Controllers.Customer.UserController.CompleteRegister)
 		// auth.POST("/verify/email", app.Controllers.General.UserController.VerifyEmail)
-		// auth.POST("/register/complete", app.Controllers.General.UserController.CompleteRegister)
 	}
 
 	corp := routerGroup.Group("/corp")
@@ -49,8 +49,8 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		notification.GET("", app.Controllers.Customer.NotificationController.GetUserNotifications)
 		notification.GET("/setting", app.Controllers.Customer.NotificationController.GetUserNotificationSettings)
 		notification.PUT("/setting/:settingID", app.Controllers.Customer.NotificationController.UpdateSettings)
-  }
-  
+	}
+
 	panels := routerGroup.Group("/panels")
 	{
 		panels.GET("/list", app.Controllers.Customer.InstallationController.GetCustomerPanels)

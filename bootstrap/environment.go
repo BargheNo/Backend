@@ -63,6 +63,7 @@ type S3 struct {
 type BucketName struct {
 	VATTaxpayerCertificate string
 	OfficialNewspaperAD    string
+	ProfilePic             string
 }
 
 type OTP struct {
@@ -122,6 +123,7 @@ func NewEnvironments() *Env {
 			Buckets: BucketName{
 				VATTaxpayerCertificate: os.Getenv("TAXPAYER_CERTIFICATE_BUCKET_NAME"),
 				OfficialNewspaperAD:    os.Getenv("OFFICIAL_NEWSPAPER_AD_BUCKET_NAME"),
+				ProfilePic:             os.Getenv("PROFILE_PIC_BUCKET_NAME"),
 			},
 			Region:    os.Getenv("BUCKET_REGION"),
 			AccessKey: os.Getenv("BUCKET_ACCESS_key"),

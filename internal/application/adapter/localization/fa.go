@@ -58,6 +58,7 @@ var Persian = map[string]interface{}{
 		"forbiddenError":         "اجازه دسترسی به این {0} وجود ندارد.",
 		"forbiddenStatus":        "اجازه انجام این کار را در این وضعیت ندارید.",
 		"pending":                "این {0} حال بررسی است.",
+		"email":                  "فرمت ایمیل نادرست است.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
@@ -85,5 +86,6 @@ var Persian = map[string]interface{}{
 		"maintenanceRequest":        "درخواست نگهداری شما با موفقیت ثبت شد.",
 		"addMaintenanceRecord":      "سابقه نگهداری با موفقیت ثبت شد.",
 		"maintenanceRequestHandled": "درخواست نگهداری با موفقیت انجام شد.",
+		"completeRegister":          "اطلاعات تکمیلی ثبت نام با موفقیت انجام شد.",
 	},
 }

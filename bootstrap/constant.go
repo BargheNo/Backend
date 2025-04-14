@@ -211,3 +211,7 @@ func (path *BucketPath) GetVATTaxpayerCertificatePath(corporationID uint, certif
 func (path *BucketPath) GetOfficialNewspaperADPath(corporationID uint, certificateFilename string) string {
 	return fmt.Sprintf("corporation/%d/newspaper-ad/%s", corporationID, certificateFilename)
 }
+
+func (path *BucketPath) GetUserProfilePath(userID uint, pictureFileName string) string {
+	return fmt.Sprintf("user/%d/profile/%s", userID, pictureFileName)
+}

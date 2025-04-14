@@ -9,9 +9,11 @@ import (
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
+	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,6 +23,7 @@ type UserService struct {
 	otpService          service.OTPService
 	jwtService          service.JWTService
 	smsService          service.SMSService
+	s3Storage           s3.S3Storage
 	userRepository      repository.UserRepository
 	userCacheRepository cacherepository.UserCacheRepository
 	db                  database.Database
@@ -31,6 +34,7 @@ func NewUserService(
 	otpService service.OTPService,
 	jwtService service.JWTService,
 	smsService service.SMSService,
+	s3Storage s3.S3Storage,
 	userRepository repository.UserRepository,
 	userCacheRepository cacherepository.UserCacheRepository,
 	db database.Database,
@@ -40,6 +44,7 @@ func NewUserService(
 		otpService:          otpService,
 		jwtService:          jwtService,
 		smsService:          smsService,
+		s3Storage:           s3Storage,
 		userRepository:      userRepository,
 		userCacheRepository: userCacheRepository,
 		db:                  db,
@@ -256,6 +261,26 @@ func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest)
 		FirstName:    user.FirstName,
 		LastName:     user.LastName,
 		Permissions:  permissions,
+	}
+}
+
+func (userService *UserService) CompleteRegister(completeRegisterInfo userdto.CompleteRegisterRequest) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, completeRegisterInfo.UserID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	user.Email = completeRegisterInfo.Email
+	user.EmailVerified = false
+	user.NationalCode = completeRegisterInfo.NationalCode
+	if completeRegisterInfo.ProfilePic != nil {
+		profilePicPath := userService.constants.S3BucketPath.GetUserProfilePath(completeRegisterInfo.UserID, completeRegisterInfo.ProfilePic.Filename)
+		userService.s3Storage.UploadObject(enum.ProfilePic, profilePicPath, completeRegisterInfo.ProfilePic)
+		user.ProfilePicPath = profilePicPath
+	}
+	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
 	}
 }
 
