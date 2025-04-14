@@ -71,3 +71,43 @@ func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 
 	controller.Response(ctx, 200, "success", tickets)
 }
+
+func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) {
+	type getCommentsParams struct {
+		TicketID uint `uri:"ticketID" binding:"required"`
+	}
+	params := controller.Validated[getCommentsParams](ctx)
+	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+	ownerID, _ := ctx.Get(ticketController.constants.Context.ID)
+	listInfo := ticketdto.TicketCommentListRequest{
+		TicketID: params.TicketID,
+		OwnerID:  ownerID.(uint),
+		Offset:   offset,
+		Limit:    limit,
+	}
+	comments := ticketController.ticketService.GetTicketComments(listInfo)
+
+	controller.Response(ctx, 200, "", comments)
+}
+
+func (ticketController *CustomerTicketController) CreateComment(ctx *gin.Context) {
+	type createCommentParams struct {
+		TicketID uint   `uri:"ticketID" validate:"required"`
+		Body     string `json:"body" validate:"required"`
+	}
+
+	params := controller.Validated[createCommentParams](ctx)
+	userID, _ := ctx.Get(ticketController.constants.Context.ID)
+	requestInfo := ticketdto.CreateTicketCommentRequest{
+		TicketID: params.TicketID,
+		OwnerID:  userID.(uint),
+		Body:     params.Body,
+	}
+
+	ticketController.ticketService.CreateTicketComment(requestInfo)
+
+	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.createTicketComment")
+	controller.Response(ctx, 200, message, nil)
+}

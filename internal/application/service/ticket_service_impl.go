@@ -9,6 +9,7 @@ import (
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -90,4 +91,55 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 	}
 
 	return responses
+}
+
+func (ticketService *TicketService) GetTicketComments(requestInfo ticketdto.TicketCommentListRequest) []ticketdto.TicketCommentResponse {
+	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
+	_, exist := ticketService.ticketRepository.GetTicketByID(ticketService.db, requestInfo.TicketID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: ticketService.constants.Field.Ticket}
+		panic(notFoundError)
+	}
+	comments := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID)
+	responses := make([]ticketdto.TicketCommentResponse, len(comments))
+	for i, comment := range comments {
+		owner := ticketService.userService.GetUserCredential(comment.OwnerID)
+		responses[i] = ticketdto.TicketCommentResponse{
+			ID: comment.ID,
+			Owner: userdto.CredentialResponse{
+				FirstName: owner.FirstName,
+				LastName:  owner.LastName,
+				Phone:     owner.Phone,
+			},
+			Body: comment.Body,
+		}
+	}
+
+	return responses
+}
+
+func (ticketService *TicketService) CreateTicketComment(requestInfo ticketdto.CreateTicketCommentRequest) {
+	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
+	ticket, exist := ticketService.ticketRepository.GetTicketByID(ticketService.db, requestInfo.TicketID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: ticketService.constants.Field.Ticket}
+		panic(notFoundError)
+	}
+	if ticket.OwnerID != requestInfo.OwnerID {
+		forbiddenError := exception.ForbiddenError{
+			Resource: ticketService.constants.Field.Ticket,
+			Message:  "",
+		}
+		panic(forbiddenError)
+	}
+
+	comment := &entity.TicketComment{
+		TicketID: requestInfo.TicketID,
+		OwnerID:  requestInfo.OwnerID,
+		Body:     requestInfo.Body,
+	}
+	err := ticketService.ticketRepository.CreateTicketComment(ticketService.db, comment)
+	if err != nil {
+		panic(err)
+	}
 }

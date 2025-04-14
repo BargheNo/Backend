@@ -18,3 +18,16 @@ type TicketListRequest struct {
 	Offset  int
 	Limit   int
 }
+
+type TicketCommentListRequest struct {
+	TicketID uint
+	OwnerID  uint
+	Offset   int
+	Limit    int
+}
+
+type CreateTicketCommentRequest struct {
+	TicketID uint
+	OwnerID  uint
+	Body     string
+}

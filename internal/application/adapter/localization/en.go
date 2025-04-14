@@ -26,6 +26,7 @@ var English = map[string]interface{}{
 	"panelName":           "panel name",
 	"panel":               "panel",
 	"maintenanceRequest":  "maintenance request",
+	"ticket":              "ticket",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
