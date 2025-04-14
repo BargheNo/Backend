@@ -85,5 +85,6 @@ var Persian = map[string]interface{}{
 		"maintenanceRequest":        "درخواست نگهداری شما با موفقیت ثبت شد.",
 		"addMaintenanceRecord":      "سابقه نگهداری با موفقیت ثبت شد.",
 		"maintenanceRequestHandled": "درخواست نگهداری با موفقیت انجام شد.",
+		"createTicket":              "درخواست شما با موفقیت ثبت شد.",
 	},
 }

@@ -5,6 +5,7 @@ type BucketType uint
 const (
 	VATTaxpayerCertificate BucketType = iota + 1
 	OfficialNewspaperAD
+	TicketImage
 )
 
 func (bt BucketType) String() string {

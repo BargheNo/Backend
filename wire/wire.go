@@ -29,8 +29,9 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
-	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/ticket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -54,6 +55,7 @@ var RepositoryProviderSet = wire.NewSet(
 	repositoryimpl.NewChatRepository,
 	repositoryimpl.NewNotificationRepository,
 	repositoryimpl.NewMaintenanceRepository,
+	repositoryimpl.NewTicketRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
@@ -63,6 +65,7 @@ var RepositoryProviderSet = wire.NewSet(
 	wire.Bind(new(repository.ChatRepository), new(*repositoryimpl.ChatRepository)),
 	wire.Bind(new(repository.NotificationRepository), new(*repositoryimpl.NotificationRepository)),
 	wire.Bind(new(repository.MaintenanceRepository), new(*repositoryimpl.MaintenanceRepository)),
+	wire.Bind(new(repository.TicketRepository), new(*repositoryimpl.TicketRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -78,6 +81,7 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewChatService,
 	serviceimpl.NewNotificationService,
 	serviceimpl.NewMaintenanceService,
+	serviceimpl.NewTicketService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
@@ -90,6 +94,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)),
 	wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)),
 	wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)),
+	wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -119,6 +124,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 	chat.NewCustomerChatController,
 	notification.NewCustomerNotificationController,
 	maintenance.NewCustomerMaintenanceController,
+	ticket.NewCustomerTicketController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -250,6 +256,7 @@ type CustomerControllers struct {
 	ChatController         *chat.CustomerChatController
 	NotificationController *notification.CustomerNotificationController
 	MaintenanceController  *maintenance.CustomerMaintenanceController
+	TicketController       *ticket.CustomerTicketController
 }
 
 type CorporationControllers struct {
