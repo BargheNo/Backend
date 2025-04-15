@@ -80,7 +80,7 @@ func (ticketController *AdminTicketController) CreateComment(ctx *gin.Context) {
 	ticketController.ticketService.CreateAdminTicketComment(requestInfo)
 
 	trans := controller.GetTranslator(ctx, ticketController.constant.Context.Translator)
-	message, _ := trans.Translate("successMessage.ticketCommentCreated")
+	message, _ := trans.Translate("successMessage.createTicketComment")
 	controller.Response(ctx, 200, message, nil)
 }
 
