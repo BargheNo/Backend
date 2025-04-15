@@ -63,3 +63,39 @@ func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {
 
 	controller.Response(ctx, 200, "success", tickets)
 }
+
+func (ticketController *AdminTicketController) CreateComment(ctx *gin.Context) {
+	type CreateCommentRequest struct {
+		TicketID uint   `uri:"ticketID" validate:"required"`
+		Body     string `json:"body" validate:"required"`
+	}
+	params := controller.Validated[CreateCommentRequest](ctx)
+	ownerID, _ := ctx.Get(ticketController.constant.Context.ID)
+	requestInfo := ticketdto.CreateTicketCommentRequest{
+		TicketID: params.TicketID,
+		OwnerID:  ownerID.(uint),
+		Body:     params.Body,
+	}
+	ticketController.ticketService.CreateTicketComment(requestInfo)
+
+	trans := controller.GetTranslator(ctx, ticketController.constant.Context.Translator)
+	message, _ := trans.Translate("successMessage.ticketCommentCreated")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (ticketController *AdminTicketController) ResolveTicket(ctx *gin.Context) {
+	type ResolveTicketRequest struct {
+		TicketID uint `uri:"ticketID" validate:"required"`
+	}
+	params := controller.Validated[ResolveTicketRequest](ctx)
+	ownerID, _ := ctx.Get(ticketController.constant.Context.ID)
+	requestInfo := ticketdto.ResolveTicketRequest{
+		TicketID: params.TicketID,
+		OwnerID:  ownerID.(uint),
+	}
+	ticketController.ticketService.ResolveTicket(requestInfo)
+
+	trans := controller.GetTranslator(ctx, ticketController.constant.Context.Translator)
+	message, _ := trans.Translate("successMessage.ticketResolved")
+	controller.Response(ctx, 200, message, nil)
+}

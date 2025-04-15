@@ -172,3 +172,18 @@ func (ticketService *TicketService) GetTickets(requestInfo ticketdto.TicketListR
 	}
 	return responses
 }
+
+func (ticketService *TicketService) ResolveTicket(requestInfo ticketdto.ResolveTicketRequest) {
+	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
+	ticket, exist := ticketService.ticketRepository.GetTicketByID(ticketService.db, requestInfo.TicketID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: ticketService.constants.Field.Ticket}
+		panic(notFoundError)
+	}
+
+	ticket.Status = enum.TicketStatusResolved
+	err := ticketService.ticketRepository.UpdateTicket(ticketService.db, ticket)
+	if err != nil {
+		panic(err)
+	}
+}

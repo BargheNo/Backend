@@ -30,4 +30,10 @@ type CreateTicketCommentRequest struct {
 	TicketID uint
 	OwnerID  uint
 	Body     string
+	IsAdmin  bool
+}
+
+type ResolveTicketRequest struct {
+	TicketID uint
+	OwnerID  uint
 }

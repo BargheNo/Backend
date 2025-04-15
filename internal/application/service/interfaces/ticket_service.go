@@ -8,4 +8,5 @@ type TicketService interface {
 	GetTicketComments(requestInfo ticketdto.TicketCommentListRequest) []ticketdto.TicketCommentResponse
 	CreateTicketComment(requestInfo ticketdto.CreateTicketCommentRequest)
 	GetTickets(requestInfo ticketdto.TicketListRequest) []ticketdto.TicketResponse
+	ResolveTicket(requestInfo ticketdto.ResolveTicketRequest)
 }
