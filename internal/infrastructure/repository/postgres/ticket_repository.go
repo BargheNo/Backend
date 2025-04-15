@@ -22,15 +22,31 @@ func (ticketRepo *TicketRepository) UpdateTicket(db database.Database, ticket *e
 	return db.GetDB().Save(ticket).Error
 }
 
-func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, ownerID uint) []*entity.Ticket {
+func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, ownerID uint, opts ...repository.QueryModifier) []*entity.Ticket {
 	var tickets []*entity.Ticket
-	db.GetDB().Where("owner_id = ?", ownerID).Find(&tickets)
+	query := db.GetDB().Where("owner_id = ?", ownerID)
+
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&tickets)
+	if result.Error != nil {
+		panic(result.Error)
+	}
 	return tickets
 }
 
-func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, ticketID uint) []*entity.TicketComment {
+func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, ticketID uint, opts ...repository.QueryModifier) []*entity.TicketComment {
 	var comments []*entity.TicketComment
-	db.GetDB().Where("ticket_id = ?", ticketID).Find(&comments)
+	query := db.GetDB().Where("ticket_id = ?", ticketID)
+
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&comments)
+	if result.Error != nil {
+		panic(result.Error)
+	}
 	return comments
 }
 

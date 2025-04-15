@@ -40,14 +40,15 @@ func NewTicketService(
 	}
 }
 
-func (ticketService *TicketService) CreateTicket(requestInfo ticketdto.CreateTicketRequest) {
+func (ticketService *TicketService) CreateCustomerTicket(requestInfo ticketdto.CreateTicketRequest) {
 	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
 
 	ticket := &entity.Ticket{
-		OwnerID:     requestInfo.OwnerID,
 		Subject:     requestInfo.Subject,
 		Description: requestInfo.Description,
 		Status:      enum.TicketStatusNotAnswered,
+		OwnerID:     requestInfo.OwnerID,
+		OwnerType:   requestInfo.OwnerType,
 	}
 	err := ticketService.ticketRepository.CreateTicket(ticketService.db, ticket)
 	if err != nil {
@@ -68,8 +69,9 @@ func (ticketService *TicketService) CreateTicket(requestInfo ticketdto.CreateTic
 
 func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.TicketListRequest) []ticketdto.TicketResponse {
 	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
-
-	tickets := ticketService.ticketRepository.GetCustomerTickets(ticketService.db, requestInfo.OwnerID)
+	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	tickets := ticketService.ticketRepository.GetCustomerTickets(ticketService.db, requestInfo.OwnerID, paginationModifier, sortingModifier)
 	responses := make([]ticketdto.TicketResponse, len(tickets))
 	for i, ticket := range tickets {
 		owner := ticketService.userService.GetUserCredential(ticket.OwnerID)
@@ -90,36 +92,10 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 			responses[i].Image = image
 		}
 	}
-
 	return responses
 }
 
-func (ticketService *TicketService) GetTicketComments(requestInfo ticketdto.TicketCommentListRequest) []ticketdto.TicketCommentResponse {
-	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
-	_, exist := ticketService.ticketRepository.GetTicketByID(ticketService.db, requestInfo.TicketID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: ticketService.constants.Field.Ticket}
-		panic(notFoundError)
-	}
-	comments := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID)
-	responses := make([]ticketdto.TicketCommentResponse, len(comments))
-	for i, comment := range comments {
-		owner := ticketService.userService.GetUserCredential(comment.OwnerID)
-		responses[i] = ticketdto.TicketCommentResponse{
-			ID: comment.ID,
-			Owner: userdto.CredentialResponse{
-				FirstName: owner.FirstName,
-				LastName:  owner.LastName,
-				Phone:     owner.Phone,
-			},
-			Body: comment.Body,
-		}
-	}
-
-	return responses
-}
-
-func (ticketService *TicketService) CreateTicketComment(requestInfo ticketdto.CreateTicketCommentRequest) {
+func (ticketService *TicketService) CreateCustomerTicketComment(requestInfo ticketdto.CreateTicketCommentRequest) {
 	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
 	ticket, exist := ticketService.ticketRepository.GetTicketByID(ticketService.db, requestInfo.TicketID)
 	if !exist {
@@ -134,10 +110,19 @@ func (ticketService *TicketService) CreateTicketComment(requestInfo ticketdto.Cr
 		panic(forbiddenError)
 	}
 
+	if ticket.Status == enum.TicketStatusResolved {
+		forbiddenError := exception.ForbiddenError{
+			Resource: ticketService.constants.Field.Ticket,
+			Message:  "",
+		}
+		panic(forbiddenError)
+	}
+
 	comment := &entity.TicketComment{
-		TicketID: requestInfo.TicketID,
-		OwnerID:  requestInfo.OwnerID,
-		Body:     requestInfo.Body,
+		TicketID:  requestInfo.TicketID,
+		OwnerID:   requestInfo.OwnerID,
+		OwnerType: requestInfo.OwnerType,
+		Body:      requestInfo.Body,
 	}
 	err := ticketService.ticketRepository.CreateTicketComment(ticketService.db, comment)
 	if err != nil {
@@ -145,7 +130,71 @@ func (ticketService *TicketService) CreateTicketComment(requestInfo ticketdto.Cr
 	}
 }
 
-func (ticketService *TicketService) GetTickets(requestInfo ticketdto.TicketListRequest) []ticketdto.TicketResponse {
+func (ticketService *TicketService) GetCustomerTicketComments(requestInfo ticketdto.TicketCommentListRequest) []ticketdto.TicketCommentResponse {
+	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
+	ticket, exist := ticketService.ticketRepository.GetTicketByID(ticketService.db, requestInfo.TicketID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: ticketService.constants.Field.Ticket}
+		panic(notFoundError)
+	}
+
+	if ticket.OwnerID != requestInfo.OwnerID {
+		forbiddenError := exception.ForbiddenError{
+			Resource: ticketService.constants.Field.Ticket,
+			Message:  "",
+		}
+		panic(forbiddenError)
+	}
+
+	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	comments := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID, paginationModifier, sortingModifier)
+	responses := make([]ticketdto.TicketCommentResponse, len(comments))
+	for i, comment := range comments {
+		owner := ticketService.userService.GetUserCredential(comment.OwnerID)
+		responses[i] = ticketdto.TicketCommentResponse{
+			ID: comment.ID,
+			Author: ticketdto.TicketCommentAuthorResponse{
+				FirstName: owner.FirstName,
+				LastName:  owner.LastName,
+				OwnerType: comment.OwnerType,
+			},
+			Body: comment.Body,
+		}
+	}
+	return responses
+}
+
+func (ticketService *TicketService) CreateAdminTicketComment(requestInfo ticketdto.CreateTicketCommentRequest) {
+	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
+	ticket, exist := ticketService.ticketRepository.GetTicketByID(ticketService.db, requestInfo.TicketID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: ticketService.constants.Field.Ticket}
+		panic(notFoundError)
+	}
+
+	if ticket.Status == enum.TicketStatusResolved {
+		forbiddenError := exception.ForbiddenError{
+			Resource: ticketService.constants.Field.Ticket,
+			Message:  "",
+		}
+		panic(forbiddenError)
+	}
+
+	comment := &entity.TicketComment{
+		TicketID:  requestInfo.TicketID,
+		OwnerID:   requestInfo.OwnerID,
+		OwnerType: requestInfo.OwnerType,
+		Body:      requestInfo.Body,
+	}
+	err := ticketService.ticketRepository.CreateTicketComment(ticketService.db, comment)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.TicketListRequest) []ticketdto.TicketResponse {
 	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
@@ -168,6 +217,33 @@ func (ticketService *TicketService) GetTickets(requestInfo ticketdto.TicketListR
 		if ticket.Image != "" {
 			image := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
 			responses[i].Image = image
+		}
+	}
+	return responses
+}
+
+func (ticketService *TicketService) GetAdminTicketComments(requestInfo ticketdto.TicketCommentListRequest) []ticketdto.TicketCommentResponse {
+	_, exist := ticketService.ticketRepository.GetTicketByID(ticketService.db, requestInfo.TicketID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: ticketService.constants.Field.Ticket}
+		panic(notFoundError)
+	}
+
+	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	comments := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID, paginationModifier, sortingModifier)
+	responses := make([]ticketdto.TicketCommentResponse, len(comments))
+	for i, comment := range comments {
+		owner := ticketService.userService.GetUserCredential(comment.OwnerID)
+		responses[i] = ticketdto.TicketCommentResponse{
+			ID: comment.ID,
+			Author: ticketdto.TicketCommentAuthorResponse{
+				FirstName: owner.FirstName,
+				LastName:  owner.LastName,
+				OwnerType: comment.OwnerType,
+			},
+			Body: comment.Body,
 		}
 	}
 	return responses

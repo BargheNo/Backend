@@ -8,9 +8,18 @@ import (
 
 type CreateTicketRequest struct {
 	OwnerID     uint
+	OwnerType   string
 	Subject     enum.TicketSubject
 	Description string
 	Image       *multipart.FileHeader
+}
+
+type CreateCorporationTicketRequest struct {
+	OperatorID    uint
+	CorporationID uint
+	Subject       enum.TicketSubject
+	Description   string
+	Image         *multipart.FileHeader
 }
 
 type TicketListRequest struct {
@@ -27,10 +36,10 @@ type TicketCommentListRequest struct {
 }
 
 type CreateTicketCommentRequest struct {
-	TicketID uint
-	OwnerID  uint
-	Body     string
-	IsAdmin  bool
+	TicketID  uint
+	OwnerID   uint
+	OwnerType string
+	Body      string
 }
 
 type ResolveTicketRequest struct {

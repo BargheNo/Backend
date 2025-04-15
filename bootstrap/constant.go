@@ -3,16 +3,18 @@ package bootstrap
 import "fmt"
 
 type Constants struct {
-	Context       Context
-	LogLevel      LogLevel
-	RedisKey      RedisKey
-	S3BucketPath  BucketPath
-	Field         ErrorField
-	Tag           ErrorTag
-	SMSTemplates  SMSTemplates
-	JWTKeysPath   JWTKeysPath
-	Metrics       Metrics
-	AddressOwners AddressOwners
+	Context             Context
+	LogLevel            LogLevel
+	RedisKey            RedisKey
+	S3BucketPath        BucketPath
+	Field               ErrorField
+	Tag                 ErrorTag
+	SMSTemplates        SMSTemplates
+	JWTKeysPath         JWTKeysPath
+	Metrics             Metrics
+	AddressOwners       AddressOwners
+	TicketOwners        TicketOwners
+	TicketCommentOwners TicketCommentOwners
 }
 
 type Context struct {
@@ -112,6 +114,17 @@ type AddressOwners struct {
 	MaintenanceRequest  string
 }
 
+type TicketOwners struct {
+	User        string
+	Corporation string
+}
+
+type TicketCommentOwners struct {
+	User        string
+	Corporation string
+	Admin       string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
@@ -198,6 +211,15 @@ func NewConstants() *Constants {
 			Corporation:         "corporations",
 			InstallationRequest: "installation_requests",
 			Panel:               "panels",
+		},
+		TicketOwners: TicketOwners{
+			User:        "users",
+			Corporation: "corporations",
+		},
+		TicketCommentOwners: TicketCommentOwners{
+			User:        "users",
+			Corporation: "corporations",
+			Admin:       "admins",
 		},
 	}
 }

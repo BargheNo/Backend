@@ -39,7 +39,7 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 		Limit:   limit,
 	}
 
-	tickets := ticketController.ticketService.GetTickets(requestInfo)
+	tickets := ticketController.ticketService.GetAdminTickets(requestInfo)
 
 	controller.Response(ctx, 200, "success", tickets)
 }
@@ -59,7 +59,7 @@ func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {
 		Limit:    limit,
 	}
 
-	tickets := ticketController.ticketService.GetTicketComments(requestInfo)
+	tickets := ticketController.ticketService.GetAdminTicketComments(requestInfo)
 
 	controller.Response(ctx, 200, "success", tickets)
 }
@@ -72,11 +72,12 @@ func (ticketController *AdminTicketController) CreateComment(ctx *gin.Context) {
 	params := controller.Validated[CreateCommentRequest](ctx)
 	ownerID, _ := ctx.Get(ticketController.constant.Context.ID)
 	requestInfo := ticketdto.CreateTicketCommentRequest{
-		TicketID: params.TicketID,
-		OwnerID:  ownerID.(uint),
-		Body:     params.Body,
+		TicketID:  params.TicketID,
+		OwnerID:   ownerID.(uint),
+		OwnerType: ticketController.constant.TicketCommentOwners.Admin,
+		Body:      params.Body,
 	}
-	ticketController.ticketService.CreateTicketComment(requestInfo)
+	ticketController.ticketService.CreateAdminTicketComment(requestInfo)
 
 	trans := controller.GetTranslator(ctx, ticketController.constant.Context.Translator)
 	message, _ := trans.Translate("successMessage.ticketCommentCreated")

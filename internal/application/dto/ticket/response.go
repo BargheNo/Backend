@@ -17,7 +17,14 @@ type TicketResponse struct {
 }
 
 type TicketCommentResponse struct {
-	ID    uint `json:"id"`
-	Owner userdto.CredentialResponse
-	Body  string `json:"body"`
+	ID     uint `json:"id"`
+	Author TicketCommentAuthorResponse
+	Body   string `json:"body"`
+}
+
+type TicketCommentAuthorResponse struct {
+	ID        uint   `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	OwnerType string `json:"owner_type"`
 }

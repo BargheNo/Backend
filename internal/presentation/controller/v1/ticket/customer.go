@@ -45,12 +45,13 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 	userID, _ := ctx.Get(ticketController.constants.Context.ID)
 	requestInfo := ticketdto.CreateTicketRequest{
 		OwnerID:     userID.(uint),
+		OwnerType:   ticketController.constants.TicketOwners.User,
 		Subject:     enum.TicketSubject(subject),
 		Description: params.Description,
 		Image:       params.Image,
 	}
 
-	ticketController.ticketService.CreateTicket(requestInfo)
+	ticketController.ticketService.CreateCustomerTicket(requestInfo)
 
 	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicket")
@@ -86,7 +87,7 @@ func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) 
 		Offset:   offset,
 		Limit:    limit,
 	}
-	comments := ticketController.ticketService.GetTicketComments(listInfo)
+	comments := ticketController.ticketService.GetCustomerTicketComments(listInfo)
 
 	controller.Response(ctx, 200, "", comments)
 }
@@ -100,12 +101,13 @@ func (ticketController *CustomerTicketController) CreateComment(ctx *gin.Context
 	params := controller.Validated[createCommentParams](ctx)
 	userID, _ := ctx.Get(ticketController.constants.Context.ID)
 	requestInfo := ticketdto.CreateTicketCommentRequest{
-		TicketID: params.TicketID,
-		OwnerID:  userID.(uint),
-		Body:     params.Body,
+		TicketID:  params.TicketID,
+		OwnerID:   userID.(uint),
+		OwnerType: ticketController.constants.TicketCommentOwners.User,
+		Body:      params.Body,
 	}
 
-	ticketController.ticketService.CreateTicketComment(requestInfo)
+	ticketController.ticketService.CreateCustomerTicketComment(requestInfo)
 
 	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicketComment")
