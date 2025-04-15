@@ -12,4 +12,5 @@ type TicketRepository interface {
 	GetTicketComments(db database.Database, ticketID uint) []*entity.TicketComment
 	GetTicketByID(db database.Database, ticketID uint) (*entity.Ticket, bool)
 	CreateTicketComment(db database.Database, comment *entity.TicketComment) error
+	GetTickets(db database.Database, opts ...QueryModifier) []*entity.Ticket
 }

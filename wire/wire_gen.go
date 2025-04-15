@@ -121,10 +121,15 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		BidController:          corporationBidController,
 		MaintenanceController:  corporationMaintenanceController,
 	}
+	adminTicketController := ticket.NewAdminTicketController(constants, pagination, userService, ticketService)
+	adminControllers := &AdminControllers{
+		TicketController: adminTicketController,
+	}
 	controllers := &Controllers{
 		General:     generalControllers,
 		Customer:    customerControllers,
 		Corporation: corporationControllers,
+		Admin:       adminControllers,
 	}
 	authMiddleware := middleware.NewAuthMiddleware(constants, jwtService, userRepository, postgresDatabase)
 	corsMiddleware := middleware.NewCorsMiddleware()
@@ -178,6 +183,8 @@ var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, ad
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, wire.Struct(new(CustomerControllers), "*"))
 
 var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, wire.Struct(new(CorporationControllers), "*"))
+
+var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, wire.Struct(new(AdminControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -245,6 +252,7 @@ var ProviderSet = wire.NewSet(
 	GeneralControllerProviderSet,
 	CustomerControllerProviderSet,
 	CorporationControllerProviderSet,
+	AdminControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	SeederProviderSet,
@@ -293,10 +301,15 @@ type CorporationControllers struct {
 	MaintenanceController  *maintenance.CorporationMaintenanceController
 }
 
+type AdminControllers struct {
+	TicketController *ticket.AdminTicketController
+}
+
 type Controllers struct {
 	General     *GeneralControllers
 	Customer    *CustomerControllers
 	Corporation *CorporationControllers
+	Admin       *AdminControllers
 }
 
 type Middlewares struct {

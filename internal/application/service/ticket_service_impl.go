@@ -13,6 +13,7 @@ import (
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type TicketService struct {
@@ -142,4 +143,32 @@ func (ticketService *TicketService) CreateTicketComment(requestInfo ticketdto.Cr
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (ticketService *TicketService) GetTickets(requestInfo ticketdto.TicketListRequest) []ticketdto.TicketResponse {
+	ticketService.userService.GetUserCredential(requestInfo.OwnerID)
+	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	tickets := ticketService.ticketRepository.GetTickets(ticketService.db, paginationModifier, sortingModifier)
+	responses := make([]ticketdto.TicketResponse, len(tickets))
+	for i, ticket := range tickets {
+		owner := ticketService.userService.GetUserCredential(ticket.OwnerID)
+		responses[i] = ticketdto.TicketResponse{
+			ID: ticket.ID,
+			Owner: userdto.CredentialResponse{
+				FirstName: owner.FirstName,
+				LastName:  owner.LastName,
+				Phone:     owner.Phone,
+			},
+			Subject:     ticket.Subject.String(),
+			Description: ticket.Description,
+			Status:      ticket.Status.String(),
+			CreatedAt:   ticket.CreatedAt,
+		}
+		if ticket.Image != "" {
+			image := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
+			responses[i].Image = image
+		}
+	}
+	return responses
 }

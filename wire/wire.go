@@ -136,6 +136,11 @@ var CorporationControllerProviderSet = wire.NewSet(
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
+var AdminControllerProviderSet = wire.NewSet(
+	ticket.NewAdminTicketController,
+	wire.Struct(new(AdminControllers), "*"),
+)
+
 var ControllersProviderSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
 )
@@ -218,6 +223,7 @@ var ProviderSet = wire.NewSet(
 	GeneralControllerProviderSet,
 	CustomerControllerProviderSet,
 	CorporationControllerProviderSet,
+	AdminControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	SeederProviderSet,
@@ -266,10 +272,15 @@ type CorporationControllers struct {
 	MaintenanceController  *maintenance.CorporationMaintenanceController
 }
 
+type AdminControllers struct {
+	TicketController *ticket.AdminTicketController
+}
+
 type Controllers struct {
 	General     *GeneralControllers
 	Customer    *CustomerControllers
 	Corporation *CorporationControllers
+	Admin       *AdminControllers
 }
 
 type Middlewares struct {

@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -47,4 +48,20 @@ func (ticketRepo *TicketRepository) GetTicketByID(db database.Database, ticketID
 
 func (ticketRepo *TicketRepository) CreateTicketComment(db database.Database, comment *entity.TicketComment) error {
 	return db.GetDB().Create(comment).Error
+}
+
+func (ticketRepo *TicketRepository) GetTickets(db database.Database, opts ...repository.QueryModifier) []*entity.Ticket {
+	var tickets []*entity.Ticket
+	query := db.GetDB()
+
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+
+	result := query.Find(&tickets)
+
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return tickets
 }

@@ -75,7 +75,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		ticket.POST("", app.Controllers.Customer.TicketController.CreateTicket)
 		ticket.GET("/list", app.Controllers.Customer.TicketController.GetTickets)
-		ticket.GET(":ticketID/comments", app.Controllers.Customer.TicketController.GetComments)
-		ticket.POST(":ticketID/comments", app.Controllers.Customer.TicketController.CreateComment)
+		ticket.GET("/:ticketID/comments", app.Controllers.Customer.TicketController.GetComments)
+		ticket.POST("/:ticketID/comments", app.Controllers.Customer.TicketController.CreateComment)
 	}
 }
