@@ -1,4 +1,4 @@
-package communicationService
+package sms
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"

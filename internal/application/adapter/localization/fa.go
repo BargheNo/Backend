@@ -88,4 +88,7 @@ var Persian = map[string]interface{}{
 		"maintenanceRequestHandled": "درخواست نگهداری با موفقیت انجام شد.",
 		"completeRegister":          "اطلاعات تکمیلی ثبت نام با موفقیت انجام شد.",
 	},
+	"emailSubject": map[string]interface{}{
+		"emailConfirmation": "تأیید آدرس ایمیل شما",
+	},
 }

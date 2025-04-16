@@ -28,6 +28,8 @@ type CompleteRegisterRequest struct {
 	Email        string
 	NationalCode string
 	ProfilePic   *multipart.FileHeader
+	TemplateFile string
+	EmailSubject string
 }
 
 type ResetPasswordRequest struct {

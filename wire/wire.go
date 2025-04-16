@@ -10,7 +10,8 @@ import (
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	metricsimpl "github.com/BargheNo/Backend/internal/application/adapter/metrics"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
-	communicationService "github.com/BargheNo/Backend/internal/application/service/communication"
+	"github.com/BargheNo/Backend/internal/application/service/communication/email"
+	"github.com/BargheNo/Backend/internal/application/service/communication/sms"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/metrics"
@@ -29,8 +30,8 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
-	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -68,7 +69,8 @@ var RepositoryProviderSet = wire.NewSet(
 var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewUserService,
 	serviceimpl.NewOTPService,
-	communicationService.NewSMSService,
+	sms.NewSMSService,
+	email.NewEmailService,
 	serviceimpl.NewJWTService,
 	serviceimpl.NewInstallationService,
 	serviceimpl.NewAddressService,
@@ -80,7 +82,8 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewMaintenanceService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
-	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
+	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
+	wire.Bind(new(service.EmailService), new(*email.EmailService)),
 	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
 	wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)),
 	wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)),
@@ -188,6 +191,10 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
+func ProvideEmailTemplates(container *bootstrap.Config) *bootstrap.EmailTemplates {
+	return &container.Constants.EmailTemplates
+}
+
 func ProvideMetrics(container *bootstrap.Config) *bootstrap.Metrics {
 	return &container.Constants.Metrics
 }
@@ -202,6 +209,10 @@ func ProvideStorageConfig(container *bootstrap.Config) *bootstrap.S3 {
 
 func ProvideWebsocketSetting(container *bootstrap.Config) *bootstrap.WebsocketSetting {
 	return &container.Env.WebsocketSetting
+}
+
+func ProvideEmailSenderAccount(container *bootstrap.Config) *bootstrap.EmailAccount {
+	return &container.Env.EmailSenderAccount
 }
 
 var ProviderSet = wire.NewSet(
@@ -223,11 +234,13 @@ var ProviderSet = wire.NewSet(
 	ProvideOTPConfig,
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
+	ProvideEmailTemplates,
 	ProvideJWTKeysPath,
 	ProvideMetrics,
 	ProvidePaginationConfig,
 	ProvideStorageConfig,
 	ProvideWebsocketSetting,
+	ProvideEmailSenderAccount,
 )
 
 type Database struct {

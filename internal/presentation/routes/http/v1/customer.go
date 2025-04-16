@@ -6,10 +6,11 @@ import (
 )
 
 func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
-	auth := routerGroup.Group("/profile")
+	profile := routerGroup.Group("/profile")
 	{
-		auth.PUT("/password", app.Controllers.Customer.UserController.ResetPassword)
-		auth.POST("/complete", app.Controllers.Customer.UserController.CompleteRegister)
+		profile.PUT("/password", app.Controllers.Customer.UserController.ResetPassword)
+		profile.POST("/complete", app.Controllers.Customer.UserController.CompleteRegister)
+		profile.POST("/verify/email", app.Controllers.General.UserController.VerifyEmail)
 		// auth.POST("/verify/email", app.Controllers.General.UserController.VerifyEmail)
 	}
 

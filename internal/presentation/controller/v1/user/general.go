@@ -66,10 +66,6 @@ func (userController *GeneralUserController) VerifyPhone(ctx *gin.Context) {
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (userController *GeneralUserController) VerifyEmail(ctx *gin.Context) {
-	// some code here ...
-}
-
 func (userController *GeneralUserController) Login(ctx *gin.Context) {
 	type verifyPhoneParams struct {
 		Phone    string `json:"phone" validate:"required,e164"`

@@ -24,6 +24,18 @@ func (repo *UserRepository) FindUserByID(db database.Database, id uint) (*entity
 	return &user, true
 }
 
+func (repo *UserRepository) FindUserByEmail(db database.Database, email string) (*entity.User, bool) {
+	var user entity.User
+	result := db.GetDB().Where("email = ?", email).First(&user)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &user, true
+}
+
 func (repo *UserRepository) FindUserByPhone(db database.Database, phone string) (*entity.User, bool) {
 	var user entity.User
 	result := db.GetDB().Where("phone = ?", phone).First(&user)

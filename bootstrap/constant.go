@@ -3,16 +3,17 @@ package bootstrap
 import "fmt"
 
 type Constants struct {
-	Context       Context
-	LogLevel      LogLevel
-	RedisKey      RedisKey
-	S3BucketPath  BucketPath
-	Field         ErrorField
-	Tag           ErrorTag
-	SMSTemplates  SMSTemplates
-	JWTKeysPath   JWTKeysPath
-	Metrics       Metrics
-	AddressOwners AddressOwners
+	Context        Context
+	LogLevel       LogLevel
+	RedisKey       RedisKey
+	S3BucketPath   BucketPath
+	Field          ErrorField
+	Tag            ErrorTag
+	SMSTemplates   SMSTemplates
+	EmailTemplates EmailTemplates
+	JWTKeysPath    JWTKeysPath
+	Metrics        Metrics
+	AddressOwners  AddressOwners
 }
 
 type Context struct {
@@ -39,6 +40,7 @@ type BucketPath struct {
 type ErrorField struct {
 	User                string
 	Phone               string
+	Email               string
 	Password            string
 	OTP                 string
 	Corporation         string
@@ -88,6 +90,12 @@ type SMSTemplates struct {
 	OTP string
 }
 
+type EmailTemplates struct {
+	Path            string
+	PersianFileName string
+	EnglishFileName string
+}
+
 type JWTKeysPath struct {
 	PublicKey  string
 	PrivateKey string
@@ -129,6 +137,7 @@ func NewConstants() *Constants {
 		Field: ErrorField{
 			User:                "user",
 			Phone:               "phone",
+			Email:               "email",
 			Password:            "password",
 			OTP:                 "otp",
 			Corporation:         "corporation",
@@ -180,6 +189,12 @@ func NewConstants() *Constants {
 			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
 			// PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
 			// PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
+		},
+		EmailTemplates: EmailTemplates{
+			// Path:            "../../internal/application/service/communication/email/templates/",
+			Path:            "./internal/application/service/communication/email/templates/",
+			PersianFileName: "fa.html",
+			EnglishFileName: "en.html",
 		},
 		Metrics: Metrics{
 			HTTPRequestsTotal: Options{

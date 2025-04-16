@@ -9,16 +9,17 @@ import (
 )
 
 type Env struct {
-	Server           Server
-	Logger           Logger
-	RateLimit        RateLimit
-	PrimaryDB        Database
-	PrimaryRedis     Redis
-	Storage          S3
-	OTP              OTP
-	SMSGateway       SMSGateway
-	Pagination       Pagination
-	WebsocketSetting WebsocketSetting
+	Server             Server
+	Logger             Logger
+	RateLimit          RateLimit
+	PrimaryDB          Database
+	PrimaryRedis       Redis
+	Storage            S3
+	OTP                OTP
+	SMSGateway         SMSGateway
+	Pagination         Pagination
+	WebsocketSetting   WebsocketSetting
+	EmailSenderAccount EmailAccount
 }
 
 type Server struct {
@@ -89,6 +90,13 @@ type WebsocketSetting struct {
 	MessageBufferSize int
 }
 
+type EmailAccount struct {
+	EmailFrom     string
+	EmailPassword string
+	SMTPHost      string
+	SMTPPort      string
+}
+
 func NewEnvironments() *Env {
 	// godotenv.Load("../../.env")
 	godotenv.Load(".env")
@@ -148,6 +156,12 @@ func NewEnvironments() *Env {
 			PingPeriod:        getEnvDuration("PING_PERIOD", 54*time.Second),
 			MaxMessageSize:    getEnvInt("MAX_MESSAGE_SIZE", 524288),
 			MessageBufferSize: getEnvInt("MESSAGE_BUFFER_SIZE", 256),
+		},
+		EmailSenderAccount: EmailAccount{
+			EmailFrom:     os.Getenv("EMAIL_FROM"),
+			EmailPassword: os.Getenv("EMAIL_PASSWORD"),
+			SMTPHost:      os.Getenv("SMTP_HOST"),
+			SMTPPort:      os.Getenv("SMTP_PORT"),
 		},
 	}
 }

@@ -23,6 +23,7 @@ type UserService struct {
 	otpService          service.OTPService
 	jwtService          service.JWTService
 	smsService          service.SMSService
+	emailService        service.EmailService
 	s3Storage           s3.S3Storage
 	userRepository      repository.UserRepository
 	userCacheRepository cacherepository.UserCacheRepository
@@ -34,6 +35,7 @@ func NewUserService(
 	otpService service.OTPService,
 	jwtService service.JWTService,
 	smsService service.SMSService,
+	emailService service.EmailService,
 	s3Storage s3.S3Storage,
 	userRepository repository.UserRepository,
 	userCacheRepository cacherepository.UserCacheRepository,
@@ -44,6 +46,7 @@ func NewUserService(
 		otpService:          otpService,
 		jwtService:          jwtService,
 		smsService:          smsService,
+		emailService:        emailService,
 		s3Storage:           s3Storage,
 		userRepository:      userRepository,
 		userCacheRepository: userCacheRepository,
@@ -77,7 +80,25 @@ func (userService *UserService) passwordValidation(password string) error {
 	return nil
 }
 
-func (userService *UserService) validateRegisterInfo(phone, password string) error {
+func (userService *UserService) validateEmail(email string) error {
+	var conflictErrors exception.ConflictErrors
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(email)
+	_, exist := userService.userCacheRepository.Get(context.Background(), redisKey)
+	if exist {
+		conflictErrors.Add(userService.constants.Field.Email, userService.constants.Tag.AlreadyRegistered)
+		return conflictErrors
+	}
+
+	user, userExist := userService.userRepository.FindUserByEmail(userService.db, email)
+	if userExist && user.EmailVerified {
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.AlreadyRegistered)
+		return conflictErrors
+	}
+
+	return nil
+}
+
+func (userService *UserService) validatePhone(phone string) error {
 	var conflictErrors exception.ConflictErrors
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(phone)
 	_, exist := userService.userCacheRepository.Get(context.Background(), redisKey)
@@ -92,7 +113,7 @@ func (userService *UserService) validateRegisterInfo(phone, password string) err
 		return conflictErrors
 	}
 
-	return userService.passwordValidation(password)
+	return nil
 }
 
 func (userService *UserService) GetUserCredential(userID uint) userdto.CredentialResponse {
@@ -109,7 +130,12 @@ func (userService *UserService) GetUserCredential(userID uint) userdto.Credentia
 }
 
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) {
-	err := userService.validateRegisterInfo(registerInfo.Phone, registerInfo.Password)
+	err := userService.validatePhone(registerInfo.Phone)
+	if err != nil {
+		panic(err)
+	}
+
+	err = userService.passwordValidation(registerInfo.Password)
 	if err != nil {
 		panic(err)
 	}
@@ -269,6 +295,34 @@ func (userService *UserService) CompleteRegister(completeRegisterInfo userdto.Co
 	if !userExist {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
 		panic(notFoundError)
+	}
+	if completeRegisterInfo.Email != "" {
+		err := userService.validateEmail(completeRegisterInfo.Email)
+		if err != nil {
+			panic(err)
+		}
+
+		otp, expiryMinute := userService.otpService.GenerateOTP()
+		redisKey := userService.constants.RedisKey.GenerateOTPKey(completeRegisterInfo.Email)
+		err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
+		if err != nil {
+			panic(err)
+		}
+
+		data := struct {
+			FirstName    string
+			LastName     string
+			OTP          string
+			ExpiryMinute int
+			Year         int
+		}{
+			FirstName:    user.FirstName,
+			LastName:     user.LastName,
+			OTP:          otp,
+			ExpiryMinute: expiryMinute,
+			Year:         time.Now().Year(),
+		}
+		userService.emailService.SendEmail(completeRegisterInfo.Email, completeRegisterInfo.EmailSubject, completeRegisterInfo.TemplateFile, data)
 	}
 	user.Email = completeRegisterInfo.Email
 	user.EmailVerified = false

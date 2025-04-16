@@ -88,4 +88,7 @@ var English = map[string]interface{}{
 		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
 		"completeRegister":          "Your registration has been completed successfully.",
 	},
+	"emailSubject": map[string]interface{}{
+		"emailConfirmation": "Verify Your Email Address",
+	},
 }

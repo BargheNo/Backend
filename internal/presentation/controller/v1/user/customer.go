@@ -11,17 +11,20 @@ import (
 )
 
 type CustomerUserController struct {
-	constants   *bootstrap.Constants
-	userService service.UserService
+	constants    *bootstrap.Constants
+	userService  service.UserService
+	emailService service.EmailService
 }
 
 func NewCustomerUserController(
 	constants *bootstrap.Constants,
 	userService service.UserService,
+	emailService service.EmailService,
 ) *CustomerUserController {
 	return &CustomerUserController{
-		constants:   constants,
-		userService: userService,
+		constants:    constants,
+		userService:  userService,
+		emailService: emailService,
 	}
 }
 
@@ -34,17 +37,26 @@ func (userController *CustomerUserController) CompleteRegister(ctx *gin.Context)
 	params := controller.Validated[resetPasswordParams](ctx)
 	userID, _ := ctx.Get(userController.constants.Context.ID)
 
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+
+	templateFile := controller.GetLocalizedTemplateFile(ctx, userController.constants.Context.Translator, userController.constants.EmailTemplates.PersianFileName, userController.constants.EmailTemplates.EnglishFileName)
+	emailSubject, _ := trans.Translate("emailSubject.emailConfirmation")
 	completeRegisterInfo := userdto.CompleteRegisterRequest{
 		UserID:       userID.(uint),
 		Email:        params.Email,
 		NationalCode: params.NationalCode,
 		ProfilePic:   params.ProfilePic,
+		TemplateFile: "email_confirmation/" + templateFile,
+		EmailSubject: emailSubject,
 	}
 	userController.userService.CompleteRegister(completeRegisterInfo)
 
-	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.completeRegister")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (userController *GeneralUserController) VerifyEmail(ctx *gin.Context) {
+	// some code here ...
 }
 
 func (userController *CustomerUserController) ResetPassword(ctx *gin.Context) {
