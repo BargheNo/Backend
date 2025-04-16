@@ -26,6 +26,7 @@ var Persian = map[string]interface{}{
 	"panelName":           "نام پنل",
 	"panel":               "پنل",
 	"maintenanceRequest":  "درخواست تعمیر",
+	"email":               "ایمیل",
 	"ticket":              "درخواست پشتیبانی",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
@@ -59,6 +60,7 @@ var Persian = map[string]interface{}{
 		"forbiddenError":         "اجازه دسترسی به این {0} وجود ندارد.",
 		"forbiddenStatus":        "اجازه انجام این کار را در این وضعیت ندارید.",
 		"pending":                "این {0} حال بررسی است.",
+		"email":                  "فرمت ایمیل نادرست است.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
@@ -86,7 +88,13 @@ var Persian = map[string]interface{}{
 		"maintenanceRequest":        "درخواست نگهداری شما با موفقیت ثبت شد.",
 		"addMaintenanceRecord":      "سابقه نگهداری با موفقیت ثبت شد.",
 		"maintenanceRequestHandled": "درخواست نگهداری با موفقیت انجام شد.",
-		"createTicket":              "درخواست شما با موفقیت ثبت شد.",
+		"completeRegister":          "اطلاعات تکمیلی ثبت نام با موفقیت انجام شد.",
+		"emailVerification":         "ایمیل شما با موفقیت تایید شد.",
+		"updateProfile":             "پروفایل شما با موفقیت به روزرسانی شد.",
+    "createTicket":              "درخواست شما با موفقیت ثبت شد.",
 		"createTicketComment":       "نظر شما با موفقیت ثبت شد.",
+	},
+	"emailSubject": map[string]interface{}{
+		"emailConfirmation": "تأیید آدرس ایمیل شما",
 	},
 }

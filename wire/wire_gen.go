@@ -13,7 +13,8 @@ import (
 	"github.com/BargheNo/Backend/internal/application/adapter/logger"
 	"github.com/BargheNo/Backend/internal/application/adapter/metrics"
 	"github.com/BargheNo/Backend/internal/application/service"
-	"github.com/BargheNo/Backend/internal/application/service/communication"
+	"github.com/BargheNo/Backend/internal/application/service/communication/email"
+	"github.com/BargheNo/Backend/internal/application/service/communication/sms"
 	"github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/metrics"
@@ -60,15 +61,29 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	jwtService := serviceimpl.NewJWTService(keyManager, jwtKeysPath)
 	smsGateway := ProvideSMSGatewayConfig(container)
 	smsTemplates := ProvideSMSTemplates(container)
-	smsService := communicationService.NewSMSService(smsGateway, smsTemplates)
+	smsService := sms.NewSMSService(smsGateway, smsTemplates)
+	emailAccount := ProvideEmailSenderAccount(container)
+	emailTemplates := ProvideEmailTemplates(container)
+	emailService := email.NewEmailService(emailAccount, emailTemplates)
+	s3 := ProvideStorageConfig(container)
+	s3Storage := storage.NewS3Storage(constants, s3)
 	userRepository := repositoryimpl.NewUserRepository()
-	userService := serviceimpl.NewUserService(constants, otpService, jwtService, smsService, userRepository, userCacheRepository, postgresDatabase)
+	userServiceDeps := serviceimpl.UserServiceDeps{
+		Constants:           constants,
+		OTPService:          otpService,
+		JWTService:          jwtService,
+		SMSService:          smsService,
+		EmailService:        emailService,
+		S3Storage:           s3Storage,
+		UserRepository:      userRepository,
+		UserCacheRepository: userCacheRepository,
+		DB:                  postgresDatabase,
+	}
+	userService := serviceimpl.NewUserService(userServiceDeps)
 	generalUserController := user.NewGeneralUserController(constants, userService, jwtService)
 	addressRepository := repositoryimpl.NewAddressRepository()
 	addressService := serviceimpl.NewAddressService(constants, addressRepository, postgresDatabase)
 	generalAddressController := address.NewGeneralAddressController(constants, addressService)
-	s3 := ProvideStorageConfig(container)
-	s3Storage := storage.NewS3Storage(constants, s3)
 	corporationRepository := repositoryimpl.NewCorporationRepository()
 	corporationService := serviceimpl.NewCorporationService(constants, userService, addressService, s3Storage, corporationRepository, postgresDatabase)
 	generalCorporationController := corporation.NewGeneralCorporationController(constants, corporationService)
@@ -77,7 +92,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		AddressController:     generalAddressController,
 		CorporationController: generalCorporationController,
 	}
-	customerUserController := user.NewCustomerUserController(constants, userService)
+	customerUserController := user.NewCustomerUserController(constants, userService, emailService)
 	pagination := ProvidePaginationConfig(container)
 	installationRepository := repositoryimpl.NewInstallationRepository()
 	installationService := serviceimpl.NewInstallationService(constants, addressService, userService, corporationService, installationRepository, postgresDatabase)
@@ -174,7 +189,7 @@ var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.New
 
 var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, repositoryimpl.NewInstallationRepository, repositoryimpl.NewAddressRepository, cacherepositoryimpl.NewUserCacheRepository, repositoryimpl.NewCorporationRepository, repositoryimpl.NewBidRepository, repositoryimpl.NewChatRepository, repositoryimpl.NewNotificationRepository, repositoryimpl.NewMaintenanceRepository, repositoryimpl.NewTicketRepository, wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)), wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)), wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)), wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)), wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)), wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)), wire.Bind(new(repository.ChatRepository), new(*repositoryimpl.ChatRepository)), wire.Bind(new(repository.NotificationRepository), new(*repositoryimpl.NotificationRepository)), wire.Bind(new(repository.MaintenanceRepository), new(*repositoryimpl.MaintenanceRepository)), wire.Bind(new(repository.TicketRepository), new(*repositoryimpl.TicketRepository)))
 
-var ServiceProviderSet = wire.NewSet(serviceimpl.NewUserService, serviceimpl.NewOTPService, communicationService.NewSMSService, serviceimpl.NewJWTService, serviceimpl.NewInstallationService, serviceimpl.NewAddressService, serviceimpl.NewCorporationService, cinimpl.NewCINService, serviceimpl.NewBidService, serviceimpl.NewChatService, serviceimpl.NewNotificationService, serviceimpl.NewMaintenanceService, serviceimpl.NewTicketService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*communicationService.SMSService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)), wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)), wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)), wire.Bind(new(service.CINService), new(*cinimpl.CINService)), wire.Bind(new(service.BidService), new(*serviceimpl.BidService)), wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)), wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)), wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)), wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)))
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(serviceimpl.UserServiceDeps), "*"), serviceimpl.NewUserService, serviceimpl.NewOTPService, sms.NewSMSService, email.NewEmailService, serviceimpl.NewJWTService, serviceimpl.NewInstallationService, serviceimpl.NewAddressService, serviceimpl.NewCorporationService, cinimpl.NewCINService, serviceimpl.NewBidService, serviceimpl.NewChatService, serviceimpl.NewNotificationService, serviceimpl.NewMaintenanceService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*sms.SMSService)), wire.Bind(new(service.EmailService), new(*email.EmailService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)), wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)), wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)), wire.Bind(new(service.CINService), new(*cinimpl.CINService)), wire.Bind(new(service.BidService), new(*serviceimpl.BidService)), wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)), wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)), wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)))
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, storage.NewS3Storage, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)))
 
@@ -228,6 +243,10 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
+func ProvideEmailTemplates(container *bootstrap.Config) *bootstrap.EmailTemplates {
+	return &container.Constants.EmailTemplates
+}
+
 func ProvideMetrics(container *bootstrap.Config) *bootstrap.Metrics {
 	return &container.Constants.Metrics
 }
@@ -242,6 +261,10 @@ func ProvideStorageConfig(container *bootstrap.Config) *bootstrap.S3 {
 
 func ProvideWebsocketSetting(container *bootstrap.Config) *bootstrap.WebsocketSetting {
 	return &container.Env.WebsocketSetting
+}
+
+func ProvideEmailSenderAccount(container *bootstrap.Config) *bootstrap.EmailAccount {
+	return &container.Env.EmailSenderAccount
 }
 
 var ProviderSet = wire.NewSet(
@@ -264,11 +287,13 @@ var ProviderSet = wire.NewSet(
 	ProvideOTPConfig,
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
+	ProvideEmailTemplates,
 	ProvideJWTKeysPath,
 	ProvideMetrics,
 	ProvidePaginationConfig,
 	ProvideStorageConfig,
 	ProvideWebsocketSetting,
+	ProvideEmailSenderAccount,
 )
 
 type Database struct {

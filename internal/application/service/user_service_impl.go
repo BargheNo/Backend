@@ -6,12 +6,16 @@ import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
+	"github.com/BargheNo/Backend/internal/domain/logger"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
+	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,28 +25,36 @@ type UserService struct {
 	otpService          service.OTPService
 	jwtService          service.JWTService
 	smsService          service.SMSService
+	emailService        service.EmailService
+	s3Storage           s3.S3Storage
 	userRepository      repository.UserRepository
 	userCacheRepository cacherepository.UserCacheRepository
 	db                  database.Database
 }
 
-func NewUserService(
-	constants *bootstrap.Constants,
-	otpService service.OTPService,
-	jwtService service.JWTService,
-	smsService service.SMSService,
-	userRepository repository.UserRepository,
-	userCacheRepository cacherepository.UserCacheRepository,
-	db database.Database,
-) *UserService {
+type UserServiceDeps struct {
+	Constants           *bootstrap.Constants
+	OTPService          service.OTPService
+	JWTService          service.JWTService
+	SMSService          service.SMSService
+	EmailService        service.EmailService
+	S3Storage           s3.S3Storage
+	UserRepository      repository.UserRepository
+	UserCacheRepository cacherepository.UserCacheRepository
+	DB                  database.Database
+}
+
+func NewUserService(deps UserServiceDeps) *UserService {
 	return &UserService{
-		constants:           constants,
-		otpService:          otpService,
-		jwtService:          jwtService,
-		smsService:          smsService,
-		userRepository:      userRepository,
-		userCacheRepository: userCacheRepository,
-		db:                  db,
+		constants:           deps.Constants,
+		otpService:          deps.OTPService,
+		jwtService:          deps.JWTService,
+		smsService:          deps.SMSService,
+		emailService:        deps.EmailService,
+		s3Storage:           deps.S3Storage,
+		userRepository:      deps.UserRepository,
+		userCacheRepository: deps.UserCacheRepository,
+		db:                  deps.DB,
 	}
 }
 
@@ -72,7 +84,25 @@ func (userService *UserService) passwordValidation(password string) error {
 	return nil
 }
 
-func (userService *UserService) validateRegisterInfo(phone, password string) error {
+func (userService *UserService) validateDuplicateEmail(email string) error {
+	var conflictErrors exception.ConflictErrors
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(email)
+	_, exist := userService.userCacheRepository.Get(context.Background(), redisKey)
+	if exist {
+		conflictErrors.Add(userService.constants.Field.Email, userService.constants.Tag.AlreadyRegistered)
+		return conflictErrors
+	}
+
+	user, userExist := userService.userRepository.FindUserByEmail(userService.db, email)
+	if userExist && user.EmailVerified {
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.AlreadyRegistered)
+		return conflictErrors
+	}
+
+	return nil
+}
+
+func (userService *UserService) validateDuplicatePhone(phone string) error {
 	var conflictErrors exception.ConflictErrors
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(phone)
 	_, exist := userService.userCacheRepository.Get(context.Background(), redisKey)
@@ -87,7 +117,54 @@ func (userService *UserService) validateRegisterInfo(phone, password string) err
 		return conflictErrors
 	}
 
-	return userService.passwordValidation(password)
+	return nil
+}
+
+func (userService *UserService) enterNewEmail(firstName, lastName, email, emailSubject, templateFile string) {
+	err := userService.validateDuplicateEmail(email)
+	if err != nil {
+		panic(err)
+	}
+
+	otp, expiryMinute := userService.otpService.GenerateOTP()
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(email)
+	err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
+	if err != nil {
+		panic(err)
+	}
+
+	data := struct {
+		FirstName    string
+		LastName     string
+		OTP          string
+		ExpiryMinute int
+		Year         int
+	}{
+		FirstName:    firstName,
+		LastName:     lastName,
+		OTP:          otp,
+		ExpiryMinute: expiryMinute,
+		Year:         time.Now().Year(),
+	}
+	userService.emailService.SendEmail(email, emailSubject, templateFile, data)
+}
+
+func (userService *UserService) DoesUserExist(userID uint) {
+	_, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+}
+
+func (userService *UserService) IsUserActive(userID uint) bool {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	isActive := enum.UserStatusActive == user.Status
+	return isActive
 }
 
 func (userService *UserService) GetUserCredential(userID uint) userdto.CredentialResponse {
@@ -96,15 +173,28 @@ func (userService *UserService) GetUserCredential(userID uint) userdto.Credentia
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
 		panic(notFoundError)
 	}
+	profilePic := ""
+	if user.ProfilePicPath != "" {
+		profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+	}
 	return userdto.CredentialResponse{
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Phone:     user.Phone,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Phone:      user.Phone,
+		Email:      user.Email,
+		NationalID: user.NationalCode,
+		ProfilePic: profilePic,
+		Status:     user.Status.String(),
 	}
 }
 
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) {
-	err := userService.validateRegisterInfo(registerInfo.Phone, registerInfo.Password)
+	err := userService.validateDuplicatePhone(registerInfo.Phone)
+	if err != nil {
+		panic(err)
+	}
+
+	err = userService.passwordValidation(registerInfo.Password)
 	if err != nil {
 		panic(err)
 	}
@@ -126,6 +216,7 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 		Password:      string(hashesPasswordBytes),
 		PhoneVerified: false,
 		EmailVerified: false,
+		Status:        enum.UserStatusActive,
 	}
 	err = userService.userRepository.CreateUser(userService.db, user)
 	if err != nil {
@@ -259,6 +350,57 @@ func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest)
 	}
 }
 
+func (userService *UserService) CompleteRegister(completeRegisterInfo userdto.CompleteRegisterRequest) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, completeRegisterInfo.UserID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if completeRegisterInfo.Email != "" {
+		userService.enterNewEmail(user.FirstName, user.LastName, completeRegisterInfo.Email, completeRegisterInfo.EmailSubject, completeRegisterInfo.TemplateFile)
+	}
+	user.Email = completeRegisterInfo.Email
+	user.EmailVerified = false
+	user.NationalCode = completeRegisterInfo.NationalCode
+	if completeRegisterInfo.ProfilePic != nil {
+		profilePicPath := userService.constants.S3BucketPath.GetUserProfilePath(completeRegisterInfo.UserID, completeRegisterInfo.ProfilePic.Filename)
+		userService.s3Storage.UploadObject(enum.ProfilePic, profilePicPath, completeRegisterInfo.ProfilePic)
+		user.ProfilePicPath = profilePicPath
+	}
+	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (userService *UserService) VerifyEmail(verifyInfo userdto.VerifyEmailRequest) {
+	var conflictErrors exception.ConflictErrors
+	user, userExist := userService.userRepository.FindUserByID(userService.db, verifyInfo.UserID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
+		panic(conflictErrors)
+	}
+	if user.EmailVerified {
+		conflictErrors.Add(userService.constants.Field.Email, userService.constants.Tag.AlreadyRegistered)
+		panic(conflictErrors)
+	}
+
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Email)
+	err := userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
+	if err != nil {
+		panic(err)
+	}
+	user.EmailVerified = true
+	err = userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswordRequest) {
 	user, userExist := userService.userRepository.FindUserByID(userService.db, resetPassInfo.ID)
 	if !userExist {
@@ -300,5 +442,41 @@ func (userService *UserService) FindUserByPhone(phone string) userdto.UserRespon
 	}
 	return userdto.UserResponse{
 		ID: user.ID,
+	}
+}
+
+func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileRequest) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, profileInfo.UserID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+
+	if profileInfo.FirstName != nil {
+		user.FirstName = *profileInfo.FirstName
+	}
+	if profileInfo.LastName != nil {
+		user.LastName = *profileInfo.LastName
+	}
+	if profileInfo.Email != nil && user.Email != *profileInfo.Email {
+		userService.enterNewEmail(user.FirstName, user.LastName, *profileInfo.Email, profileInfo.EmailSubject, profileInfo.TemplateFile)
+		user.Email = *profileInfo.Email
+		user.EmailVerified = false
+	}
+	if profileInfo.NationalCode != nil {
+		user.NationalCode = *profileInfo.NationalCode
+	}
+	if profileInfo.ProfilePic != nil {
+		profilePicPath := userService.constants.S3BucketPath.GetUserProfilePath(profileInfo.UserID, profileInfo.ProfilePic.Filename)
+		userService.s3Storage.UploadObject(enum.ProfilePic, profilePicPath, profileInfo.ProfilePic)
+		err := userService.s3Storage.DeleteObject(enum.ProfilePic, user.ProfilePicPath)
+		if err != nil {
+			loggerimpl.GetLogger().Error("unable to delete object", logger.Error("error:", err))
+		}
+		user.ProfilePicPath = profilePicPath
+	}
+	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
 	}
 }

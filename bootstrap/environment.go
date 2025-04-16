@@ -9,16 +9,17 @@ import (
 )
 
 type Env struct {
-	Server           Server
-	Logger           Logger
-	RateLimit        RateLimit
-	PrimaryDB        Database
-	PrimaryRedis     Redis
-	Storage          S3
-	OTP              OTP
-	SMSGateway       SMSGateway
-	Pagination       Pagination
-	WebsocketSetting WebsocketSetting
+	Server             Server
+	Logger             Logger
+	RateLimit          RateLimit
+	PrimaryDB          Database
+	PrimaryRedis       Redis
+	Storage            S3
+	OTP                OTP
+	SMSGateway         SMSGateway
+	Pagination         Pagination
+	WebsocketSetting   WebsocketSetting
+	EmailSenderAccount EmailAccount
 }
 
 type Server struct {
@@ -63,6 +64,7 @@ type S3 struct {
 type BucketName struct {
 	VATTaxpayerCertificate string
 	OfficialNewspaperAD    string
+	ProfilePic             string
 	TicketImage            string
 }
 
@@ -87,6 +89,13 @@ type WebsocketSetting struct {
 	PingPeriod        time.Duration
 	MaxMessageSize    int
 	MessageBufferSize int
+}
+
+type EmailAccount struct {
+	EmailFrom     string
+	EmailPassword string
+	SMTPHost      string
+	SMTPPort      string
 }
 
 func NewEnvironments() *Env {
@@ -123,6 +132,7 @@ func NewEnvironments() *Env {
 			Buckets: BucketName{
 				VATTaxpayerCertificate: os.Getenv("TAXPAYER_CERTIFICATE_BUCKET_NAME"),
 				OfficialNewspaperAD:    os.Getenv("OFFICIAL_NEWSPAPER_AD_BUCKET_NAME"),
+				ProfilePic:             os.Getenv("PROFILE_PIC_BUCKET_NAME"),
 				TicketImage:            os.Getenv("TICKET_IMAGE_BUCKET_NAME"),
 			},
 			Region:    os.Getenv("BUCKET_REGION"),
@@ -148,6 +158,12 @@ func NewEnvironments() *Env {
 			PingPeriod:        getEnvDuration("PING_PERIOD", 54*time.Second),
 			MaxMessageSize:    getEnvInt("MAX_MESSAGE_SIZE", 524288),
 			MessageBufferSize: getEnvInt("MESSAGE_BUFFER_SIZE", 256),
+		},
+		EmailSenderAccount: EmailAccount{
+			EmailFrom:     os.Getenv("EMAIL_FROM"),
+			EmailPassword: os.Getenv("EMAIL_PASSWORD"),
+			SMTPHost:      os.Getenv("SMTP_HOST"),
+			SMTPPort:      os.Getenv("SMTP_PORT"),
 		},
 	}
 }

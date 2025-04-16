@@ -221,7 +221,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 	for i, panel := range panels {
 		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
 		customer := installationService.userService.GetUserCredential(panel.CustomerID)
-		operatior := installationService.userService.GetUserCredential(panel.OperatorID)
+		operator := installationService.userService.GetUserCredential(panel.OperatorID)
 		response[i] = installationdto.CorporationPanelResponse{
 			ID:                   panel.ID,
 			PanelName:            panel.Name,
@@ -234,7 +234,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 			Azimuth:              panel.Azimuth,
 			TotalNumberOfModules: panel.TotalNumberOfModules,
 			Address:              address,
-			OperatorName:         operatior.FirstName + " " + operatior.LastName,
+			OperatorName:         operator.FirstName + " " + operator.LastName,
 		}
 	}
 	return response
