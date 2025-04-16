@@ -216,6 +216,7 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 		Password:      string(hashesPasswordBytes),
 		PhoneVerified: false,
 		EmailVerified: false,
+		Status:        enum.UserStatusActive,
 	}
 	err = userService.userRepository.CreateUser(userService.db, user)
 	if err != nil {
