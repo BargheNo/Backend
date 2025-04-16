@@ -115,8 +115,6 @@ func (repo *MaintenanceRepository) FindMaintenanceRecordsByCustomerID(db databas
 
 func (repo *MaintenanceRepository) FindCustomerMaintenanceRecordsByPanelID(db database.Database, customerID uint, panelID uint, opts ...repository.QueryModifier) []*entity.MaintenanceRecord {
 	var records []*entity.MaintenanceRecord
-	print("customerID", customerID)
-	print("panelID", panelID)
 	query := db.GetDB().Where("customer_id = ? AND panel_id = ?", customerID, panelID)
 	for _, opt := range opts {
 		query = opt.Apply(query).(*gorm.DB)

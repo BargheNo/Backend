@@ -27,6 +27,7 @@ var Persian = map[string]interface{}{
 	"panel":               "پنل",
 	"maintenanceRequest":  "درخواست تعمیر",
 	"email":               "ایمیل",
+	"ticket":              "درخواست پشتیبانی",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -90,6 +91,8 @@ var Persian = map[string]interface{}{
 		"completeRegister":          "اطلاعات تکمیلی ثبت نام با موفقیت انجام شد.",
 		"emailVerification":         "ایمیل شما با موفقیت تایید شد.",
 		"updateProfile":             "پروفایل شما با موفقیت به روزرسانی شد.",
+    "createTicket":              "درخواست شما با موفقیت ثبت شد.",
+		"createTicketComment":       "نظر شما با موفقیت ثبت شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

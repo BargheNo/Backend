@@ -92,11 +92,11 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByOwnerID(maintenanceService.db, listInfo.OwnerID, paginationModifier, sortingModifier)
-	var maintenanceResponses []maintenancedto.MaintenanceResponse
-	for _, request := range maintenanceRequests {
+	response := make([]maintenancedto.MaintenanceResponse, len(maintenanceRequests))
+	for i, request := range maintenanceRequests {
 		panel := maintenanceService.installationService.GetPanel(request.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		maintenanceResponse := maintenancedto.MaintenanceResponse{
+		response[i] = maintenancedto.MaintenanceResponse{
 			ID:            request.ID,
 			PanelID:       request.PanelID,
 			CorporationID: request.CorporationID,
@@ -119,22 +119,21 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 				CorporationName:      panel.Corporation.Name,
 			},
 		}
-		maintenanceResponses = append(maintenanceResponses, maintenanceResponse)
 	}
-	return maintenanceResponses
+	return response
 }
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) []maintenancedto.CorporationMaintenanceResponse {
-	maintenanceService.corporationService.CheckApplicantAccess(listInfo.OperatorID, listInfo.CorporationID)
+	maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
 	maintenanceService.corporationService.GetCorporationByID(listInfo.CorporationID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByCorporationID(maintenanceService.db, listInfo.CorporationID, paginationModifier, sortingModifier)
-	var maintenanceResponses []maintenancedto.CorporationMaintenanceResponse
-	for _, request := range maintenanceRequests {
+	response := make([]maintenancedto.CorporationMaintenanceResponse, len(maintenanceRequests))
+	for i, request := range maintenanceRequests {
 		panel := maintenanceService.installationService.GetPanel(request.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		maintenanceResponse := maintenancedto.CorporationMaintenanceResponse{
+		response[i] = maintenancedto.CorporationMaintenanceResponse{
 			ID:           request.ID,
 			PanelID:      request.PanelID,
 			Subject:      request.Subject,
@@ -156,13 +155,12 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 				OperatorName:         panel.Operator.FirstName + " " + panel.Operator.LastName,
 			},
 		}
-		maintenanceResponses = append(maintenanceResponses, maintenanceResponse)
 	}
-	return maintenanceResponses
+	return response
 }
 
 func (maintenanceService *MaintenanceService) HandleRequest(handleRequestInfo maintenancedto.HandleRequest) {
-	maintenanceService.corporationService.CheckApplicantAccess(handleRequestInfo.OperatorID, handleRequestInfo.CorporationID)
+	maintenanceService.corporationService.CheckApplicantAccess(handleRequestInfo.CorporationID, handleRequestInfo.OperatorID)
 	request := maintenanceService.maintenanceRepository.FindMaintenanceRequestByID(maintenanceService.db, handleRequestInfo.RequestID)
 	if request == nil {
 		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
@@ -187,7 +185,7 @@ func (maintenanceService *MaintenanceService) HandleRequest(handleRequestInfo ma
 }
 
 func (maintenanceService *MaintenanceService) AddMaintenanceRecord(requestInfo maintenancedto.AddMaintenanceRecordRequest) {
-	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.OperatorID, requestInfo.CorporationID)
+	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.OperatorID)
 	request := maintenanceService.maintenanceRepository.FindMaintenanceRequestByID(maintenanceService.db, requestInfo.RequestID)
 	if request == nil {
 		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
@@ -221,15 +219,15 @@ func (maintenanceService *MaintenanceService) AddMaintenanceRecord(requestInfo m
 }
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecords(requestInfo maintenancedto.CorporationMaintenanceListRequest) []maintenancedto.MaintenanceRecordResponse {
-	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.OperatorID, requestInfo.CorporationID)
+	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.OperatorID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByCorporationID(maintenanceService.db, requestInfo.CorporationID, paginationModifier, sortingModifier)
-	var maintenanceRecordResponses []maintenancedto.MaintenanceRecordResponse
-	for _, record := range maintenanceRecords {
+	response := make([]maintenancedto.MaintenanceRecordResponse, len(maintenanceRecords))
+	for i, record := range maintenanceRecords {
 		panel := maintenanceService.installationService.GetPanel(record.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		maintenanceRecordResponse := maintenancedto.MaintenanceRecordResponse{
+		response[i] = maintenancedto.MaintenanceRecordResponse{
 			ID:        record.ID,
 			RequestID: record.ID,
 			Panel: installationdto.CorporationPanelResponse{
@@ -250,22 +248,21 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecords(r
 			Details:       record.Details,
 			Date:          record.Date,
 		}
-		maintenanceRecordResponses = append(maintenanceRecordResponses, maintenanceRecordResponse)
 	}
-	return maintenanceRecordResponses
+	return response
 }
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecordsByPanel(requestInfo maintenancedto.CorporationMaintenanceRecordByPanelRequest) []maintenancedto.MaintenanceRecordResponse {
-	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.OperatorID, requestInfo.CorporationID)
+	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.OperatorID)
 	maintenanceService.installationService.GetPanel(requestInfo.PanelID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByPanelAndCorporationID(maintenanceService.db, requestInfo.PanelID, requestInfo.CorporationID, paginationModifier, sortingModifier)
-	var maintenanceRecordResponses []maintenancedto.MaintenanceRecordResponse
-	for _, record := range maintenanceRecords {
+	response := make([]maintenancedto.MaintenanceRecordResponse, len(maintenanceRecords))
+	for i, record := range maintenanceRecords {
 		panel := maintenanceService.installationService.GetPanel(record.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		maintenanceRecordResponse := maintenancedto.MaintenanceRecordResponse{
+		response[i] = maintenancedto.MaintenanceRecordResponse{
 			ID:        record.ID,
 			RequestID: record.ID,
 			Panel: installationdto.CorporationPanelResponse{
@@ -286,9 +283,8 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecordsBy
 			Details:       record.Details,
 			Date:          record.Date,
 		}
-		maintenanceRecordResponses = append(maintenanceRecordResponses, maintenanceRecordResponse)
 	}
-	return maintenanceRecordResponses
+	return response
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requestInfo maintenancedto.MaintenanceListRequest) []maintenancedto.CustomerMaintenanceRecordResponse {
@@ -296,11 +292,11 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requ
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByCustomerID(maintenanceService.db, requestInfo.OwnerID, paginationModifier, sortingModifier)
-	var maintenanceRecordResponses []maintenancedto.CustomerMaintenanceRecordResponse
-	for _, record := range maintenanceRecords {
+	response := make([]maintenancedto.CustomerMaintenanceRecordResponse, len(maintenanceRecords))
+	for i, record := range maintenanceRecords {
 		panel := maintenanceService.installationService.GetPanel(record.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		customerMaintenanceRecordResponse := maintenancedto.CustomerMaintenanceRecordResponse{
+		response[i] = maintenancedto.CustomerMaintenanceRecordResponse{
 			ID: record.ID,
 			Panel: installationdto.CustomerPanelResponse{
 				ID:                   panel.ID,
@@ -320,9 +316,8 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requ
 			Details:       record.Details,
 			Date:          record.Date,
 		}
-		maintenanceRecordResponses = append(maintenanceRecordResponses, customerMaintenanceRecordResponse)
 	}
-	return maintenanceRecordResponses
+	return response
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPanel(requestInfo maintenancedto.CustomerMaintenanceRecordByPanelRequest) []maintenancedto.CustomerMaintenanceRecordResponse {
@@ -330,11 +325,11 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPan
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindCustomerMaintenanceRecordsByPanelID(maintenanceService.db, requestInfo.PanelID, requestInfo.OwnerID, paginationModifier, sortingModifier)
-	var maintenanceRecordResponses []maintenancedto.CustomerMaintenanceRecordResponse
-	for _, record := range maintenanceRecords {
+	response := make([]maintenancedto.CustomerMaintenanceRecordResponse, len(maintenanceRecords))
+	for i, record := range maintenanceRecords {
 		panel := maintenanceService.installationService.GetPanel(record.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		customerMaintenanceRecordResponse := maintenancedto.CustomerMaintenanceRecordResponse{
+		response[i] = maintenancedto.CustomerMaintenanceRecordResponse{
 			ID: record.ID,
 			Panel: installationdto.CustomerPanelResponse{
 				ID:                   panel.ID,
@@ -354,7 +349,6 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPan
 			Details:       record.Details,
 			Date:          record.Date,
 		}
-		maintenanceRecordResponses = append(maintenanceRecordResponses, customerMaintenanceRecordResponse)
 	}
-	return maintenanceRecordResponses
+	return response
 }

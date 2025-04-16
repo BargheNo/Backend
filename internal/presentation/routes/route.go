@@ -22,6 +22,7 @@ func Run(ginEngine *gin.Engine, app *wire.Application) {
 	registerGeneralRoutes(v1, app)
 	registerCustomerRoutes(v1, app)
 	registerCorporationRoutes(v1, app)
+	registerAdminRoutes(v1, app)
 }
 
 func registerGeneralRoutes(v1 *gin.RouterGroup, app *wire.Application) {
@@ -43,4 +44,10 @@ func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	corporation.Use(app.Middlewares.Authentication.AuthRequired)
 	// corporation.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.AccessCorporation}))
 	httpv1.SetupCorporationRoutes(corporation, app)
+}
+
+func registerAdminRoutes(v1 *gin.RouterGroup, app *wire.Application) {
+	admin := v1.Group("/admin")
+	admin.Use(app.Middlewares.Authentication.AuthRequired)
+	httpv1.SetupAdminRoutes(admin, app)
 }

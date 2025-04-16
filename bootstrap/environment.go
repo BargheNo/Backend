@@ -65,6 +65,7 @@ type BucketName struct {
 	VATTaxpayerCertificate string
 	OfficialNewspaperAD    string
 	ProfilePic             string
+	TicketImage            string
 }
 
 type OTP struct {
@@ -132,6 +133,7 @@ func NewEnvironments() *Env {
 				VATTaxpayerCertificate: os.Getenv("TAXPAYER_CERTIFICATE_BUCKET_NAME"),
 				OfficialNewspaperAD:    os.Getenv("OFFICIAL_NEWSPAPER_AD_BUCKET_NAME"),
 				ProfilePic:             os.Getenv("PROFILE_PIC_BUCKET_NAME"),
+				TicketImage:            os.Getenv("TICKET_IMAGE_BUCKET_NAME"),
 			},
 			Region:    os.Getenv("BUCKET_REGION"),
 			AccessKey: os.Getenv("BUCKET_ACCESS_key"),

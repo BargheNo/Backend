@@ -3,17 +3,18 @@ package bootstrap
 import "fmt"
 
 type Constants struct {
-	Context        Context
-	LogLevel       LogLevel
-	RedisKey       RedisKey
-	S3BucketPath   BucketPath
-	Field          ErrorField
-	Tag            ErrorTag
-	SMSTemplates   SMSTemplates
-	EmailTemplates EmailTemplates
-	JWTKeysPath    JWTKeysPath
-	Metrics        Metrics
-	AddressOwners  AddressOwners
+	Context             Context
+	LogLevel            LogLevel
+	RedisKey            RedisKey
+	S3BucketPath        BucketPath
+	Field               ErrorField
+	Tag                 ErrorTag
+	SMSTemplates        SMSTemplates
+	JWTKeysPath         JWTKeysPath
+	Metrics             Metrics
+	AddressOwners       AddressOwners
+	TicketOwners        TicketOwners
+	TicketCommentOwners TicketCommentOwners
 }
 
 type Context struct {
@@ -61,6 +62,7 @@ type ErrorField struct {
 	PanelName           string
 	Panel               string
 	MaintenanceRequest  string
+	Ticket              string
 }
 
 type ErrorTag struct {
@@ -119,6 +121,17 @@ type AddressOwners struct {
 	MaintenanceRequest  string
 }
 
+type TicketOwners struct {
+	User        string
+	Corporation string
+}
+
+type TicketCommentOwners struct {
+	User        string
+	Corporation string
+	Admin       string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
@@ -158,6 +171,7 @@ func NewConstants() *Constants {
 			PanelName:           "panelName",
 			Panel:               "panel",
 			MaintenanceRequest:  "maintenanceRequest",
+			Ticket:              "ticket",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -212,6 +226,15 @@ func NewConstants() *Constants {
 			InstallationRequest: "installation_requests",
 			Panel:               "panels",
 		},
+		TicketOwners: TicketOwners{
+			User:        "users",
+			Corporation: "corporations",
+		},
+		TicketCommentOwners: TicketCommentOwners{
+			User:        "users",
+			Corporation: "corporations",
+			Admin:       "admins",
+		},
 	}
 }
 
@@ -229,4 +252,8 @@ func (path *BucketPath) GetOfficialNewspaperADPath(corporationID uint, certifica
 
 func (path *BucketPath) GetUserProfilePath(userID uint, pictureFileName string) string {
 	return fmt.Sprintf("user/%d/profile/%s", userID, pictureFileName)
+}
+
+func (path *BucketPath) GetTicketImagePath(ticketID uint, imageFilename string) string {
+	return fmt.Sprintf("tickets/%d/%s", ticketID, imageFilename)
 }
