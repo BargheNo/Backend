@@ -80,7 +80,7 @@ func (userService *UserService) passwordValidation(password string) error {
 	return nil
 }
 
-func (userService *UserService) validateEmail(email string) error {
+func (userService *UserService) validateDuplicateEmail(email string) error {
 	var conflictErrors exception.ConflictErrors
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(email)
 	_, exist := userService.userCacheRepository.Get(context.Background(), redisKey)
@@ -98,7 +98,7 @@ func (userService *UserService) validateEmail(email string) error {
 	return nil
 }
 
-func (userService *UserService) validatePhone(phone string) error {
+func (userService *UserService) validateDuplicatePhone(phone string) error {
 	var conflictErrors exception.ConflictErrors
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(phone)
 	_, exist := userService.userCacheRepository.Get(context.Background(), redisKey)
@@ -130,7 +130,7 @@ func (userService *UserService) GetUserCredential(userID uint) userdto.Credentia
 }
 
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) {
-	err := userService.validatePhone(registerInfo.Phone)
+	err := userService.validateDuplicatePhone(registerInfo.Phone)
 	if err != nil {
 		panic(err)
 	}
@@ -297,7 +297,7 @@ func (userService *UserService) CompleteRegister(completeRegisterInfo userdto.Co
 		panic(notFoundError)
 	}
 	if completeRegisterInfo.Email != "" {
-		err := userService.validateEmail(completeRegisterInfo.Email)
+		err := userService.validateDuplicateEmail(completeRegisterInfo.Email)
 		if err != nil {
 			panic(err)
 		}
@@ -333,6 +333,34 @@ func (userService *UserService) CompleteRegister(completeRegisterInfo userdto.Co
 		user.ProfilePicPath = profilePicPath
 	}
 	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (userService *UserService) VerifyEmail(verifyInfo userdto.VerifyEmailRequest) {
+	var conflictErrors exception.ConflictErrors
+	user, userExist := userService.userRepository.FindUserByID(userService.db, verifyInfo.UserID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if !user.PhoneVerified {
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
+		panic(conflictErrors)
+	}
+	if user.EmailVerified {
+		conflictErrors.Add(userService.constants.Field.Email, userService.constants.Tag.AlreadyRegistered)
+		panic(conflictErrors)
+	}
+
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Email)
+	err := userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
+	if err != nil {
+		panic(err)
+	}
+	user.EmailVerified = true
+	err = userService.userRepository.UpdateUser(userService.db, user)
 	if err != nil {
 		panic(err)
 	}

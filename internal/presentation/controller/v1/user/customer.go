@@ -56,7 +56,23 @@ func (userController *CustomerUserController) CompleteRegister(ctx *gin.Context)
 }
 
 func (userController *GeneralUserController) VerifyEmail(ctx *gin.Context) {
-	// some code here ...
+	type verifyEmailParams struct {
+		Email string `json:"email" validate:"required,email"`
+		OTP   string `json:"otp" validate:"required"`
+	}
+	params := controller.Validated[verifyEmailParams](ctx)
+	userID, _ := ctx.Get(userController.constants.Context.ID)
+
+	verifyOTPInfo := userdto.VerifyEmailRequest{
+		UserID: userID.(uint),
+		Email:  params.Email,
+		OTP:    params.OTP,
+	}
+	userController.userService.VerifyEmail(verifyOTPInfo)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.emailVerification")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (userController *CustomerUserController) ResetPassword(ctx *gin.Context) {

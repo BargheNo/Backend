@@ -26,6 +26,7 @@ var English = map[string]interface{}{
 	"panelName":           "panel name",
 	"panel":               "panel",
 	"maintenanceRequest":  "maintenance request",
+	"email":               "email",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -87,6 +88,7 @@ var English = map[string]interface{}{
 		"addMaintenanceRecord":      "Maintenance record has been successfully added.",
 		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
 		"completeRegister":          "Your registration has been completed successfully.",
+		"emailVerification":         "Your email has been successfully verified.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

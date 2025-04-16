@@ -14,6 +14,12 @@ type VerifyPhoneRequest struct {
 	OTP   string
 }
 
+type VerifyEmailRequest struct {
+	UserID uint
+	Email  string
+	OTP    string
+}
+
 type LoginRequest struct {
 	Phone    string
 	Password string
