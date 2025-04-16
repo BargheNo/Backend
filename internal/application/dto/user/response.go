@@ -14,9 +14,12 @@ type UserInfoResponse struct {
 }
 
 type CredentialResponse struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Phone     string `json:"phone"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Phone      string `json:"phone"`
+	Email      string `json:"email"`
+	NationalID string `json:"nationalID"`
+	ProfilePic string `json:"profilePic"`
 }
 
 type UserResponse struct {

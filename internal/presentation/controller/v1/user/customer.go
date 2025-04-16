@@ -28,6 +28,12 @@ func NewCustomerUserController(
 	}
 }
 
+func (userController *CustomerUserController) GetMyProfile(ctx *gin.Context) {
+	userID, _ := ctx.Get(userController.constants.Context.ID)
+	profile := userController.userService.GetUserCredential(userID.(uint))
+	controller.Response(ctx, 200, "", profile)
+}
+
 func (userController *CustomerUserController) CompleteRegister(ctx *gin.Context) {
 	type resetPasswordParams struct {
 		Email        string                `form:"email" validate:"omitempty,email"`

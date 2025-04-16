@@ -153,10 +153,17 @@ func (userService *UserService) GetUserCredential(userID uint) userdto.Credentia
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
 		panic(notFoundError)
 	}
+	profilePic := ""
+	if user.ProfilePicPath != "" {
+		profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+	}
 	return userdto.CredentialResponse{
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Phone:     user.Phone,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Phone:      user.Phone,
+		Email:      user.Email,
+		NationalID: user.NationalCode,
+		ProfilePic: profilePic,
 	}
 }
 
