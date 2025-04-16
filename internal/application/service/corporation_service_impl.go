@@ -63,10 +63,17 @@ func (corporationService *CorporationService) CheckApplicantAccess(corporationID
 }
 
 func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationDetailsResponse {
-	corporationService.userService.GetUserCredential(registerInfo.ApplicantID)
+	exist := corporationService.userService.IsUserActive(registerInfo.ApplicantID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
+		}
+		panic(forbiddenError)
+	}
 	activeStatus := []enum.CorporationStatus{enum.CorpStatusApproved, enum.CorpStatusAwaitingApproval}
 	var conflictErrors exception.ConflictErrors
-	_, exist := corporationService.corporationRepository.FindCorporationByName(corporationService.db, registerInfo.Name, activeStatus)
+	_, exist = corporationService.corporationRepository.FindCorporationByName(corporationService.db, registerInfo.Name, activeStatus)
 	if exist {
 		conflictErrors.Add(corporationService.constants.Field.Name, corporationService.constants.Tag.AlreadyExist)
 	}
@@ -191,7 +198,7 @@ func (corporationService *CorporationService) DeleteAddress(addressInfo corporat
 }
 
 func (corporationService *CorporationService) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationInfoResponse {
-	corporationService.userService.GetUserCredential(requestInfo.UserID)
+	corporationService.userService.DoesUserExist(requestInfo.UserID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}

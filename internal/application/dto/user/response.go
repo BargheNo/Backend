@@ -20,6 +20,7 @@ type CredentialResponse struct {
 	Email      string `json:"email"`
 	NationalID string `json:"nationalID"`
 	ProfilePic string `json:"profilePic"`
+	Status     string `json:"status"`
 }
 
 type UserResponse struct {

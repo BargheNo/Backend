@@ -147,6 +147,24 @@ func (userService *UserService) enterNewEmail(firstName, lastName, email, emailS
 	userService.emailService.SendEmail(email, emailSubject, templateFile, data)
 }
 
+func (userService *UserService) DoesUserExist(userID uint) {
+	_, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+}
+
+func (userService *UserService) IsUserActive(userID uint) bool {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	isActive := enum.UserStatusActive == user.Status
+	return isActive
+}
+
 func (userService *UserService) GetUserCredential(userID uint) userdto.CredentialResponse {
 	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
 	if !userExist {
@@ -164,6 +182,7 @@ func (userService *UserService) GetUserCredential(userID uint) userdto.Credentia
 		Email:      user.Email,
 		NationalID: user.NationalCode,
 		ProfilePic: profilePic,
+		Status:     user.Status.String(),
 	}
 }
 

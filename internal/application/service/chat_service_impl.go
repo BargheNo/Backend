@@ -79,7 +79,14 @@ func (chatService *ChatService) validateRoomParticipantAccess(senderID, memberID
 }
 
 func (chatService *ChatService) SaveMessage(roomID, senderID uint, content string) {
-	chatService.userService.GetUserCredential(senderID)
+	exist := chatService.userService.IsUserActive(senderID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: chatService.constants.Field.Room,
+		}
+		panic(forbiddenError)
+	}
 	room, exist := chatService.chatRepository.GetRoomByID(chatService.db, roomID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: chatService.constants.Field.Room}
@@ -97,7 +104,14 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 }
 
 func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRequest) []chatdto.RoomMessagesResponse {
-	chatService.userService.GetUserCredential(request.UserID)
+	exist := chatService.userService.IsUserActive(request.UserID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: chatService.constants.Field.Room,
+		}
+		panic(forbiddenError)
+	}
 	room, exist := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: chatService.constants.Field.Room}
