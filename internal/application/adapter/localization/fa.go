@@ -26,6 +26,7 @@ var Persian = map[string]interface{}{
 	"panelName":           "نام پنل",
 	"panel":               "پنل",
 	"maintenanceRequest":  "درخواست تعمیر",
+	"ticket":              "درخواست پشتیبانی",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -85,5 +86,7 @@ var Persian = map[string]interface{}{
 		"maintenanceRequest":        "درخواست نگهداری شما با موفقیت ثبت شد.",
 		"addMaintenanceRecord":      "سابقه نگهداری با موفقیت ثبت شد.",
 		"maintenanceRequestHandled": "درخواست نگهداری با موفقیت انجام شد.",
+		"createTicket":              "درخواست شما با موفقیت ثبت شد.",
+		"createTicketComment":       "نظر شما با موفقیت ثبت شد.",
 	},
 }
