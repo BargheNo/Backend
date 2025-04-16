@@ -55,7 +55,7 @@ func (userController *CustomerUserController) CompleteRegister(ctx *gin.Context)
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (userController *GeneralUserController) VerifyEmail(ctx *gin.Context) {
+func (userController *CustomerUserController) VerifyEmail(ctx *gin.Context) {
 	type verifyEmailParams struct {
 		Email string `json:"email" validate:"required,email"`
 		OTP   string `json:"otp" validate:"required"`
@@ -90,5 +90,36 @@ func (userController *CustomerUserController) ResetPassword(ctx *gin.Context) {
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.resetPassword")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (userController *CustomerUserController) UpdateProfile(ctx *gin.Context) {
+	type updateProfileParams struct {
+		FirstName    *string               `form:"firstName" validate:"omitempty"`
+		LastName     *string               `form:"lastName" validate:"omitempty"`
+		Email        *string               `form:"email" validate:"omitempty,email"`
+		NationalCode *string               `form:"nationalCode" validate:"omitempty"`
+		ProfilePic   *multipart.FileHeader `form:"profilePic" validate:"omitempty"`
+	}
+	params := controller.Validated[updateProfileParams](ctx)
+	userID, _ := ctx.Get(userController.constants.Context.ID)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+
+	templateFile := controller.GetLocalizedTemplateFile(ctx, userController.constants.Context.Translator, userController.constants.EmailTemplates.PersianFileName, userController.constants.EmailTemplates.EnglishFileName)
+	emailSubject, _ := trans.Translate("emailSubject.emailConfirmation")
+	profileInfo := userdto.UpdateProfileRequest{
+		UserID:       userID.(uint),
+		FirstName:    params.FirstName,
+		LastName:     params.LastName,
+		Email:        params.Email,
+		NationalCode: params.NationalCode,
+		ProfilePic:   params.ProfilePic,
+		TemplateFile: "email_confirmation/" + templateFile,
+		EmailSubject: emailSubject,
+	}
+	userController.userService.UpdateProfile(profileInfo)
+
+	message, _ := trans.Translate("successMessage.updateProfile")
 	controller.Response(ctx, 200, message, nil)
 }

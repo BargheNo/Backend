@@ -10,8 +10,8 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		profile.PUT("/password", app.Controllers.Customer.UserController.ResetPassword)
 		profile.POST("/complete", app.Controllers.Customer.UserController.CompleteRegister)
-		profile.POST("/verify/email", app.Controllers.General.UserController.VerifyEmail)
-		// auth.POST("/verify/email", app.Controllers.General.UserController.VerifyEmail)
+		profile.POST("/verify/email", app.Controllers.Customer.UserController.VerifyEmail)
+		profile.PUT("", app.Controllers.Customer.UserController.UpdateProfile)
 	}
 
 	corp := routerGroup.Group("/corp")

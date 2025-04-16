@@ -13,4 +13,5 @@ type UserService interface {
 	VerifyEmail(verifyOTPInfo userdto.VerifyEmailRequest)
 	ResetPassword(resetPassInfo userdto.ResetPasswordRequest)
 	FindUserByPhone(phone string) userdto.UserResponse
+	UpdateProfile(profileInfo userdto.UpdateProfileRequest)
 }

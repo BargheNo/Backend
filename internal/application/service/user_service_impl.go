@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
+	"github.com/BargheNo/Backend/internal/domain/logger"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -114,6 +116,35 @@ func (userService *UserService) validateDuplicatePhone(phone string) error {
 	}
 
 	return nil
+}
+
+func (userService *UserService) enterNewEmail(firstName, lastName, email, emailSubject, templateFile string) {
+	err := userService.validateDuplicateEmail(email)
+	if err != nil {
+		panic(err)
+	}
+
+	otp, expiryMinute := userService.otpService.GenerateOTP()
+	redisKey := userService.constants.RedisKey.GenerateOTPKey(email)
+	err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
+	if err != nil {
+		panic(err)
+	}
+
+	data := struct {
+		FirstName    string
+		LastName     string
+		OTP          string
+		ExpiryMinute int
+		Year         int
+	}{
+		FirstName:    firstName,
+		LastName:     lastName,
+		OTP:          otp,
+		ExpiryMinute: expiryMinute,
+		Year:         time.Now().Year(),
+	}
+	userService.emailService.SendEmail(email, emailSubject, templateFile, data)
 }
 
 func (userService *UserService) GetUserCredential(userID uint) userdto.CredentialResponse {
@@ -297,32 +328,7 @@ func (userService *UserService) CompleteRegister(completeRegisterInfo userdto.Co
 		panic(notFoundError)
 	}
 	if completeRegisterInfo.Email != "" {
-		err := userService.validateDuplicateEmail(completeRegisterInfo.Email)
-		if err != nil {
-			panic(err)
-		}
-
-		otp, expiryMinute := userService.otpService.GenerateOTP()
-		redisKey := userService.constants.RedisKey.GenerateOTPKey(completeRegisterInfo.Email)
-		err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
-		if err != nil {
-			panic(err)
-		}
-
-		data := struct {
-			FirstName    string
-			LastName     string
-			OTP          string
-			ExpiryMinute int
-			Year         int
-		}{
-			FirstName:    user.FirstName,
-			LastName:     user.LastName,
-			OTP:          otp,
-			ExpiryMinute: expiryMinute,
-			Year:         time.Now().Year(),
-		}
-		userService.emailService.SendEmail(completeRegisterInfo.Email, completeRegisterInfo.EmailSubject, completeRegisterInfo.TemplateFile, data)
+		userService.enterNewEmail(user.FirstName, user.LastName, completeRegisterInfo.Email, completeRegisterInfo.EmailSubject, completeRegisterInfo.TemplateFile)
 	}
 	user.Email = completeRegisterInfo.Email
 	user.EmailVerified = false
@@ -407,5 +413,41 @@ func (userService *UserService) FindUserByPhone(phone string) userdto.UserRespon
 	}
 	return userdto.UserResponse{
 		ID: user.ID,
+	}
+}
+
+func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileRequest) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, profileInfo.UserID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+
+	if profileInfo.FirstName != nil {
+		user.FirstName = *profileInfo.FirstName
+	}
+	if profileInfo.LastName != nil {
+		user.LastName = *profileInfo.LastName
+	}
+	if profileInfo.Email != nil && user.Email != *profileInfo.Email {
+		userService.enterNewEmail(user.FirstName, user.LastName, *profileInfo.Email, profileInfo.EmailSubject, profileInfo.TemplateFile)
+		user.Email = *profileInfo.Email
+		user.EmailVerified = false
+	}
+	if profileInfo.NationalCode != nil {
+		user.NationalCode = *profileInfo.NationalCode
+	}
+	if profileInfo.ProfilePic != nil {
+		profilePicPath := userService.constants.S3BucketPath.GetUserProfilePath(profileInfo.UserID, profileInfo.ProfilePic.Filename)
+		userService.s3Storage.UploadObject(enum.ProfilePic, profilePicPath, profileInfo.ProfilePic)
+		err := userService.s3Storage.DeleteObject(enum.ProfilePic, user.ProfilePicPath)
+		if err != nil {
+			loggerimpl.GetLogger().Error("unable to delete object", logger.Error("error:", err))
+		}
+		user.ProfilePicPath = profilePicPath
+	}
+	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
 	}
 }

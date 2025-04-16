@@ -42,3 +42,14 @@ type ResetPasswordRequest struct {
 	ID       uint
 	Password string
 }
+
+type UpdateProfileRequest struct {
+	UserID       uint
+	FirstName    *string
+	LastName     *string
+	Email        *string
+	NationalCode *string
+	ProfilePic   *multipart.FileHeader
+	TemplateFile string
+	EmailSubject string
+}
