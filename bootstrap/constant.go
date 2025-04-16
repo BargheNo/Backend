@@ -10,6 +10,7 @@ type Constants struct {
 	Field               ErrorField
 	Tag                 ErrorTag
 	SMSTemplates        SMSTemplates
+	EmailTemplates      EmailTemplates
 	JWTKeysPath         JWTKeysPath
 	Metrics             Metrics
 	AddressOwners       AddressOwners
