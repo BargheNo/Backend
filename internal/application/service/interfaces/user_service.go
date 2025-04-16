@@ -3,7 +3,7 @@ package service
 import userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 
 type UserService interface {
-	DoesUserExist(userID uint) bool
+	DoesUserExist(userID uint)
 	IsUserActive(userID uint) bool
 	GetUserCredential(userID uint) userdto.CredentialResponse
 	Register(registerInfo userdto.BasicRegisterRequest)

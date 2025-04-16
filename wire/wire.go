@@ -67,6 +67,7 @@ var RepositoryProviderSet = wire.NewSet(
 )
 
 var ServiceProviderSet = wire.NewSet(
+	wire.Struct(new(serviceimpl.UserServiceDeps), "*"),
 	serviceimpl.NewUserService,
 	serviceimpl.NewOTPService,
 	sms.NewSMSService,

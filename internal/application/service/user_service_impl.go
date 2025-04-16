@@ -32,27 +32,29 @@ type UserService struct {
 	db                  database.Database
 }
 
-func NewUserService(
-	constants *bootstrap.Constants,
-	otpService service.OTPService,
-	jwtService service.JWTService,
-	smsService service.SMSService,
-	emailService service.EmailService,
-	s3Storage s3.S3Storage,
-	userRepository repository.UserRepository,
-	userCacheRepository cacherepository.UserCacheRepository,
-	db database.Database,
-) *UserService {
+type UserServiceDeps struct {
+	Constants           *bootstrap.Constants
+	OTPService          service.OTPService
+	JWTService          service.JWTService
+	SMSService          service.SMSService
+	EmailService        service.EmailService
+	S3Storage           s3.S3Storage
+	UserRepository      repository.UserRepository
+	UserCacheRepository cacherepository.UserCacheRepository
+	DB                  database.Database
+}
+
+func NewUserService(deps UserServiceDeps) *UserService {
 	return &UserService{
-		constants:           constants,
-		otpService:          otpService,
-		jwtService:          jwtService,
-		smsService:          smsService,
-		emailService:        emailService,
-		s3Storage:           s3Storage,
-		userRepository:      userRepository,
-		userCacheRepository: userCacheRepository,
-		db:                  db,
+		constants:           deps.Constants,
+		otpService:          deps.OTPService,
+		jwtService:          deps.JWTService,
+		smsService:          deps.SMSService,
+		emailService:        deps.EmailService,
+		s3Storage:           deps.S3Storage,
+		userRepository:      deps.UserRepository,
+		userCacheRepository: deps.UserCacheRepository,
+		db:                  deps.DB,
 	}
 }
 
