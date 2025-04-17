@@ -25,6 +25,12 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		bids.GET("/list", app.Controllers.Corporation.BidController.GetBids)
 	}
 
+	chat := routerGroup.Group("/chat")
+	{
+		chat.GET("/room/:corporationID", app.Controllers.Corporation.ChatController.GetRoom)
+		chat.GET("/rooms/:corporationID", app.Controllers.Corporation.ChatController.GetRooms)
+	}
+
 	requests := routerGroup.Group(":corporationID/requests")
 	{
 		requests.GET("/installation", app.Controllers.Corporation.InstallationController.GetInstallationRequests)

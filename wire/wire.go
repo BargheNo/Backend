@@ -135,6 +135,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 var CorporationControllerProviderSet = wire.NewSet(
 	corporation.NewCorporationCorporationController,
 	installation.NewCorporationInstallationController,
+	chat.NewCorporationChatController,
 	bid.NewCorporationBidController,
 	maintenance.NewCorporationMaintenanceController,
 	wire.Struct(new(CorporationControllers), "*"),
@@ -282,6 +283,7 @@ type CustomerControllers struct {
 type CorporationControllers struct {
 	CorporationController  *corporation.CorporationCorporationController
 	InstallationController *installation.CorporationInstallationController
+	ChatController         *chat.CorporationChatController
 	BidController          *bid.CorporationBidController
 	MaintenanceController  *maintenance.CorporationMaintenanceController
 }

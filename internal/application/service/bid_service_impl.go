@@ -40,10 +40,13 @@ func NewBidService(
 
 func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	var conflictErrors exception.ConflictErrors
-	corporation := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
-	if corporation.Status != enum.CorpStatusApproved {
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
-		panic(conflictErrors)
+	approved := bidService.corporationService.ISCorporationApproved(bidInfo.CorporationID)
+	if !approved {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: bidService.constants.Field.Bid,
+		}
+		panic(forbiddenError)
 	}
 	bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.BidderID)
 
@@ -77,11 +80,15 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 
 func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 	var conflictErrors exception.ConflictErrors
-	corporation := bidService.corporationService.GetCorporationByID(bidInfo.CorporationID)
-	if corporation.Status != enum.CorpStatusApproved {
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
-		panic(conflictErrors)
+	approved := bidService.corporationService.ISCorporationApproved(bidInfo.CorporationID)
+	if !approved {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: bidService.constants.Field.Bid,
+		}
+		panic(forbiddenError)
 	}
+
 	bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.BidderID)
 
 	request := bidService.installationService.GetInstallationRequest(bidInfo.InstallationRequestID)
@@ -113,12 +120,15 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 }
 
 func (bidService *BidService) GetCorporationBids(bidsRequest biddto.GetCorporationBidsRequest) []biddto.BidsResponse {
-	corporation := bidService.corporationService.GetCorporationByID(bidsRequest.CorporationID)
-	if corporation.Status != enum.CorpStatusApproved {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
-		panic(conflictErrors)
+	approved := bidService.corporationService.ISCorporationApproved(bidsRequest.CorporationID)
+	if !approved {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: bidService.constants.Field.Bid,
+		}
+		panic(forbiddenError)
 	}
+
 	bidService.corporationService.CheckApplicantAccess(bidsRequest.CorporationID, bidsRequest.UserID)
 
 	bids := bidService.bidRepository.FindCorporationBids(bidService.db, bidsRequest.CorporationID, bidsRequest.Offset, bidsRequest.Limit)

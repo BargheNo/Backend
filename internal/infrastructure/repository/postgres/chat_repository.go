@@ -37,6 +37,19 @@ func (repo *ChatRepository) GetUserRooms(db database.Database, userID uint) []*e
 	return rooms
 }
 
+func (repo *ChatRepository) GetCorporationRooms(db database.Database, corporationID uint) []*entity.ChatRoom {
+	var rooms []*entity.ChatRoom
+	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&rooms)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(result.Error)
+	}
+	return rooms
+}
+
 func (repo *ChatRepository) GetUserAndCorpRoom(db database.Database, userID uint, corporationID uint) (*entity.ChatRoom, bool) {
 	var room entity.ChatRoom
 	result := db.GetDB().Where("customer_id = ? AND corporation_id = ?", userID, corporationID).First(&room)

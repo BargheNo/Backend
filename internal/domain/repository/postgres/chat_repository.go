@@ -8,6 +8,7 @@ import (
 type ChatRepository interface {
 	GetRoomByID(db database.Database, roomID uint) (*entity.ChatRoom, bool)
 	GetUserRooms(db database.Database, userID uint) []*entity.ChatRoom
+	GetCorporationRooms(db database.Database, corporationID uint) []*entity.ChatRoom
 	GetUserAndCorpRoom(db database.Database, userID uint, corporationID uint) (*entity.ChatRoom, bool)
 	GetRoomMessages(db database.Database, roomID uint) []*entity.ChatMessage
 	CreateRoom(db database.Database, room *entity.ChatRoom) error

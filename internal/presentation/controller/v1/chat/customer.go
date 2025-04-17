@@ -40,7 +40,7 @@ func (chatController *CustomerChatController) CreateOrGetRoom(ctx *gin.Context) 
 	params := controller.Validated[roomParams](ctx)
 	userID, _ := ctx.Get(chatController.constants.Context.ID)
 
-	roomInfo := chatdto.CreateOrGetRoomRequest{
+	roomInfo := chatdto.CreateOrGetUserRoomRequest{
 		CorporationID: params.CorporationID,
 		UserID:        userID.(uint),
 	}
