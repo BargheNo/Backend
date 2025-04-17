@@ -8,6 +8,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type ReportService struct {
@@ -50,4 +51,22 @@ func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdt
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (reportService *ReportService) GetAdminReports(requestInfo reportdto.ReportListRequest) []reportdto.MaintenanceReportResponse {
+	reportService.userService.GetUserCredential(requestInfo.OwnerID)
+	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	reports := reportService.reportRepository.GetReports(reportService.db, paginationModifier, sortingModifier)
+	reportResponses := make([]reportdto.MaintenanceReportResponse, len(reports))
+	for i, report := range reports {
+		maintenanceRecord := reportService.maintenanceService.GetMaintenanceRecordByID(report.ObjectID)
+		reportResponses[i] = reportdto.MaintenanceReportResponse{
+			ID:                report.ID,
+			Description:       report.Description,
+			MaintenanceRecord: maintenanceRecord,
+		}
+	}
+
+	return reportResponses
 }

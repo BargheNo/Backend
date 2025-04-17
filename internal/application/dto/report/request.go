@@ -7,3 +7,9 @@ type CreateReportRequest struct {
 	ReportedByID   uint
 	ReportedByType string
 }
+
+type ReportListRequest struct {
+	OwnerID uint
+	Offset  int
+	Limit   int
+}

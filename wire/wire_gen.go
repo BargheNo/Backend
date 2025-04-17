@@ -127,8 +127,10 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		MaintenanceController:  corporationMaintenanceController,
 	}
 	adminTicketController := ticket.NewAdminTicketController(constants, pagination, userService, ticketService)
+	adminReportController := report.NewAdminReportController(constants, pagination, reportService)
 	adminControllers := &AdminControllers{
 		TicketController: adminTicketController,
+		ReportController: adminReportController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -189,7 +191,7 @@ var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, 
 
 var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, wire.Struct(new(CorporationControllers), "*"))
 
-var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, wire.Struct(new(AdminControllers), "*"))
+var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, report.NewAdminReportController, wire.Struct(new(AdminControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -309,6 +311,7 @@ type CorporationControllers struct {
 
 type AdminControllers struct {
 	TicketController *ticket.AdminTicketController
+	ReportController *report.AdminReportController
 }
 
 type Controllers struct {

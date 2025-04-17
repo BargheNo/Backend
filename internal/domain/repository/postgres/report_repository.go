@@ -7,4 +7,5 @@ import (
 
 type ReportRepository interface {
 	CreateReport(db database.Database, report *entity.Report) error
+	GetReports(db database.Database, opts ...QueryModifier) []*entity.Report
 }
