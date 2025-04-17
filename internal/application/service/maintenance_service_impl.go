@@ -53,7 +53,7 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestIn
 		}
 		panic(forbiddenError)
 	}
-	maintenanceService.corporationService.GetCorporationByID(requestInfo.CorporationID)
+	maintenanceService.corporationService.DoesCorporationExist(requestInfo.CorporationID)
 	panel := maintenanceService.installationService.GetPanel(requestInfo.PanelID)
 
 	if panel.CustomerID != requestInfo.OwnerID {
@@ -125,7 +125,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) []maintenancedto.CorporationMaintenanceResponse {
 	maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
-	maintenanceService.corporationService.GetCorporationByID(listInfo.CorporationID)
+	maintenanceService.corporationService.DoesCorporationExist(listInfo.CorporationID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByCorporationID(maintenanceService.db, listInfo.CorporationID, paginationModifier, sortingModifier)

@@ -87,6 +87,8 @@ type ErrorTag struct {
 	AlreadyExist           string
 	ForbiddenStatus        string
 	Pending                string
+	AlreadyBlocked         string
+	AlreadyActive          string
 }
 
 type SMSTemplates struct {
@@ -195,19 +197,21 @@ func NewConstants() *Constants {
 			AlreadyExist:           "alreadyExist",
 			ForbiddenStatus:        "forbiddenStatus",
 			Pending:                "pending",
+			AlreadyBlocked:         "alreadyBlocked",
+			AlreadyActive:          "alreadyActive",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
 		},
 		JWTKeysPath: JWTKeysPath{
-			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
-			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
-			// PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
-			// PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
+			// PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
+			// PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
+			PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
+			PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
 		},
 		EmailTemplates: EmailTemplates{
-			// Path:            "../../internal/application/service/communication/email/templates/",
-			Path:            "./internal/application/service/communication/email/templates/",
+			Path: "../../internal/application/service/communication/email/templates/",
+			// Path:            "./internal/application/service/communication/email/templates/",
 			PersianFileName: "fa.html",
 			EnglishFileName: "en.html",
 		},

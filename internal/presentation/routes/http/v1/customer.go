@@ -43,6 +43,8 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		chat.POST("/room/:corporationID", app.Controllers.Customer.ChatController.CreateOrGetRoom)
 		chat.GET("/room", app.Controllers.Customer.ChatController.GetUserRooms)
 		chat.GET("/room/:roomID/messages", app.Controllers.Customer.ChatController.GetMessages)
+		chat.PUT("/room/:roomID/block", app.Controllers.Customer.ChatController.BlockRoom)
+		chat.PUT("/room/:roomID/unblock", app.Controllers.Customer.ChatController.UnBlockRoom)
 	}
 
 	notification := routerGroup.Group("/notification")
