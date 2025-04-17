@@ -19,4 +19,6 @@ type GetCorporationRoomsRequest struct {
 type GetRoomMessageRequest struct {
 	RoomID uint
 	UserID uint
+	Offset int
+	Limit  int
 }

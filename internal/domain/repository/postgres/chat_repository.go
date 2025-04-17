@@ -10,7 +10,7 @@ type ChatRepository interface {
 	GetUserRooms(db database.Database, userID uint) []*entity.ChatRoom
 	GetCorporationRooms(db database.Database, corporationID uint) []*entity.ChatRoom
 	GetUserAndCorpRoom(db database.Database, userID uint, corporationID uint) (*entity.ChatRoom, bool)
-	GetRoomMessages(db database.Database, roomID uint) []*entity.ChatMessage
+	GetRoomMessages(db database.Database, roomID uint, opts ...QueryModifier) []*entity.ChatMessage
 	CreateRoom(db database.Database, room *entity.ChatRoom) error
 	CreateMessage(db database.Database, message *entity.ChatMessage) error
 }

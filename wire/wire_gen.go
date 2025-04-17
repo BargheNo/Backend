@@ -105,7 +105,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	bidService := serviceimpl.NewBidService(constants, installationService, userService, corporationService, bidRepository, postgresDatabase)
 	customerBidController := bid.NewCustomerBidController(constants, pagination, bidService)
 	websocketSetting := ProvideWebsocketSetting(container)
-	customerChatController := chat.NewCustomerChatController(constants, websocketSetting, chatService, jwtService, hub)
+	customerChatController := chat.NewCustomerChatController(constants, pagination, websocketSetting, chatService, jwtService, hub)
 	notificationRepository := repositoryimpl.NewNotificationRepository()
 	notificationService := serviceimpl.NewNotificationService(constants, userService, notificationRepository, hub, postgresDatabase)
 	customerNotificationController := notification.NewCustomerNotificationController(constants, websocketSetting, notificationService, jwtService, hub)

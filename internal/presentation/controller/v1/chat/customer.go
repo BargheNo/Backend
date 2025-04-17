@@ -11,6 +11,7 @@ import (
 
 type CustomerChatController struct {
 	constants        *bootstrap.Constants
+	pagination       *bootstrap.Pagination
 	websocketSetting *bootstrap.WebsocketSetting
 	chatService      service.ChatService
 	jwtService       service.JWTService
@@ -19,6 +20,7 @@ type CustomerChatController struct {
 
 func NewCustomerChatController(
 	constants *bootstrap.Constants,
+	pagination *bootstrap.Pagination,
 	websocketSetting *bootstrap.WebsocketSetting,
 	chatService service.ChatService,
 	jwtService service.JWTService,
@@ -26,6 +28,7 @@ func NewCustomerChatController(
 ) *CustomerChatController {
 	return &CustomerChatController{
 		constants:        constants,
+		pagination:       pagination,
 		websocketSetting: websocketSetting,
 		chatService:      chatService,
 		jwtService:       jwtService,
@@ -60,11 +63,15 @@ func (chatController *CustomerChatController) GetMessages(ctx *gin.Context) {
 		RoomID uint `uri:"roomID" validate:"required"`
 	}
 	userID, _ := ctx.Get(chatController.constants.Context.ID)
+	pagination := controller.GetPagination(ctx, chatController.pagination.DefaultPage, chatController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
 	param := controller.Validated[getMessagesParams](ctx)
 
 	roomInfo := chatdto.GetRoomMessageRequest{
 		RoomID: param.RoomID,
 		UserID: userID.(uint),
+		Offset: offset,
+		Limit:  limit,
 	}
 	messages := chatController.chatService.GetRoomMessages(roomInfo)
 

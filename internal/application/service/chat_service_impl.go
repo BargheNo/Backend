@@ -8,6 +8,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type ChatService struct {
@@ -158,7 +159,9 @@ func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRe
 		panic(notFoundError)
 	}
 	chatService.validateRoomParticipantAccess(request.UserID, room.CustomerID, room.CorporationID)
-	messages := chatService.chatRepository.GetRoomMessages(chatService.db, request.RoomID)
+	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	messages := chatService.chatRepository.GetRoomMessages(chatService.db, request.RoomID, paginationModifier, sortingModifier)
 	messagesResponse := make([]chatdto.RoomMessagesResponse, len(messages))
 	for i, message := range messages {
 		sender := chatService.userService.GetUserCredential(message.SenderID)

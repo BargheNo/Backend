@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -62,9 +63,13 @@ func (repo *ChatRepository) GetUserAndCorpRoom(db database.Database, userID uint
 	return &room, true
 }
 
-func (repo *ChatRepository) GetRoomMessages(db database.Database, roomID uint) []*entity.ChatMessage {
+func (repo *ChatRepository) GetRoomMessages(db database.Database, roomID uint, opts ...repository.QueryModifier) []*entity.ChatMessage {
 	var messages []*entity.ChatMessage
-	result := db.GetDB().Where("room_id = ?", roomID).Find(&messages)
+	query := db.GetDB().Where("room_id = ?", roomID)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&messages)
 	if result.Error != nil {
 		panic(result.Error)
 	}
