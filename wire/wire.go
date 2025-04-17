@@ -143,6 +143,7 @@ var CorporationControllerProviderSet = wire.NewSet(
 
 var AdminControllerProviderSet = wire.NewSet(
 	ticket.NewAdminTicketController,
+	user.NewAdminUserController,
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -290,6 +291,7 @@ type CorporationControllers struct {
 
 type AdminControllers struct {
 	TicketController *ticket.AdminTicketController
+	UserController   *user.AdminUserController
 }
 
 type Controllers struct {

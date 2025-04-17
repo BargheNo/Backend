@@ -92,7 +92,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		AddressController:     generalAddressController,
 		CorporationController: generalCorporationController,
 	}
-	customerUserController := user.NewCustomerUserController(constants, userService, emailService)
+	customerUserController := user.NewCustomerUserController(constants, userService)
 	pagination := ProvidePaginationConfig(container)
 	chatRepository := repositoryimpl.NewChatRepository()
 	chatService := serviceimpl.NewChatService(constants, userService, corporationService, chatRepository, postgresDatabase)
@@ -139,8 +139,10 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		MaintenanceController:  corporationMaintenanceController,
 	}
 	adminTicketController := ticket.NewAdminTicketController(constants, pagination, userService, ticketService)
+	adminUserController := user.NewAdminUserController(constants, userService)
 	adminControllers := &AdminControllers{
 		TicketController: adminTicketController,
+		UserController:   adminUserController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -201,7 +203,7 @@ var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, 
 
 var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, chat.NewCorporationChatController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, wire.Struct(new(CorporationControllers), "*"))
 
-var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, wire.Struct(new(AdminControllers), "*"))
+var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, user.NewAdminUserController, wire.Struct(new(AdminControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -331,6 +333,7 @@ type CorporationControllers struct {
 
 type AdminControllers struct {
 	TicketController *ticket.AdminTicketController
+	UserController   *user.AdminUserController
 }
 
 type Controllers struct {
