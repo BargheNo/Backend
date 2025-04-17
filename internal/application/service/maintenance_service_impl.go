@@ -345,3 +345,35 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPan
 	}
 	return response
 }
+
+func (maintenanceService *MaintenanceService) GetMaintenanceRecordByID(maintenanceRecordID uint) maintenancedto.MaintenanceRecordResponse {
+	record := maintenanceService.maintenanceRepository.FindMaintenanceRecordByID(maintenanceService.db, maintenanceRecordID)
+	if record == nil {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
+		panic(notFoundError)
+	}
+	panel := maintenanceService.installationService.GetPanel(record.PanelID)
+	address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
+	response := maintenancedto.MaintenanceRecordResponse{
+		ID:        record.ID,
+		RequestID: record.ID,
+		Panel: installationdto.CorporationPanelResponse{
+			ID:                   panel.ID,
+			PanelName:            panel.Name,
+			Power:                panel.Power,
+			Area:                 panel.Area,
+			BuildingType:         panel.BuildingType,
+			Tilt:                 panel.Tilt,
+			Azimuth:              panel.Azimuth,
+			TotalNumberOfModules: panel.TotalNumberOfModules,
+			Address:              address,
+			OperatorName:         panel.Operator.FirstName + " " + panel.Operator.LastName,
+		},
+		OperatorID:    record.OperatorID,
+		CorporationID: record.CorporationID,
+		Title:         record.Title,
+		Details:       record.Details,
+		Date:          record.Date,
+	}
+	return response
+}

@@ -26,7 +26,10 @@ var English = map[string]interface{}{
 	"panelName":           "panel name",
 	"panel":               "panel",
 	"maintenanceRequest":  "maintenance request",
+	"maintenanceRecord":   "maintenance record",
 	"ticket":              "ticket",
+	"ticketComment":       "ticket comment",
+	"report":              "report",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -88,5 +91,6 @@ var English = map[string]interface{}{
 		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
 		"createTicket":              "Ticket has been successfully created.",
 		"createTicketComment":       "Ticket comment has been successfully created.",
+		"createReport":              "Report has been successfully created.",
 	},
 }

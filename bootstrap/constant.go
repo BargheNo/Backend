@@ -15,6 +15,8 @@ type Constants struct {
 	AddressOwners       AddressOwners
 	TicketOwners        TicketOwners
 	TicketCommentOwners TicketCommentOwners
+	ReportObjectTypes   ReportObjectTypes
+	ReportOwners        ReportOwners
 }
 
 type Context struct {
@@ -61,7 +63,10 @@ type ErrorField struct {
 	PanelName           string
 	Panel               string
 	MaintenanceRequest  string
+	MaintenanceRecord   string
 	Ticket              string
+	TicketComment       string
+	Report              string
 }
 
 type ErrorTag struct {
@@ -125,6 +130,14 @@ type TicketCommentOwners struct {
 	Admin       string
 }
 
+type ReportObjectTypes struct {
+	Maintenance string
+}
+
+type ReportOwners struct {
+	User string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
@@ -163,7 +176,10 @@ func NewConstants() *Constants {
 			PanelName:           "panelName",
 			Panel:               "panel",
 			MaintenanceRequest:  "maintenanceRequest",
+			MaintenanceRecord:   "maintenanceRecord",
 			Ticket:              "ticket",
+			TicketComment:       "ticketComment",
+			Report:              "report",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -220,6 +236,13 @@ func NewConstants() *Constants {
 			User:        "users",
 			Corporation: "corporations",
 			Admin:       "admins",
+		},
+
+		ReportObjectTypes: ReportObjectTypes{
+			Maintenance: "maintenance",
+		},
+		ReportOwners: ReportOwners{
+			User: "users",
 		},
 	}
 }
