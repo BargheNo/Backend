@@ -17,5 +17,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	report := routerGroup.Group("/report")
 	{
 		report.GET("", app.Controllers.Admin.ReportController.GetReports)
+		report.POST("resolve/:reportID", app.Controllers.Admin.ReportController.ResolveReport)
 	}
 }

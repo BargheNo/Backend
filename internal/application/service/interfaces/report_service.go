@@ -7,4 +7,5 @@ import (
 type ReportService interface {
 	CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest)
 	GetAdminReports(requestInfo reportdto.ReportListRequest) []reportdto.MaintenanceReportResponse
+	ResolveReport(requestInfo reportdto.ResolveReportRequest)
 }

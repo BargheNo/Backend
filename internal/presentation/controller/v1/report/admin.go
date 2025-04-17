@@ -39,3 +39,20 @@ func (reportController *AdminReportController) GetReports(ctx *gin.Context) {
 	reports := reportController.reportService.GetAdminReports(requestInfo)
 	controller.Response(ctx, 200, "success", reports)
 }
+
+func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {
+	type ResolveReportRequest struct {
+		ReportID uint `uri:"reportID" validate:"required"`
+	}
+	params := controller.Validated[ResolveReportRequest](ctx)
+	userID, _ := ctx.Get(reportController.constants.Context.ID)
+	requestInfo := reportdto.ResolveReportRequest{
+		ReportID: params.ReportID,
+		UserID:   userID.(uint),
+	}
+	reportController.reportService.ResolveReport(requestInfo)
+
+	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.reportResolved")
+	controller.Response(ctx, 200, message, nil)
+}

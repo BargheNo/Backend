@@ -62,6 +62,7 @@ var English = map[string]interface{}{
 		"forbiddenError":         "Forbidden: Access to {0} is not allowed",
 		"forbiddenStatus":        "Cannot do this action with this status.",
 		"pending":                "Your request is pending.",
+		"alreadyResolved":        "This {0} has been already resolved.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -92,5 +93,6 @@ var English = map[string]interface{}{
 		"createTicket":              "Ticket has been successfully created.",
 		"createTicketComment":       "Ticket comment has been successfully created.",
 		"createReport":              "Report has been successfully created.",
+		"reportResolved":            "Report has been successfully resolved.",
 	},
 }

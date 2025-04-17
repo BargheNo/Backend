@@ -32,3 +32,16 @@ func (repo *ReportRepository) GetReports(db database.Database, opts ...repositor
 	}
 	return reports
 }
+
+func (repo *ReportRepository) GetReportByID(db database.Database, id uint) (*entity.Report, bool) {
+	var report entity.Report
+	err := db.GetDB().Where("id = ?", id).First(&report).Error
+	if err != nil {
+		return nil, false
+	}
+	return &report, true
+}
+
+func (repo *ReportRepository) UpdateReport(db database.Database, report *entity.Report) error {
+	return db.GetDB().Save(report).Error
+}

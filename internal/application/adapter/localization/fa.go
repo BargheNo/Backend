@@ -62,6 +62,7 @@ var Persian = map[string]interface{}{
 		"forbiddenError":         "اجازه دسترسی به این {0} وجود ندارد.",
 		"forbiddenStatus":        "اجازه انجام این کار را در این وضعیت ندارید.",
 		"pending":                "این {0} حال بررسی است.",
+		"alreadyResolved":        "این {0} قبلا بررسی شده است.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
@@ -92,5 +93,6 @@ var Persian = map[string]interface{}{
 		"createTicket":              "درخواست شما با موفقیت ثبت شد.",
 		"createTicketComment":       "نظر شما با موفقیت ثبت شد.",
 		"createReport":              "گزارش شما با موفقیت ثبت شد.",
+		"reportResolved":            "گزارش شما با موفقیت بررسی شد.",
 	},
 }

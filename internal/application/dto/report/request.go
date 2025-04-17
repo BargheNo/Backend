@@ -13,3 +13,8 @@ type ReportListRequest struct {
 	Offset  int
 	Limit   int
 }
+
+type ResolveReportRequest struct {
+	ReportID uint
+	UserID   uint
+}

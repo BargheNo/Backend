@@ -6,6 +6,7 @@ import (
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
@@ -65,8 +66,28 @@ func (reportService *ReportService) GetAdminReports(requestInfo reportdto.Report
 			ID:                report.ID,
 			Description:       report.Description,
 			MaintenanceRecord: maintenanceRecord,
+			Status:            report.Status.String(),
 		}
 	}
 
 	return reportResponses
+}
+
+func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveReportRequest) {
+	reportService.userService.GetUserCredential(requestInfo.UserID)
+	report, exist := reportService.reportRepository.GetReportByID(reportService.db, requestInfo.ReportID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
+		panic(notFoundError)
+	}
+	if report.Status == enum.ReportStatusResolved {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(reportService.constants.Field.Report, reportService.constants.Tag.AlreadyResolved)
+		panic(conflictErrors)
+	}
+	report.Status = enum.ReportStatusResolved
+	err := reportService.reportRepository.UpdateReport(reportService.db, report)
+	if err != nil {
+		panic(err)
+	}
 }

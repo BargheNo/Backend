@@ -6,4 +6,5 @@ type MaintenanceReportResponse struct {
 	ID                uint
 	Description       string
 	MaintenanceRecord maintenancedto.MaintenanceRecordResponse
+	Status            string
 }

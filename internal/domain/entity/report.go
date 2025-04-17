@@ -11,6 +11,6 @@ type Report struct {
 	ObjectID       uint              `gorm:"not null;index"`
 	ObjectType     string            `gorm:"type:varchar(50);not null"`
 	ReportedByID   uint              `gorm:"not null;index"`
-	ReportedByType string            `gorm:"type:varchar(50);not null"`
-	Status         enum.ReportStatus `gorm:"type:varchar(50);not null"`
+	ReportedByType string            `gorm:"not null"`
+	Status         enum.ReportStatus `gorm:"not null"`
 }
