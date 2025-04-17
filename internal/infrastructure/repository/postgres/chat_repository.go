@@ -80,6 +80,10 @@ func (repo *ChatRepository) CreateRoom(db database.Database, room *entity.ChatRo
 	return db.GetDB().Create(&room).Error
 }
 
+func (repo *ChatRepository) UpdateRoom(db database.Database, room *entity.ChatRoom) error {
+	return db.GetDB().Save(&room).Error
+}
+
 func (repo *ChatRepository) CreateMessage(db database.Database, message *entity.ChatMessage) error {
 	return db.GetDB().Create(&message).Error
 }

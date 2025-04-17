@@ -29,6 +29,8 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 	{
 		chat.GET("/room/:corporationID", app.Controllers.Corporation.ChatController.GetRoom)
 		chat.GET("/rooms/:corporationID", app.Controllers.Corporation.ChatController.GetRooms)
+		chat.PUT("/room/:roomID/block", app.Controllers.Corporation.ChatController.BlockRoom)
+		chat.PUT("/room/:roomID/unblock", app.Controllers.Corporation.ChatController.UnBlockRoom)
 	}
 
 	requests := routerGroup.Group(":corporationID/requests")

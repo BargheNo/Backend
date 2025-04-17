@@ -4,6 +4,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -53,4 +54,44 @@ func (chatController *CorporationChatController) GetRooms(ctx *gin.Context) {
 	}
 	roomsDetails := chatController.chatService.GetCorporationRooms(request)
 	controller.Response(ctx, 200, "", roomsDetails)
+}
+
+func (chatController *CorporationChatController) BlockRoom(ctx *gin.Context) {
+	type getMessagesParams struct {
+		RoomID uint `uri:"roomID" validate:"required"`
+	}
+	param := controller.Validated[getMessagesParams](ctx)
+	userID, _ := ctx.Get(chatController.constants.Context.ID)
+
+	blockRequest := chatdto.BlockServiceChatRequest{
+		UserID:     userID.(uint),
+		RoomID:     param.RoomID,
+		BlockedBy:  enum.BlockedByCorporation,
+		ChatStatus: enum.ChatStatusBlocked,
+	}
+	chatController.chatService.BlockChatRoom(blockRequest)
+
+	trans := controller.GetTranslator(ctx, chatController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.blockChatRoom")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (chatController *CorporationChatController) UnBlockRoom(ctx *gin.Context) {
+	type getMessagesParams struct {
+		RoomID uint `uri:"roomID" validate:"required"`
+	}
+	param := controller.Validated[getMessagesParams](ctx)
+	userID, _ := ctx.Get(chatController.constants.Context.ID)
+
+	blockRequest := chatdto.BlockServiceChatRequest{
+		UserID:     userID.(uint),
+		RoomID:     param.RoomID,
+		BlockedBy:  enum.BlockedByCorporation,
+		ChatStatus: enum.ChatStatusActive,
+	}
+	chatController.chatService.UnBlockChatRoom(blockRequest)
+
+	trans := controller.GetTranslator(ctx, chatController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.unblockChatRoom")
+	controller.Response(ctx, 200, message, nil)
 }

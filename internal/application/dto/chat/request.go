@@ -1,5 +1,7 @@
 package chatdto
 
+import "github.com/BargheNo/Backend/internal/domain/enum"
+
 type CreateOrGetUserRoomRequest struct {
 	CorporationID uint
 	UserID        uint
@@ -21,4 +23,11 @@ type GetRoomMessageRequest struct {
 	UserID uint
 	Offset int
 	Limit  int
+}
+
+type BlockServiceChatRequest struct {
+	UserID     uint
+	RoomID     uint
+	BlockedBy  enum.BlockedBy
+	ChatStatus enum.ChatStatus
 }

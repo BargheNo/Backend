@@ -61,6 +61,8 @@ var English = map[string]interface{}{
 		"forbiddenError":         "Forbidden: Access to {0} is not allowed",
 		"forbiddenStatus":        "Cannot do this action with this status.",
 		"pending":                "Your request is pending.",
+		"alreadyBlocked":         "This {0} has been already blocked.",
+		"alreadyActive":          "This {0} has been already active.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -91,8 +93,10 @@ var English = map[string]interface{}{
 		"completeRegister":          "Your registration has been completed successfully.",
 		"emailVerification":         "Your email has been successfully verified.",
 		"updateProfile":             "Profile has been updated successfully",
-    "createTicket":              "Ticket has been successfully created.",
+		"createTicket":              "Ticket has been successfully created.",
 		"createTicketComment":       "Ticket comment has been successfully created.",
+		"blockChatRoom":             "Chat room has been successfully blocked.",
+		"unblockChatRoom":           "Chat room has been successfully unblocked.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

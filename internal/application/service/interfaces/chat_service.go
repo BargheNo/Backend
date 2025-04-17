@@ -13,4 +13,6 @@ type ChatService interface {
 	GetCorporationRooms(request chatdto.GetCorporationRoomsRequest) []chatdto.ChatRoomDetailsResponse
 	SaveMessage(roomID, senderID uint, content string)
 	GetRoomMessages(request chatdto.GetRoomMessageRequest) []chatdto.RoomMessagesResponse
+	BlockChatRoom(request chatdto.BlockServiceChatRequest)
+	UnBlockChatRoom(request chatdto.BlockServiceChatRequest)
 }
