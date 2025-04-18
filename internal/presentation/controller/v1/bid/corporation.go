@@ -1,7 +1,6 @@
 package bid
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
@@ -83,16 +82,7 @@ func (bidController *CorporationBidController) GetBids(ctx *gin.Context) {
 	}
 	params := controller.Validated[getBidsParams](ctx)
 	userID, _ := ctx.Get(bidController.constants.Context.ID)
-
-	defaultPage, err := strconv.Atoi(bidController.pagination.DefaultPage)
-	if err != nil {
-		defaultPage = 1
-	}
-	defaultPageSize, err := strconv.Atoi(bidController.pagination.DefaultPageSize)
-	if err != nil {
-		defaultPageSize = 10
-	}
-	pagination := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	pagination := controller.GetPagination(ctx, bidController.pagination.DefaultPage, bidController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 
 	bidsRequest := biddto.GetCorporationBidsRequest{

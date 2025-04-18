@@ -1,8 +1,6 @@
 package corporation
 
 import (
-	"strconv"
-
 	"github.com/BargheNo/Backend/bootstrap"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -69,15 +67,7 @@ func (corporationController *CustomerCorporationController) Register(ctx *gin.Co
 
 func (corporationController *CustomerCorporationController) GetCorporations(ctx *gin.Context) {
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-	defaultPage, err := strconv.Atoi(corporationController.pagination.DefaultPage)
-	if err != nil {
-		defaultPage = 1
-	}
-	defaultPageSize, err := strconv.Atoi(corporationController.pagination.DefaultPageSize)
-	if err != nil {
-		defaultPageSize = 10
-	}
-	params := controller.GetPagination(ctx, defaultPage, defaultPageSize)
+	params := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
 	offset, limit := params.GetOffsetLimit()
 	listInfo := corporationdto.CorporationListRequest{
 		UserID: userID.(uint),

@@ -41,14 +41,51 @@ func NewCorporationService(
 	}
 }
 
-// change this logic later if u can
-func (corporationService *CorporationService) GetCorporationByID(corporationID uint) *entity.Corporation {
+func (corporationService *CorporationService) getCorporationByID(corporationID uint) *entity.Corporation {
 	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
 	return corporation
+}
+
+func (corporationService *CorporationService) DoesCorporationExist(corporationID uint) {
+	_, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+}
+
+func (corporationService *CorporationService) GetCorporationCredentials(corporationID uint) corporationdto.CorporationDetailsResponse {
+	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+	ownerInfo := addressdto.GetOwnerAddressesRequest{
+		OwnerID:   corporation.ID,
+		OwnerType: corporationService.constants.AddressOwners.Corporation,
+	}
+	addresses := corporationService.addressService.GetAddresses(ownerInfo)
+	contactInfo := corporationService.GetContactInfo(corporation.ID)
+	return corporationdto.CorporationDetailsResponse{
+		ID:          corporation.ID,
+		Name:        corporation.Name,
+		ContactInfo: contactInfo,
+		Addresses:   addresses,
+	}
+}
+
+func (corporationService *CorporationService) ISCorporationApproved(corporationID uint) bool {
+	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+	isApproved := corporation.Status == enum.CorpStatusApproved
+	return isApproved
 }
 
 func (corporationService *CorporationService) CheckApplicantAccess(corporationID, applicantID uint) {
@@ -63,10 +100,17 @@ func (corporationService *CorporationService) CheckApplicantAccess(corporationID
 }
 
 func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationDetailsResponse {
-	corporationService.userService.GetUserCredential(registerInfo.ApplicantID)
+	exist := corporationService.userService.IsUserActive(registerInfo.ApplicantID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
+		}
+		panic(forbiddenError)
+	}
 	activeStatus := []enum.CorporationStatus{enum.CorpStatusApproved, enum.CorpStatusAwaitingApproval}
 	var conflictErrors exception.ConflictErrors
-	_, exist := corporationService.corporationRepository.FindCorporationByName(corporationService.db, registerInfo.Name, activeStatus)
+	_, exist = corporationService.corporationRepository.FindCorporationByName(corporationService.db, registerInfo.Name, activeStatus)
 	if exist {
 		conflictErrors.Add(corporationService.constants.Field.Name, corporationService.constants.Tag.AlreadyExist)
 	}
@@ -134,7 +178,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 }
 
 func (corporationService *CorporationService) AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest) {
-	corporation := corporationService.GetCorporationByID(requestInfo.CorporationID)
+	corporation := corporationService.getCorporationByID(requestInfo.CorporationID)
 	corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID)
 	if requestInfo.VATTaxpayerCertificate != nil {
 		taxPayerPath := corporationService.constants.S3BucketPath.GetVATTaxpayerCertificatePath(corporation.ID, requestInfo.VATTaxpayerCertificate.Filename)
@@ -153,7 +197,7 @@ func (corporationService *CorporationService) AddCertificateFiles(requestInfo co
 }
 
 func (corporationService *CorporationService) AddContactInfo(contactInfo corporationdto.AddContactInformationRequest) {
-	corporationService.GetCorporationByID(contactInfo.CorporationID)
+	corporationService.DoesCorporationExist(contactInfo.CorporationID)
 	corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
 	for _, contact := range contactInfo.ContactInformation {
 		_, exist := corporationService.corporationRepository.FindContactInformationTypeByID(corporationService.db, contact.ContactTypeID)
@@ -177,7 +221,7 @@ func (corporationService *CorporationService) AddContactInfo(contactInfo corpora
 }
 
 func (corporationService *CorporationService) AddAddress(addressInfo corporationdto.AddCorporationAddressRequest) {
-	corporationService.GetCorporationByID(addressInfo.CorporationID)
+	corporationService.DoesCorporationExist(addressInfo.CorporationID)
 	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID)
 	for _, address := range addressInfo.Addresses {
 		corporationService.addressService.CreateAddress(address)
@@ -185,38 +229,27 @@ func (corporationService *CorporationService) AddAddress(addressInfo corporation
 }
 
 func (corporationService *CorporationService) DeleteAddress(addressInfo corporationdto.DeleteAddressRequest) {
-	corporationService.GetCorporationByID(addressInfo.CorporationID)
+	corporationService.DoesCorporationExist(addressInfo.CorporationID)
 	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID)
 	corporationService.addressService.DeleteAddress(addressInfo.AddressID)
 }
 
-func (corporationService *CorporationService) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationInfoResponse {
-	corporationService.userService.GetUserCredential(requestInfo.UserID)
+func (corporationService *CorporationService) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationDetailsResponse {
+	corporationService.userService.DoesUserExist(requestInfo.UserID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
 	corporations := corporationService.corporationRepository.FindCorporationByStatus(corporationService.db, allowedStatuses, paginationModifier, sortingModifier)
-	response := make([]corporationdto.CorporationInfoResponse, len(corporations))
+	response := make([]corporationdto.CorporationDetailsResponse, len(corporations))
 	for i, corporation := range corporations {
-		ownerInfo := addressdto.GetOwnerAddressesRequest{
-			OwnerID:   corporation.ID,
-			OwnerType: corporationService.constants.AddressOwners.Corporation,
-		}
-		addresses := corporationService.addressService.GetAddresses(ownerInfo)
-		contactInfo := corporationService.GetContactInfo(corporation.ID)
-		response[i] = corporationdto.CorporationInfoResponse{
-			ID:          corporation.ID,
-			Name:        corporation.Name,
-			ContactInfo: contactInfo,
-			Addresses:   addresses,
-		}
+		response[i] = corporationService.GetCorporationCredentials(corporation.ID)
 	}
 
 	return response
 }
 
 func (corporationService *CorporationService) GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse {
-	corporation := corporationService.GetCorporationByID(corporationID)
+	corporation := corporationService.getCorporationByID(corporationID)
 	contactInfo := corporationService.corporationRepository.FindContactInformation(corporationService.db, corporation.ID)
 	response := make([]corporationdto.ContactInformationResponse, len(contactInfo))
 	for i, contact := range contactInfo {

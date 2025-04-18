@@ -12,4 +12,5 @@ type MaintenanceService interface {
 	GetCorporationMaintenanceRecordsByPanel(requestInfo maintenancedto.CorporationMaintenanceRecordByPanelRequest) []maintenancedto.MaintenanceRecordResponse
 	GetCustomerMaintenanceRecords(requestInfo maintenancedto.MaintenanceListRequest) []maintenancedto.CustomerMaintenanceRecordResponse
 	GetCustomerMaintenanceRecordsByPanel(requestInfo maintenancedto.CustomerMaintenanceRecordByPanelRequest) []maintenancedto.CustomerMaintenanceRecordResponse
+	GetMaintenanceRecordByID(maintenanceID uint) maintenancedto.MaintenanceRecordResponse
 }

@@ -10,7 +10,8 @@ import (
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	metricsimpl "github.com/BargheNo/Backend/internal/application/adapter/metrics"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
-	communicationService "github.com/BargheNo/Backend/internal/application/service/communication"
+	"github.com/BargheNo/Backend/internal/application/service/communication/email"
+	"github.com/BargheNo/Backend/internal/application/service/communication/sms"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/metrics"
@@ -23,11 +24,16 @@ import (
 	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
 	"github.com/BargheNo/Backend/internal/infrastructure/storage"
+	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/report"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/ticket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
 	"github.com/BargheNo/Backend/internal/presentation/middleware"
 	"github.com/google/wire"
@@ -48,37 +54,56 @@ var RepositoryProviderSet = wire.NewSet(
 	cacherepositoryimpl.NewUserCacheRepository,
 	repositoryimpl.NewCorporationRepository,
 	repositoryimpl.NewBidRepository,
+	repositoryimpl.NewChatRepository,
+	repositoryimpl.NewNotificationRepository,
 	repositoryimpl.NewMaintenanceRepository,
+	repositoryimpl.NewTicketRepository,
+	repositoryimpl.NewReportRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
 	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
 	wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)),
 	wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)),
+	wire.Bind(new(repository.ChatRepository), new(*repositoryimpl.ChatRepository)),
+	wire.Bind(new(repository.NotificationRepository), new(*repositoryimpl.NotificationRepository)),
 	wire.Bind(new(repository.MaintenanceRepository), new(*repositoryimpl.MaintenanceRepository)),
+	wire.Bind(new(repository.TicketRepository), new(*repositoryimpl.TicketRepository)),
+	wire.Bind(new(repository.ReportRepository), new(*repositoryimpl.ReportRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
+	wire.Struct(new(serviceimpl.UserServiceDeps), "*"),
 	serviceimpl.NewUserService,
 	serviceimpl.NewOTPService,
-	communicationService.NewSMSService,
+	sms.NewSMSService,
+	email.NewEmailService,
 	serviceimpl.NewJWTService,
 	serviceimpl.NewInstallationService,
 	serviceimpl.NewAddressService,
 	serviceimpl.NewCorporationService,
 	cinimpl.NewCINService,
 	serviceimpl.NewBidService,
+	serviceimpl.NewChatService,
+	serviceimpl.NewNotificationService,
 	serviceimpl.NewMaintenanceService,
+	serviceimpl.NewTicketService,
+	serviceimpl.NewReportService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
-	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
+	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
+	wire.Bind(new(service.EmailService), new(*email.EmailService)),
 	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
 	wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)),
 	wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)),
 	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
 	wire.Bind(new(service.CINService), new(*cinimpl.CINService)),
 	wire.Bind(new(service.BidService), new(*serviceimpl.BidService)),
+	wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)),
+	wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)),
 	wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)),
+	wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)),
+	wire.Bind(new(service.ReportService), new(*serviceimpl.ReportService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -105,16 +130,27 @@ var CustomerControllerProviderSet = wire.NewSet(
 	address.NewCustomerAddressController,
 	corporation.NewCustomerCorporationController,
 	bid.NewCustomerBidController,
+	chat.NewCustomerChatController,
+	notification.NewCustomerNotificationController,
 	maintenance.NewCustomerMaintenanceController,
+	ticket.NewCustomerTicketController,
+	report.NewCustomerReportController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
 var CorporationControllerProviderSet = wire.NewSet(
 	corporation.NewCorporationCorporationController,
 	installation.NewCorporationInstallationController,
+	chat.NewCorporationChatController,
 	bid.NewCorporationBidController,
 	maintenance.NewCorporationMaintenanceController,
 	wire.Struct(new(CorporationControllers), "*"),
+)
+
+var AdminControllerProviderSet = wire.NewSet(
+	ticket.NewAdminTicketController,
+	report.NewAdminReportController,
+	wire.Struct(new(AdminControllers), "*"),
 )
 
 var ControllersProviderSet = wire.NewSet(
@@ -129,11 +165,13 @@ var MiddlewareProviderSet = wire.NewSet(
 	middleware.NewRateLimit,
 	middleware.NewLoggerMiddleware,
 	middleware.NewPrometheusMiddleware,
+	middleware.NewWebsocketMiddleware,
 	wire.Struct(new(Middlewares), "*"),
 )
 
 var SeederProviderSet = wire.NewSet(
 	seed.NewAddressSeeder,
+	seed.NewNotificationTypeSeeder,
 	wire.Struct(new(Seeds), "*"),
 )
 
@@ -173,6 +211,10 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
+func ProvideEmailTemplates(container *bootstrap.Config) *bootstrap.EmailTemplates {
+	return &container.Constants.EmailTemplates
+}
+
 func ProvideMetrics(container *bootstrap.Config) *bootstrap.Metrics {
 	return &container.Constants.Metrics
 }
@@ -185,6 +227,14 @@ func ProvideStorageConfig(container *bootstrap.Config) *bootstrap.S3 {
 	return &container.Env.Storage
 }
 
+func ProvideWebsocketSetting(container *bootstrap.Config) *bootstrap.WebsocketSetting {
+	return &container.Env.WebsocketSetting
+}
+
+func ProvideEmailSenderAccount(container *bootstrap.Config) *bootstrap.EmailAccount {
+	return &container.Env.EmailSenderAccount
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -193,6 +243,7 @@ var ProviderSet = wire.NewSet(
 	GeneralControllerProviderSet,
 	CustomerControllerProviderSet,
 	CorporationControllerProviderSet,
+	AdminControllerProviderSet,
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	SeederProviderSet,
@@ -204,10 +255,13 @@ var ProviderSet = wire.NewSet(
 	ProvideOTPConfig,
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
+	ProvideEmailTemplates,
 	ProvideJWTKeysPath,
 	ProvideMetrics,
 	ProvidePaginationConfig,
 	ProvideStorageConfig,
+	ProvideWebsocketSetting,
+	ProvideEmailSenderAccount,
 )
 
 type Database struct {
@@ -227,34 +281,47 @@ type CustomerControllers struct {
 	AddressController      *address.CustomerAddressController
 	CorporationController  *corporation.CustomerCorporationController
 	BidController          *bid.CustomerBidController
+	ChatController         *chat.CustomerChatController
+	NotificationController *notification.CustomerNotificationController
 	MaintenanceController  *maintenance.CustomerMaintenanceController
+	TicketController       *ticket.CustomerTicketController
+	ReportController       *report.CustomerReportController
 }
 
 type CorporationControllers struct {
 	CorporationController  *corporation.CorporationCorporationController
 	InstallationController *installation.CorporationInstallationController
+	ChatController         *chat.CorporationChatController
 	BidController          *bid.CorporationBidController
 	MaintenanceController  *maintenance.CorporationMaintenanceController
+}
+
+type AdminControllers struct {
+	TicketController *ticket.AdminTicketController
+	ReportController *report.AdminReportController
 }
 
 type Controllers struct {
 	General     *GeneralControllers
 	Customer    *CustomerControllers
 	Corporation *CorporationControllers
+	Admin       *AdminControllers
 }
 
 type Middlewares struct {
-	Authentication *middleware.AuthMiddleware
-	CORS           *middleware.CORSMiddleware
-	Recovery       *middleware.RecoveryMiddleware
-	Localization   *middleware.LocalizationMiddleware
-	RateLimit      *middleware.RateLimitMiddleware
-	Logger         *middleware.LoggerMiddleware
-	Prometheus     *middleware.PrometheusMiddleware
+	Authentication      *middleware.AuthMiddleware
+	CORS                *middleware.CORSMiddleware
+	Recovery            *middleware.RecoveryMiddleware
+	Localization        *middleware.LocalizationMiddleware
+	RateLimit           *middleware.RateLimitMiddleware
+	Logger              *middleware.LoggerMiddleware
+	Prometheus          *middleware.PrometheusMiddleware
+	WebsocketMiddleware *middleware.WebsocketMiddleware
 }
 
 type Seeds struct {
-	AddressSeeder *seed.AddressSeeder
+	AddressSeeder          *seed.AddressSeeder
+	NotificationTypeSeeder *seed.NotificationTypeSeeder
 }
 
 type Application struct {
@@ -278,7 +345,7 @@ func NewApplication(
 	}
 }
 
-func InitializeApplication(container *bootstrap.Config) (*Application, error) {
+func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Application, error) {
 	wire.Build(
 		ProviderSet,
 		NewApplication,

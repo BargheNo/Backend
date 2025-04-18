@@ -17,4 +17,5 @@ type MaintenanceRepository interface {
 	FindMaintenanceRecordsByPanelAndCorporationID(db database.Database, panelID uint, corporationID uint, opts ...QueryModifier) []*entity.MaintenanceRecord
 	FindMaintenanceRecordsByCustomerID(db database.Database, customerID uint, opts ...QueryModifier) []*entity.MaintenanceRecord
 	FindCustomerMaintenanceRecordsByPanelID(db database.Database, customerID uint, panelID uint, opts ...QueryModifier) []*entity.MaintenanceRecord
+	FindMaintenanceRecordByID(db database.Database, recordID uint) *entity.MaintenanceRecord
 }

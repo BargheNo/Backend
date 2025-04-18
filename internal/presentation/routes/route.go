@@ -2,6 +2,7 @@ package routes
 
 import (
 	httpv1 "github.com/BargheNo/Backend/internal/presentation/routes/http/v1"
+	wsv1 "github.com/BargheNo/Backend/internal/presentation/routes/ws/v1"
 	"github.com/BargheNo/Backend/wire"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -21,6 +22,7 @@ func Run(ginEngine *gin.Engine, app *wire.Application) {
 	registerGeneralRoutes(v1, app)
 	registerCustomerRoutes(v1, app)
 	registerCorporationRoutes(v1, app)
+	registerAdminRoutes(v1, app)
 }
 
 func registerGeneralRoutes(v1 *gin.RouterGroup, app *wire.Application) {
@@ -31,6 +33,10 @@ func registerCustomerRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	user := v1.Group("/user")
 	user.Use(app.Middlewares.Authentication.AuthRequired)
 	httpv1.SetupCustomerRoutes(user, app)
+
+	wsUser := v1.Group("/user")
+	wsUser.Use(app.Middlewares.WebsocketMiddleware.UpgradeToWebSocket)
+	wsv1.SetupCustomerRoutes(wsUser, app)
 }
 
 func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {
@@ -38,4 +44,10 @@ func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	corporation.Use(app.Middlewares.Authentication.AuthRequired)
 	// corporation.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.AccessCorporation}))
 	httpv1.SetupCorporationRoutes(corporation, app)
+}
+
+func registerAdminRoutes(v1 *gin.RouterGroup, app *wire.Application) {
+	admin := v1.Group("/admin")
+	admin.Use(app.Middlewares.Authentication.AuthRequired)
+	httpv1.SetupAdminRoutes(admin, app)
 }

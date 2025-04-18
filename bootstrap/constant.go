@@ -3,22 +3,28 @@ package bootstrap
 import "fmt"
 
 type Constants struct {
-	Context       Context
-	LogLevel      LogLevel
-	RedisKey      RedisKey
-	S3BucketPath  BucketPath
-	Field         ErrorField
-	Tag           ErrorTag
-	SMSTemplates  SMSTemplates
-	JWTKeysPath   JWTKeysPath
-	Metrics       Metrics
-	AddressOwners AddressOwners
+	Context             Context
+	LogLevel            LogLevel
+	RedisKey            RedisKey
+	S3BucketPath        BucketPath
+	Field               ErrorField
+	Tag                 ErrorTag
+	SMSTemplates        SMSTemplates
+	EmailTemplates      EmailTemplates
+	JWTKeysPath         JWTKeysPath
+	Metrics             Metrics
+	AddressOwners       AddressOwners
+	TicketOwners        TicketOwners
+	TicketCommentOwners TicketCommentOwners
+	ReportObjectTypes   ReportObjectTypes
+	ReportOwners        ReportOwners
 }
 
 type Context struct {
 	Translator                   string
 	IsLoadedValidationTranslator string
 	ID                           string
+	WebsocketConnection          string
 }
 
 type LogLevel struct {
@@ -38,6 +44,7 @@ type BucketPath struct {
 type ErrorField struct {
 	User                string
 	Phone               string
+	Email               string
 	Password            string
 	OTP                 string
 	Corporation         string
@@ -52,9 +59,16 @@ type ErrorField struct {
 	City                string
 	Page                string
 	ContactType         string
+	Room                string
+	NotificationType    string
+	Notification        string
 	PanelName           string
 	Panel               string
 	MaintenanceRequest  string
+	MaintenanceRecord   string
+	Ticket              string
+	TicketComment       string
+	Report              string
 }
 
 type ErrorTag struct {
@@ -78,10 +92,19 @@ type ErrorTag struct {
 	AlreadyExist           string
 	ForbiddenStatus        string
 	Pending                string
+	AlreadyBlocked         string
+	AlreadyActive          string
+	AlreadyResolved        string
 }
 
 type SMSTemplates struct {
 	OTP string
+}
+
+type EmailTemplates struct {
+	Path            string
+	PersianFileName string
+	EnglishFileName string
 }
 
 type JWTKeysPath struct {
@@ -107,12 +130,33 @@ type AddressOwners struct {
 	MaintenanceRequest  string
 }
 
+type TicketOwners struct {
+	User        string
+	Corporation string
+}
+
+type TicketCommentOwners struct {
+	User        string
+	Corporation string
+	Admin       string
+}
+
+type ReportObjectTypes struct {
+	Maintenance string
+	Panel       string
+}
+
+type ReportOwners struct {
+	User string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
 			Translator:                   "translator",
 			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
 			ID:                           "ID",
+			WebsocketConnection:          "wsConnection",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",
@@ -124,6 +168,7 @@ func NewConstants() *Constants {
 		Field: ErrorField{
 			User:                "user",
 			Phone:               "phone",
+			Email:               "email",
 			Password:            "password",
 			OTP:                 "otp",
 			Corporation:         "corporation",
@@ -138,9 +183,16 @@ func NewConstants() *Constants {
 			City:                "city",
 			Page:                "page",
 			ContactType:         "contactType",
+			Room:                "room",
+			NotificationType:    "notificationType",
+			Notification:        "notification",
 			PanelName:           "panelName",
 			Panel:               "panel",
 			MaintenanceRequest:  "maintenanceRequest",
+			MaintenanceRecord:   "maintenanceRecord",
+			Ticket:              "ticket",
+			TicketComment:       "ticketComment",
+			Report:              "report",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -163,6 +215,9 @@ func NewConstants() *Constants {
 			AlreadyExist:           "alreadyExist",
 			ForbiddenStatus:        "forbiddenStatus",
 			Pending:                "pending",
+			AlreadyBlocked:         "alreadyBlocked",
+			AlreadyActive:          "alreadyActive",
+			AlreadyResolved:        "alreadyResolved",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
@@ -170,6 +225,14 @@ func NewConstants() *Constants {
 		JWTKeysPath: JWTKeysPath{
 			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
 			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
+			// PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
+			// PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
+		},
+		EmailTemplates: EmailTemplates{
+			// Path:            "../../internal/application/service/communication/email/templates/",
+			Path:            "./internal/application/service/communication/email/templates/",
+			PersianFileName: "fa.html",
+			EnglishFileName: "en.html",
 		},
 		Metrics: Metrics{
 			HTTPRequestsTotal: Options{
@@ -187,6 +250,23 @@ func NewConstants() *Constants {
 			InstallationRequest: "installation_requests",
 			Panel:               "panels",
 		},
+		TicketOwners: TicketOwners{
+			User:        "users",
+			Corporation: "corporations",
+		},
+		TicketCommentOwners: TicketCommentOwners{
+			User:        "users",
+			Corporation: "corporations",
+			Admin:       "admins",
+		},
+
+		ReportObjectTypes: ReportObjectTypes{
+			Maintenance: "maintenance",
+			Panel:       "panel",
+		},
+		ReportOwners: ReportOwners{
+			User: "users",
+		},
 	}
 }
 
@@ -200,4 +280,12 @@ func (path *BucketPath) GetVATTaxpayerCertificatePath(corporationID uint, certif
 
 func (path *BucketPath) GetOfficialNewspaperADPath(corporationID uint, certificateFilename string) string {
 	return fmt.Sprintf("corporation/%d/newspaper-ad/%s", corporationID, certificateFilename)
+}
+
+func (path *BucketPath) GetUserProfilePath(userID uint, pictureFileName string) string {
+	return fmt.Sprintf("user/%d/profile/%s", userID, pictureFileName)
+}
+
+func (path *BucketPath) GetTicketImagePath(ticketID uint, imageFilename string) string {
+	return fmt.Sprintf("tickets/%d/%s", ticketID, imageFilename)
 }

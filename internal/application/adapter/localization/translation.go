@@ -45,6 +45,10 @@ func (t *translatorInstanceImpl) Translate(key string, params ...string) (string
 	return t.translator.T(key, params...)
 }
 
+func (t *translatorInstanceImpl) Locale() string {
+	return t.translator.Locale()
+}
+
 func createUniversalTranslator() *ut.UniversalTranslator {
 	en := en_US.New()
 	fa := fa_IR.New()
