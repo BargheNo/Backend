@@ -126,3 +126,15 @@ func (repo *UserRepository) AssignPermissionToRole(db database.Database, role *e
 func (repo *UserRepository) AssignRoleToUser(db database.Database, user *entity.User, role *entity.Role) error {
 	return db.GetDB().Model(user).Association("Roles").Append(role)
 }
+
+func (repo *UserRepository) FindAllPermissions(db database.Database) []*entity.Permission {
+	var permissions []*entity.Permission
+	result := db.GetDB().Find(&permissions)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(result.Error)
+	}
+	return permissions
+}

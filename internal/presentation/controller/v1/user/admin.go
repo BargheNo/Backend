@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,8 +22,9 @@ func NewAdminUserController(
 	}
 }
 
-func (userController *AdminUserController) GetPermissionsList(c *gin.Context) {
-	// some codes here ...
+func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) {
+	permissions := userController.userService.GetAllPermissions()
+	controller.Response(ctx, 200, "", permissions)
 }
 
 func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {

@@ -483,3 +483,17 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 		panic(err)
 	}
 }
+
+func (userService *UserService) GetAllPermissions() []userdto.PermissionResponse {
+	permissions := userService.userRepository.FindAllPermissions(userService.db)
+	permissionsResponse := make([]userdto.PermissionResponse, len(permissions))
+	for i, permission := range permissions {
+		permissionsResponse[i] = userdto.PermissionResponse{
+			ID:          permission.ID,
+			Name:        permission.Type.String(),
+			Description: permission.Type.Description(),
+			Category:    permission.Category.String(),
+		}
+	}
+	return permissionsResponse
+}

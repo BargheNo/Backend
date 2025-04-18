@@ -16,4 +16,5 @@ type UserService interface {
 	ResetPassword(resetPassInfo userdto.ResetPasswordRequest)
 	FindUserByPhone(phone string) userdto.UserResponse
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest)
+	GetAllPermissions() []userdto.PermissionResponse
 }
