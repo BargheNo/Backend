@@ -9,5 +9,6 @@ type Permission struct {
 	database.Model
 	Type        enum.PermissionType `gorm:"not null;uniqueIndex"`
 	Description string              `gorm:"type:text"`
-	Roles       []Role              `gorm:"many2many:role_permissions;"`
+	Category    enum.PermissionCategory
+	Roles       []Role `gorm:"many2many:role_permissions;"`
 }

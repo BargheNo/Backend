@@ -179,9 +179,12 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	}
 	addressSeeder := seed.NewAddressSeeder(addressRepository, postgresDatabase)
 	notificationTypeSeeder := seed.NewNotificationTypeSeeder(notificationRepository, postgresDatabase)
+	adminCredentials := ProvideSuperAdminCredential(container)
+	roleSeeder := seed.NewRoleSeeder(adminCredentials, userRepository, postgresDatabase)
 	seeds := &Seeds{
 		AddressSeeder:          addressSeeder,
 		NotificationTypeSeeder: notificationTypeSeeder,
+		RoleSeeder:             roleSeeder,
 	}
 	application := NewApplication(wireDatabase, controllers, middlewares, seeds)
 	return application, nil
@@ -209,7 +212,7 @@ var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, middleware.NewWebsocketMiddleware, wire.Struct(new(Middlewares), "*"))
 
-var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, seed.NewNotificationTypeSeeder, wire.Struct(new(Seeds), "*"))
+var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, seed.NewNotificationTypeSeeder, seed.NewRoleSeeder, wire.Struct(new(Seeds), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -271,6 +274,10 @@ func ProvideEmailSenderAccount(container *bootstrap.Config) *bootstrap.EmailAcco
 	return &container.Env.EmailSenderAccount
 }
 
+func ProvideSuperAdminCredential(container *bootstrap.Config) *bootstrap.AdminCredentials {
+	return &container.Env.SuperAdmin
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -298,6 +305,7 @@ var ProviderSet = wire.NewSet(
 	ProvideStorageConfig,
 	ProvideWebsocketSetting,
 	ProvideEmailSenderAccount,
+	ProvideSuperAdminCredential,
 )
 
 type Database struct {
@@ -357,6 +365,7 @@ type Middlewares struct {
 type Seeds struct {
 	AddressSeeder          *seed.AddressSeeder
 	NotificationTypeSeeder *seed.NotificationTypeSeeder
+	RoleSeeder             *seed.RoleSeeder
 }
 
 type Application struct {

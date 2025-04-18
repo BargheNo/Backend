@@ -20,6 +20,7 @@ type Env struct {
 	Pagination         Pagination
 	WebsocketSetting   WebsocketSetting
 	EmailSenderAccount EmailAccount
+	SuperAdmin         AdminCredentials
 }
 
 type Server struct {
@@ -98,6 +99,15 @@ type EmailAccount struct {
 	SMTPPort      string
 }
 
+type AdminCredentials struct {
+	FirstName    string
+	LastName     string
+	Phone        string
+	Password     string
+	Email        string
+	NationalCode string
+}
+
 func NewEnvironments() *Env {
 	// godotenv.Load("../../.env")
 	godotenv.Load(".env")
@@ -164,6 +174,14 @@ func NewEnvironments() *Env {
 			EmailPassword: os.Getenv("EMAIL_PASSWORD"),
 			SMTPHost:      os.Getenv("SMTP_HOST"),
 			SMTPPort:      os.Getenv("SMTP_PORT"),
+		},
+		SuperAdmin: AdminCredentials{
+			FirstName:    os.Getenv("SUPER_ADMIN_FIRST_NAME"),
+			LastName:     os.Getenv("SUPER_ADMIN_LAST_NAME"),
+			Phone:        os.Getenv("SUPER_ADMIN_PHONE"),
+			Password:     os.Getenv("SUPER_ADMIN_PASSWORD"),
+			Email:        os.Getenv("SUPER_ADMIN_EMAIL"),
+			NationalCode: os.Getenv("SUPER_ADMIN_NATIONAL_CODE"),
 		},
 	}
 }

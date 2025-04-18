@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -48,6 +49,18 @@ func (repo *UserRepository) FindUserByPhone(db database.Database, phone string) 
 	return &user, true
 }
 
+func (repo *UserRepository) FindRoleByName(db database.Database, name string) (*entity.Role, bool) {
+	var role entity.Role
+	result := db.GetDB().Where("name = ?", name).First(&role)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &role, true
+}
+
 func (repo *UserRepository) CreateUser(db database.Database, user *entity.User) error {
 	return db.GetDB().Create(&user).Error
 }
@@ -66,4 +79,50 @@ func (repo *UserRepository) FindUserRoles(db database.Database, user *entity.Use
 
 func (repo *UserRepository) FindRolePermissions(db database.Database, role *entity.Role) error {
 	return db.GetDB().Preload("Permissions").First(&role).Error
+}
+
+func (repo *UserRepository) FindPermissionByType(db database.Database, permissionType enum.PermissionType) (*entity.Permission, bool) {
+	var permission entity.Permission
+	result := db.GetDB().Where("type = ?", permissionType).First(&permission)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &permission, true
+}
+
+func (repo *UserRepository) RoleHasPermission(db database.Database, roleID uint, permissionID uint) bool {
+	var count int64
+	db.GetDB().
+		Table("role_permissions").
+		Where("role_id = ? AND permission_id = ?", roleID, permissionID).
+		Count(&count)
+	return count > 0
+}
+
+func (repo *UserRepository) UserHasRole(db database.Database, userID uint, roleID uint) bool {
+	var count int64
+	db.GetDB().
+		Table("user_roles").
+		Where("user_id = ? AND role_id = ?", userID, roleID).
+		Count(&count)
+	return count > 0
+}
+
+func (repo *UserRepository) CreateRole(db database.Database, role *entity.Role) error {
+	return db.GetDB().Create(&role).Error
+}
+
+func (repo *UserRepository) CreatePermission(db database.Database, permission *entity.Permission) error {
+	return db.GetDB().Create(&permission).Error
+}
+
+func (repo *UserRepository) AssignPermissionToRole(db database.Database, role *entity.Role, permission *entity.Permission) error {
+	return db.GetDB().Model(role).Association("Permissions").Append(permission)
+}
+
+func (repo *UserRepository) AssignRoleToUser(db database.Database, user *entity.User, role *entity.Role) error {
+	return db.GetDB().Model(user).Association("Roles").Append(role)
 }

@@ -256,23 +256,26 @@ func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneReques
 	}
 }
 
-func (userService *UserService) FindUserPermissions(user *entity.User) []string {
-	err := userService.userRepository.FindUserRoles(userService.db, user)
-	if err != nil {
+func (userService *UserService) FindUserPermissions(user *entity.User) []userdto.PermissionResponse {
+	var permissions []userdto.PermissionResponse
+	if err := userService.userRepository.FindUserRoles(userService.db, user); err != nil {
 		panic(err)
 	}
-	var permissionNames []string
 	for _, role := range user.Roles {
-		err = userService.userRepository.FindRolePermissions(userService.db, &role)
-		if err != nil {
+		if err := userService.userRepository.FindRolePermissions(userService.db, &role); err != nil {
 			panic(err)
 		}
-		permissions := role.Permissions
-		for _, permission := range permissions {
-			permissionNames = append(permissionNames, permission.Type.String())
+		for _, permission := range role.Permissions {
+			permResponse := userdto.PermissionResponse{
+				ID:          permission.ID,
+				Name:        permission.Type.String(),
+				Description: permission.Description,
+				Category:    permission.Category.String(),
+			}
+			permissions = append(permissions, permResponse)
 		}
 	}
-	return permissionNames
+	return permissions
 }
 
 func (userService *UserService) Login(loginInfo userdto.LoginRequest) userdto.UserInfoResponse {

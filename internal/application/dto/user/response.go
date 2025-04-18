@@ -6,11 +6,11 @@ type OTPData struct {
 }
 
 type UserInfoResponse struct {
-	AccessToken  string   `json:"accessToken"`
-	RefreshToken string   `json:"refreshToken"`
-	FirstName    string   `json:"firstName"`
-	LastName     string   `json:"lastName"`
-	Permissions  []string `json:"permissions"`
+	AccessToken  string               `json:"accessToken"`
+	RefreshToken string               `json:"refreshToken"`
+	FirstName    string               `json:"firstName"`
+	LastName     string               `json:"lastName"`
+	Permissions  []PermissionResponse `json:"permissions"`
 }
 
 type CredentialResponse struct {
@@ -25,4 +25,17 @@ type CredentialResponse struct {
 
 type UserResponse struct {
 	ID uint `json:"id"`
+}
+
+type RoleResponse struct {
+	ID          uint                 `json:"id"`
+	Name        string               `json:"name"`
+	Permissions []PermissionResponse `json:"permissions"`
+}
+
+type PermissionResponse struct {
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
 }

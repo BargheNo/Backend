@@ -16,6 +16,7 @@ func (s RequestType) String() string {
 	}
 	return "unknown"
 }
+
 func GetAllRequestTypes() []RequestType {
 	return []RequestType{
 		InstallationRequest,
