@@ -102,7 +102,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	ticketService := serviceimpl.NewTicketService(constants, ticketRepository, userService, s3Storage, postgresDatabase)
 	customerTicketController := ticket.NewCustomerTicketController(constants, ticketService, pagination)
 	reportRepository := repositoryimpl.NewReportRepository()
-	reportService := serviceimpl.NewReportService(constants, userService, reportRepository, maintenanceService, postgresDatabase)
+	reportService := serviceimpl.NewReportService(constants, userService, reportRepository, maintenanceService, installationService, postgresDatabase)
 	customerReportController := report.NewCustomerReportController(constants, reportService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,

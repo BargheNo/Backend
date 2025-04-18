@@ -133,6 +133,7 @@ type TicketCommentOwners struct {
 
 type ReportObjectTypes struct {
 	Maintenance string
+	Panel       string
 }
 
 type ReportOwners struct {
@@ -242,6 +243,7 @@ func NewConstants() *Constants {
 
 		ReportObjectTypes: ReportObjectTypes{
 			Maintenance: "maintenance",
+			Panel:       "panel",
 		},
 		ReportOwners: ReportOwners{
 			User: "users",

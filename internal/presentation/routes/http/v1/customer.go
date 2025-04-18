@@ -82,5 +82,6 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	report := routerGroup.Group("/report")
 	{
 		report.POST("maintenance/:recordID", app.Controllers.Customer.ReportController.CreateMaintenanceReport)
+		report.POST("panel/:panelID", app.Controllers.Customer.ReportController.CreatePanelReport)
 	}
 }

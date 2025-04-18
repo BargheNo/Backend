@@ -45,3 +45,25 @@ func (reportController *CustomerReportController) CreateMaintenanceReport(ctx *g
 	controller.Response(ctx, 200, message, nil)
 
 }
+
+func (reportController *CustomerReportController) CreatePanelReport(ctx *gin.Context) {
+	type createPanelReportRequest struct {
+		PanelID     uint   `uri:"panelID" validate:"required"`
+		Description string `json:"description" validate:"required"`
+	}
+	params := controller.Validated[createPanelReportRequest](ctx)
+	userID, _ := ctx.Get(reportController.constants.Context.ID)
+	requestInfo := reportdto.CreateReportRequest{
+		ObjectID:       params.PanelID,
+		ObjectType:     reportController.constants.ReportObjectTypes.Panel,
+		ReportedByID:   userID.(uint),
+		ReportedByType: reportController.constants.ReportOwners.User,
+		Description:    params.Description,
+	}
+
+	reportController.reportService.CreatePanelReport(requestInfo)
+
+	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.createReport")
+	controller.Response(ctx, 200, message, nil)
+}

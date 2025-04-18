@@ -13,11 +13,12 @@ import (
 )
 
 type ReportService struct {
-	constants          *bootstrap.Constants
-	userService        service.UserService
-	reportRepository   repository.ReportRepository
-	maintenanceService service.MaintenanceService
-	db                 database.Database
+	constants           *bootstrap.Constants
+	userService         service.UserService
+	reportRepository    repository.ReportRepository
+	maintenanceService  service.MaintenanceService
+	installationService service.InstallationService
+	db                  database.Database
 }
 
 func NewReportService(
@@ -25,14 +26,16 @@ func NewReportService(
 	userService service.UserService,
 	reportRepository repository.ReportRepository,
 	maintenanceService service.MaintenanceService,
+	installationService service.InstallationService,
 	db database.Database,
 ) *ReportService {
 	return &ReportService{
-		constants:          constants,
-		userService:        userService,
-		reportRepository:   reportRepository,
-		maintenanceService: maintenanceService,
-		db:                 db,
+		constants:           constants,
+		userService:         userService,
+		reportRepository:    reportRepository,
+		maintenanceService:  maintenanceService,
+		installationService: installationService,
+		db:                  db,
 	}
 }
 
@@ -48,6 +51,23 @@ func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdt
 		Status:         enum.ReportStatusPending,
 	}
 
+	err := reportService.reportRepository.CreateReport(reportService.db, report)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) {
+	reportService.userService.GetUserCredential(requestInfo.ReportedByID)
+	reportService.installationService.GetPanelByID(requestInfo.ObjectID)
+	report := &entity.Report{
+		ObjectID:       requestInfo.ObjectID,
+		ObjectType:     requestInfo.ObjectType,
+		ReportedByID:   requestInfo.ReportedByID,
+		ReportedByType: requestInfo.ReportedByType,
+		Description:    requestInfo.Description,
+		Status:         enum.ReportStatusPending,
+	}
 	err := reportService.reportRepository.CreateReport(reportService.db, report)
 	if err != nil {
 		panic(err)
