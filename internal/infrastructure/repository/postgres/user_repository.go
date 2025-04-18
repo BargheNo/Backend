@@ -162,3 +162,15 @@ func (repo *UserRepository) FindPermissionByID(db database.Database, permissionI
 	}
 	return &permission, true
 }
+
+func (repo *UserRepository) FindRoleByID(db database.Database, roleID uint) (*entity.Role, bool) {
+	var role entity.Role
+	result := db.GetDB().First(&role, roleID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &role, true
+}

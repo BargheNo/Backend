@@ -548,3 +548,16 @@ func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest
 		existingPermissions[permissionID] = true
 	}
 }
+
+func (userService *UserService) GetRoomDetails(roleID uint) userdto.RoleResponse {
+	role, exist := userService.userRepository.FindRoleByID(userService.db, roleID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
+		panic(notFoundError)
+	}
+	return userdto.RoleResponse{
+		ID:          role.ID,
+		Name:        role.Name,
+		Permissions: userService.getRolePermissions(role),
+	}
+}

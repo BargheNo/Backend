@@ -19,4 +19,5 @@ type UserService interface {
 	GetAllPermissions() []userdto.PermissionResponse
 	GetAllRoles() []userdto.RoleResponse
 	CreateRole(newRoleRequest userdto.NewRoleRequest)
+	GetRoomDetails(roleID uint) userdto.RoleResponse
 }
