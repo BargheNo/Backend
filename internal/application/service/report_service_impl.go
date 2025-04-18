@@ -74,7 +74,7 @@ func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.Crea
 	}
 }
 
-func (reportService *ReportService) GetAdminReports(requestInfo reportdto.ReportListRequest) []reportdto.MaintenanceReportResponse {
+func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) []reportdto.MaintenanceReportResponse {
 	reportService.userService.GetUserCredential(requestInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
@@ -87,6 +87,24 @@ func (reportService *ReportService) GetAdminReports(requestInfo reportdto.Report
 			Description:       report.Description,
 			MaintenanceRecord: maintenanceRecord,
 			Status:            report.Status.String(),
+		}
+	}
+
+	return reportResponses
+}
+
+func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) []reportdto.PanelReportResponse {
+	reportService.userService.GetUserCredential(requestInfo.OwnerID)
+	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	reports := reportService.reportRepository.GetReports(reportService.db, paginationModifier, sortingModifier)
+	reportResponses := make([]reportdto.PanelReportResponse, len(reports))
+	for i, report := range reports {
+		panel := reportService.installationService.GetPanelByID(report.ObjectID)
+		reportResponses[i] = reportdto.PanelReportResponse{
+			ID:     report.ID,
+			Panel:  panel,
+			Status: report.Status.String(),
 		}
 	}
 

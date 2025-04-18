@@ -26,7 +26,7 @@ func NewAdminReportController(
 	}
 }
 
-func (reportController *AdminReportController) GetReports(ctx *gin.Context) {
+func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Context) {
 	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
@@ -36,7 +36,7 @@ func (reportController *AdminReportController) GetReports(ctx *gin.Context) {
 		Limit:   limit,
 	}
 
-	reports := reportController.reportService.GetAdminReports(requestInfo)
+	reports := reportController.reportService.GetMaintenanceReports(requestInfo)
 	controller.Response(ctx, 200, "success", reports)
 }
 

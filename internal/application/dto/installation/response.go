@@ -4,6 +4,7 @@ import (
 	"time"
 
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
@@ -43,6 +44,20 @@ type CorporationPanelResponse struct {
 	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
 	Address              addressdto.AddressResponse `json:"address"`
 	OperatorName         string                     `json:"operatorName"`
+}
+
+type PanleResponse struct {
+	ID                   uint
+	Customer             userdto.CredentialResponse
+	Corporation          corporationdto.CorporationInfoResponse
+	Address              addressdto.AddressResponse
+	PanelName            string
+	Power                uint
+	Area                 uint
+	BuildingType         string
+	Tilt                 uint
+	Azimuth              uint
+	TotalNumberOfModules uint
 }
 
 type CustomerPanelResponse struct {
