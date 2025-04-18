@@ -125,3 +125,11 @@ func (repo *MaintenanceRepository) FindCustomerMaintenanceRecordsByPanelID(db da
 	}
 	return records
 }
+
+func (repo *MaintenanceRepository) FindMaintenanceRecordByID(db database.Database, recordID uint) *entity.MaintenanceRecord {
+	var record entity.MaintenanceRecord
+	if err := db.GetDB().First(&record, recordID).Error; err != nil {
+		return nil
+	}
+	return &record
+}

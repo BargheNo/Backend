@@ -46,6 +46,22 @@ type CorporationPanelResponse struct {
 	OperatorName         string                     `json:"operatorName"`
 }
 
+type PanleResponse struct {
+	ID                   uint
+	Name                 string
+	Customer             userdto.CredentialResponse
+	Operator             userdto.CredentialResponse
+	Corporation          corporationdto.CorporationDetailsResponse
+	Address              addressdto.AddressResponse
+	PanelName            string
+	Power                uint
+	Area                 uint
+	BuildingType         string
+	Tilt                 uint
+	Azimuth              uint
+	TotalNumberOfModules uint
+}
+
 type CustomerPanelResponse struct {
 	ID                   uint   `json:"id"`
 	PanelName            string `json:"panelName"`

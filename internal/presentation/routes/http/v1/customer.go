@@ -82,4 +82,10 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		ticket.GET("/:ticketID/comments", app.Controllers.Customer.TicketController.GetComments)
 		ticket.POST("/:ticketID/comments", app.Controllers.Customer.TicketController.CreateComment)
 	}
+
+	report := routerGroup.Group("/report")
+	{
+		report.POST("maintenance/:recordID", app.Controllers.Customer.ReportController.CreateMaintenanceReport)
+		report.POST("panel/:panelID", app.Controllers.Customer.ReportController.CreatePanelReport)
+	}
 }
