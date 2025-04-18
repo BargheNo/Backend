@@ -27,6 +27,7 @@ func TestGetOwnerInstallationRequests(t *testing.T) {
 		addressService,
 		userService,
 		nil,
+		nil,
 		repo,
 		db,
 	)

@@ -16,6 +16,7 @@ require (
 	github.com/kavenegar/kavenegar-go v0.0.0-20240205151018-77039f51467d
 	github.com/prometheus/client_golang v1.21.1
 	github.com/redis/go-redis/v9 v9.7.1
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.36.0
 	golang.org/x/time v0.11.0
