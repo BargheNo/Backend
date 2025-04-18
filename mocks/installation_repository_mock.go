@@ -27,7 +27,7 @@ func (repo *InstallationRepositoryMock) FindRequestByID(db database.Database, re
 }
 
 func (repo *InstallationRepositoryMock) FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, modifiers ...repository.QueryModifier) []*entity.InstallationRequest {
-	args := repo.Called(ownerID, status)
+	args := repo.Called(db, ownerID, status, modifiers[0], modifiers[1])
 	return args.Get(0).([]*entity.InstallationRequest)
 }
 

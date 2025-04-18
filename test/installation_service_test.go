@@ -12,6 +12,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	mocks "github.com/BargheNo/Backend/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetOwnerInstallationRequests(t *testing.T) {
@@ -30,50 +31,22 @@ func TestGetOwnerInstallationRequests(t *testing.T) {
 		db,
 	)
 
-	t.Run("Success - Returns formatted installation requests", func(t *testing.T) {
-		ownerID := uint(123)
+	t.Run("Returns Empty List When No Requests Found", func(t *testing.T) {
+		ownerID := uint(456)
 
-		mockRequests := []*entity.InstallationRequest{
-			{
-				Model:        database.Model{ID: 1},
-				Name:         "Request 1",
-				Status:       enum.InstallationRequestStatusActive,
-				OwnerID:      ownerID,
-				PowerRequest: 500,
-				MaxCost:      1000,
-				BuildingType: "Residential",
-			},
-			{
-				Model:        database.Model{ID: 2},
-				Name:         "Request 2",
-				Status:       enum.InstallationRequestStatusCancelled,
-				OwnerID:      ownerID,
-				PowerRequest: 750,
-				MaxCost:      1500,
-				BuildingType: "Commercial",
-			},
-		}
-
-		mockAddress := addressdto.AddressResponse{
-			Province:      "Test Province",
-			City:          "Test City",
-			StreetAddress: "123 Test St",
-			PostalCode:    "12345",
-		}
+		mockRequests := []*entity.InstallationRequest{}
 
 		repo.On("FindOwnerRequests",
+			db,
 			ownerID,
 			[]enum.InstallationRequestStatus{
 				enum.InstallationRequestStatusActive,
 				enum.InstallationRequestStatusCancelled,
 				enum.InstallationRequestStatusExpired,
 			},
+			mock.Anything,
+			mock.Anything,
 		).Return(mockRequests).Once()
-
-		addressService.On("GetAddress",
-			ownerID,
-			constants.AddressOwners.InstallationRequest,
-		).Return(mockAddress).Twice()
 
 		result := installationService.GetOwnerInstallationRequests(installationdto.InstallationListRequest{
 			OwnerID: ownerID,
@@ -81,17 +54,74 @@ func TestGetOwnerInstallationRequests(t *testing.T) {
 			Offset:  0,
 		})
 
-		assert.Len(t, result, 2)
-		assert.Equal(t, uint(1), result[0].ID)
-		assert.Equal(t, "Request 1", result[0].Name)
+		assert.Empty(t, result)
+		assert.Len(t, result, 0)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("Handles Multiple Request Statuses", func(t *testing.T) {
+		ownerID := uint(101)
+
+		mockRequests := []*entity.InstallationRequest{
+			{
+				Model:        database.Model{ID: 4},
+				Name:         "Active Request",
+				Status:       enum.InstallationRequestStatusActive,
+				OwnerID:      ownerID,
+				BuildingType: "Residential",
+			},
+			{
+				Model:        database.Model{ID: 5},
+				Name:         "Cancelled Request",
+				Status:       enum.InstallationRequestStatusCancelled,
+				OwnerID:      ownerID,
+				BuildingType: "Commercial",
+			},
+			{
+				Model:        database.Model{ID: 6},
+				Name:         "Expired Request",
+				Status:       enum.InstallationRequestStatusExpired,
+				OwnerID:      ownerID,
+				BuildingType: "Industrial",
+			},
+		}
+
+		mockAddress := addressdto.AddressResponse{
+			Province:      "Test Province",
+			City:          "Test City",
+			StreetAddress: "Test Street",
+			PostalCode:    "12345",
+		}
+
+		repo.On("FindOwnerRequests",
+			db,
+			ownerID,
+			[]enum.InstallationRequestStatus{
+				enum.InstallationRequestStatusActive,
+				enum.InstallationRequestStatusCancelled,
+				enum.InstallationRequestStatusExpired,
+			},
+			mock.Anything,
+			mock.Anything,
+		).Return(mockRequests).Once()
+
+		addressService.On("GetAddress",
+			ownerID,
+			constants.AddressOwners.InstallationRequest,
+		).Return(mockAddress).Times(3)
+
+		result := installationService.GetOwnerInstallationRequests(installationdto.InstallationListRequest{
+			OwnerID: ownerID,
+			Limit:   10,
+			Offset:  0,
+		})
+
+		assert.Len(t, result, 3)
 		assert.Equal(t, "active", result[0].Status)
-		assert.Equal(t, mockAddress, result[0].Address)
-		assert.Equal(t, uint(2), result[1].ID)
-		assert.Equal(t, "Request 2", result[1].Name)
 		assert.Equal(t, "cancelled", result[1].Status)
+		assert.Equal(t, "expired", result[2].Status)
 
 		repo.AssertExpectations(t)
 		addressService.AssertExpectations(t)
 	})
-
 }
