@@ -4,6 +4,7 @@ import (
 	"time"
 
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
@@ -46,9 +47,9 @@ type CorporationPanelResponse struct {
 }
 
 type CustomerPanelResponse struct {
-	ID                   uint                       `json:"id"`
-	PanelName            string                     `json:"panelName"`
-	CorporationName      string                     `json:"corporationName"`
+	ID                   uint   `json:"id"`
+	PanelName            string `json:"panelName"`
+	Corporation          corporationdto.CorporationDetailsResponse
 	Power                uint                       `json:"power"`
 	Area                 uint                       `json:"area"`
 	BuildingType         string                     `json:"buildingType"`
