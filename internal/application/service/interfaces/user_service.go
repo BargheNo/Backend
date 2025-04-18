@@ -17,4 +17,6 @@ type UserService interface {
 	FindUserByPhone(phone string) userdto.UserResponse
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest)
 	GetAllPermissions() []userdto.PermissionResponse
+	GetAllRoles() []userdto.RoleResponse
+	CreateRole(newRoleRequest userdto.NewRoleRequest)
 }

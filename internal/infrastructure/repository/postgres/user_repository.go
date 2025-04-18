@@ -138,3 +138,27 @@ func (repo *UserRepository) FindAllPermissions(db database.Database) []*entity.P
 	}
 	return permissions
 }
+
+func (repo *UserRepository) FindAllRoles(db database.Database) []*entity.Role {
+	var roles []*entity.Role
+	result := db.GetDB().Find(&roles)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(result.Error)
+	}
+	return roles
+}
+
+func (repo *UserRepository) FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, bool) {
+	var permission entity.Permission
+	result := db.GetDB().First(&permission, permissionID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &permission, true
+}

@@ -262,18 +262,8 @@ func (userService *UserService) FindUserPermissions(user *entity.User) []userdto
 		panic(err)
 	}
 	for _, role := range user.Roles {
-		if err := userService.userRepository.FindRolePermissions(userService.db, &role); err != nil {
-			panic(err)
-		}
-		for _, permission := range role.Permissions {
-			permResponse := userdto.PermissionResponse{
-				ID:          permission.ID,
-				Name:        permission.Type.String(),
-				Description: permission.Description,
-				Category:    permission.Category.String(),
-			}
-			permissions = append(permissions, permResponse)
-		}
+		rolePermissions := userService.getRolePermissions(&role)
+		permissions = append(permissions, rolePermissions...)
 	}
 	return permissions
 }
@@ -496,4 +486,65 @@ func (userService *UserService) GetAllPermissions() []userdto.PermissionResponse
 		}
 	}
 	return permissionsResponse
+}
+
+func (userService *UserService) getRolePermissions(role *entity.Role) []userdto.PermissionResponse {
+	if err := userService.userRepository.FindRolePermissions(userService.db, role); err != nil {
+		panic(err)
+	}
+	permissions := make([]userdto.PermissionResponse, len(role.Permissions))
+	for i, permission := range role.Permissions {
+		permissions[i] = userdto.PermissionResponse{
+			ID:          permission.ID,
+			Name:        permission.Type.String(),
+			Description: permission.Type.Description(),
+			Category:    permission.Category.String(),
+		}
+	}
+	return permissions
+}
+
+func (userService *UserService) GetAllRoles() []userdto.RoleResponse {
+	roles := userService.userRepository.FindAllRoles(userService.db)
+	rolesResponse := make([]userdto.RoleResponse, len(roles))
+	for i, role := range roles {
+		rolesResponse[i] = userdto.RoleResponse{
+			ID:          role.ID,
+			Name:        role.Name,
+			Permissions: userService.getRolePermissions(role),
+		}
+	}
+	return rolesResponse
+}
+
+func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest) {
+	_, exist := userService.userRepository.FindRoleByName(userService.db, newRoleRequest.Name)
+	if exist {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Role, userService.constants.Tag.AlreadyExist)
+		panic(conflictErrors)
+	}
+	role := &entity.Role{
+		Name: newRoleRequest.Name,
+	}
+	err := userService.userRepository.CreateRole(userService.db, role)
+	if err != nil {
+		panic(err)
+	}
+
+	existingPermissions := make(map[uint]bool)
+	for _, permissionID := range newRoleRequest.PermissionIDs {
+		if existingPermissions[permissionID] {
+			continue
+		}
+		permission, exist := userService.userRepository.FindPermissionByID(userService.db, permissionID)
+		if !exist {
+			notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
+			panic(notFoundError)
+		}
+		if err := userService.userRepository.AssignPermissionToRole(userService.db, role, permission); err != nil {
+			panic(err)
+		}
+		existingPermissions[permissionID] = true
+	}
 }

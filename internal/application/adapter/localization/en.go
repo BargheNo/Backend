@@ -28,6 +28,8 @@ var English = map[string]interface{}{
 	"maintenanceRequest":  "maintenance request",
 	"email":               "email",
 	"ticket":              "ticket",
+	"role":                "role",
+	"permission":          "permission",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -97,6 +99,7 @@ var English = map[string]interface{}{
 		"createTicketComment":       "Ticket comment has been successfully created.",
 		"blockChatRoom":             "Chat room has been successfully blocked.",
 		"unblockChatRoom":           "Chat room has been successfully unblocked.",
+		"createRole":                "New role has been created successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

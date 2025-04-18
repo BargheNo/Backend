@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -28,33 +29,48 @@ func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) 
 }
 
 func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
+	roles := userController.userService.GetAllRoles()
+	controller.Response(ctx, 200, "", roles)
+}
+
+func (userController *AdminUserController) CreateRole(ctx *gin.Context) {
+	type newRoleParams struct {
+		Name          string `json:"name" validate:"required"`
+		PermissionIDs []uint `json:"permissionIDs"`
+	}
+	params := controller.Validated[newRoleParams](ctx)
+
+	newRoleRequest := userdto.NewRoleRequest{
+		Name:          params.Name,
+		PermissionIDs: params.PermissionIDs,
+	}
+	userController.userService.CreateRole(newRoleRequest)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.createRole")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (userController *AdminUserController) GetRoleDetails(ctx *gin.Context) {
 	// some codes here ...
 }
 
-func (userController *AdminUserController) CreateRole(c *gin.Context) {
+func (userController *AdminUserController) GetRoleOwners(ctx *gin.Context) {
 	// some codes here ...
 }
 
-func (userController *AdminUserController) GetRoleDetails(c *gin.Context) {
+func (userController *AdminUserController) UpdateRole(ctx *gin.Context) {
 	// some codes here ...
 }
 
-func (userController *AdminUserController) GetRoleOwners(c *gin.Context) {
+func (userController *AdminUserController) DeleteRole(ctx *gin.Context) {
 	// some codes here ...
 }
 
-func (userController *AdminUserController) UpdateRole(c *gin.Context) {
+func (userController *AdminUserController) GetUserRoles(ctx *gin.Context) {
 	// some codes here ...
 }
 
-func (userController *AdminUserController) DeleteRole(c *gin.Context) {
-	// some codes here ...
-}
-
-func (userController *AdminUserController) GetUserRoles(c *gin.Context) {
-	// some codes here ...
-}
-
-func (userController *AdminUserController) UpdateUserRoles(c *gin.Context) {
+func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
 	// some codes here ...
 }

@@ -28,6 +28,8 @@ var Persian = map[string]interface{}{
 	"maintenanceRequest":  "درخواست تعمیر",
 	"email":               "ایمیل",
 	"ticket":              "درخواست پشتیبانی",
+	"role":                "نقش",
+	"permission":          "دسترسی",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -97,6 +99,7 @@ var Persian = map[string]interface{}{
 		"createTicketComment":       "نظر شما با موفقیت ثبت شد.",
 		"blockChatRoom":             "اتاق گفتگو با موفقیت مسدود شد.",
 		"unblockChatRoom":           "اتاق گفتگو با موفقیت رفع مسدود شد.",
+		"createRole":                "نقش جدید با موفقیت ساخته شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

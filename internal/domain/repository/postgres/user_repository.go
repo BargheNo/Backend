@@ -24,4 +24,6 @@ type UserRepository interface {
 	AssignPermissionToRole(db database.Database, role *entity.Role, permission *entity.Permission) error
 	AssignRoleToUser(db database.Database, user *entity.User, role *entity.Role) error
 	FindAllPermissions(db database.Database) []*entity.Permission
+	FindAllRoles(db database.Database) []*entity.Role
+	FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, bool)
 }
