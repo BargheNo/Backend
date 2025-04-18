@@ -2,7 +2,6 @@ package serviceimpl
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	maintenancedto "github.com/BargheNo/Backend/internal/application/dto/maintenance"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -97,7 +96,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 	for i, request := range maintenanceRequests {
 		panel := maintenanceService.installationService.GetPanel(request.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		corporation := maintenanceService.corporationService.GetCorporationByID(request.CorporationID)
+		corporation := maintenanceService.corporationService.GetCorporationCredentials(request.CorporationID)
 		response[i] = maintenancedto.MaintenanceResponse{
 			ID:            request.ID,
 			PanelID:       request.PanelID,
@@ -118,10 +117,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 				Azimuth:              panel.Azimuth,
 				TotalNumberOfModules: panel.TotalNumberOfModules,
 				Address:              address,
-				Corporation: corporationdto.CorporationDetailsResponse{
-					ID:   corporation.ID,
-					Name: corporation.Name,
-				},
+				Corporation:          corporation,
 			},
 		}
 	}
@@ -301,7 +297,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requ
 	for i, record := range maintenanceRecords {
 		panel := maintenanceService.installationService.GetPanel(record.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		corporation := maintenanceService.corporationService.GetCorporationByID(record.CorporationID)
+		corporation := maintenanceService.corporationService.GetCorporationCredentials(record.CorporationID)
 		response[i] = maintenancedto.CustomerMaintenanceRecordResponse{
 			ID: record.ID,
 			Panel: installationdto.CustomerPanelResponse{
@@ -314,10 +310,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requ
 				Azimuth:              panel.Azimuth,
 				TotalNumberOfModules: panel.TotalNumberOfModules,
 				Address:              address,
-				Corporation: corporationdto.CorporationDetailsResponse{
-					ID:   corporation.ID,
-					Name: corporation.Name,
-				},
+				Corporation:          corporation,
 			},
 			OperatorID:    record.OperatorID,
 			OperatorPhone: record.Operator.Phone,
@@ -338,7 +331,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPan
 	for i, record := range maintenanceRecords {
 		panel := maintenanceService.installationService.GetPanel(record.PanelID)
 		address := maintenanceService.addressService.GetAddress(panel.ID, maintenanceService.constants.AddressOwners.Panel)
-		corporation := maintenanceService.corporationService.GetCorporationByID(record.CorporationID)
+		corporation := maintenanceService.corporationService.GetCorporationCredentials(record.CorporationID)
 		response[i] = maintenancedto.CustomerMaintenanceRecordResponse{
 			ID: record.ID,
 			Panel: installationdto.CustomerPanelResponse{
@@ -351,10 +344,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPan
 				Azimuth:              panel.Azimuth,
 				TotalNumberOfModules: panel.TotalNumberOfModules,
 				Address:              address,
-				Corporation: corporationdto.CorporationDetailsResponse{
-					ID:   corporation.ID,
-					Name: corporation.Name,
-				},
+				Corporation:          corporation,
 			},
 			OperatorID:    record.OperatorID,
 			OperatorPhone: record.Operator.Phone,
