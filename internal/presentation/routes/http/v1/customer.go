@@ -6,11 +6,13 @@ import (
 )
 
 func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
-	auth := routerGroup.Group("/auth")
+	profile := routerGroup.Group("/profile")
 	{
-		auth.POST("/reset-password", app.Controllers.Customer.UserController.ResetPassword)
-		// auth.POST("/verify/email", app.Controllers.General.UserController.VerifyEmail)
-		// auth.POST("/register/complete", app.Controllers.General.UserController.CompleteRegister)
+		profile.GET("", app.Controllers.Customer.UserController.GetMyProfile)
+		profile.PUT("/password", app.Controllers.Customer.UserController.ResetPassword)
+		profile.POST("/complete", app.Controllers.Customer.UserController.CompleteRegister)
+		profile.POST("/verify/email", app.Controllers.Customer.UserController.VerifyEmail)
+		profile.PUT("", app.Controllers.Customer.UserController.UpdateProfile)
 	}
 
 	corp := routerGroup.Group("/corp")
@@ -41,6 +43,8 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		chat.POST("/room/:corporationID", app.Controllers.Customer.ChatController.CreateOrGetRoom)
 		chat.GET("/room", app.Controllers.Customer.ChatController.GetUserRooms)
 		chat.GET("/room/:roomID/messages", app.Controllers.Customer.ChatController.GetMessages)
+		chat.PUT("/room/:roomID/block", app.Controllers.Customer.ChatController.BlockRoom)
+		chat.PUT("/room/:roomID/unblock", app.Controllers.Customer.ChatController.UnBlockRoom)
 	}
 
 	notification := routerGroup.Group("/notification")

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .otp-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .otp-code {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #4285f4;
+            padding: 10px 20px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 12px;
+            color: #888888;
+            border-top: 1px solid #eeeeee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <h2>Verify Your Email Address</h2>
+            <p>Hello {{.FirstName}} {{.LastName}},</p>
+            <p>Thank you for signing up! To complete your registration, please use the following One-Time Password (OTP) to verify your email address:</p>
+            
+            <div class="otp-container">
+                <div class="otp-code">{{.OTP}}</div>
+            </div>
+            
+            <p>This code will expire in <strong>{{.ExpiryMinute}} minutes</strong>. If you didn't request this verification, please ignore this email.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{.Year}} BargheNo. All rights reserved.</p>
+            <p>If you have any questions, please contact our support team.</p>
+        </div>
+    </div>
+</body>
+</html>

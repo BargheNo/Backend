@@ -9,8 +9,3 @@ type Logger interface {
 	WithFields(fields map[string]interface{}) Logger
 	Close()
 }
-
-type Field struct {
-	Key   string
-	Value interface{}
-}

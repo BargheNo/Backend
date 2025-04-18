@@ -15,6 +15,18 @@ func GetTranslator(ctx *gin.Context, key string) localization.TranslatorInstance
 	return translator.(localization.TranslatorInstance)
 }
 
+func GetLocalizedTemplateFile(ctx *gin.Context, key, persianTemplateFile, englishTemplateFile string) string {
+	trans := GetTranslator(ctx, key)
+	switch trans.Locale() {
+	case "fa_IR":
+		return persianTemplateFile
+	case "en_US":
+		return englishTemplateFile
+	default:
+		return persianTemplateFile
+	}
+}
+
 type SortParams struct {
 	SortBy string `form:"sortBy"`
 	Dir    string `form:"dir"`

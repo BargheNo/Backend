@@ -61,9 +61,9 @@ type PanleResponse struct {
 }
 
 type CustomerPanelResponse struct {
-	ID                   uint                       `json:"id"`
-	PanelName            string                     `json:"panelName"`
-	CorporationName      string                     `json:"corporationName"`
+	ID                   uint   `json:"id"`
+	PanelName            string `json:"panelName"`
+	Corporation          corporationdto.CorporationDetailsResponse
 	Power                uint                       `json:"power"`
 	Area                 uint                       `json:"area"`
 	BuildingType         string                     `json:"buildingType"`

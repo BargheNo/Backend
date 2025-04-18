@@ -2,17 +2,18 @@ package service
 
 import (
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
-	"github.com/BargheNo/Backend/internal/domain/entity"
 )
 
 type CorporationService interface {
-	GetCorporationByID(corporationID uint) *entity.Corporation
+	DoesCorporationExist(corporationID uint)
+	ISCorporationApproved(corporationID uint) bool
+	GetCorporationCredentials(corporationID uint) corporationdto.CorporationDetailsResponse
 	CheckApplicantAccess(corporationID, applicantID uint)
 	Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationDetailsResponse
 	AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest)
 	AddContactInfo(contactInfo corporationdto.AddContactInformationRequest)
 	AddAddress(addressInfo corporationdto.AddCorporationAddressRequest)
 	DeleteAddress(addressInfo corporationdto.DeleteAddressRequest)
-	GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationInfoResponse
+	GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationDetailsResponse
 	GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse
 }

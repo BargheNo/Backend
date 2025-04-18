@@ -10,6 +10,7 @@ type Constants struct {
 	Field               ErrorField
 	Tag                 ErrorTag
 	SMSTemplates        SMSTemplates
+	EmailTemplates      EmailTemplates
 	JWTKeysPath         JWTKeysPath
 	Metrics             Metrics
 	AddressOwners       AddressOwners
@@ -43,6 +44,7 @@ type BucketPath struct {
 type ErrorField struct {
 	User                string
 	Phone               string
+	Email               string
 	Password            string
 	OTP                 string
 	Corporation         string
@@ -90,11 +92,19 @@ type ErrorTag struct {
 	AlreadyExist           string
 	ForbiddenStatus        string
 	Pending                string
+	AlreadyBlocked         string
+	AlreadyActive          string
 	AlreadyResolved        string
 }
 
 type SMSTemplates struct {
 	OTP string
+}
+
+type EmailTemplates struct {
+	Path            string
+	PersianFileName string
+	EnglishFileName string
 }
 
 type JWTKeysPath struct {
@@ -158,6 +168,7 @@ func NewConstants() *Constants {
 		Field: ErrorField{
 			User:                "user",
 			Phone:               "phone",
+			Email:               "email",
 			Password:            "password",
 			OTP:                 "otp",
 			Corporation:         "corporation",
@@ -204,6 +215,8 @@ func NewConstants() *Constants {
 			AlreadyExist:           "alreadyExist",
 			ForbiddenStatus:        "forbiddenStatus",
 			Pending:                "pending",
+			AlreadyBlocked:         "alreadyBlocked",
+			AlreadyActive:          "alreadyActive",
 			AlreadyResolved:        "alreadyResolved",
 		},
 		SMSTemplates: SMSTemplates{
@@ -214,6 +227,12 @@ func NewConstants() *Constants {
 			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
 			// PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
 			// PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
+		},
+		EmailTemplates: EmailTemplates{
+			// Path:            "../../internal/application/service/communication/email/templates/",
+			Path:            "./internal/application/service/communication/email/templates/",
+			PersianFileName: "fa.html",
+			EnglishFileName: "en.html",
 		},
 		Metrics: Metrics{
 			HTTPRequestsTotal: Options{
@@ -261,6 +280,10 @@ func (path *BucketPath) GetVATTaxpayerCertificatePath(corporationID uint, certif
 
 func (path *BucketPath) GetOfficialNewspaperADPath(corporationID uint, certificateFilename string) string {
 	return fmt.Sprintf("corporation/%d/newspaper-ad/%s", corporationID, certificateFilename)
+}
+
+func (path *BucketPath) GetUserProfilePath(userID uint, pictureFileName string) string {
+	return fmt.Sprintf("user/%d/profile/%s", userID, pictureFileName)
 }
 
 func (path *BucketPath) GetTicketImagePath(ticketID uint, imageFilename string) string {
