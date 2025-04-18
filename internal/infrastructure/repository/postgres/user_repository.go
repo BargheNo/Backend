@@ -174,3 +174,19 @@ func (repo *UserRepository) FindRoleByID(db database.Database, roleID uint) (*en
 	}
 	return &role, true
 }
+
+func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint) []*entity.User {
+	var users []*entity.User
+	result := db.GetDB().
+		Joins("JOIN user_roles ON user_roles.user_id = users.id").
+		Where("user_roles.role_id = ?", roleID).
+		Find(&users)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(result.Error)
+	}
+	return users
+}

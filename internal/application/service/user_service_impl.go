@@ -561,3 +561,29 @@ func (userService *UserService) GetRoomDetails(roleID uint) userdto.RoleResponse
 		Permissions: userService.getRolePermissions(role),
 	}
 }
+
+func (userService *UserService) GetRoleOwners(roleID uint) []userdto.CredentialResponse {
+	_, exist := userService.userRepository.FindRoleByID(userService.db, roleID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
+		panic(notFoundError)
+	}
+	users := userService.userRepository.FindUsersByRoleID(userService.db, roleID)
+	userCreds := make([]userdto.CredentialResponse, len(users))
+	for i, user := range users {
+		profilePic := ""
+		if user.ProfilePicPath != "" {
+			profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+		}
+		userCreds[i] = userdto.CredentialResponse{
+			FirstName:  user.FirstName,
+			LastName:   user.LastName,
+			Phone:      user.Phone,
+			Email:      user.Email,
+			NationalID: user.NationalCode,
+			ProfilePic: profilePic,
+			Status:     user.Status.String(),
+		}
+	}
+	return userCreds
+}

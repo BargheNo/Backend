@@ -27,4 +27,5 @@ type UserRepository interface {
 	FindAllRoles(db database.Database) []*entity.Role
 	FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, bool)
 	FindRoleByID(db database.Database, roleID uint) (*entity.Role, bool)
+	FindUsersByRoleID(db database.Database, roleID uint) []*entity.User
 }

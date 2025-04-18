@@ -62,7 +62,12 @@ func (userController *AdminUserController) GetRoleDetails(ctx *gin.Context) {
 }
 
 func (userController *AdminUserController) GetRoleOwners(ctx *gin.Context) {
-	// some codes here ...
+	type getRoleParams struct {
+		RoleID uint `uri:"roleID" validate:"required"`
+	}
+	param := controller.Validated[getRoleParams](ctx)
+	roleOwners := userController.userService.GetRoleOwners(param.RoleID)
+	controller.Response(ctx, 200, "", roleOwners)
 }
 
 func (userController *AdminUserController) UpdateRole(ctx *gin.Context) {
