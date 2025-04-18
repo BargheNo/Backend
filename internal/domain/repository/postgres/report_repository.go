@@ -7,7 +7,7 @@ import (
 
 type ReportRepository interface {
 	CreateReport(db database.Database, report *entity.Report) error
-	GetReports(db database.Database, opts ...QueryModifier) []*entity.Report
+	GetReportsByObjectType(db database.Database, objectType string, opts ...QueryModifier) []*entity.Report
 	GetReportByID(db database.Database, id uint) (*entity.Report, bool)
 	UpdateReport(db database.Database, report *entity.Report) error
 }

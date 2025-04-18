@@ -54,9 +54,9 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestIn
 		panic(forbiddenError)
 	}
 	maintenanceService.corporationService.DoesCorporationExist(requestInfo.CorporationID)
-	panel := maintenanceService.installationService.GetPanel(requestInfo.PanelID)
+	panel := maintenanceService.installationService.GetPanelByID(requestInfo.PanelID)
 
-	if panel.CustomerID != requestInfo.OwnerID {
+	if panel.Customer.ID != requestInfo.OwnerID {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: maintenanceService.constants.Field.Panel,

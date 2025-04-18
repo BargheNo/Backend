@@ -40,6 +40,20 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 	controller.Response(ctx, 200, "success", reports)
 }
 
+func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context) {
+	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
+	requestInfo := reportdto.ReportListRequest{
+		OwnerID: ownerID.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+
+	reports := reportController.reportService.GetPanelReports(requestInfo)
+	controller.Response(ctx, 200, "success", reports)
+}
+
 func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {
 	type ResolveReportRequest struct {
 		ReportID uint `uri:"reportID" validate:"required"`

@@ -78,7 +78,7 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 	reportService.userService.GetUserCredential(requestInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	reports := reportService.reportRepository.GetReports(reportService.db, paginationModifier, sortingModifier)
+	reports := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, paginationModifier, sortingModifier)
 	reportResponses := make([]reportdto.MaintenanceReportResponse, len(reports))
 	for i, report := range reports {
 		maintenanceRecord := reportService.maintenanceService.GetMaintenanceRecordByID(report.ObjectID)
@@ -97,7 +97,7 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 	reportService.userService.GetUserCredential(requestInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	reports := reportService.reportRepository.GetReports(reportService.db, paginationModifier, sortingModifier)
+	reports := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, paginationModifier, sortingModifier)
 	reportResponses := make([]reportdto.PanelReportResponse, len(reports))
 	for i, report := range reports {
 		panel := reportService.installationService.GetPanelByID(report.ObjectID)

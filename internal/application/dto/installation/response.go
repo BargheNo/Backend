@@ -48,8 +48,10 @@ type CorporationPanelResponse struct {
 
 type PanleResponse struct {
 	ID                   uint
+	Name                 string
 	Customer             userdto.CredentialResponse
-	Corporation          corporationdto.CorporationInfoResponse
+	Operator             userdto.CredentialResponse
+	Corporation          corporationdto.CorporationDetailsResponse
 	Address              addressdto.AddressResponse
 	PanelName            string
 	Power                uint

@@ -18,17 +18,16 @@ func (r *ReportRepository) CreateReport(db database.Database, report *entity.Rep
 	return db.GetDB().Create(report).Error
 }
 
-func (repo *ReportRepository) GetReports(db database.Database, opts ...repository.QueryModifier) []*entity.Report {
+func (repo *ReportRepository) GetReportsByObject(db database.Database, objectType string, opts ...repository.QueryModifier) []*entity.Report {
 	var reports []*entity.Report
-	query := db.GetDB().Model(&entity.Report{})
-
+	query := db.GetDB().Where("object_type = ?", objectType)
 	for _, opt := range opts {
 		query = opt.Apply(query).(*gorm.DB)
 	}
 
-	err := query.Find(&reports).Error
-	if err != nil {
-		return nil
+	result := query.Find(&reports)
+	if result.Error != nil {
+		panic(result.Error)
 	}
 	return reports
 }

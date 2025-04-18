@@ -280,7 +280,21 @@ func (installationService *InstallationService) GetPanelByID(panelID uint) insta
 		panic(notFoundError)
 	}
 
+	customer := installationService.userService.GetUserCredential(panel.CustomerID)
+	corporation := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
 	address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
-	corporation := installationService.corporationService.Get
+	return installationdto.PanleResponse{
+		ID:                   panel.ID,
+		Customer:             customer,
+		Corporation:          corporation,
+		Address:              address,
+		PanelName:            panel.Name,
+		Power:                panel.Power,
+		Area:                 panel.Area,
+		BuildingType:         panel.BuildingType,
+		Tilt:                 panel.Tilt,
+		Azimuth:              panel.Azimuth,
+		TotalNumberOfModules: panel.TotalNumberOfModules,
+	}
 
 }

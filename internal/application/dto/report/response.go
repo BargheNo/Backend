@@ -15,6 +15,6 @@ type MaintenanceReportResponse struct {
 type PanelReportResponse struct {
 	ID          uint
 	Description string
-	Panle       installationdto.PanleResponse
+	Panel       installationdto.PanleResponse
 	Status      string
 }
