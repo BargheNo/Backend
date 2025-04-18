@@ -10,7 +10,8 @@ import (
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	metricsimpl "github.com/BargheNo/Backend/internal/application/adapter/metrics"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
-	communicationService "github.com/BargheNo/Backend/internal/application/service/communication"
+	"github.com/BargheNo/Backend/internal/application/service/communication/email"
+	"github.com/BargheNo/Backend/internal/application/service/communication/sms"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/metrics"
@@ -69,9 +70,11 @@ var RepositoryProviderSet = wire.NewSet(
 )
 
 var ServiceProviderSet = wire.NewSet(
+	wire.Struct(new(serviceimpl.UserServiceDeps), "*"),
 	serviceimpl.NewUserService,
 	serviceimpl.NewOTPService,
-	communicationService.NewSMSService,
+	sms.NewSMSService,
+	email.NewEmailService,
 	serviceimpl.NewJWTService,
 	serviceimpl.NewInstallationService,
 	serviceimpl.NewAddressService,
@@ -84,7 +87,8 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewTicketService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
-	wire.Bind(new(service.SMSService), new(*communicationService.SMSService)),
+	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
+	wire.Bind(new(service.EmailService), new(*email.EmailService)),
 	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
 	wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)),
 	wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)),
@@ -131,6 +135,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 var CorporationControllerProviderSet = wire.NewSet(
 	corporation.NewCorporationCorporationController,
 	installation.NewCorporationInstallationController,
+	chat.NewCorporationChatController,
 	bid.NewCorporationBidController,
 	maintenance.NewCorporationMaintenanceController,
 	wire.Struct(new(CorporationControllers), "*"),
@@ -199,6 +204,10 @@ func ProvideJWTKeysPath(container *bootstrap.Config) *bootstrap.JWTKeysPath {
 	return &container.Constants.JWTKeysPath
 }
 
+func ProvideEmailTemplates(container *bootstrap.Config) *bootstrap.EmailTemplates {
+	return &container.Constants.EmailTemplates
+}
+
 func ProvideMetrics(container *bootstrap.Config) *bootstrap.Metrics {
 	return &container.Constants.Metrics
 }
@@ -213,6 +222,10 @@ func ProvideStorageConfig(container *bootstrap.Config) *bootstrap.S3 {
 
 func ProvideWebsocketSetting(container *bootstrap.Config) *bootstrap.WebsocketSetting {
 	return &container.Env.WebsocketSetting
+}
+
+func ProvideEmailSenderAccount(container *bootstrap.Config) *bootstrap.EmailAccount {
+	return &container.Env.EmailSenderAccount
 }
 
 var ProviderSet = wire.NewSet(
@@ -235,11 +248,13 @@ var ProviderSet = wire.NewSet(
 	ProvideOTPConfig,
 	ProvideSMSGatewayConfig,
 	ProvideSMSTemplates,
+	ProvideEmailTemplates,
 	ProvideJWTKeysPath,
 	ProvideMetrics,
 	ProvidePaginationConfig,
 	ProvideStorageConfig,
 	ProvideWebsocketSetting,
+	ProvideEmailSenderAccount,
 )
 
 type Database struct {
@@ -268,6 +283,7 @@ type CustomerControllers struct {
 type CorporationControllers struct {
 	CorporationController  *corporation.CorporationCorporationController
 	InstallationController *installation.CorporationInstallationController
+	ChatController         *chat.CorporationChatController
 	BidController          *bid.CorporationBidController
 	MaintenanceController  *maintenance.CorporationMaintenanceController
 }

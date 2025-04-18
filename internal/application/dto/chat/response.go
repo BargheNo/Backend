@@ -9,6 +9,8 @@ type ChatRoomDetailsResponse struct {
 	RoomID                uint                                      `json:"roomID"`
 	CustomerCredential    userdto.CredentialResponse                `json:"customer"`
 	CorporationCredential corporationdto.CorporationDetailsResponse `json:"corporation"`
+	Status                string                                    `json:"status"`
+	BlockedBy             string                                    `json:"blockedBy"`
 }
 
 type RoomMessagesResponse struct {

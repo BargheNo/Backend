@@ -26,6 +26,7 @@ var English = map[string]interface{}{
 	"panelName":           "panel name",
 	"panel":               "panel",
 	"maintenanceRequest":  "maintenance request",
+	"email":               "email",
 	"ticket":              "ticket",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
@@ -42,6 +43,7 @@ var English = map[string]interface{}{
 		"eqfield":                "Password and {0} are not the same.",
 		"eq":                     "Field {0} should be true.",
 		"Expired":                "OTP is expired.",
+		"email":                  "Email format is wrong.",
 		"invalid":                "OTP is invalid.",
 		"notRegistered":          "You have to register first.",
 		"invalidAuthCredentials": "Username and password not matched",
@@ -59,6 +61,8 @@ var English = map[string]interface{}{
 		"forbiddenError":         "Forbidden: Access to {0} is not allowed",
 		"forbiddenStatus":        "Cannot do this action with this status.",
 		"pending":                "Your request is pending.",
+		"alreadyBlocked":         "This {0} has been already blocked.",
+		"alreadyActive":          "This {0} has been already active.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -86,7 +90,15 @@ var English = map[string]interface{}{
 		"maintenanceRequest":        "Maintenance request has been successfully stored.",
 		"addMaintenanceRecord":      "Maintenance record has been successfully added.",
 		"maintenanceRequestHandled": "Maintenance request has been successfully handled.",
+		"completeRegister":          "Your registration has been completed successfully.",
+		"emailVerification":         "Your email has been successfully verified.",
+		"updateProfile":             "Profile has been updated successfully",
 		"createTicket":              "Ticket has been successfully created.",
 		"createTicketComment":       "Ticket comment has been successfully created.",
+		"blockChatRoom":             "Chat room has been successfully blocked.",
+		"unblockChatRoom":           "Chat room has been successfully unblocked.",
+	},
+	"emailSubject": map[string]interface{}{
+		"emailConfirmation": "Verify Your Email Address",
 	},
 }

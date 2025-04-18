@@ -42,7 +42,7 @@ func (notificationService *NotificationService) CreateNotification(
 	typeID, recipientID uint,
 	additionalData map[string]string,
 ) {
-	notificationService.userService.GetUserCredential(recipientID)
+	notificationService.userService.DoesUserExist(recipientID)
 	additionalDataJSON, err := json.Marshal(additionalData)
 	if err != nil {
 		panic(err)
@@ -125,7 +125,7 @@ func (notificationService *NotificationService) MarkAsRead(notificationInfo noti
 }
 
 func (notificationService *NotificationService) GetUserNotifications(userID uint) []notificationdto.NotificationListResponse {
-	notificationService.userService.GetUserCredential(userID)
+	notificationService.userService.DoesUserExist(userID)
 
 	notifications := notificationService.notificationRepository.GetNotificationsByUserID(notificationService.db, userID)
 	notificationsResponse := make([]notificationdto.NotificationListResponse, len(notifications))
@@ -146,7 +146,7 @@ func (notificationService *NotificationService) GetUserNotifications(userID uint
 }
 
 func (notificationService *NotificationService) CreateNotificationSettings(userID uint) {
-	notificationService.userService.GetUserCredential(userID)
+	notificationService.userService.DoesUserExist(userID)
 	notificationTypes := notificationService.notificationRepository.GetNotificationTypes(notificationService.db)
 	for _, notificationType := range notificationTypes {
 		setting := &entity.NotificationSetting{
@@ -163,7 +163,7 @@ func (notificationService *NotificationService) CreateNotificationSettings(userI
 }
 
 func (notificationService *NotificationService) GetUserNotificationSettings(userID uint) []notificationdto.NotificationSettingResponse {
-	notificationService.userService.GetUserCredential(userID)
+	notificationService.userService.DoesUserExist(userID)
 
 	settings := notificationService.notificationRepository.GetNotificationSettingByUserID(notificationService.db, userID)
 	settingsResponse := make([]notificationdto.NotificationSettingResponse, len(settings))
@@ -185,7 +185,7 @@ func (notificationService *NotificationService) GetUserNotificationSettings(user
 }
 
 func (notificationService *NotificationService) UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest) {
-	notificationService.userService.GetUserCredential(newSettingInfo.UserID)
+	notificationService.userService.DoesUserExist(newSettingInfo.UserID)
 	setting, exist := notificationService.notificationRepository.GetNotificationSettingByID(notificationService.db, newSettingInfo.SettingID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: notificationService.constants.Field.NotificationType}

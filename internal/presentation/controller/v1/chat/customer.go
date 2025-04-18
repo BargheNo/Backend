@@ -4,6 +4,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -11,6 +12,7 @@ import (
 
 type CustomerChatController struct {
 	constants        *bootstrap.Constants
+	pagination       *bootstrap.Pagination
 	websocketSetting *bootstrap.WebsocketSetting
 	chatService      service.ChatService
 	jwtService       service.JWTService
@@ -19,6 +21,7 @@ type CustomerChatController struct {
 
 func NewCustomerChatController(
 	constants *bootstrap.Constants,
+	pagination *bootstrap.Pagination,
 	websocketSetting *bootstrap.WebsocketSetting,
 	chatService service.ChatService,
 	jwtService service.JWTService,
@@ -26,6 +29,7 @@ func NewCustomerChatController(
 ) *CustomerChatController {
 	return &CustomerChatController{
 		constants:        constants,
+		pagination:       pagination,
 		websocketSetting: websocketSetting,
 		chatService:      chatService,
 		jwtService:       jwtService,
@@ -40,7 +44,7 @@ func (chatController *CustomerChatController) CreateOrGetRoom(ctx *gin.Context) 
 	params := controller.Validated[roomParams](ctx)
 	userID, _ := ctx.Get(chatController.constants.Context.ID)
 
-	roomInfo := chatdto.CreateOrGetRoomRequest{
+	roomInfo := chatdto.CreateOrGetUserRoomRequest{
 		CorporationID: params.CorporationID,
 		UserID:        userID.(uint),
 	}
@@ -59,16 +63,60 @@ func (chatController *CustomerChatController) GetMessages(ctx *gin.Context) {
 	type getMessagesParams struct {
 		RoomID uint `uri:"roomID" validate:"required"`
 	}
-	userID, _ := ctx.Get(chatController.constants.Context.ID)
 	param := controller.Validated[getMessagesParams](ctx)
+	userID, _ := ctx.Get(chatController.constants.Context.ID)
+	pagination := controller.GetPagination(ctx, chatController.pagination.DefaultPage, chatController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
 
 	roomInfo := chatdto.GetRoomMessageRequest{
 		RoomID: param.RoomID,
 		UserID: userID.(uint),
+		Offset: offset,
+		Limit:  limit,
 	}
 	messages := chatController.chatService.GetRoomMessages(roomInfo)
 
 	controller.Response(ctx, 200, "", messages)
+}
+
+func (chatController *CustomerChatController) BlockRoom(ctx *gin.Context) {
+	type getMessagesParams struct {
+		RoomID uint `uri:"roomID" validate:"required"`
+	}
+	param := controller.Validated[getMessagesParams](ctx)
+	userID, _ := ctx.Get(chatController.constants.Context.ID)
+
+	blockRequest := chatdto.BlockServiceChatRequest{
+		UserID:     userID.(uint),
+		RoomID:     param.RoomID,
+		BlockedBy:  enum.BlockedByUser,
+		ChatStatus: enum.ChatStatusBlocked,
+	}
+	chatController.chatService.BlockChatRoom(blockRequest)
+
+	trans := controller.GetTranslator(ctx, chatController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.blockChatRoom")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (chatController *CustomerChatController) UnBlockRoom(ctx *gin.Context) {
+	type getMessagesParams struct {
+		RoomID uint `uri:"roomID" validate:"required"`
+	}
+	param := controller.Validated[getMessagesParams](ctx)
+	userID, _ := ctx.Get(chatController.constants.Context.ID)
+
+	blockRequest := chatdto.BlockServiceChatRequest{
+		UserID:     userID.(uint),
+		RoomID:     param.RoomID,
+		BlockedBy:  enum.BlockedByUser,
+		ChatStatus: enum.ChatStatusActive,
+	}
+	chatController.chatService.UnBlockChatRoom(blockRequest)
+
+	trans := controller.GetTranslator(ctx, chatController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.unblockChatRoom")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (chatController *CustomerChatController) HandleWebsocket(ctx *gin.Context) {

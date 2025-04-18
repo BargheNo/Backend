@@ -46,8 +46,15 @@ func NewMaintenanceService(
 
 func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestInfo maintenancedto.NewMaintenanceRequest) {
 	var conflictErrors exception.ConflictErrors
-	maintenanceService.userService.GetUserCredential(requestInfo.OwnerID)
-	maintenanceService.corporationService.GetCorporationByID(requestInfo.CorporationID)
+	exist := maintenanceService.userService.IsUserActive(requestInfo.OwnerID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: maintenanceService.constants.Field.MaintenanceRequest,
+		}
+		panic(forbiddenError)
+	}
+	maintenanceService.corporationService.DoesCorporationExist(requestInfo.CorporationID)
 	panel := maintenanceService.installationService.GetPanel(requestInfo.PanelID)
 
 	if panel.CustomerID != requestInfo.OwnerID {
@@ -82,7 +89,7 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestIn
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.MaintenanceListRequest) []maintenancedto.MaintenanceResponse {
-	maintenanceService.userService.GetUserCredential(listInfo.OwnerID)
+	maintenanceService.userService.DoesUserExist(listInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByOwnerID(maintenanceService.db, listInfo.OwnerID, paginationModifier, sortingModifier)
@@ -123,7 +130,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) []maintenancedto.CorporationMaintenanceResponse {
 	maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
-	maintenanceService.corporationService.GetCorporationByID(listInfo.CorporationID)
+	maintenanceService.corporationService.DoesCorporationExist(listInfo.CorporationID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByCorporationID(maintenanceService.db, listInfo.CorporationID, paginationModifier, sortingModifier)
@@ -286,7 +293,7 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecordsBy
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requestInfo maintenancedto.MaintenanceListRequest) []maintenancedto.CustomerMaintenanceRecordResponse {
-	maintenanceService.userService.GetUserCredential(requestInfo.OwnerID)
+	maintenanceService.userService.DoesUserExist(requestInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByCustomerID(maintenanceService.db, requestInfo.OwnerID, paginationModifier, sortingModifier)
@@ -323,7 +330,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requ
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPanel(requestInfo maintenancedto.CustomerMaintenanceRecordByPanelRequest) []maintenancedto.CustomerMaintenanceRecordResponse {
-	maintenanceService.userService.GetUserCredential(requestInfo.OwnerID)
+	maintenanceService.userService.DoesUserExist(requestInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindCustomerMaintenanceRecordsByPanelID(maintenanceService.db, requestInfo.PanelID, requestInfo.OwnerID, paginationModifier, sortingModifier)

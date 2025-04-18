@@ -3,6 +3,7 @@ package serviceimpl
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
+	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
@@ -18,6 +19,7 @@ type InstallationService struct {
 	addressService         service.AddressService
 	userService            service.UserService
 	corporationService     service.CorporationService
+	chatService            service.ChatService
 	installationRepository repository.InstallationRepository
 	db                     database.Database
 }
@@ -27,6 +29,7 @@ func NewInstallationService(
 	addressService service.AddressService,
 	userService service.UserService,
 	corporationService service.CorporationService,
+	chatService service.ChatService,
 	installationRepository repository.InstallationRepository,
 	db database.Database,
 ) *InstallationService {
@@ -35,6 +38,7 @@ func NewInstallationService(
 		addressService:         addressService,
 		userService:            userService,
 		corporationService:     corporationService,
+		chatService:            chatService,
 		installationRepository: installationRepository,
 		db:                     db,
 	}
@@ -211,6 +215,11 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 	if err != nil {
 		panic(err)
 	}
+	request := chatdto.CreateOrGetUserRoomRequest{
+		CorporationID: panel.CorporationID,
+		UserID:        customer.ID,
+	}
+	installationService.chatService.CreateOrGetRoom(request)
 }
 
 func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelResponse {
@@ -222,7 +231,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 	for i, panel := range panels {
 		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
 		customer := installationService.userService.GetUserCredential(panel.CustomerID)
-		operatior := installationService.userService.GetUserCredential(panel.OperatorID)
+		operator := installationService.userService.GetUserCredential(panel.OperatorID)
 		response[i] = installationdto.CorporationPanelResponse{
 			ID:                   panel.ID,
 			PanelName:            panel.Name,
@@ -235,7 +244,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 			Azimuth:              panel.Azimuth,
 			TotalNumberOfModules: panel.TotalNumberOfModules,
 			Address:              address,
-			OperatorName:         operatior.FirstName + " " + operatior.LastName,
+			OperatorName:         operator.FirstName + " " + operator.LastName,
 		}
 	}
 	return response

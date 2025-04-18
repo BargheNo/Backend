@@ -6,4 +6,5 @@ type Translator interface {
 
 type TranslatorInstance interface {
 	Translate(key string, params ...string) (string, error)
+	Locale() string
 }
