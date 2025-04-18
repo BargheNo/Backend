@@ -2,6 +2,7 @@ package serviceimpl
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -256,11 +257,14 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 	response := make([]installationdto.CustomerPanelResponse, len(panels))
 	for i, panel := range panels {
 		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
-		corporation := installationService.userService.GetUserCredential(panel.CorporationID)
+		corporation := installationService.corporationService.GetCorporationByID(panel.CorporationID)
 		response[i] = installationdto.CustomerPanelResponse{
-			ID:                   panel.ID,
-			PanelName:            panel.Name,
-			CorporationName:      corporation.FirstName + " " + corporation.LastName,
+			ID:        panel.ID,
+			PanelName: panel.Name,
+			Corporation: corporationdto.CorporationDetailsResponse{
+				ID:   corporation.ID,
+				Name: corporation.Name,
+			},
 			Power:                panel.Power,
 			Area:                 panel.Area,
 			BuildingType:         panel.BuildingType,
