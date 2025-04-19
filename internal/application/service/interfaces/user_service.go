@@ -22,4 +22,5 @@ type UserService interface {
 	GetRoomDetails(roleID uint) userdto.RoleResponse
 	GetRoleOwners(roleID uint) []userdto.CredentialResponse
 	GetUserRoles(userID uint) []userdto.RoleResponse
+	DeleteRole(roleID uint)
 }

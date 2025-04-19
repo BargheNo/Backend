@@ -100,6 +100,7 @@ var English = map[string]interface{}{
 		"blockChatRoom":             "Chat room has been successfully blocked.",
 		"unblockChatRoom":           "Chat room has been successfully unblocked.",
 		"createRole":                "New role has been created successfully.",
+		"deleteRole":                "New role has been deleted successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

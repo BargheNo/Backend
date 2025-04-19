@@ -190,3 +190,7 @@ func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint)
 	}
 	return users
 }
+
+func (repo *UserRepository) DeleteRole(db database.Database, roleID uint) error {
+	return db.GetDB().Unscoped().Delete(&entity.Role{}, roleID).Error
+}

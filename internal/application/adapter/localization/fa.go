@@ -100,6 +100,7 @@ var Persian = map[string]interface{}{
 		"blockChatRoom":             "اتاق گفتگو با موفقیت مسدود شد.",
 		"unblockChatRoom":           "اتاق گفتگو با موفقیت رفع مسدود شد.",
 		"createRole":                "نقش جدید با موفقیت ساخته شد.",
+		"deleteRole":                "نقش مورد نظر با موفقیت حذف شد..",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

@@ -552,7 +552,7 @@ func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest
 func (userService *UserService) GetRoomDetails(roleID uint) userdto.RoleResponse {
 	role, exist := userService.userRepository.FindRoleByID(userService.db, roleID)
 	if !exist {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
 		panic(notFoundError)
 	}
 	return userdto.RoleResponse{
@@ -565,7 +565,7 @@ func (userService *UserService) GetRoomDetails(roleID uint) userdto.RoleResponse
 func (userService *UserService) GetRoleOwners(roleID uint) []userdto.CredentialResponse {
 	_, exist := userService.userRepository.FindRoleByID(userService.db, roleID)
 	if !exist {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
 		panic(notFoundError)
 	}
 	users := userService.userRepository.FindUsersByRoleID(userService.db, roleID)
@@ -606,4 +606,15 @@ func (userService *UserService) GetUserRoles(userID uint) []userdto.RoleResponse
 		}
 	}
 	return roles
+}
+
+func (userService *UserService) DeleteRole(roleID uint) {
+	_, exist := userService.userRepository.FindRoleByID(userService.db, roleID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
+		panic(notFoundError)
+	}
+	if err := userService.userRepository.DeleteRole(userService.db, roleID); err != nil {
+		panic(err)
+	}
 }

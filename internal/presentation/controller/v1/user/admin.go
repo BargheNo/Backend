@@ -75,7 +75,16 @@ func (userController *AdminUserController) UpdateRole(ctx *gin.Context) {
 }
 
 func (userController *AdminUserController) DeleteRole(ctx *gin.Context) {
-	// some codes here ...
+	type deleteRoleParams struct {
+		RoleID uint `uri:"roleID" validate:"required"`
+	}
+	params := controller.Validated[deleteRoleParams](ctx)
+
+	userController.userService.DeleteRole(params.RoleID)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteRole")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (userController *AdminUserController) GetUserRoles(ctx *gin.Context) {
