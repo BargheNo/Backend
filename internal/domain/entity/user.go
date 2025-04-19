@@ -18,5 +18,5 @@ type User struct {
 	ProfilePicPath string          `gorm:"type:varchar(255);default:null"`
 	Status         enum.UserStatus `gorm:"index"`
 	Addresses      []Address       `gorm:"polymorphic:Owner;polymorphicValue:users"`
-	Roles          []Role          `gorm:"many2many:user_roles;"`
+	Roles          []Role          `gorm:"many2many:user_roles;constraint:OnDelete:CASCADE;"`
 }

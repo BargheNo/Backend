@@ -54,6 +54,7 @@ func main() {
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()
 	app.Seeds.NotificationTypeSeeder.SeedNotificationTypes()
+	app.Seeds.RoleSeeder.SeedRoles()
 
 	routes.Run(ginEngine, app)
 

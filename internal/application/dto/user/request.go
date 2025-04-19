@@ -53,3 +53,19 @@ type UpdateProfileRequest struct {
 	TemplateFile string
 	EmailSubject string
 }
+
+type NewRoleRequest struct {
+	Name          string
+	PermissionIDs []uint
+}
+
+type UpdateRoleRequest struct {
+	RoleID        uint
+	Name          *string
+	PermissionIDs []uint
+}
+
+type UpdateUserRolesRequest struct {
+	UserID  uint
+	RoleIDs []uint
+}

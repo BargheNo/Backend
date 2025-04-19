@@ -67,6 +67,8 @@ type ErrorField struct {
 	MaintenanceRequest  string
 	MaintenanceRecord   string
 	Ticket              string
+	Role                string
+	Permission          string
 	TicketComment       string
 	Report              string
 }
@@ -191,6 +193,8 @@ func NewConstants() *Constants {
 			MaintenanceRequest:  "maintenanceRequest",
 			MaintenanceRecord:   "maintenanceRecord",
 			Ticket:              "ticket",
+			Role:                "role",
+			Permission:          "permission",
 			TicketComment:       "ticketComment",
 			Report:              "report",
 		},
