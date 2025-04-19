@@ -31,4 +31,5 @@ type UserRepository interface {
 	DeleteRole(db database.Database, roleID uint) error
 	UpdateRole(db database.Database, role *entity.Role) error
 	ReplaceRolePermissions(db database.Database, role *entity.Role, permissions []entity.Permission) error
+	ReplaceUserRoles(db database.Database, user *entity.User, roles []entity.Role) error
 }

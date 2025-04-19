@@ -651,3 +651,29 @@ func (userService *UserService) UpdateRole(newRoleRequest userdto.UpdateRoleRequ
 		panic(err)
 	}
 }
+
+func (userService *UserService) UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) {
+	user, exist := userService.userRepository.FindUserByID(userService.db, userRolesRequest.UserID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
+		panic(notFoundError)
+	}
+
+	existingRoles := make(map[uint]bool)
+	var roles []entity.Role
+	for _, roleID := range userRolesRequest.RoleIDs {
+		if existingRoles[roleID] {
+			continue
+		}
+		role, exist := userService.userRepository.FindRoleByID(userService.db, roleID)
+		if !exist {
+			notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
+			panic(notFoundError)
+		}
+		roles = append(roles, *role)
+		existingRoles[roleID] = true
+	}
+	if err := userService.userRepository.ReplaceUserRoles(userService.db, user, roles); err != nil {
+		panic(err)
+	}
+}

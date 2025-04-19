@@ -102,6 +102,7 @@ var English = map[string]interface{}{
 		"createRole":                "New role has been created successfully.",
 		"deleteRole":                "New role has been deleted successfully.",
 		"updateRole":                "New role has been updated successfully.",
+		"updateUserRoles":           "User roles has been updated successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

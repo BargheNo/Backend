@@ -113,5 +113,19 @@ func (userController *AdminUserController) GetUserRoles(ctx *gin.Context) {
 }
 
 func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
-	// some codes here ...
+	type updateUserRolesParams struct {
+		UserID  uint   `uri:"userID" validate:"required"`
+		RoleIDs []uint `json:"roleIDs"`
+	}
+	params := controller.Validated[updateUserRolesParams](ctx)
+
+	userRolesRequest := userdto.UpdateUserRolesRequest{
+		UserID:  params.UserID,
+		RoleIDs: params.RoleIDs,
+	}
+	userController.userService.UpdateUserRoles(userRolesRequest)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateUserRoles")
+	controller.Response(ctx, 200, message, nil)
 }

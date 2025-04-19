@@ -102,6 +102,7 @@ var Persian = map[string]interface{}{
 		"createRole":                "نقش جدید با موفقیت ساخته شد.",
 		"deleteRole":                "نقش مورد نظر با موفقیت حذف شد..",
 		"updateRole":                "نقش مورد نظر با موفقیت به روزرسانی شد.",
+		"updateUserRoles":           "نقش های فرد مورد نظر به روزرسانی شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

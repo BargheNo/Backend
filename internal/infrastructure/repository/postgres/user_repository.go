@@ -203,3 +203,8 @@ func (repo *UserRepository) ReplaceRolePermissions(db database.Database, role *e
 	return db.GetDB().Model(&role).Association("Permissions").Replace(permissions)
 
 }
+
+func (repo *UserRepository) ReplaceUserRoles(db database.Database, user *entity.User, roles []entity.Role) error {
+	return db.GetDB().Model(&user).Association("Roles").Replace(roles)
+
+}
