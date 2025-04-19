@@ -33,7 +33,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			}
 		}
 
-		userRoles := accessManagement.Group("/users/roles")
+		userRoles := accessManagement.Group("/users/:userID/roles")
 		{
 			userRoles.GET("", app.Controllers.Admin.UserController.GetUserRoles)
 			userRoles.PUT("", app.Controllers.Admin.UserController.UpdateUserRoles)

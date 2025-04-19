@@ -65,8 +65,8 @@ func (userController *AdminUserController) GetRoleOwners(ctx *gin.Context) {
 	type getRoleParams struct {
 		RoleID uint `uri:"roleID" validate:"required"`
 	}
-	param := controller.Validated[getRoleParams](ctx)
-	roleOwners := userController.userService.GetRoleOwners(param.RoleID)
+	params := controller.Validated[getRoleParams](ctx)
+	roleOwners := userController.userService.GetRoleOwners(params.RoleID)
 	controller.Response(ctx, 200, "", roleOwners)
 }
 
@@ -79,7 +79,12 @@ func (userController *AdminUserController) DeleteRole(ctx *gin.Context) {
 }
 
 func (userController *AdminUserController) GetUserRoles(ctx *gin.Context) {
-	// some codes here ...
+	type getRolesParams struct {
+		UserID uint `uri:"userID" validate:"required"`
+	}
+	params := controller.Validated[getRolesParams](ctx)
+	roles := userController.userService.GetUserRoles(params.UserID)
+	controller.Response(ctx, 200, "", roles)
 }
 
 func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {

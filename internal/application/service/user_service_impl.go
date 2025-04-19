@@ -587,3 +587,23 @@ func (userService *UserService) GetRoleOwners(roleID uint) []userdto.CredentialR
 	}
 	return userCreds
 }
+
+func (userService *UserService) GetUserRoles(userID uint) []userdto.RoleResponse {
+	user, exist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if err := userService.userRepository.FindUserRoles(userService.db, user); err != nil {
+		panic(err)
+	}
+	roles := make([]userdto.RoleResponse, len(user.Roles))
+	for i, role := range user.Roles {
+		roles[i] = userdto.RoleResponse{
+			ID:          role.ID,
+			Name:        role.Name,
+			Permissions: userService.getRolePermissions(&role),
+		}
+	}
+	return roles
+}
