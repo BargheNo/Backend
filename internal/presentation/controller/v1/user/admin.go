@@ -71,7 +71,23 @@ func (userController *AdminUserController) GetRoleOwners(ctx *gin.Context) {
 }
 
 func (userController *AdminUserController) UpdateRole(ctx *gin.Context) {
-	// some codes here ...
+	type updateRoleParams struct {
+		RoleID        uint    `uri:"roleID" validate:"required"`
+		Name          *string `json:"name"`
+		PermissionIDs []uint  `json:"permissionIDs"`
+	}
+	params := controller.Validated[updateRoleParams](ctx)
+
+	newRoleRequest := userdto.UpdateRoleRequest{
+		RoleID:        params.RoleID,
+		Name:          params.Name,
+		PermissionIDs: params.PermissionIDs,
+	}
+	userController.userService.UpdateRole(newRoleRequest)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateRole")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (userController *AdminUserController) DeleteRole(ctx *gin.Context) {

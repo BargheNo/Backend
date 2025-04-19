@@ -194,3 +194,12 @@ func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint)
 func (repo *UserRepository) DeleteRole(db database.Database, roleID uint) error {
 	return db.GetDB().Unscoped().Delete(&entity.Role{}, roleID).Error
 }
+
+func (repo *UserRepository) UpdateRole(db database.Database, role *entity.Role) error {
+	return db.GetDB().Save(&role).Error
+}
+
+func (repo *UserRepository) ReplaceRolePermissions(db database.Database, role *entity.Role, permissions []entity.Permission) error {
+	return db.GetDB().Model(&role).Association("Permissions").Replace(permissions)
+
+}

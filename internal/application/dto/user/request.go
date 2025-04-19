@@ -58,3 +58,9 @@ type NewRoleRequest struct {
 	Name          string
 	PermissionIDs []uint
 }
+
+type UpdateRoleRequest struct {
+	RoleID        uint
+	Name          *string
+	PermissionIDs []uint
+}

@@ -23,4 +23,5 @@ type UserService interface {
 	GetRoleOwners(roleID uint) []userdto.CredentialResponse
 	GetUserRoles(userID uint) []userdto.RoleResponse
 	DeleteRole(roleID uint)
+	UpdateRole(newRoleRequest userdto.UpdateRoleRequest)
 }

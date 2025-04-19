@@ -618,3 +618,36 @@ func (userService *UserService) DeleteRole(roleID uint) {
 		panic(err)
 	}
 }
+
+func (userService *UserService) UpdateRole(newRoleRequest userdto.UpdateRoleRequest) {
+	role, exist := userService.userRepository.FindRoleByID(userService.db, newRoleRequest.RoleID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
+		panic(notFoundError)
+	}
+
+	if newRoleRequest.Name != nil {
+		role.Name = *newRoleRequest.Name
+		if err := userService.userRepository.UpdateRole(userService.db, role); err != nil {
+			panic(err)
+		}
+	}
+
+	existingPermissions := make(map[uint]bool)
+	var permissions []entity.Permission
+	for _, permissionID := range newRoleRequest.PermissionIDs {
+		if existingPermissions[permissionID] {
+			continue
+		}
+		permission, exist := userService.userRepository.FindPermissionByID(userService.db, permissionID)
+		if !exist {
+			notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
+			panic(notFoundError)
+		}
+		permissions = append(permissions, *permission)
+		existingPermissions[permissionID] = true
+	}
+	if err := userService.userRepository.ReplaceRolePermissions(userService.db, role, permissions); err != nil {
+		panic(err)
+	}
+}
