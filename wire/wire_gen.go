@@ -145,12 +145,10 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	}
 	adminTicketController := ticket.NewAdminTicketController(constants, pagination, userService, ticketService)
 	adminUserController := user.NewAdminUserController(constants, userService)
-	adminControllers := &AdminControllers{
-		TicketController: adminTicketController,
-		UserController:   adminUserController,
 	adminReportController := report.NewAdminReportController(constants, pagination, reportService)
 	adminControllers := &AdminControllers{
 		TicketController: adminTicketController,
+		UserController:   adminUserController,
 		ReportController: adminReportController,
 	}
 	controllers := &Controllers{
