@@ -178,6 +178,7 @@ func (userService *UserService) GetUserCredential(userID uint) userdto.Credentia
 		profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
 	}
 	return userdto.CredentialResponse{
+		ID:         user.ID,
 		FirstName:  user.FirstName,
 		LastName:   user.LastName,
 		Phone:      user.Phone,

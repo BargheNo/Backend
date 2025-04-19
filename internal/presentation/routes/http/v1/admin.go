@@ -38,5 +38,11 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			userRoles.GET("", app.Controllers.Admin.UserController.GetUserRoles)
 			userRoles.PUT("", app.Controllers.Admin.UserController.UpdateUserRoles)
 		}
+
+	report := routerGroup.Group("/report")
+	{
+		report.GET("/maintenance", app.Controllers.Admin.ReportController.GetMaintenanceReports)
+		report.GET("/panel", app.Controllers.Admin.ReportController.GetPanelReports)
+		report.POST("/resolve/:reportID", app.Controllers.Admin.ReportController.ResolveReport)
 	}
 }

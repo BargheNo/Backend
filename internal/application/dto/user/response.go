@@ -14,6 +14,7 @@ type UserInfoResponse struct {
 }
 
 type CredentialResponse struct {
+	ID         uint   `json:"id"`
 	FirstName  string `json:"firstName"`
 	LastName   string `json:"lastName"`
 	Phone      string `json:"phone"`

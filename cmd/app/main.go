@@ -49,6 +49,7 @@ func main() {
 		&entity.MaintenanceRecord{},
 		&entity.Ticket{},
 		&entity.TicketComment{},
+		&entity.Report{},
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()

@@ -27,9 +27,12 @@ var English = map[string]interface{}{
 	"panel":               "panel",
 	"maintenanceRequest":  "maintenance request",
 	"email":               "email",
+	"maintenanceRecord":   "maintenance record",
 	"ticket":              "ticket",
 	"role":                "role",
 	"permission":          "permission",
+	"ticketComment":       "ticket comment",
+	"report":              "report",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -65,6 +68,7 @@ var English = map[string]interface{}{
 		"pending":                "Your request is pending.",
 		"alreadyBlocked":         "This {0} has been already blocked.",
 		"alreadyActive":          "This {0} has been already active.",
+		"alreadyResolved":        "This {0} has been already resolved.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -106,5 +110,7 @@ var English = map[string]interface{}{
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",
+		"createReport":      "Report has been successfully created.",
+		"reportResolved":    "Report has been successfully resolved.",
 	},
 }

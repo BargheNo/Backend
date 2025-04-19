@@ -256,11 +256,11 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 	response := make([]installationdto.CustomerPanelResponse, len(panels))
 	for i, panel := range panels {
 		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
-		corporation := installationService.userService.GetUserCredential(panel.CorporationID)
+		corporation := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
 		response[i] = installationdto.CustomerPanelResponse{
 			ID:                   panel.ID,
 			PanelName:            panel.Name,
-			CorporationName:      corporation.FirstName + " " + corporation.LastName,
+			Corporation:          corporation,
 			Power:                panel.Power,
 			Area:                 panel.Area,
 			BuildingType:         panel.BuildingType,
@@ -273,11 +273,28 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 	return response
 }
 
-func (installationService *InstallationService) GetPanel(panelID uint) *entity.Panel {
+func (installationService *InstallationService) GetPanelByID(panelID uint) installationdto.PanleResponse {
 	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
 		panic(notFoundError)
 	}
-	return panel
+
+	customer := installationService.userService.GetUserCredential(panel.CustomerID)
+	corporation := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
+	address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+	return installationdto.PanleResponse{
+		ID:                   panel.ID,
+		Customer:             customer,
+		Corporation:          corporation,
+		Address:              address,
+		PanelName:            panel.Name,
+		Power:                panel.Power,
+		Area:                 panel.Area,
+		BuildingType:         panel.BuildingType,
+		Tilt:                 panel.Tilt,
+		Azimuth:              panel.Azimuth,
+		TotalNumberOfModules: panel.TotalNumberOfModules,
+	}
+
 }
