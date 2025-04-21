@@ -108,6 +108,7 @@ func (corporationController *CustomerCorporationController) UpdateRegister(ctx *
 	controller.Response(ctx, 200, message, nil)
 }
 
+// TODO: i think u should remove this
 func (corporationController *CustomerCorporationController) GetCorporations(ctx *gin.Context) {
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
 	params := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
@@ -120,4 +121,35 @@ func (corporationController *CustomerCorporationController) GetCorporations(ctx 
 
 	corporations := corporationController.corporationService.GetCorporations(listInfo)
 	controller.Response(ctx, 200, "", corporations)
+}
+
+func (corporationController *CustomerCorporationController) UpdateContactInfoCorporations(ctx *gin.Context) {
+	type contactInformation struct {
+		ContactTypeID uint   `json:"contactTypeID"`
+		ContactValue  string `json:"contactValue"`
+	}
+	type contactInformationParams struct {
+		CorporationID      uint                 `uri:"corporationID" validate:"required"`
+		ContactInformation []contactInformation `json:"contactInformation" validate:"required"`
+	}
+	params := controller.Validated[contactInformationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	contacts := make([]corporationdto.ContactInformation, len(params.ContactInformation))
+	for i, contact := range params.ContactInformation {
+		contacts[i] = corporationdto.ContactInformation{
+			ContactTypeID: contact.ContactTypeID,
+			ContactValue:  contact.ContactValue,
+		}
+	}
+	contactInfo := corporationdto.AddContactInformationRequest{
+		ApplicantID:        userID.(uint),
+		CorporationID:      params.CorporationID,
+		ContactInformation: contacts,
+	}
+	corporationController.corporationService.AddContactInfo(contactInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateContactInfo")
+	controller.Response(ctx, 200, message, nil)
 }

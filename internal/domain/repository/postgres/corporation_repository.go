@@ -27,4 +27,5 @@ type CorporationRepository interface {
 	FindCorporationByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) []*entity.Corporation
 	FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation
 	DeleteCorporationSignatories(db database.Database, corporationID uint) error
+	DeleteCorporationContactInfo(db database.Database, corporationID uint) error
 }

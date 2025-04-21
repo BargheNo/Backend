@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	queryByCorporationID string = "corporation_id"
+)
+
 type CorporationRepository struct{}
 
 func NewCorporationRepository() *CorporationRepository {
@@ -185,7 +189,7 @@ func (repo *CorporationRepository) FindCorporationByStatus(db database.Database,
 
 func (repo *CorporationRepository) FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation {
 	var contactInfo []*entity.ContactInformation
-	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&contactInfo)
+	result := db.GetDB().Where(queryByCorporationID, corporationID).Find(&contactInfo)
 	if result.Error != nil {
 		panic(result.Error)
 	}
@@ -193,5 +197,9 @@ func (repo *CorporationRepository) FindContactInformation(db database.Database, 
 }
 
 func (repo *CorporationRepository) DeleteCorporationSignatories(db database.Database, corporationID uint) error {
-	return db.GetDB().Where("corporation_id = ?", corporationID).Delete(&entity.Signatory{}).Error
+	return db.GetDB().Where(queryByCorporationID, corporationID).Delete(&entity.Signatory{}).Error
+}
+
+func (repo *CorporationRepository) DeleteCorporationContactInfo(db database.Database, corporationID uint) error {
+	return db.GetDB().Where(queryByCorporationID, corporationID).Delete(&entity.Signatory{}).Error
 }

@@ -28,7 +28,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		corpsSubgroup := corps.Group("/:corporationID")
 		{
 			corpsSubgroup.PUT("/basic", app.Controllers.Customer.CorporationController.UpdateRegister)
-			corpsSubgroup.PUT("/contacts")
+			corpsSubgroup.PUT("/contacts", app.Controllers.Customer.CorporationController.UpdateContactInfoCorporations)
 			corpsSubgroup.PUT("/address")
 			corpsSubgroup.GET("")
 		}

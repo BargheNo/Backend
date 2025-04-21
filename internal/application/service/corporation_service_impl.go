@@ -281,6 +281,16 @@ func (corporationService *CorporationService) AddCertificateFiles(requestInfo co
 	}
 }
 
+func (corporationService *CorporationService) UpdateContactInfo(contactInfo corporationdto.AddContactInformationRequest) {
+	corporationService.DoesCorporationExist(contactInfo.CorporationID)
+	corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
+	err := corporationService.corporationRepository.DeleteCorporationContactInfo(corporationService.db, contactInfo.CorporationID)
+	if err != nil {
+		panic(err)
+	}
+	corporationService.AddContactInfo(contactInfo)
+}
+
 func (corporationService *CorporationService) AddContactInfo(contactInfo corporationdto.AddContactInformationRequest) {
 	corporationService.DoesCorporationExist(contactInfo.CorporationID)
 	corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
