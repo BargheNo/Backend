@@ -21,4 +21,9 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		addresses.GET("/province", app.Controllers.General.AddressController.GetProvince)
 		addresses.GET("/province/:provinceID/city", app.Controllers.General.AddressController.GetProvinceCities)
 	}
+
+	contacts := routerGroup.Group("/contact")
+	{
+		contacts.GET("/types", app.Controllers.General.CorporationController.GetContactTypes)
+	}
 }

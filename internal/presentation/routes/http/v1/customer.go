@@ -15,10 +15,16 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		profile.PUT("", app.Controllers.Customer.UserController.UpdateProfile)
 	}
 
-	corp := routerGroup.Group("/corp")
+	corps := routerGroup.Group("corps/registration")
 	{
-		corp.POST("/register", app.Controllers.Customer.CorporationController.Register)
-		corp.GET("/list", app.Controllers.Customer.CorporationController.GetCorporations)
+		corps.POST("/basic", app.Controllers.Customer.CorporationController.Register)
+		corpsSubgroup := corps.Group("/:corporationID")
+		{
+			corpsSubgroup.PUT("/basic", app.Controllers.Customer.CorporationController.UpdateRegister)
+			corpsSubgroup.PUT("/contacts", app.Controllers.Customer.CorporationController.UpdateContactInfoCorporations)
+			corpsSubgroup.PUT("/address", app.Controllers.Customer.CorporationController.UpdateAddress)
+			corpsSubgroup.GET("", app.Controllers.Customer.CorporationController.GetCorporationPrivateDetails)
+		}
 	}
 
 	orders := routerGroup.Group("/installation")
