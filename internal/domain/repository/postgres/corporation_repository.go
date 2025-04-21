@@ -21,8 +21,10 @@ type CorporationRepository interface {
 	FindCorporationStaff(db database.Database, staffID, corporationID uint) (*entity.CorporationStaff, bool)
 	FindContactInformationTypeByID(db database.Database, typeID uint) (*entity.ContactType, bool)
 	FindContactInformationTypeValue(db database.Database, typeID uint, value string) (*entity.ContactInformation, bool)
+	FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, bool)
 	FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool)
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
 	FindCorporationByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) []*entity.Corporation
 	FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation
+	DeleteCorporationSignatories(db database.Database, corporationID uint) error
 }

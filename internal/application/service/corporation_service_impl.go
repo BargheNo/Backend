@@ -167,7 +167,6 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 			NationalCardNumber: signatory.NationalCardNumber,
 			Position:           signatory.Position,
 		}
-		// errors could be ignored instead of panicking
 		err := corporationService.corporationRepository.CreateSignatory(corporationService.db, signatoryEntity)
 		if err != nil {
 			panic(err)
@@ -175,6 +174,92 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 	}
 
 	return corporationdto.CorporationDetailsResponse{ID: corporation.ID, Name: corporation.Name}
+}
+
+func (corporationService *CorporationService) replaceSignatories(corporationID uint, Signatories []corporationdto.Signatory) {
+	err := corporationService.corporationRepository.DeleteCorporationSignatories(corporationService.db, corporationID)
+	if err != nil {
+		panic(err)
+	}
+	for _, signatory := range Signatories {
+		_, exist := corporationService.corporationRepository.FindCorporationSignatoryByNationalID(corporationService.db, corporationID, signatory.NationalCardNumber, signatory.Position)
+		if exist {
+			continue
+		}
+		signatoryEntity := &entity.Signatory{
+			CorporationID:      corporationID,
+			Name:               signatory.Name,
+			NationalCardNumber: signatory.NationalCardNumber,
+			Position:           signatory.Position,
+		}
+		err := corporationService.corporationRepository.CreateSignatory(corporationService.db, signatoryEntity)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (corporationService *CorporationService) UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest) {
+	exist := corporationService.userService.IsUserActive(updateRegisterInfo.ApplicantID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
+		}
+		panic(forbiddenError)
+	}
+	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, updateRegisterInfo.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+	corporationService.checkCorporationConflicts(corporation, updateRegisterInfo.Name, updateRegisterInfo.NationalID, updateRegisterInfo.RegistrationNumber, updateRegisterInfo.IBAN)
+
+	if err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation); err != nil {
+		panic(err)
+	}
+
+	corporationService.replaceSignatories(updateRegisterInfo.CorporationID, updateRegisterInfo.Signatories)
+}
+
+func (corporationService *CorporationService) checkCorporationConflicts(corporation *entity.Corporation, name, nationalID, registrationNumber, iban *string) {
+	activeStatus := []enum.CorporationStatus{enum.CorpStatusApproved, enum.CorpStatusAwaitingApproval}
+	var conflictErrors exception.ConflictErrors
+	if name != nil {
+		_, exist := corporationService.corporationRepository.FindCorporationByName(corporationService.db, *name, activeStatus)
+		if exist {
+			conflictErrors.Add(corporationService.constants.Field.Name, corporationService.constants.Tag.AlreadyExist)
+		}
+		corporation.Name = *name
+	}
+
+	if nationalID != nil {
+		_, exist := corporationService.corporationRepository.FindCorporationByNationalID(corporationService.db, *nationalID, activeStatus)
+		if exist {
+			conflictErrors.Add(corporationService.constants.Field.NationalID, corporationService.constants.Tag.AlreadyExist)
+		}
+		corporation.NationalID = *nationalID
+	}
+
+	if registrationNumber != nil {
+		_, exist := corporationService.corporationRepository.FindCorporationByRegistrationNumber(corporationService.db, *registrationNumber, activeStatus)
+		if exist {
+			conflictErrors.Add(corporationService.constants.Field.RegistrationNumber, corporationService.constants.Tag.AlreadyExist)
+		}
+		corporation.RegistrationNumber = *registrationNumber
+	}
+
+	if iban != nil {
+		_, exist := corporationService.corporationRepository.FindCorporationByIBAN(corporationService.db, *iban, activeStatus)
+		if exist {
+			conflictErrors.Add(corporationService.constants.Field.IBAN, corporationService.constants.Tag.AlreadyExist)
+		}
+		corporation.IBAN = *iban
+	}
+
+	if len(conflictErrors.Errors) > 0 {
+		panic(conflictErrors)
+	}
 }
 
 func (corporationService *CorporationService) AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest) {

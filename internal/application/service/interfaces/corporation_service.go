@@ -10,6 +10,7 @@ type CorporationService interface {
 	GetCorporationCredentials(corporationID uint) corporationdto.CorporationDetailsResponse
 	CheckApplicantAccess(corporationID, applicantID uint)
 	Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationDetailsResponse
+	UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest)
 	AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest)
 	AddContactInfo(contactInfo corporationdto.AddContactInformationRequest)
 	AddAddress(addressInfo corporationdto.AddCorporationAddressRequest)

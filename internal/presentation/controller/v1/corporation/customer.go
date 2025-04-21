@@ -65,6 +65,49 @@ func (corporationController *CustomerCorporationController) Register(ctx *gin.Co
 	controller.Response(ctx, 200, message, corporationInfo)
 }
 
+func (corporationController *CustomerCorporationController) UpdateRegister(ctx *gin.Context) {
+	type signatory struct {
+		Name               string `json:"name" validate:"required"`
+		NationalCardNumber string `json:"nationalCardNumber" validate:"required"`
+		Position           string `json:"position" validate:"required"`
+	}
+
+	type registerParams struct {
+		CorporationID      uint        `uri:"corporationID" validate:"required"`
+		Name               *string     `json:"name"`
+		RegistrationNumber *string     `json:"registrationNumber"`
+		NationalID         *string     `json:"nationalID"`
+		IBAN               *string     `json:"iban"`
+		Signatories        []signatory `json:"signatories" validate:"omitempty,dive"`
+	}
+	params := controller.Validated[registerParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	signatories := make([]corporationdto.Signatory, len(params.Signatories))
+	for i, signatory := range params.Signatories {
+		signatories[i] = corporationdto.Signatory{
+			Name:               signatory.Name,
+			NationalCardNumber: signatory.NationalCardNumber,
+			Position:           signatory.Position,
+		}
+	}
+	updateRegisterInfo := corporationdto.UpdateRegisterRequest{
+		ApplicantID:        userID.(uint),
+		CorporationID:      params.CorporationID,
+		Name:               params.Name,
+		NationalID:         params.NationalID,
+		RegistrationNumber: params.RegistrationNumber,
+		IBAN:               params.IBAN,
+		Signatories:        signatories,
+	}
+
+	corporationController.corporationService.UpdateRegister(updateRegisterInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateCorporation")
+	controller.Response(ctx, 200, message, nil)
+}
+
 func (corporationController *CustomerCorporationController) GetCorporations(ctx *gin.Context) {
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
 	params := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)

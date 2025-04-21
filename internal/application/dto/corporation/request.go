@@ -21,6 +21,16 @@ type RegisterRequest struct {
 	Signatories        []Signatory
 }
 
+type UpdateRegisterRequest struct {
+	ApplicantID        uint
+	CorporationID      uint
+	Name               *string
+	NationalID         *string
+	RegistrationNumber *string
+	IBAN               *string
+	Signatories        []Signatory
+}
+
 type AddCertificatesRequest struct {
 	CorporationID          uint
 	ApplicantID            uint
