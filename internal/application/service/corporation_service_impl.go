@@ -323,6 +323,12 @@ func (corporationService *CorporationService) AddAddress(addressInfo corporation
 	}
 }
 
+func (corporationService *CorporationService) UpdateAddress(addressInfo corporationdto.AddCorporationAddressRequest) {
+	corporationService.DoesCorporationExist(addressInfo.CorporationID)
+	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID)
+	corporationService.addressService.ReplaceAddresses(addressInfo.CorporationID, corporationService.constants.AddressOwners.Corporation, addressInfo.Addresses)
+}
+
 func (corporationService *CorporationService) DeleteAddress(addressInfo corporationdto.DeleteAddressRequest) {
 	corporationService.DoesCorporationExist(addressInfo.CorporationID)
 	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID)
