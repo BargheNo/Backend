@@ -7,9 +7,9 @@ import (
 type CorporationService interface {
 	DoesCorporationExist(corporationID uint)
 	ISCorporationApproved(corporationID uint) bool
-	GetCorporationCredentials(corporationID uint) corporationdto.CorporationDetailsResponse
+	GetCorporationCredentials(corporationID uint) corporationdto.CorporationCredentialResponse
 	CheckApplicantAccess(corporationID, applicantID uint)
-	Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationDetailsResponse
+	Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationCredentialResponse
 	UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest)
 	AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest)
 	AddContactInfo(contactInfo corporationdto.AddContactInformationRequest)
@@ -17,6 +17,6 @@ type CorporationService interface {
 	AddAddress(addressInfo corporationdto.AddCorporationAddressRequest)
 	UpdateAddress(addressInfo corporationdto.AddCorporationAddressRequest)
 	DeleteAddress(addressInfo corporationdto.DeleteAddressRequest)
-	GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationDetailsResponse
+	GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) corporationdto.CorporationPrivateInfoResponse
 	GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse
 }

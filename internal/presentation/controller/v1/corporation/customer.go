@@ -109,19 +109,19 @@ func (corporationController *CustomerCorporationController) UpdateRegister(ctx *
 	controller.Response(ctx, 200, message, nil)
 }
 
-// TODO: i think u should remove this
-func (corporationController *CustomerCorporationController) GetCorporations(ctx *gin.Context) {
+func (corporationController *CustomerCorporationController) GetCorporationPrivateDetails(ctx *gin.Context) {
+	type GetCorporationParamsParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[GetCorporationParamsParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-	params := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
-	offset, limit := params.GetOffsetLimit()
-	listInfo := corporationdto.CorporationListRequest{
-		UserID: userID.(uint),
-		Offset: offset,
-		Limit:  limit,
+	corporationRequest := corporationdto.CorporationDetailsRequest{
+		UserID:        userID.(uint),
+		CorporationID: params.CorporationID,
 	}
 
-	corporations := corporationController.corporationService.GetCorporations(listInfo)
-	controller.Response(ctx, 200, "", corporations)
+	corporationDetails := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	controller.Response(ctx, 200, "", corporationDetails)
 }
 
 func (corporationController *CustomerCorporationController) UpdateContactInfoCorporations(ctx *gin.Context) {

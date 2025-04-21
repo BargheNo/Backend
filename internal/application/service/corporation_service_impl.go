@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"time"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
@@ -11,7 +13,6 @@ import (
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type CorporationService struct {
@@ -58,7 +59,7 @@ func (corporationService *CorporationService) DoesCorporationExist(corporationID
 	}
 }
 
-func (corporationService *CorporationService) GetCorporationCredentials(corporationID uint) corporationdto.CorporationDetailsResponse {
+func (corporationService *CorporationService) GetCorporationCredentials(corporationID uint) corporationdto.CorporationCredentialResponse {
 	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
@@ -70,7 +71,7 @@ func (corporationService *CorporationService) GetCorporationCredentials(corporat
 	}
 	addresses := corporationService.addressService.GetAddresses(ownerInfo)
 	contactInfo := corporationService.GetContactInfo(corporation.ID)
-	return corporationdto.CorporationDetailsResponse{
+	return corporationdto.CorporationCredentialResponse{
 		ID:          corporation.ID,
 		Name:        corporation.Name,
 		ContactInfo: contactInfo,
@@ -99,7 +100,7 @@ func (corporationService *CorporationService) CheckApplicantAccess(corporationID
 	}
 }
 
-func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationDetailsResponse {
+func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationCredentialResponse {
 	exist := corporationService.userService.IsUserActive(registerInfo.ApplicantID)
 	if !exist {
 		forbiddenError := exception.ForbiddenError{
@@ -173,7 +174,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		}
 	}
 
-	return corporationdto.CorporationDetailsResponse{ID: corporation.ID, Name: corporation.Name}
+	return corporationdto.CorporationCredentialResponse{ID: corporation.ID, Name: corporation.Name}
 }
 
 func (corporationService *CorporationService) replaceSignatories(corporationID uint, Signatories []corporationdto.Signatory) {
@@ -335,18 +336,51 @@ func (corporationService *CorporationService) DeleteAddress(addressInfo corporat
 	corporationService.addressService.DeleteAddress(addressInfo.AddressID)
 }
 
-func (corporationService *CorporationService) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationDetailsResponse {
-	corporationService.userService.DoesUserExist(requestInfo.UserID)
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
-	corporations := corporationService.corporationRepository.FindCorporationByStatus(corporationService.db, allowedStatuses, paginationModifier, sortingModifier)
-	response := make([]corporationdto.CorporationDetailsResponse, len(corporations))
-	for i, corporation := range corporations {
-		response[i] = corporationService.GetCorporationCredentials(corporation.ID)
-	}
+// func (corporationService *CorporationService) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationCredentialResponse {
+// 	corporationService.userService.DoesUserExist(requestInfo.UserID)
+// 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+// 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+// 	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
+// 	corporations := corporationService.corporationRepository.FindCorporationByStatus(corporationService.db, allowedStatuses, paginationModifier, sortingModifier)
+// 	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
+// 	for i, corporation := range corporations {
+// 		response[i] = corporationService.GetCorporationCredentials(corporation.ID)
+// 	}
 
-	return response
+// 	return response
+// }
+
+func (corporationService *CorporationService) GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) corporationdto.CorporationPrivateInfoResponse {
+	corporationService.userService.DoesUserExist(requestInfo.UserID)
+	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, requestInfo.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+	corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.UserID)
+	vatTaxPayer := ""
+	if corporation.VATTaxpayerCertificate != "" {
+		vatTaxPayer = corporationService.s3Storage.GetPresignedURL(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate, 8*time.Hour)
+	}
+	officialNewspaperAD := ""
+	if corporation.OfficialNewspaperAD != "" {
+		officialNewspaperAD = corporationService.s3Storage.GetPresignedURL(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD, 8*time.Hour)
+	}
+	ownerInfo := addressdto.GetOwnerAddressesRequest{
+		OwnerID:   corporation.ID,
+		OwnerType: corporationService.constants.AddressOwners.Corporation,
+	}
+	addresses := corporationService.addressService.GetAddresses(ownerInfo)
+	contactInfo := corporationService.GetContactInfo(corporation.ID)
+	return corporationdto.CorporationPrivateInfoResponse{
+		ID:                     corporation.ID,
+		Name:                   corporation.Name,
+		Logo:                   "",
+		VATTaxpayerCertificate: vatTaxPayer,
+		OfficialNewspaperAD:    officialNewspaperAD,
+		ContactInfo:            contactInfo,
+		Addresses:              addresses,
+	}
 }
 
 func (corporationService *CorporationService) GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse {

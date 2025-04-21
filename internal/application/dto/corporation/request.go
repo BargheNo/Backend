@@ -61,8 +61,7 @@ type DeleteAddressRequest struct {
 	AddressID     uint
 }
 
-type CorporationListRequest struct {
-	UserID uint
-	Offset int
-	Limit  int
+type CorporationDetailsRequest struct {
+	UserID        uint
+	CorporationID uint
 }
