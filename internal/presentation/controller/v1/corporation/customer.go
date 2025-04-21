@@ -126,12 +126,12 @@ func (corporationController *CustomerCorporationController) GetCorporationPrivat
 
 func (corporationController *CustomerCorporationController) UpdateContactInfoCorporations(ctx *gin.Context) {
 	type contactInformation struct {
-		ContactTypeID uint   `json:"contactTypeID"`
-		ContactValue  string `json:"contactValue"`
+		ContactTypeID uint   `json:"contactTypeID" validate:"required"`
+		ContactValue  string `json:"contactValue" validate:"required"`
 	}
 	type contactInformationParams struct {
 		CorporationID      uint                 `uri:"corporationID" validate:"required"`
-		ContactInformation []contactInformation `json:"contactInformation" validate:"required"`
+		ContactInformation []contactInformation `json:"contactInformation" validate:"required,dive"`
 	}
 	params := controller.Validated[contactInformationParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)

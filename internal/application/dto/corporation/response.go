@@ -26,3 +26,8 @@ type ContactInformationResponse struct {
 	ContactTypeID uint
 	ContactValue  string
 }
+
+type ContactTypeResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}

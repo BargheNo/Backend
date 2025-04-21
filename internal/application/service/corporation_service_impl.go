@@ -336,19 +336,17 @@ func (corporationService *CorporationService) DeleteAddress(addressInfo corporat
 	corporationService.addressService.DeleteAddress(addressInfo.AddressID)
 }
 
-// func (corporationService *CorporationService) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationCredentialResponse {
-// 	corporationService.userService.DoesUserExist(requestInfo.UserID)
-// 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-// 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-// 	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
-// 	corporations := corporationService.corporationRepository.FindCorporationByStatus(corporationService.db, allowedStatuses, paginationModifier, sortingModifier)
-// 	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
-// 	for i, corporation := range corporations {
-// 		response[i] = corporationService.GetCorporationCredentials(corporation.ID)
-// 	}
-
-// 	return response
-// }
+func (corporationService *CorporationService) GetContactTypes() []corporationdto.ContactTypeResponse {
+	types := corporationService.corporationRepository.GetContactTypes(corporationService.db)
+	contactTypes := make([]corporationdto.ContactTypeResponse, len(types))
+	for i, contactType := range types {
+		contactTypes[i] = corporationdto.ContactTypeResponse{
+			ID:   contactType.ID,
+			Name: contactType.Name,
+		}
+	}
+	return contactTypes
+}
 
 func (corporationService *CorporationService) GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) corporationdto.CorporationPrivateInfoResponse {
 	corporationService.userService.DoesUserExist(requestInfo.UserID)

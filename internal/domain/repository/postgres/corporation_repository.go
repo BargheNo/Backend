@@ -11,6 +11,10 @@ type CorporationRepository interface {
 	CreateCorporationStaff(db database.Database, staff *entity.CorporationStaff) error
 	CreateSignatory(db database.Database, signatory *entity.Signatory) error
 	CreateContactInformation(db database.Database, contact *entity.ContactInformation) error
+	CreateContactType(db database.Database, contactType *entity.ContactType) error
+	GetContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool)
+	GetContactTypeByName(db database.Database, name string) (*entity.ContactType, bool)
+	GetContactTypes(db database.Database) []*entity.ContactType
 	DeleteCorporationByCIN(db database.Database, cin string) error
 	FindCorporationByCIN(db database.Database, cin string) (*entity.Corporation, bool)
 	FindCorporationByIBAN(db database.Database, iban string, status []enum.CorporationStatus) (*entity.Corporation, bool)

@@ -166,6 +166,43 @@ func (repo *CorporationRepository) CreateContactInformation(db database.Database
 	return db.GetDB().Create(&contact).Error
 }
 
+func (repo *CorporationRepository) CreateContactType(db database.Database, contactType *entity.ContactType) error {
+	return db.GetDB().Create(&contactType).Error
+}
+
+func (repo *CorporationRepository) GetContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool) {
+	var contactType entity.ContactType
+	result := db.GetDB().First(&contactType, contactTypeID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &contactType, true
+}
+
+func (repo *CorporationRepository) GetContactTypeByName(db database.Database, name string) (*entity.ContactType, bool) {
+	var contactType entity.ContactType
+	result := db.GetDB().Where("name = ?", name).First(&contactType)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &contactType, true
+}
+
+func (repo *CorporationRepository) GetContactTypes(db database.Database) []*entity.ContactType {
+	var types []*entity.ContactType
+	err := db.GetDB().Find(&types).Error
+	if err != nil {
+		panic(err)
+	}
+	return types
+}
+
 func (repo *CorporationRepository) DeleteCorporationByCIN(db database.Database, cin string) error {
 	return db.GetDB().Where("cin = ?", cin).Delete(&entity.Corporation{}).Error
 }

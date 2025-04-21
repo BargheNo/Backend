@@ -188,10 +188,12 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	notificationTypeSeeder := seed.NewNotificationTypeSeeder(notificationRepository, postgresDatabase)
 	adminCredentials := ProvideSuperAdminCredential(container)
 	roleSeeder := seed.NewRoleSeeder(adminCredentials, userRepository, postgresDatabase)
+	contactTypeSeeder := seed.NewContactTypeSeeder(corporationRepository, postgresDatabase)
 	seeds := &Seeds{
 		AddressSeeder:          addressSeeder,
 		NotificationTypeSeeder: notificationTypeSeeder,
 		RoleSeeder:             roleSeeder,
+		ContactType:            contactTypeSeeder,
 	}
 	application := NewApplication(wireDatabase, controllers, middlewares, seeds)
 	return application, nil
@@ -219,7 +221,7 @@ var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
 var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, middleware.NewWebsocketMiddleware, wire.Struct(new(Middlewares), "*"))
 
-var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, seed.NewNotificationTypeSeeder, seed.NewRoleSeeder, wire.Struct(new(Seeds), "*"))
+var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, seed.NewNotificationTypeSeeder, seed.NewRoleSeeder, seed.NewContactTypeSeeder, wire.Struct(new(Seeds), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -375,6 +377,7 @@ type Seeds struct {
 	AddressSeeder          *seed.AddressSeeder
 	NotificationTypeSeeder *seed.NotificationTypeSeeder
 	RoleSeeder             *seed.RoleSeeder
+	ContactType            *seed.ContactTypeSeeder
 }
 
 type Application struct {
