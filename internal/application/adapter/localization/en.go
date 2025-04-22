@@ -29,6 +29,8 @@ var English = map[string]interface{}{
 	"email":               "email",
 	"maintenanceRecord":   "maintenance record",
 	"ticket":              "ticket",
+	"role":                "role",
+	"permission":          "permission",
 	"ticketComment":       "ticket comment",
 	"report":              "report",
 	"errors": map[string]interface{}{
@@ -101,6 +103,11 @@ var English = map[string]interface{}{
 		"createTicketComment":       "Ticket comment has been successfully created.",
 		"blockChatRoom":             "Chat room has been successfully blocked.",
 		"unblockChatRoom":           "Chat room has been successfully unblocked.",
+		"createRole":                "New role has been created successfully.",
+		"deleteRole":                "New role has been deleted successfully.",
+		"updateRole":                "New role has been updated successfully.",
+		"updateUserRoles":           "User roles has been updated successfully.",
+		"updateCorporation":         "Corporation has been updated successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

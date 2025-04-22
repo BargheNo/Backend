@@ -114,6 +114,16 @@ func (addressService *AddressService) DeleteAddress(addressID uint) {
 	}
 }
 
+func (addressService *AddressService) ReplaceAddresses(ownerID uint, ownerType string, addresses []addressdto.CreateAddressRequest) {
+	err := addressService.addressRepository.DeleteOwnerAddresses(addressService.db, ownerID, ownerType)
+	if err != nil {
+		panic(err)
+	}
+	for _, addressInfo := range addresses {
+		addressService.CreateAddress(addressInfo)
+	}
+}
+
 func (addressService *AddressService) GetProvinceList() []addressdto.ProvinceResponse {
 	provinces := addressService.addressRepository.GetProvinceList(addressService.db)
 	provinceList := make([]addressdto.ProvinceResponse, len(provinces))

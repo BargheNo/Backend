@@ -63,7 +63,7 @@ type PanleResponse struct {
 	Name                 string
 	Customer             userdto.CredentialResponse
 	Operator             userdto.CredentialResponse
-	Corporation          corporationdto.CorporationDetailsResponse
+	Corporation          corporationdto.CorporationCredentialResponse
 	Address              addressdto.AddressResponse
 	PanelName            string
 	Power                uint
@@ -72,4 +72,17 @@ type PanleResponse struct {
 	Tilt                 uint
 	Azimuth              uint
 	TotalNumberOfModules uint
+}
+
+type CustomerPanelResponse struct {
+	ID                   uint   `json:"id"`
+	PanelName            string `json:"panelName"`
+	Corporation          corporationdto.CorporationCredentialResponse
+	Power                uint                       `json:"power"`
+	Area                 uint                       `json:"area"`
+	BuildingType         string                     `json:"buildingType"`
+	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
+	Tilt                 uint                       `json:"tilt"`
+	Azimuth              uint                       `json:"azimuth"`
+	Address              addressdto.AddressResponse `json:"address"`
 }

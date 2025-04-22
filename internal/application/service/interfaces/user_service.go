@@ -16,4 +16,13 @@ type UserService interface {
 	ResetPassword(resetPassInfo userdto.ResetPasswordRequest)
 	FindUserByPhone(phone string) userdto.UserResponse
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest)
+	GetAllPermissions() []userdto.PermissionResponse
+	GetAllRoles() []userdto.RoleResponse
+	CreateRole(newRoleRequest userdto.NewRoleRequest)
+	GetRoomDetails(roleID uint) userdto.RoleResponse
+	GetRoleOwners(roleID uint) []userdto.CredentialResponse
+	GetUserRoles(userID uint) []userdto.RoleResponse
+	DeleteRole(roleID uint)
+	UpdateRole(newRoleRequest userdto.UpdateRoleRequest)
+	UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest)
 }

@@ -29,6 +29,8 @@ var Persian = map[string]interface{}{
 	"email":               "ایمیل",
 	"maintenanceRecord":   "سابقه تعمیر",
 	"ticket":              "درخواست پشتیبانی",
+	"role":                "نقش",
+	"permission":          "دسترسی",
 	"ticketComment":       "نظر در مورد درخواست پشتیبانی",
 	"report":              "گزارش",
 	"errors": map[string]interface{}{
@@ -101,6 +103,11 @@ var Persian = map[string]interface{}{
 		"createTicketComment":       "نظر شما با موفقیت ثبت شد.",
 		"blockChatRoom":             "اتاق گفتگو با موفقیت مسدود شد.",
 		"unblockChatRoom":           "اتاق گفتگو با موفقیت رفع مسدود شد.",
+		"createRole":                "نقش جدید با موفقیت ساخته شد.",
+		"deleteRole":                "نقش مورد نظر با موفقیت حذف شد..",
+		"updateRole":                "نقش مورد نظر با موفقیت به روزرسانی شد.",
+		"updateUserRoles":           "نقش های فرد مورد نظر به روزرسانی شد.",
+		"updateCorporation":         "مشخصات شرکت با موفقیت به روزرسانی شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

@@ -11,20 +11,17 @@ import (
 )
 
 type CustomerUserController struct {
-	constants    *bootstrap.Constants
-	userService  service.UserService
-	emailService service.EmailService
+	constants   *bootstrap.Constants
+	userService service.UserService
 }
 
 func NewCustomerUserController(
 	constants *bootstrap.Constants,
 	userService service.UserService,
-	emailService service.EmailService,
 ) *CustomerUserController {
 	return &CustomerUserController{
-		constants:    constants,
-		userService:  userService,
-		emailService: emailService,
+		constants:   constants,
+		userService: userService,
 	}
 }
 

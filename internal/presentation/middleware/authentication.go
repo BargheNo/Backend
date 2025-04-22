@@ -72,7 +72,7 @@ func (am *AuthMiddleware) RequiredWithPermission(allowedPermissions []enum.Permi
 		}
 		user, _ := am.userRepository.FindUserByID(am.db, id.(uint))
 		am.userRepository.FindUserRoles(am.db, user)
-		allowedPermissions = append(allowedPermissions, enum.AccessAll)
+		allowedPermissions = append(allowedPermissions, enum.PermissionAll)
 		if !am.isAllowRole(allowedPermissions, user.Roles) {
 			err := exception.ForbiddenError{Resource: am.constants.Field.Page, Message: "access denied"}
 			panic(err)
