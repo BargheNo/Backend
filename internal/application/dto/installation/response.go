@@ -45,19 +45,6 @@ type CorporationPanelResponse struct {
 	Address              addressdto.AddressResponse `json:"address"`
 }
 
-type CustomerPanelResponse struct {
-	ID                   uint   `json:"id"`
-	PanelName            string `json:"panelName"`
-	Corporation          corporationdto.CorporationDetailsResponse
-	Power                uint                       `json:"power"`
-	Area                 uint                       `json:"area"`
-	BuildingType         string                     `json:"buildingType"`
-	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
-	Tilt                 uint                       `json:"tilt"`
-	Azimuth              uint                       `json:"azimuth"`
-	Address              addressdto.AddressResponse `json:"address"`
-}
-
 type PanleResponse struct {
 	ID                   uint
 	Name                 string

@@ -11,7 +11,7 @@ import (
 type CustomerMaintenanceRequestResponse struct {
 	ID           uint
 	Panel        installationdto.CustomerPanelResponse
-	Corporation  corporationdto.CorporationDetailsResponse
+	Corporation  corporationdto.CorporationCredentialResponse
 	OwnerID      uint
 	Subject      string
 	Description  string
@@ -34,7 +34,7 @@ type CorporationMaintenanceResponse struct {
 type MaintenanceRequestResponse struct {
 	ID           uint
 	Panel        installationdto.PanleResponse
-	Corporation  corporationdto.CorporationDetailsResponse
+	Corporation  corporationdto.CorporationCredentialResponse
 	Customer     userdto.CredentialResponse
 	Subject      string
 	Description  string
@@ -56,7 +56,7 @@ type CorporationMaintenanceRecordResponse struct {
 type CustomerMaintenanceRecordResponse struct {
 	ID          uint
 	Panel       installationdto.CustomerPanelResponse
-	Corporation corporationdto.CorporationDetailsResponse
+	Corporation corporationdto.CorporationCredentialResponse
 	Operator    userdto.CredentialResponse
 	Title       string
 	Details     string
@@ -66,7 +66,7 @@ type CustomerMaintenanceRecordResponse struct {
 type MaintenanceRecordResponse struct {
 	ID          uint
 	Panel       installationdto.PanleResponse
-	Corporation corporationdto.CorporationDetailsResponse
+	Corporation corporationdto.CorporationCredentialResponse
 	Customer    userdto.CredentialResponse
 	Operator    userdto.CredentialResponse
 	Title       string
