@@ -4,6 +4,7 @@ import (
 	"mime/multipart"
 
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 )
 
 type Signatory struct {
@@ -64,4 +65,5 @@ type DeleteAddressRequest struct {
 type CorporationDetailsRequest struct {
 	UserID        uint
 	CorporationID uint
+	Status        enum.CorporationStatus
 }

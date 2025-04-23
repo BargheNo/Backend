@@ -8,6 +8,7 @@ import (
 type Corporation struct {
 	database.Model
 	Name                   string                 `gorm:"type:varchar(100);unique;not null"`
+	Logo                   string                 `gorm:"type:text"`
 	RegistrationNumber     string                 `gorm:"type:varchar(50);unique;not null"`
 	NationalID             string                 `gorm:"type:varchar(50);unique;not null"`
 	VATTaxpayerCertificate string                 `gorm:"type:varchar(255)"`

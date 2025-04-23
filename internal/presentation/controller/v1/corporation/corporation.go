@@ -5,6 +5,7 @@ import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -28,11 +29,19 @@ func NewCorporationCorporationController(
 }
 
 func (corporationController *CorporationCorporationController) GetMyProfile(ctx *gin.Context) {
-	// type profileParams struct {
-	// 	CorporationID uint      `uri:"corporationID" validate:"required"`
-	// }
-	// params := controller.Validated[profileParams](ctx)
-	// userID, _ := ctx.Get(corporationController.constants.Context.ID)
+	type GetCorporationParamsParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[GetCorporationParamsParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+	corporationRequest := corporationdto.CorporationDetailsRequest{
+		UserID:        userID.(uint),
+		CorporationID: params.CorporationID,
+		Status:        enum.CorpStatusApproved,
+	}
+
+	corporationDetails := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	controller.Response(ctx, 200, "", corporationDetails)
 }
 
 func (corporationController *CorporationCorporationController) AddAddress(ctx *gin.Context) {

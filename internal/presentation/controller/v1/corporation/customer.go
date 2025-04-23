@@ -7,6 +7,7 @@ import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -120,6 +121,7 @@ func (corporationController *CustomerCorporationController) GetCorporationPrivat
 	corporationRequest := corporationdto.CorporationDetailsRequest{
 		UserID:        userID.(uint),
 		CorporationID: params.CorporationID,
+		Status:        enum.CorpStatusAwaitingApproval,
 	}
 
 	corporationDetails := corporationController.corporationService.GetCorporationDetails(corporationRequest)

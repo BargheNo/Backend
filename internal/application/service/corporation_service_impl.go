@@ -72,7 +72,7 @@ func (corporationService *CorporationService) GetCorporationCredentials(corporat
 		OwnerType: corporationService.constants.AddressOwners.Corporation,
 	}
 	addresses := corporationService.addressService.GetAddresses(ownerInfo)
-	contactInfo := corporationService.GetContactInfo(corporation.ID)
+	contactInfo := corporationService.getContactInfo(corporation.ID)
 	return corporationdto.CorporationCredentialResponse{
 		ID:          corporation.ID,
 		Name:        corporation.Name,
@@ -364,30 +364,48 @@ func (corporationService *CorporationService) GetContactTypes() []corporationdto
 
 func (corporationService *CorporationService) GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) corporationdto.CorporationPrivateInfoResponse {
 	corporationService.userService.DoesUserExist(requestInfo.UserID)
+
 	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, requestInfo.CorporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
 		panic(notFoundError)
 	}
+	if corporation.Status != requestInfo.Status {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: corporationService.constants.Field.Corporation,
+		}
+		panic(forbiddenError)
+	}
 	corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.UserID)
+
 	vatTaxPayer := ""
 	if corporation.VATTaxpayerCertificate != "" {
 		vatTaxPayer = corporationService.s3Storage.GetPresignedURL(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate, 8*time.Hour)
 	}
+
 	officialNewspaperAD := ""
 	if corporation.OfficialNewspaperAD != "" {
 		officialNewspaperAD = corporationService.s3Storage.GetPresignedURL(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD, 8*time.Hour)
 	}
+
+	logo := ""
+	if corporation.Logo != "" {
+		logo = corporationService.s3Storage.GetPresignedURL(enum.LogoPic, corporation.Logo, 8*time.Hour)
+	}
+
 	ownerInfo := addressdto.GetOwnerAddressesRequest{
 		OwnerID:   corporation.ID,
 		OwnerType: corporationService.constants.AddressOwners.Corporation,
 	}
 	addresses := corporationService.addressService.GetAddresses(ownerInfo)
-	contactInfo := corporationService.GetContactInfo(corporation.ID)
+
+	contactInfo := corporationService.getContactInfo(corporation.ID)
+
 	return corporationdto.CorporationPrivateInfoResponse{
 		ID:                     corporation.ID,
 		Name:                   corporation.Name,
-		Logo:                   "",
+		Logo:                   logo,
 		RegistrationNumber:     corporation.RegistrationNumber,
 		NationalID:             corporation.NationalID,
 		IBAN:                   corporation.IBAN,
@@ -398,14 +416,18 @@ func (corporationService *CorporationService) GetCorporationDetails(requestInfo 
 	}
 }
 
-func (corporationService *CorporationService) GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse {
+func (corporationService *CorporationService) getContactInfo(corporationID uint) []corporationdto.ContactInformationResponse {
 	corporation := corporationService.getCorporationByID(corporationID)
 	contactInfo := corporationService.corporationRepository.FindContactInformation(corporationService.db, corporation.ID)
 	response := make([]corporationdto.ContactInformationResponse, len(contactInfo))
 	for i, contact := range contactInfo {
+		contactType, exist := corporationService.corporationRepository.GetContactTypeByID(corporationService.db, contact.TypeID)
+		if !exist {
+			continue
+		}
 		response[i] = corporationdto.ContactInformationResponse{
-			ContactTypeID: contact.TypeID,
-			ContactValue:  contact.Value,
+			ContactType: corporationdto.ContactTypeResponse{ID: contactType.ID, Name: contactType.Name},
+			Value:       contact.Value,
 		}
 	}
 	return response
