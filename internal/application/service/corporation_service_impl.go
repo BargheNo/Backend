@@ -4,12 +4,14 @@ import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
+	"github.com/BargheNo/Backend/internal/domain/logger"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -266,6 +268,18 @@ func (corporationService *CorporationService) checkCorporationConflicts(corporat
 func (corporationService *CorporationService) AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest) {
 	corporation := corporationService.getCorporationByID(requestInfo.CorporationID)
 	corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID)
+	if corporation.VATTaxpayerCertificate != "" {
+		err := corporationService.s3Storage.DeleteObject(enum.ProfilePic, corporation.VATTaxpayerCertificate)
+		if err != nil {
+			loggerimpl.GetLogger().Error("unable to delete object", logger.Error("error:", err))
+		}
+	}
+	if corporation.OfficialNewspaperAD != "" {
+		err := corporationService.s3Storage.DeleteObject(enum.ProfilePic, corporation.OfficialNewspaperAD)
+		if err != nil {
+			loggerimpl.GetLogger().Error("unable to delete object", logger.Error("error:", err))
+		}
+	}
 	if requestInfo.VATTaxpayerCertificate != nil {
 		taxPayerPath := corporationService.constants.S3BucketPath.GetVATTaxpayerCertificatePath(corporation.ID, requestInfo.VATTaxpayerCertificate.Filename)
 		corporationService.s3Storage.UploadObject(enum.VATTaxpayerCertificate, taxPayerPath, requestInfo.VATTaxpayerCertificate)
@@ -374,6 +388,9 @@ func (corporationService *CorporationService) GetCorporationDetails(requestInfo 
 		ID:                     corporation.ID,
 		Name:                   corporation.Name,
 		Logo:                   "",
+		RegistrationNumber:     corporation.RegistrationNumber,
+		NationalID:             corporation.NationalID,
+		IBAN:                   corporation.IBAN,
 		VATTaxpayerCertificate: vatTaxPayer,
 		OfficialNewspaperAD:    officialNewspaperAD,
 		ContactInfo:            contactInfo,

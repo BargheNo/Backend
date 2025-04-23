@@ -23,6 +23,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			corpsSubgroup.PUT("/basic", app.Controllers.Customer.CorporationController.UpdateRegister)
 			corpsSubgroup.PUT("/contacts", app.Controllers.Customer.CorporationController.UpdateContactInfoCorporations)
 			corpsSubgroup.PUT("/address", app.Controllers.Customer.CorporationController.UpdateAddress)
+			corpsSubgroup.PUT("/certificates", app.Controllers.Customer.CorporationController.SubmitCertificateFiles)
 			corpsSubgroup.GET("", app.Controllers.Customer.CorporationController.GetCorporationPrivateDetails)
 		}
 	}

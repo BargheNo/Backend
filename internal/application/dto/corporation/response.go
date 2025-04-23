@@ -15,6 +15,9 @@ type CorporationCredentialResponse struct {
 type CorporationPrivateInfoResponse struct {
 	ID                     uint                         `json:"id"`
 	Name                   string                       `json:"name"`
+	RegistrationNumber     string                       `json:"registrationNumber"`
+	NationalID             string                       `json:"nationalID"`
+	IBAN                   string                       `json:"iban"`
 	Logo                   string                       `json:"logo"`
 	VATTaxpayerCertificate string                       `json:"vatTaxpayerCertificate"`
 	OfficialNewspaperAD    string                       `json:"officialNewspaperAD"`

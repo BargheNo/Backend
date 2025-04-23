@@ -1,6 +1,8 @@
 package corporation
 
 import (
+	"mime/multipart"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
@@ -195,5 +197,27 @@ func (corporationController *CustomerCorporationController) UpdateAddress(ctx *g
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.editAddress")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CustomerCorporationController) SubmitCertificateFiles(ctx *gin.Context) {
+	type certificatesParams struct {
+		CorporationID          uint                  `uri:"corporationID" validate:"required"`
+		VATTaxpayerCertificate *multipart.FileHeader `form:"vatTaxpayerCertificate"`
+		OfficialNewspaperAD    *multipart.FileHeader `form:"officialNewspaperAD"`
+	}
+	params := controller.Validated[certificatesParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	requestInfo := corporationdto.AddCertificatesRequest{
+		CorporationID:          params.CorporationID,
+		ApplicantID:            userID.(uint),
+		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
+		OfficialNewspaperAD:    params.OfficialNewspaperAD,
+	}
+	corporationController.corporationService.AddCertificateFiles(requestInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addCorporationCertificate")
 	controller.Response(ctx, 200, message, nil)
 }
