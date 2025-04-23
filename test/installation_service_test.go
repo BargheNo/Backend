@@ -15,6 +15,81 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func TestCreateInstallationRequest(t *testing.T) {
+	repo := mocks.NewInstallationRepositoryMock()
+	addressService := mocks.NewAddressServiceMock()
+	userService := mocks.NewUserServiceMock()
+	db := mocks.NewDatabaseMock()
+	config := bootstrap.Run()
+	constants := config.Constants
+	installationService := serviceimpl.NewInstallationService(
+		constants,
+		addressService,
+		userService,
+		nil,
+		nil,
+		repo,
+		db,
+	)
+
+	t.Run("Success - Create Installation Request", func(t *testing.T) {
+		requestInfo := installationdto.NewInstallationRequest{
+			Name:         "Test Request",
+			OwnerID:      123,
+			BuildingType: "Residential",
+			Address: addressdto.CreateAddressRequest{
+				ProvinceID:    1,
+				CityID:        2,
+				StreetAddress: "123 Test St",
+				PostalCode:    "12345",
+				HouseNumber:   "10A",
+				Unit:          5,
+				OwnerID:       123,
+				OwnerType:     constants.AddressOwners.InstallationRequest,
+			},
+		}
+
+		mockRequest := &entity.InstallationRequest{
+			Model:        database.Model{ID: 1},
+			Name:         requestInfo.Name,
+			Status:       enum.InstallationRequestStatusActive,
+			OwnerID:      requestInfo.OwnerID,
+			BuildingType: requestInfo.BuildingType,
+		}
+
+		var nilRequest *entity.InstallationRequest = nil
+
+		repo.On("CreateRequest",
+			db,
+			mockRequest,
+		).Return(nil).Once()
+
+		repo.On("FindOwnerRequestByName",
+			db, requestInfo.OwnerID,
+			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
+			requestInfo.Name,
+		).Return(nilRequest, false).Once()
+
+		repo.On("FindOwnerRequests",
+			db,
+			requestInfo.OwnerID,
+			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
+			mock.Anything,
+			mock.Anything,
+		).Return([]*entity.InstallationRequest{nil}).Once()
+
+		addressService.On("CreateAddress",
+			requestInfo.Address,
+			constants.AddressOwners.InstallationRequest,
+		).Return(nil).Once()
+
+		installationService.CreateInstallationRequest(requestInfo)
+
+		repo.AssertExpectations(t)
+		addressService.AssertExpectations(t)
+	})
+}
+
 func TestGetOwnerInstallationRequests(t *testing.T) {
 	repo := mocks.NewInstallationRepositoryMock()
 	addressService := mocks.NewAddressServiceMock()

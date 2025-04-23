@@ -27,17 +27,27 @@ func (repo *InstallationRepositoryMock) FindRequestByID(db database.Database, re
 }
 
 func (repo *InstallationRepositoryMock) FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, modifiers ...repository.QueryModifier) []*entity.InstallationRequest {
-	args := repo.Called(db, ownerID, status, modifiers[0], modifiers[1])
-	return args.Get(0).([]*entity.InstallationRequest)
+	var mod1, mod2 repository.QueryModifier
+	if len(modifiers) > 0 {
+		mod1 = modifiers[0]
+	}
+	if len(modifiers) > 1 {
+		mod2 = modifiers[1]
+	}
+	args := repo.Called(db, ownerID, status, mod1, mod2)
+	if r := args.Get(0); r != nil {
+		return r.([]*entity.InstallationRequest)
+	}
+	return nil
 }
 
 func (repo *InstallationRepositoryMock) FindOwnerRequestByName(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, name string) (*entity.InstallationRequest, bool) {
-	args := repo.Called(ownerID, status, name)
+	args := repo.Called(db, ownerID, status, name)
 	return args.Get(0).(*entity.InstallationRequest), args.Bool(1)
 }
 
 func (repo *InstallationRepositoryMock) CreateRequest(db database.Database, request *entity.InstallationRequest) error {
-	args := repo.Called(request)
+	args := repo.Called(db, request)
 	return args.Error(0)
 }
 
