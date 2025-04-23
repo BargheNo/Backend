@@ -6,16 +6,14 @@ import (
 )
 
 func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
-	addresses := routerGroup.Group(":corporationID/address")
+	profile := routerGroup.Group("/:corporationID/profile")
 	{
-		addresses.POST("", app.Controllers.Corporation.CorporationController.AddAddress)
-		addresses.DELETE("", app.Controllers.Corporation.CorporationController.DeleteAddress)
-	}
-
-	profileComplete := routerGroup.Group(":corporationID")
-	{
-		profileComplete.POST("/certificates", app.Controllers.Corporation.CorporationController.SubmitCertificateFiles)
-		profileComplete.POST("/contact", app.Controllers.Corporation.CorporationController.AddContactInformation)
+		profile.GET("", app.Controllers.Corporation.CorporationController.GetMyProfile)
+		profile.POST("/address", app.Controllers.Corporation.CorporationController.AddAddress)
+		profile.DELETE("/address/:addressID", app.Controllers.Corporation.CorporationController.DeleteAddress)
+		profile.POST("/contactInfo", app.Controllers.Corporation.CorporationController.AddContactInformation)
+		profile.DELETE("/contactInfo/:contactInfoID", app.Controllers.Corporation.CorporationController.DeleteContactInformation)
+		profile.PUT("/logo", app.Controllers.Corporation.CorporationController.ChangeLogo)
 	}
 
 	bids := routerGroup.Group(":corporationID/bids")

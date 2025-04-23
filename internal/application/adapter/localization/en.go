@@ -80,6 +80,8 @@ var English = map[string]interface{}{
 		"cancelBid":                 "Your bid has been successfully canceled.",
 		"getBids":                   "Bids fetched successfully.",
 		"updateContactInfo":         "Contact information updated successfully.",
+		"deleteContactInfo":         "Contact information deleted successfully.",
+		"changeLogo":                "Corporation logo has been changed.",
 		"addAddress":                "Address added successfully.",
 		"editAddress":               "Address edited successfully.",
 		"deleteAddress":             "Address deleted successfully.",
