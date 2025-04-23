@@ -44,13 +44,12 @@ type MaintenanceRequestResponse struct {
 }
 
 type CorporationMaintenanceRecordResponse struct {
-	ID        uint
-	RequestID uint
-	Panel     installationdto.CorporationPanelResponse
-	Operator  userdto.CredentialResponse
-	Title     string
-	Details   string
-	Date      time.Time
+	ID       uint
+	Panel    installationdto.CorporationPanelResponse
+	Operator userdto.CredentialResponse
+	Title    string
+	Details  string
+	Date     time.Time
 }
 
 type CustomerMaintenanceRecordResponse struct {

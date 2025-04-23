@@ -160,33 +160,18 @@ func (maintenanceService *MaintenanceService) HandleRequest(handleRequestInfo ma
 
 func (maintenanceService *MaintenanceService) AddMaintenanceRecord(requestInfo maintenancedto.AddMaintenanceRecordRequest) {
 	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.OperatorID)
-	request := maintenanceService.maintenanceRepository.FindMaintenanceRequestByID(maintenanceService.db, requestInfo.RequestID)
-	if request == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		panic(notFoundError)
-	}
-	if request.Status != enum.MaintenanceRequestStatusAccepted {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: maintenanceService.constants.Field.MaintenanceRequest,
-		}
-		panic(forbiddenError)
-	}
+	panel := maintenanceService.installationService.GetPanelByID(requestInfo.PanelID)
+
 	record := &entity.MaintenanceRecord{
-		PanelID:       request.PanelID,
-		CustomerID:    request.OwnerID,
-		CorporationID: request.CorporationID,
+		PanelID:       panel.ID,
+		CustomerID:    panel.Customer.ID,
+		CorporationID: requestInfo.CorporationID,
 		OperatorID:    requestInfo.OperatorID,
 		Title:         requestInfo.Title,
 		Details:       requestInfo.Details,
 		Date:          requestInfo.Date,
 	}
-	request.Status = enum.MaintenanceRequestStatusCompleted
 	err := maintenanceService.maintenanceRepository.CreateMaintenanceRecord(maintenanceService.db, record)
-	if err != nil {
-		panic(err)
-	}
-	err = maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, request)
 	if err != nil {
 		panic(err)
 	}
