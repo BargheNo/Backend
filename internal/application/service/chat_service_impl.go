@@ -185,9 +185,10 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 	}
 	sender := chatService.userService.GetUserCredential(message.SenderID)
 	return chatdto.RoomMessagesResponse{
-		ID:      message.ID,
-		Sender:  sender,
-		Content: message.Content,
+		ID:        message.ID,
+		Sender:    sender,
+		Content:   message.Content,
+		TimeStamp: message.CreatedAt,
 	}
 }
 
@@ -206,9 +207,10 @@ func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRe
 	for i, message := range messages {
 		sender := chatService.userService.GetUserCredential(message.SenderID)
 		messagesResponse[i] = chatdto.RoomMessagesResponse{
-			ID:      message.ID,
-			Sender:  sender,
-			Content: message.Content,
+			ID:        message.ID,
+			Sender:    sender,
+			Content:   message.Content,
+			TimeStamp: message.CreatedAt,
 		}
 	}
 	return messagesResponse

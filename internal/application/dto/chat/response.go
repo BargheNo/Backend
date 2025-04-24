@@ -1,6 +1,8 @@
 package chatdto
 
 import (
+	"time"
+
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
@@ -14,7 +16,8 @@ type ChatRoomDetailsResponse struct {
 }
 
 type RoomMessagesResponse struct {
-	ID      uint                       `json:"id"`
-	Sender  userdto.CredentialResponse `json:"sender"`
-	Content string                     `json:"content"`
+	ID        uint                       `json:"id"`
+	Sender    userdto.CredentialResponse `json:"sender"`
+	Content   string                     `json:"content"`
+	TimeStamp time.Time                  `json:"timeStamp"`
 }
