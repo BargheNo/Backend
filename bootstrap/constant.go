@@ -71,6 +71,7 @@ type ErrorField struct {
 	Permission          string
 	TicketComment       string
 	Report              string
+	ContactInformation  string
 }
 
 type ErrorTag struct {
@@ -197,6 +198,7 @@ func NewConstants() *Constants {
 			Permission:          "permission",
 			TicketComment:       "ticketComment",
 			Report:              "report",
+			ContactInformation:  "contactInformation",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",

@@ -11,8 +11,8 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		profile.GET("", app.Controllers.Corporation.CorporationController.GetMyProfile)
 		profile.POST("/address", app.Controllers.Corporation.CorporationController.AddAddress)
 		profile.DELETE("/address/:addressID", app.Controllers.Corporation.CorporationController.DeleteAddress)
-		profile.POST("/contactInfo", app.Controllers.Corporation.CorporationController.AddContactInformation)
-		profile.DELETE("/contactInfo/:contactInfoID", app.Controllers.Corporation.CorporationController.DeleteContactInformation)
+		profile.POST("/contacts", app.Controllers.Corporation.CorporationController.AddContactInformation)
+		profile.DELETE("/contacts/:contactID", app.Controllers.Corporation.CorporationController.DeleteContactInformation)
 		profile.PUT("/logo", app.Controllers.Corporation.CorporationController.ChangeLogo)
 	}
 

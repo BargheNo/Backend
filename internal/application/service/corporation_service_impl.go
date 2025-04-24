@@ -4,14 +4,12 @@ import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
-	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	"github.com/BargheNo/Backend/internal/domain/logger"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -44,11 +42,18 @@ func NewCorporationService(
 	}
 }
 
-func (corporationService *CorporationService) getCorporationByID(corporationID uint) *entity.Corporation {
+func (corporationService *CorporationService) getCorporationByIDAndStatus(corporationID uint, status enum.CorporationStatus) *entity.Corporation {
 	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
 		panic(notFoundError)
+	}
+	if corporation.Status != status {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: corporationService.constants.Field.Corporation,
+		}
+		panic(forbiddenError)
 	}
 	return corporation
 }
@@ -203,6 +208,8 @@ func (corporationService *CorporationService) replaceSignatories(corporationID u
 }
 
 func (corporationService *CorporationService) UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest) {
+	corporation := corporationService.getCorporationByIDAndStatus(updateRegisterInfo.CorporationID, enum.CorpStatusAwaitingApproval)
+
 	exist := corporationService.userService.IsUserActive(updateRegisterInfo.ApplicantID)
 	if !exist {
 		forbiddenError := exception.ForbiddenError{
@@ -211,11 +218,8 @@ func (corporationService *CorporationService) UpdateRegister(updateRegisterInfo 
 		}
 		panic(forbiddenError)
 	}
-	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, updateRegisterInfo.CorporationID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		panic(notFoundError)
-	}
+	corporationService.CheckApplicantAccess(updateRegisterInfo.CorporationID, updateRegisterInfo.ApplicantID)
+
 	corporationService.checkCorporationConflicts(corporation, updateRegisterInfo.Name, updateRegisterInfo.NationalID, updateRegisterInfo.RegistrationNumber, updateRegisterInfo.IBAN)
 
 	if err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation); err != nil {
@@ -266,29 +270,43 @@ func (corporationService *CorporationService) checkCorporationConflicts(corporat
 }
 
 func (corporationService *CorporationService) AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest) {
-	corporation := corporationService.getCorporationByID(requestInfo.CorporationID)
+	corporation := corporationService.getCorporationByIDAndStatus(requestInfo.CorporationID, enum.CorpStatusAwaitingApproval)
+
+	exist := corporationService.userService.IsUserActive(requestInfo.ApplicantID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
+		}
+		panic(forbiddenError)
+	}
 	corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID)
-	if corporation.VATTaxpayerCertificate != "" {
-		err := corporationService.s3Storage.DeleteObject(enum.ProfilePic, corporation.VATTaxpayerCertificate)
-		if err != nil {
-			loggerimpl.GetLogger().Error("unable to delete object", logger.Error("error:", err))
-		}
-	}
-	if corporation.OfficialNewspaperAD != "" {
-		err := corporationService.s3Storage.DeleteObject(enum.ProfilePic, corporation.OfficialNewspaperAD)
-		if err != nil {
-			loggerimpl.GetLogger().Error("unable to delete object", logger.Error("error:", err))
-		}
-	}
+
+	prevVatTaxPayerPath := corporation.VATTaxpayerCertificate
+	prevOfficialNewspaperPath := corporation.OfficialNewspaperAD
+
 	if requestInfo.VATTaxpayerCertificate != nil {
 		taxPayerPath := corporationService.constants.S3BucketPath.GetVATTaxpayerCertificatePath(corporation.ID, requestInfo.VATTaxpayerCertificate.Filename)
 		corporationService.s3Storage.UploadObject(enum.VATTaxpayerCertificate, taxPayerPath, requestInfo.VATTaxpayerCertificate)
 		corporation.VATTaxpayerCertificate = taxPayerPath
+		if prevVatTaxPayerPath != "" {
+			err := corporationService.s3Storage.DeleteObject(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
+
 	if requestInfo.OfficialNewspaperAD != nil {
 		newspaperADPath := corporationService.constants.S3BucketPath.GetOfficialNewspaperADPath(corporation.ID, requestInfo.OfficialNewspaperAD.Filename)
 		corporationService.s3Storage.UploadObject(enum.OfficialNewspaperAD, newspaperADPath, requestInfo.OfficialNewspaperAD)
 		corporation.OfficialNewspaperAD = newspaperADPath
+		if prevOfficialNewspaperPath != "" {
+			err := corporationService.s3Storage.DeleteObject(enum.VATTaxpayerCertificate, corporation.OfficialNewspaperAD)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 	err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
 	if err != nil {
@@ -296,19 +314,19 @@ func (corporationService *CorporationService) AddCertificateFiles(requestInfo co
 	}
 }
 
-func (corporationService *CorporationService) UpdateContactInfo(contactInfo corporationdto.AddContactInformationRequest) {
-	corporationService.DoesCorporationExist(contactInfo.CorporationID)
-	corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
-	err := corporationService.corporationRepository.DeleteCorporationContactInfo(corporationService.db, contactInfo.CorporationID)
-	if err != nil {
-		panic(err)
-	}
-	corporationService.AddContactInfo(contactInfo)
-}
-
 func (corporationService *CorporationService) AddContactInfo(contactInfo corporationdto.AddContactInformationRequest) {
-	corporationService.DoesCorporationExist(contactInfo.CorporationID)
+	corporationService.getCorporationByIDAndStatus(contactInfo.CorporationID, contactInfo.CorporationStatus)
+
+	exist := corporationService.userService.IsUserActive(contactInfo.ApplicantID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
+		}
+		panic(forbiddenError)
+	}
 	corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
+
 	for _, contact := range contactInfo.ContactInformation {
 		_, exist := corporationService.corporationRepository.FindContactInformationTypeByID(corporationService.db, contact.ContactTypeID)
 		if !exist {
@@ -330,53 +348,33 @@ func (corporationService *CorporationService) AddContactInfo(contactInfo corpora
 	}
 }
 
-func (corporationService *CorporationService) AddAddress(addressInfo corporationdto.AddCorporationAddressRequest) {
-	corporationService.DoesCorporationExist(addressInfo.CorporationID)
-	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID)
-	for _, address := range addressInfo.Addresses {
-		corporationService.addressService.CreateAddress(address)
-	}
-}
+func (corporationService *CorporationService) DeleteContactInfo(contactInfo corporationdto.DeleteContactInformationRequest) {
+	corporationService.getCorporationByIDAndStatus(contactInfo.CorporationID, contactInfo.CorporationStatus)
 
-func (corporationService *CorporationService) UpdateAddress(addressInfo corporationdto.AddCorporationAddressRequest) {
-	corporationService.DoesCorporationExist(addressInfo.CorporationID)
-	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID)
-	corporationService.addressService.ReplaceAddresses(addressInfo.CorporationID, corporationService.constants.AddressOwners.Corporation, addressInfo.Addresses)
-}
-
-func (corporationService *CorporationService) DeleteAddress(addressInfo corporationdto.DeleteAddressRequest) {
-	corporationService.DoesCorporationExist(addressInfo.CorporationID)
-	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID)
-	corporationService.addressService.DeleteAddress(addressInfo.AddressID)
-}
-
-func (corporationService *CorporationService) GetContactTypes() []corporationdto.ContactTypeResponse {
-	types := corporationService.corporationRepository.GetContactTypes(corporationService.db)
-	contactTypes := make([]corporationdto.ContactTypeResponse, len(types))
-	for i, contactType := range types {
-		contactTypes[i] = corporationdto.ContactTypeResponse{
-			ID:   contactType.ID,
-			Name: contactType.Name,
+	exist := corporationService.userService.IsUserActive(contactInfo.ApplicantID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
 		}
+		panic(forbiddenError)
 	}
-	return contactTypes
+	corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
+
+	contact, exist := corporationService.corporationRepository.FindContactInformationByID(corporationService.db, contactInfo.ContactID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.ContactInformation}
+		panic(notFoundError)
+	}
+
+	if err := corporationService.corporationRepository.DeleteContactInfo(corporationService.db, contact); err != nil {
+		panic(err)
+	}
 }
 
 func (corporationService *CorporationService) GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) corporationdto.CorporationPrivateInfoResponse {
 	corporationService.userService.DoesUserExist(requestInfo.UserID)
-
-	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, requestInfo.CorporationID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		panic(notFoundError)
-	}
-	if corporation.Status != requestInfo.Status {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: corporationService.constants.Field.Corporation,
-		}
-		panic(forbiddenError)
-	}
+	corporation := corporationService.getCorporationByIDAndStatus(requestInfo.CorporationID, requestInfo.Status)
 	corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.UserID)
 
 	vatTaxPayer := ""
@@ -417,11 +415,10 @@ func (corporationService *CorporationService) GetCorporationDetails(requestInfo 
 }
 
 func (corporationService *CorporationService) getContactInfo(corporationID uint) []corporationdto.ContactInformationResponse {
-	corporation := corporationService.getCorporationByID(corporationID)
-	contactInfo := corporationService.corporationRepository.FindContactInformation(corporationService.db, corporation.ID)
+	contactInfo := corporationService.corporationRepository.FindContactInformation(corporationService.db, corporationID)
 	response := make([]corporationdto.ContactInformationResponse, len(contactInfo))
 	for i, contact := range contactInfo {
-		contactType, exist := corporationService.corporationRepository.GetContactTypeByID(corporationService.db, contact.TypeID)
+		contactType, exist := corporationService.corporationRepository.FindContactTypeByID(corporationService.db, contact.TypeID)
 		if !exist {
 			continue
 		}
@@ -431,4 +428,82 @@ func (corporationService *CorporationService) getContactInfo(corporationID uint)
 		}
 	}
 	return response
+}
+
+func (corporationService *CorporationService) GetContactTypes() []corporationdto.ContactTypeResponse {
+	types := corporationService.corporationRepository.FindContactTypes(corporationService.db)
+	contactTypes := make([]corporationdto.ContactTypeResponse, len(types))
+	for i, contactType := range types {
+		contactTypes[i] = corporationdto.ContactTypeResponse{
+			ID:   contactType.ID,
+			Name: contactType.Name,
+		}
+	}
+	return contactTypes
+}
+
+func (corporationService *CorporationService) AddAddress(addressInfo corporationdto.AddCorporationAddressRequest) {
+	corporationService.getCorporationByIDAndStatus(addressInfo.CorporationID, addressInfo.CorporationStatus)
+
+	exist := corporationService.userService.IsUserActive(addressInfo.ApplicantID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
+		}
+		panic(forbiddenError)
+	}
+	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID)
+
+	for _, address := range addressInfo.Addresses {
+		corporationService.addressService.CreateAddress(address)
+	}
+}
+
+func (corporationService *CorporationService) DeleteAddress(addressInfo corporationdto.DeleteAddressRequest) {
+	corporationService.getCorporationByIDAndStatus(addressInfo.CorporationID, addressInfo.CorporationStatus)
+
+	exist := corporationService.userService.IsUserActive(addressInfo.UserID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
+		}
+		panic(forbiddenError)
+	}
+	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID)
+
+	corporationService.addressService.DeleteAddress(addressInfo.AddressID)
+}
+
+func (corporationService *CorporationService) ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest) {
+	corporation := corporationService.getCorporationByIDAndStatus(changeLogoRequest.CorporationID, enum.CorpStatusApproved)
+
+	exist := corporationService.userService.IsUserActive(changeLogoRequest.ApplicantID)
+	if !exist {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: "",
+		}
+		panic(forbiddenError)
+	}
+	corporationService.CheckApplicantAccess(changeLogoRequest.CorporationID, changeLogoRequest.ApplicantID)
+
+	prevLogoPath := corporation.Logo
+
+	if changeLogoRequest.Logo != nil {
+		newLogoPath := corporationService.constants.S3BucketPath.GetCorporationLogoPath(changeLogoRequest.CorporationID, changeLogoRequest.Logo.Filename)
+		corporationService.s3Storage.UploadObject(enum.LogoPic, newLogoPath, changeLogoRequest.Logo)
+		corporation.Logo = newLogoPath
+		if prevLogoPath != "" {
+			err := corporationService.s3Storage.DeleteObject(enum.LogoPic, corporation.Logo)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+	err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		panic(err)
+	}
 }

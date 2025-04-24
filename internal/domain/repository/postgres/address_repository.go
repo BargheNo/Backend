@@ -10,7 +10,6 @@ type AddressRepository interface {
 	CreateCity(db database.Database, city *entity.City) error
 	CreateProvince(db database.Database, province *entity.Province) error
 	DeleteAddress(db database.Database, address *entity.Address) error
-	DeleteOwnerAddresses(db database.Database, ownerID uint, ownerType string) error
 	GetAddressByID(db database.Database, id uint) (*entity.Address, bool)
 	GetCityByID(db database.Database, id uint) (*entity.City, bool)
 	GetCityByName(db database.Database, name string) (*entity.City, bool)

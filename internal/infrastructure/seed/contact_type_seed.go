@@ -35,7 +35,7 @@ var contactTypes = []string{
 
 func (seeder *ContactTypeSeeder) SeedContactTypes() {
 	for _, name := range contactTypes {
-		_, exist := seeder.corporationRepository.GetContactTypeByName(seeder.db, name)
+		_, exist := seeder.corporationRepository.FindContactTypeByName(seeder.db, name)
 		if exist {
 			continue
 		}

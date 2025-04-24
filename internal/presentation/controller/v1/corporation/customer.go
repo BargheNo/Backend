@@ -128,38 +128,7 @@ func (corporationController *CustomerCorporationController) GetCorporationPrivat
 	controller.Response(ctx, 200, "", corporationDetails)
 }
 
-func (corporationController *CustomerCorporationController) UpdateContactInfoCorporations(ctx *gin.Context) {
-	type contactInformation struct {
-		ContactTypeID uint   `json:"contactTypeID" validate:"required"`
-		ContactValue  string `json:"contactValue" validate:"required"`
-	}
-	type contactInformationParams struct {
-		CorporationID      uint                 `uri:"corporationID" validate:"required"`
-		ContactInformation []contactInformation `json:"contactInformation" validate:"required,dive"`
-	}
-	params := controller.Validated[contactInformationParams](ctx)
-	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-
-	contacts := make([]corporationdto.ContactInformation, len(params.ContactInformation))
-	for i, contact := range params.ContactInformation {
-		contacts[i] = corporationdto.ContactInformation{
-			ContactTypeID: contact.ContactTypeID,
-			ContactValue:  contact.ContactValue,
-		}
-	}
-	contactInfo := corporationdto.AddContactInformationRequest{
-		ApplicantID:        userID.(uint),
-		CorporationID:      params.CorporationID,
-		ContactInformation: contacts,
-	}
-	corporationController.corporationService.UpdateContactInfo(contactInfo)
-
-	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.updateContactInfo")
-	controller.Response(ctx, 200, message, nil)
-}
-
-func (corporationController *CustomerCorporationController) UpdateAddress(ctx *gin.Context) {
+func (corporationController *CustomerCorporationController) AddAddress(ctx *gin.Context) {
 	type address struct {
 		ProvinceID    uint   `json:"provinceID" validate:"required"`
 		CityID        uint   `json:"cityID" validate:"required"`
@@ -190,15 +159,90 @@ func (corporationController *CustomerCorporationController) UpdateAddress(ctx *g
 	}
 
 	addressInfo := corporationdto.AddCorporationAddressRequest{
-		ApplicantID:   userID.(uint),
-		CorporationID: params.CorporationID,
-		Addresses:     addresses,
+		ApplicantID:       userID.(uint),
+		CorporationID:     params.CorporationID,
+		CorporationStatus: enum.CorpStatusAwaitingApproval,
+		Addresses:         addresses,
 	}
 
-	corporationController.corporationService.UpdateAddress(addressInfo)
+	corporationController.corporationService.AddAddress(addressInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.editAddress")
+	message, _ := trans.Translate("successMessage.addAddress")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CustomerCorporationController) DeleteAddress(ctx *gin.Context) {
+	type deleteAddressParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+		AddressID     uint `uri:"addressID" validate:"required"`
+	}
+	params := controller.Validated[deleteAddressParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	addressInfo := corporationdto.DeleteAddressRequest{
+		UserID:            userID.(uint),
+		CorporationID:     params.CorporationID,
+		CorporationStatus: enum.CorpStatusAwaitingApproval,
+		AddressID:         params.AddressID,
+	}
+	corporationController.corporationService.DeleteAddress(addressInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteAddress")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CustomerCorporationController) AddContactInformation(ctx *gin.Context) {
+	type contactInformation struct {
+		ContactTypeID uint   `json:"contactTypeID"`
+		ContactValue  string `json:"contactValue"`
+	}
+	type contactInformationParams struct {
+		CorporationID      uint                 `uri:"corporationID" validate:"required"`
+		ContactInformation []contactInformation `json:"contactInformation" validate:"required"`
+	}
+	params := controller.Validated[contactInformationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	contacts := make([]corporationdto.ContactInformation, len(params.ContactInformation))
+	for i, contact := range params.ContactInformation {
+		contacts[i] = corporationdto.ContactInformation{
+			ContactTypeID: contact.ContactTypeID,
+			ContactValue:  contact.ContactValue,
+		}
+	}
+	contactInfo := corporationdto.AddContactInformationRequest{
+		ApplicantID:        userID.(uint),
+		CorporationID:      params.CorporationID,
+		CorporationStatus:  enum.CorpStatusAwaitingApproval,
+		ContactInformation: contacts,
+	}
+	corporationController.corporationService.AddContactInfo(contactInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateContactInfo")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CustomerCorporationController) DeleteContactInformation(ctx *gin.Context) {
+	type contactInformationParams struct {
+		CorporationID        uint `uri:"corporationID" validate:"required"`
+		ContactInformationID uint `uri:"contactID" validate:"required"`
+	}
+	params := controller.Validated[contactInformationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	contactInfo := corporationdto.DeleteContactInformationRequest{
+		ApplicantID:       userID.(uint),
+		CorporationID:     params.CorporationID,
+		CorporationStatus: enum.CorpStatusAwaitingApproval,
+	}
+
+	corporationController.corporationService.DeleteContactInfo(contactInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteContactInfo")
 	controller.Response(ctx, 200, message, nil)
 }
 
