@@ -4,6 +4,7 @@ import (
 	"mime/multipart"
 
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 )
 
 type Signatory struct {
@@ -18,6 +19,16 @@ type RegisterRequest struct {
 	NationalID         string
 	RegistrationNumber string
 	IBAN               string
+	Signatories        []Signatory
+}
+
+type UpdateRegisterRequest struct {
+	ApplicantID        uint
+	CorporationID      uint
+	Name               *string
+	NationalID         *string
+	RegistrationNumber *string
+	IBAN               *string
 	Signatories        []Signatory
 }
 
@@ -36,19 +47,41 @@ type ContactInformation struct {
 type AddContactInformationRequest struct {
 	ApplicantID        uint
 	CorporationID      uint
+	CorporationStatus  enum.CorporationStatus
 	ContactInformation []ContactInformation
 }
 
+type DeleteContactInformationRequest struct {
+	ApplicantID       uint
+	ContactID         uint
+	CorporationID     uint
+	CorporationStatus enum.CorporationStatus
+}
+
 type AddCorporationAddressRequest struct {
-	ApplicantID   uint
-	CorporationID uint
-	Addresses     []addressdto.CreateAddressRequest
+	ApplicantID       uint
+	CorporationID     uint
+	CorporationStatus enum.CorporationStatus
+	Addresses         []addressdto.CreateAddressRequest
 }
 
 type DeleteAddressRequest struct {
+	UserID            uint
+	CorporationID     uint
+	CorporationStatus enum.CorporationStatus
+	AddressID         uint
+}
+
+type CorporationDetailsRequest struct {
 	UserID        uint
 	CorporationID uint
-	AddressID     uint
+	Status        enum.CorporationStatus
+}
+
+type ChangeLogoRequest struct {
+	ApplicantID   uint
+	CorporationID uint
+	Logo          *multipart.FileHeader
 }
 
 type CorporationListRequest struct {

@@ -4,7 +4,7 @@ import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 )
 
-type CorporationDetailsResponse struct {
+type CorporationCredentialResponse struct {
 	ID          uint                         `json:"id"`
 	Name        string                       `json:"name"`
 	Logo        string                       `json:"logo"`
@@ -12,13 +12,34 @@ type CorporationDetailsResponse struct {
 	Addresses   []addressdto.AddressResponse `json:"addresses"`
 }
 
-type CorporationLoginResponse struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
-	Name         string `json:"name"`
+type CorporationPrivateInfoResponse struct {
+	ID                     uint                         `json:"id"`
+	Name                   string                       `json:"name"`
+	RegistrationNumber     string                       `json:"registrationNumber"`
+	NationalID             string                       `json:"nationalID"`
+	IBAN                   string                       `json:"iban"`
+	Logo                   string                       `json:"logo"`
+	VATTaxpayerCertificate string                       `json:"vatTaxpayerCertificate"`
+	OfficialNewspaperAD    string                       `json:"officialNewspaperAD"`
+	Signatories            []SignatoryResponse          `json:"signatories"`
+	ContactInfo            []ContactInformationResponse `json:"contactInfo"`
+	Addresses              []addressdto.AddressResponse `json:"addresses"`
+}
+
+type SignatoryResponse struct {
+	ID                 uint   `json:"id"`
+	Name               string `json:"name"`
+	NationalCardNumber string `json:"nationalCardNumber"`
+	Position           string `json:"position"`
 }
 
 type ContactInformationResponse struct {
-	ContactTypeID uint
-	ContactValue  string
+	ID          uint
+	ContactType ContactTypeResponse `json:"contactType"`
+	Value       string              `json:"value"`
+}
+
+type ContactTypeResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
 }

@@ -36,9 +36,9 @@ type HandleRequest struct {
 }
 
 type AddMaintenanceRecordRequest struct {
-	RequestID     uint
 	OperatorID    uint
 	CorporationID uint
+	PanelID       uint
 	Date          time.Time
 	Title         string
 	Details       string

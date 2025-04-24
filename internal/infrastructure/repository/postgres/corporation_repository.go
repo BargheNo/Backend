@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	queryByCorporationID string = "corporation_id"
+)
+
 type CorporationRepository struct{}
 
 func NewCorporationRepository() *CorporationRepository {
@@ -122,6 +126,30 @@ func (repo *CorporationRepository) FindContactInformationTypeValue(db database.D
 	return &contact, true
 }
 
+func (repo *CorporationRepository) FindContactInformationByID(db database.Database, contactID uint) (*entity.ContactInformation, bool) {
+	var contact entity.ContactInformation
+	result := db.GetDB().First(&contact, contactID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &contact, true
+}
+
+func (repo *CorporationRepository) FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, bool) {
+	var signatory entity.Signatory
+	result := db.GetDB().First(&signatory, signatoryID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &signatory, true
+}
+
 func (repo *CorporationRepository) FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool) {
 	var signatory entity.Signatory
 	result := db.GetDB().Where("corporation_id = ? AND national_card_number = ? AND position = ?", corporationID, nationalID, position).First(&signatory)
@@ -132,6 +160,15 @@ func (repo *CorporationRepository) FindCorporationSignatoryByNationalID(db datab
 		panic(result.Error)
 	}
 	return &signatory, true
+}
+
+func (repo *CorporationRepository) FindCorporationSignatories(db database.Database, corporationID uint) []*entity.Signatory {
+	var signatories []*entity.Signatory
+	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&signatories)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return signatories
 }
 
 func (repo *CorporationRepository) CreateCorporation(db database.Database, corporation *entity.Corporation) error {
@@ -150,15 +187,48 @@ func (repo *CorporationRepository) CreateContactInformation(db database.Database
 	return db.GetDB().Create(&contact).Error
 }
 
-func (repo *CorporationRepository) DeleteCorporationByCIN(db database.Database, cin string) error {
-	return db.GetDB().Where("cin = ?", cin).Delete(&entity.Corporation{}).Error
+func (repo *CorporationRepository) CreateContactType(db database.Database, contactType *entity.ContactType) error {
+	return db.GetDB().Create(&contactType).Error
+}
+
+func (repo *CorporationRepository) FindContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool) {
+	var contactType entity.ContactType
+	result := db.GetDB().First(&contactType, contactTypeID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &contactType, true
+}
+
+func (repo *CorporationRepository) FindContactTypeByName(db database.Database, name string) (*entity.ContactType, bool) {
+	var contactType entity.ContactType
+	result := db.GetDB().Where("name = ?", name).First(&contactType)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &contactType, true
+}
+
+func (repo *CorporationRepository) FindContactTypes(db database.Database) []*entity.ContactType {
+	var types []*entity.ContactType
+	err := db.GetDB().Find(&types).Error
+	if err != nil {
+		panic(err)
+	}
+	return types
 }
 
 func (repo *CorporationRepository) UpdateCorporation(db database.Database, corporation *entity.Corporation) error {
 	return db.GetDB().Save(&corporation).Error
 }
 
-func (repo *CorporationRepository) FindCorporationByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) []*entity.Corporation {
+func (repo *CorporationRepository) FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) []*entity.Corporation {
 	var corporations []*entity.Corporation
 	query := db.GetDB().Where("status IN ?", status)
 	for _, opt := range opts {
@@ -173,9 +243,17 @@ func (repo *CorporationRepository) FindCorporationByStatus(db database.Database,
 
 func (repo *CorporationRepository) FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation {
 	var contactInfo []*entity.ContactInformation
-	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&contactInfo)
+	result := db.GetDB().Where(queryByCorporationID, corporationID).Find(&contactInfo)
 	if result.Error != nil {
 		panic(result.Error)
 	}
 	return contactInfo
+}
+
+func (repo *CorporationRepository) DeleteCorporationSignatories(db database.Database, corporationID uint) error {
+	return db.GetDB().Where(queryByCorporationID, corporationID).Delete(&entity.Signatory{}).Error
+}
+
+func (repo *CorporationRepository) DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error {
+	return db.GetDB().Delete(contact).Error
 }

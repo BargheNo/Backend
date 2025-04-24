@@ -149,6 +149,7 @@ var CorporationControllerProviderSet = wire.NewSet(
 
 var AdminControllerProviderSet = wire.NewSet(
 	ticket.NewAdminTicketController,
+	user.NewAdminUserController,
 	report.NewAdminReportController,
 	wire.Struct(new(AdminControllers), "*"),
 )
@@ -172,6 +173,8 @@ var MiddlewareProviderSet = wire.NewSet(
 var SeederProviderSet = wire.NewSet(
 	seed.NewAddressSeeder,
 	seed.NewNotificationTypeSeeder,
+	seed.NewRoleSeeder,
+	seed.NewContactTypeSeeder,
 	wire.Struct(new(Seeds), "*"),
 )
 
@@ -235,6 +238,10 @@ func ProvideEmailSenderAccount(container *bootstrap.Config) *bootstrap.EmailAcco
 	return &container.Env.EmailSenderAccount
 }
 
+func ProvideSuperAdminCredential(container *bootstrap.Config) *bootstrap.AdminCredentials {
+	return &container.Env.SuperAdmin
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -262,6 +269,7 @@ var ProviderSet = wire.NewSet(
 	ProvideStorageConfig,
 	ProvideWebsocketSetting,
 	ProvideEmailSenderAccount,
+	ProvideSuperAdminCredential,
 )
 
 type Database struct {
@@ -298,6 +306,7 @@ type CorporationControllers struct {
 
 type AdminControllers struct {
 	TicketController *ticket.AdminTicketController
+	UserController   *user.AdminUserController
 	ReportController *report.AdminReportController
 }
 
@@ -322,6 +331,8 @@ type Middlewares struct {
 type Seeds struct {
 	AddressSeeder          *seed.AddressSeeder
 	NotificationTypeSeeder *seed.NotificationTypeSeeder
+	RoleSeeder             *seed.RoleSeeder
+	ContactType            *seed.ContactTypeSeeder
 }
 
 type Application struct {

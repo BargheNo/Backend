@@ -75,7 +75,7 @@ func (maintenanceController *CorporationMaintenanceController) HandleMaintenance
 func (maintenanceController *CorporationMaintenanceController) AddMaintenanceRecord(ctx *gin.Context) {
 	type addMaintenanceParams struct {
 		CorporationID uint      `uri:"corporationID" validate:"required"`
-		RequestID     uint      `json:"requestID" validate:"required"`
+		PanleID       uint      `json:"panelID" validate:"required"`
 		Date          time.Time `json:"date" validate:"required"`
 		Title         string    `json:"title" validate:"required"`
 		Details       string    `json:"details" validate:"required"`
@@ -84,8 +84,8 @@ func (maintenanceController *CorporationMaintenanceController) AddMaintenanceRec
 	params := controller.Validated[addMaintenanceParams](ctx)
 	maintenanceRecordInfo := maintenancedto.AddMaintenanceRecordRequest{
 		CorporationID: params.CorporationID,
-		RequestID:     params.RequestID,
 		OperatorID:    operatorID.(uint),
+		PanelID:       params.PanleID,
 		Date:          params.Date,
 		Title:         params.Title,
 		Details:       params.Details,

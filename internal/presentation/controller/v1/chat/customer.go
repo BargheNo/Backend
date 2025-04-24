@@ -16,6 +16,7 @@ type CustomerChatController struct {
 	websocketSetting *bootstrap.WebsocketSetting
 	chatService      service.ChatService
 	jwtService       service.JWTService
+	userService      service.UserService
 	hub              *websocket.Hub
 }
 
@@ -25,6 +26,7 @@ func NewCustomerChatController(
 	websocketSetting *bootstrap.WebsocketSetting,
 	chatService service.ChatService,
 	jwtService service.JWTService,
+	userService service.UserService,
 	hub *websocket.Hub,
 ) *CustomerChatController {
 	return &CustomerChatController{
@@ -33,6 +35,7 @@ func NewCustomerChatController(
 		websocketSetting: websocketSetting,
 		chatService:      chatService,
 		jwtService:       jwtService,
+		userService:      userService,
 		hub:              hub,
 	}
 }

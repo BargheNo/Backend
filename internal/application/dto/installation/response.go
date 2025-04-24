@@ -34,8 +34,8 @@ type RequestDetailsResponse struct {
 type CorporationPanelResponse struct {
 	ID                   uint                       `json:"id"`
 	PanelName            string                     `json:"panelName"`
-	CustomerName         string                     `json:"customerName"`
-	CustomerPhone        string                     `json:"customerPhone"`
+	Customer             userdto.CredentialResponse `json:"customer"`
+	Operator             userdto.CredentialResponse `json:"operator"`
 	Power                uint                       `json:"power"`
 	Area                 uint                       `json:"area"`
 	BuildingType         string                     `json:"buildingType"`
@@ -43,7 +43,6 @@ type CorporationPanelResponse struct {
 	Azimuth              uint                       `json:"azimuth"`
 	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
 	Address              addressdto.AddressResponse `json:"address"`
-	OperatorName         string                     `json:"operatorName"`
 }
 
 type PanleResponse struct {
@@ -51,7 +50,7 @@ type PanleResponse struct {
 	Name                 string
 	Customer             userdto.CredentialResponse
 	Operator             userdto.CredentialResponse
-	Corporation          corporationdto.CorporationDetailsResponse
+	Corporation          corporationdto.CorporationCredentialResponse
 	Address              addressdto.AddressResponse
 	PanelName            string
 	Power                uint
@@ -65,7 +64,7 @@ type PanleResponse struct {
 type CustomerPanelResponse struct {
 	ID                   uint   `json:"id"`
 	PanelName            string `json:"panelName"`
-	Corporation          corporationdto.CorporationDetailsResponse
+	Corporation          corporationdto.CorporationCredentialResponse
 	Power                uint                       `json:"power"`
 	Area                 uint                       `json:"area"`
 	BuildingType         string                     `json:"buildingType"`

@@ -3,51 +3,72 @@ package maintenancedto
 import (
 	"time"
 
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
-type MaintenanceResponse struct {
-	ID            uint
-	PanelID       uint
-	CorporationID uint
-	OwnerID       uint
-	Subject       string
-	Description   string
-	UrgencyLevel  string
-	Status        string
-	CreatedAt     time.Time
-	Panel         installationdto.CustomerPanelResponse
+type CustomerMaintenanceRequestResponse struct {
+	ID           uint
+	Panel        installationdto.CustomerPanelResponse
+	Corporation  corporationdto.CorporationCredentialResponse
+	OwnerID      uint
+	Subject      string
+	Description  string
+	UrgencyLevel string
+	Status       string
+	CreatedAt    time.Time
 }
 
 type CorporationMaintenanceResponse struct {
 	ID           uint
-	PanelID      uint
+	Panel        installationdto.CorporationPanelResponse
 	Subject      string
 	Description  string
 	UrgencyLevel string
 	Status       string
 	CreatedAt    time.Time
 	OwnerPhone   string
-	Panel        installationdto.CorporationPanelResponse
 }
 
-type MaintenanceRecordResponse struct {
-	ID            uint
-	RequestID     uint
-	Panel         installationdto.CorporationPanelResponse
-	OperatorID    uint
-	CorporationID uint
-	Title         string
-	Details       string
-	Date          time.Time
+type MaintenanceRequestResponse struct {
+	ID           uint
+	Panel        installationdto.PanleResponse
+	Corporation  corporationdto.CorporationCredentialResponse
+	Customer     userdto.CredentialResponse
+	Subject      string
+	Description  string
+	UrgencyLevel string
+	Status       string
+	CreatedAt    time.Time
+}
+
+type CorporationMaintenanceRecordResponse struct {
+	ID       uint
+	Panel    installationdto.CorporationPanelResponse
+	Operator userdto.CredentialResponse
+	Title    string
+	Details  string
+	Date     time.Time
 }
 
 type CustomerMaintenanceRecordResponse struct {
-	ID            uint
-	Panel         installationdto.CustomerPanelResponse
-	OperatorID    uint
-	OperatorPhone string
-	Title         string
-	Details       string
-	Date          time.Time
+	ID          uint
+	Panel       installationdto.CustomerPanelResponse
+	Corporation corporationdto.CorporationCredentialResponse
+	Operator    userdto.CredentialResponse
+	Title       string
+	Details     string
+	Date        time.Time
+}
+
+type MaintenanceRecordResponse struct {
+	ID          uint
+	Panel       installationdto.PanleResponse
+	Corporation corporationdto.CorporationCredentialResponse
+	Customer    userdto.CredentialResponse
+	Operator    userdto.CredentialResponse
+	Title       string
+	Details     string
+	Date        time.Time
 }

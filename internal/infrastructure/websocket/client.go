@@ -3,7 +3,6 @@ package websocket
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -21,6 +20,7 @@ type Client struct {
 	userID              uint
 	mu                  sync.Mutex
 	done                chan struct{}
+	closeOnce           sync.Once
 	chatService         service.ChatService
 	notificationService service.NotificationService
 }
@@ -31,9 +31,6 @@ func NewClient(
 	chatService service.ChatService,
 	notificationService service.NotificationService,
 ) *Client {
-	if hub == nil {
-		panic("hub cannot be nil")
-	}
 	wsConn, _ := conn.(*websocket.Conn)
 	return &Client{
 		websocketSetting:    websocketSetting,
@@ -49,11 +46,7 @@ func NewClient(
 }
 
 func (client *Client) ReadPump() error {
-	defer func() {
-		client.Hub.unregister <- client
-		close(client.done)
-		client.conn.Close()
-	}()
+	defer client.CloseConnection()
 
 	client.conn.SetReadLimit(int64(client.websocketSetting.MaxMessageSize))
 	client.conn.SetReadDeadline(time.Now().Add(client.websocketSetting.ReadTimeout))
@@ -89,7 +82,7 @@ func (client *Client) WritePump() error {
 	ticker := time.NewTicker(client.websocketSetting.PingPeriod)
 	defer func() {
 		ticker.Stop()
-		client.conn.Close()
+		client.CloseConnection()
 	}()
 
 	for {
@@ -98,15 +91,15 @@ func (client *Client) WritePump() error {
 			client.mu.Lock()
 			client.conn.SetWriteDeadline(time.Now().Add(client.websocketSetting.WriteTimeout))
 			if !ok {
-				client.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "closed by server"))
 				client.mu.Unlock()
-				return fmt.Errorf("send channel closed")
+				return nil
 			}
 
 			writer, err := client.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				client.mu.Unlock()
-				return fmt.Errorf("failed to get writer: %w", err)
+				return err
 			}
 			writer.Write(message)
 
@@ -115,35 +108,40 @@ func (client *Client) WritePump() error {
 				writer.Write(bytes.TrimSpace([]byte{'\n'}))
 				writer.Write(<-client.send)
 			}
-
-			if err := writer.Close(); err != nil {
-				client.mu.Unlock()
-				return fmt.Errorf("failed to close writer: %w", err)
-			}
+			writer.Close()
 			client.mu.Unlock()
 
 		case <-ticker.C:
 			client.mu.Lock()
 			client.conn.SetWriteDeadline(time.Now().Add(client.websocketSetting.WriteTimeout))
-			err := client.conn.WriteMessage(websocket.PingMessage, nil)
-			client.mu.Unlock()
-			if err != nil {
+			if err := client.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				client.mu.Unlock()
 				return err
 			}
+			client.mu.Unlock()
 
 		case <-client.done:
-			return fmt.Errorf("client connection done")
+			return nil
 		}
 	}
+}
+
+func (client *Client) CloseConnection() {
+	client.closeOnce.Do(func() {
+		close(client.done)
+		close(client.send)
+		client.conn.WriteMessage(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "closing connection"))
+		client.conn.Close()
+	})
 }
 
 func (client *Client) processAndSaveChatMessage(message *Message) {
 	var content string
 	if err := json.Unmarshal(message.Content, &content); err != nil {
-		panic(err)
+		return
 	}
-	client.chatService.SaveMessage(client.roomID, client.userID, content)
+	savedMessage := client.chatService.SaveMessage(client.roomID, client.userID, content)
+	message.MessageID = savedMessage.ID
+	message.Sender = savedMessage.Sender
 }
-
-// func (client *Client) processAndSaveNotificationMessage(message *Message) error {
-// }

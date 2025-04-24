@@ -67,8 +67,11 @@ type ErrorField struct {
 	MaintenanceRequest  string
 	MaintenanceRecord   string
 	Ticket              string
+	Role                string
+	Permission          string
 	TicketComment       string
 	Report              string
+	ContactInformation  string
 }
 
 type ErrorTag struct {
@@ -191,8 +194,11 @@ func NewConstants() *Constants {
 			MaintenanceRequest:  "maintenanceRequest",
 			MaintenanceRecord:   "maintenanceRecord",
 			Ticket:              "ticket",
+			Role:                "role",
+			Permission:          "permission",
 			TicketComment:       "ticketComment",
 			Report:              "report",
+			ContactInformation:  "contactInformation",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -288,4 +294,8 @@ func (path *BucketPath) GetUserProfilePath(userID uint, pictureFileName string) 
 
 func (path *BucketPath) GetTicketImagePath(ticketID uint, imageFilename string) string {
 	return fmt.Sprintf("tickets/%d/%s", ticketID, imageFilename)
+}
+
+func (path *BucketPath) GetCorporationLogoPath(corporationID uint, logoFileName string) string {
+	return fmt.Sprintf("corporation/%d/logo/%s", corporationID, logoFileName)
 }

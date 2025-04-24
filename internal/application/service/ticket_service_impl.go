@@ -111,11 +111,9 @@ func (ticketService *TicketService) CreateCustomerTicketComment(requestInfo tick
 	}
 
 	if ticket.Status == enum.TicketStatusResolved {
-		forbiddenError := exception.ForbiddenError{
-			Resource: ticketService.constants.Field.Ticket,
-			Message:  "",
-		}
-		panic(forbiddenError)
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(ticketService.constants.Field.Ticket, ticketService.constants.Tag.AlreadyResolved)
+		panic(conflictErrors)
 	}
 
 	comment := &entity.TicketComment{
@@ -175,11 +173,9 @@ func (ticketService *TicketService) CreateAdminTicketComment(requestInfo ticketd
 	}
 
 	if ticket.Status == enum.TicketStatusResolved {
-		forbiddenError := exception.ForbiddenError{
-			Resource: ticketService.constants.Field.Ticket,
-			Message:  "",
-		}
-		panic(forbiddenError)
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(ticketService.constants.Field.Ticket, ticketService.constants.Tag.AlreadyResolved)
+		panic(conflictErrors)
 	}
 
 	comment := &entity.TicketComment{
@@ -255,6 +251,12 @@ func (ticketService *TicketService) ResolveTicket(requestInfo ticketdto.ResolveT
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: ticketService.constants.Field.Ticket}
 		panic(notFoundError)
+	}
+
+	if ticket.Status == enum.TicketStatusResolved {
+		var conflicterrors exception.ConflictErrors
+		conflicterrors.Add(ticketService.constants.Field.Ticket, ticketService.constants.Tag.AlreadyResolved)
+		panic(conflicterrors)
 	}
 
 	ticket.Status = enum.TicketStatusResolved

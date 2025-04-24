@@ -20,6 +20,7 @@ type Env struct {
 	Pagination         Pagination
 	WebsocketSetting   WebsocketSetting
 	EmailSenderAccount EmailAccount
+	SuperAdmin         AdminCredentials
 }
 
 type Server struct {
@@ -66,6 +67,7 @@ type BucketName struct {
 	OfficialNewspaperAD    string
 	ProfilePic             string
 	TicketImage            string
+	LogoPic                string
 }
 
 type OTP struct {
@@ -96,6 +98,15 @@ type EmailAccount struct {
 	EmailPassword string
 	SMTPHost      string
 	SMTPPort      string
+}
+
+type AdminCredentials struct {
+	FirstName    string
+	LastName     string
+	Phone        string
+	Password     string
+	Email        string
+	NationalCode string
 }
 
 func NewEnvironments() *Env {
@@ -134,6 +145,7 @@ func NewEnvironments() *Env {
 				OfficialNewspaperAD:    os.Getenv("OFFICIAL_NEWSPAPER_AD_BUCKET_NAME"),
 				ProfilePic:             os.Getenv("PROFILE_PIC_BUCKET_NAME"),
 				TicketImage:            os.Getenv("TICKET_IMAGE_BUCKET_NAME"),
+				LogoPic:                os.Getenv("LOGO_PIC_BUCKET_NAME"),
 			},
 			Region:    os.Getenv("BUCKET_REGION"),
 			AccessKey: os.Getenv("BUCKET_ACCESS_key"),
@@ -164,6 +176,14 @@ func NewEnvironments() *Env {
 			EmailPassword: os.Getenv("EMAIL_PASSWORD"),
 			SMTPHost:      os.Getenv("SMTP_HOST"),
 			SMTPPort:      os.Getenv("SMTP_PORT"),
+		},
+		SuperAdmin: AdminCredentials{
+			FirstName:    os.Getenv("SUPER_ADMIN_FIRST_NAME"),
+			LastName:     os.Getenv("SUPER_ADMIN_LAST_NAME"),
+			Phone:        os.Getenv("SUPER_ADMIN_PHONE"),
+			Password:     os.Getenv("SUPER_ADMIN_PASSWORD"),
+			Email:        os.Getenv("SUPER_ADMIN_EMAIL"),
+			NationalCode: os.Getenv("SUPER_ADMIN_NATIONAL_CODE"),
 		},
 	}
 }

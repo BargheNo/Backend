@@ -3,6 +3,8 @@ package websocket
 import (
 	"encoding/json"
 	"time"
+
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
 // convert to enum
@@ -12,12 +14,14 @@ const (
 )
 
 type Message struct {
-	Type      string          `json:"type"`
-	RoomID    uint            `json:"room_id,omitempty"`
-	SenderID  uint            `json:"sender_id,omitempty"`
-	Content   json.RawMessage `json:"content"`
-	Timestamp time.Time       `json:"timestamp"`
-	Client    *Client         `json:"-"`
+	MessageID uint                       `json:"id"`
+	Sender    userdto.CredentialResponse `json:"sender"`
+	Type      string                     `json:"type"`
+	RoomID    uint                       `json:"room_id,omitempty"`
+	SenderID  uint                       `json:"sender_id,omitempty"`
+	Content   json.RawMessage            `json:"content"`
+	Timestamp time.Time                  `json:"timestamp"`
+	Client    *Client                    `json:"-"`
 }
 
 type NotificationPayload struct {

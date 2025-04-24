@@ -7,13 +7,17 @@ import (
 type CorporationService interface {
 	DoesCorporationExist(corporationID uint)
 	ISCorporationApproved(corporationID uint) bool
-	GetCorporationCredentials(corporationID uint) corporationdto.CorporationDetailsResponse
+	GetCorporationCredentials(corporationID uint) corporationdto.CorporationCredentialResponse
 	CheckApplicantAccess(corporationID, applicantID uint)
-	Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationDetailsResponse
+	Register(registerInfo corporationdto.RegisterRequest) corporationdto.CorporationCredentialResponse
+	UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest)
 	AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest)
 	AddContactInfo(contactInfo corporationdto.AddContactInformationRequest)
+	DeleteContactInfo(contactInfo corporationdto.DeleteContactInformationRequest)
 	AddAddress(addressInfo corporationdto.AddCorporationAddressRequest)
 	DeleteAddress(addressInfo corporationdto.DeleteAddressRequest)
-	GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationDetailsResponse
-	GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse
+	GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) corporationdto.CorporationPrivateInfoResponse
+	GetContactTypes() []corporationdto.ContactTypeResponse
+	ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest)
+	GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationCredentialResponse
 }

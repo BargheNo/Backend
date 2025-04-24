@@ -12,6 +12,10 @@ func NewAddressRepository() *AddressRepository {
 	return &AddressRepository{}
 }
 
+const (
+	queryByOwnerIDAndOwnerType = "owner_id = ? AND owner_type = ?"
+)
+
 func (repo *AddressRepository) GetProvinceList(db database.Database) []*entity.Province {
 	var provinces []*entity.Province
 	err := db.GetDB().Find(&provinces).Error
@@ -92,7 +96,7 @@ func (repo *AddressRepository) GetAddressByID(db database.Database, id uint) (*e
 
 func (repo *AddressRepository) GetOwnerAddress(db database.Database, ownerID uint, ownerType string) (*entity.Address, bool) {
 	var address entity.Address
-	result := db.GetDB().Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).First(&address)
+	result := db.GetDB().Where(queryByOwnerIDAndOwnerType, ownerID, ownerType).First(&address)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, false
@@ -104,7 +108,7 @@ func (repo *AddressRepository) GetOwnerAddress(db database.Database, ownerID uin
 
 func (repo *AddressRepository) GetOwnerAddresses(db database.Database, ownerID uint, ownerType string) []*entity.Address {
 	var addresses []*entity.Address
-	err := db.GetDB().Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).Find(&addresses).Error
+	err := db.GetDB().Where(queryByOwnerIDAndOwnerType, ownerID, ownerType).Find(&addresses).Error
 	if err != nil {
 		panic(err)
 	}

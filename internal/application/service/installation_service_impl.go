@@ -234,8 +234,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 		response[i] = installationdto.CorporationPanelResponse{
 			ID:                   panel.ID,
 			PanelName:            panel.Name,
-			CustomerName:         customer.FirstName + " " + customer.LastName,
-			CustomerPhone:        customer.Phone,
+			Customer:             customer,
 			Power:                panel.Power,
 			Area:                 panel.Area,
 			BuildingType:         panel.BuildingType,
@@ -243,7 +242,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 			Azimuth:              panel.Azimuth,
 			TotalNumberOfModules: panel.TotalNumberOfModules,
 			Address:              address,
-			OperatorName:         operator.FirstName + " " + operator.LastName,
+			Operator:             operator,
 		}
 	}
 	return response
@@ -297,4 +296,50 @@ func (installationService *InstallationService) GetPanelByID(panelID uint) insta
 		TotalNumberOfModules: panel.TotalNumberOfModules,
 	}
 
+}
+
+func (installationService *InstallationService) GetCustomerPanelByID(panelID uint) installationdto.CustomerPanelResponse {
+	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+
+	corporation := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
+	address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+	return installationdto.CustomerPanelResponse{
+		ID:                   panel.ID,
+		Corporation:          corporation,
+		Address:              address,
+		PanelName:            panel.Name,
+		Power:                panel.Power,
+		Area:                 panel.Area,
+		BuildingType:         panel.BuildingType,
+		Tilt:                 panel.Tilt,
+		Azimuth:              panel.Azimuth,
+		TotalNumberOfModules: panel.TotalNumberOfModules,
+	}
+}
+func (installationService *InstallationService) GetCorporationPanelByID(panelID uint) installationdto.CorporationPanelResponse {
+	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+	address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+	customer := installationService.userService.GetUserCredential(panel.CustomerID)
+	operator := installationService.userService.GetUserCredential(panel.OperatorID)
+	return installationdto.CorporationPanelResponse{
+		ID:                   panel.ID,
+		PanelName:            panel.Name,
+		Customer:             customer,
+		Operator:             operator,
+		Power:                panel.Power,
+		Area:                 panel.Area,
+		BuildingType:         panel.BuildingType,
+		Tilt:                 panel.Tilt,
+		Azimuth:              panel.Azimuth,
+		TotalNumberOfModules: panel.TotalNumberOfModules,
+		Address:              address,
+	}
 }
