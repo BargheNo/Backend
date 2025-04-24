@@ -112,10 +112,10 @@ var English = map[string]interface{}{
 		"updateUserRoles":           "User roles has been updated successfully.",
 		"updateCorporation":         "Corporation has been updated successfully.",
 		"ticketResolved":            "Ticket has been successfully resolved.",
+		"createReport":              "Report has been successfully created.",
+		"reportResolved":            "Report has been successfully resolved.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",
-		"createReport":      "Report has been successfully created.",
-		"reportResolved":    "Report has been successfully resolved.",
 	},
 }

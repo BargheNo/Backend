@@ -112,10 +112,10 @@ var Persian = map[string]interface{}{
 		"updateUserRoles":           "نقش های فرد مورد نظر به روزرسانی شد.",
 		"updateCorporation":         "مشخصات شرکت با موفقیت به روزرسانی شد.",
 		"ticketResolved":            "درخواست پشتیبانی با موفقیت بررسی شد.",
+		"createReport":              "گزارش شما با موفقیت ثبت شد.",
+		"reportResolved":            "گزارش شما با موفقیت بررسی شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",
-		"createReport":      "گزارش شما با موفقیت ثبت شد.",
-		"reportResolved":    "گزارش شما با موفقیت بررسی شد.",
 	},
 }
