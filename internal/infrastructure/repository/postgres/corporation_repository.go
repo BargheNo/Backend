@@ -162,6 +162,15 @@ func (repo *CorporationRepository) FindCorporationSignatoryByNationalID(db datab
 	return &signatory, true
 }
 
+func (repo *CorporationRepository) FindCorporationSignatories(db database.Database, corporationID uint) []*entity.Signatory {
+	var signatories []*entity.Signatory
+	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&signatories)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return signatories
+}
+
 func (repo *CorporationRepository) CreateCorporation(db database.Database, corporation *entity.Corporation) error {
 	return db.GetDB().Create(&corporation).Error
 }

@@ -400,6 +400,8 @@ func (corporationService *CorporationService) GetCorporationDetails(requestInfo 
 
 	contactInfo := corporationService.getContactInfo(corporation.ID)
 
+	signatories := corporationService.getCorporationSignatories(requestInfo.CorporationID)
+
 	return corporationdto.CorporationPrivateInfoResponse{
 		ID:                     corporation.ID,
 		Name:                   corporation.Name,
@@ -409,6 +411,7 @@ func (corporationService *CorporationService) GetCorporationDetails(requestInfo 
 		IBAN:                   corporation.IBAN,
 		VATTaxpayerCertificate: vatTaxPayer,
 		OfficialNewspaperAD:    officialNewspaperAD,
+		Signatories:            signatories,
 		ContactInfo:            contactInfo,
 		Addresses:              addresses,
 	}
@@ -425,6 +428,20 @@ func (corporationService *CorporationService) getContactInfo(corporationID uint)
 		response[i] = corporationdto.ContactInformationResponse{
 			ContactType: corporationdto.ContactTypeResponse{ID: contactType.ID, Name: contactType.Name},
 			Value:       contact.Value,
+		}
+	}
+	return response
+}
+
+func (corporationService *CorporationService) getCorporationSignatories(corporationID uint) []corporationdto.SignatoryResponse {
+	signatories := corporationService.corporationRepository.FindCorporationSignatories(corporationService.db, corporationID)
+	response := make([]corporationdto.SignatoryResponse, len(signatories))
+	for i, signatory := range signatories {
+		response[i] = corporationdto.SignatoryResponse{
+			ID:                 signatory.ID,
+			Name:               signatory.Name,
+			NationalCardNumber: signatory.NationalCardNumber,
+			Position:           signatory.Position,
 		}
 	}
 	return response

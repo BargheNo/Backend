@@ -21,8 +21,16 @@ type CorporationPrivateInfoResponse struct {
 	Logo                   string                       `json:"logo"`
 	VATTaxpayerCertificate string                       `json:"vatTaxpayerCertificate"`
 	OfficialNewspaperAD    string                       `json:"officialNewspaperAD"`
+	Signatories            []SignatoryResponse          `json:"signatories"`
 	ContactInfo            []ContactInformationResponse `json:"contactInfo"`
 	Addresses              []addressdto.AddressResponse `json:"addresses"`
+}
+
+type SignatoryResponse struct {
+	ID                 uint   `json:"id"`
+	Name               string `json:"name"`
+	NationalCardNumber string `json:"nationalID"`
+	Position           string `json:"position"`
 }
 
 type ContactInformationResponse struct {
