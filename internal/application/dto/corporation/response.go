@@ -34,6 +34,7 @@ type SignatoryResponse struct {
 }
 
 type ContactInformationResponse struct {
+	ID          uint
 	ContactType ContactTypeResponse `json:"contactType"`
 	Value       string              `json:"value"`
 }
