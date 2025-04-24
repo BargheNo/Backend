@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"sync"
 )
 
@@ -28,10 +29,8 @@ func (hub *Hub) Run() {
 		select {
 		case client := <-hub.Register:
 			hub.handleRegister(client)
-
 		case client := <-hub.unregister:
 			hub.handleUnregister(client)
-
 		case message := <-hub.broadcast:
 			hub.handleBroadcast(message)
 		}
@@ -71,7 +70,7 @@ func (hub *Hub) handleUnregister(client *Client) {
 		}
 	}
 
-	close(client.send)
+	client.CloseConnection()
 }
 
 func (hub *Hub) handleBroadcast(message *Message) {
@@ -80,16 +79,17 @@ func (hub *Hub) handleBroadcast(message *Message) {
 
 	switch message.Type {
 	case MessageTypeChat:
+		messageBytes, err := json.Marshal(message)
+		if err != nil {
+			panic(err)
+		}
 		if room, ok := hub.rooms[message.RoomID]; ok {
 			for client := range room {
 				select {
-				case client.send <- message.Content:
+				case client.send <- messageBytes:
 				default:
 					hub.unregister <- client
 				}
-			}
-			if len(room) == 0 {
-				delete(hub.rooms, message.RoomID)
 			}
 		}
 	case MessageTypeNotification:
