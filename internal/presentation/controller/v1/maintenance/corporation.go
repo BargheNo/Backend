@@ -84,7 +84,6 @@ func (maintenanceController *CorporationMaintenanceController) AddMaintenanceRec
 	params := controller.Validated[addMaintenanceParams](ctx)
 	maintenanceRecordInfo := maintenancedto.AddMaintenanceRecordRequest{
 		CorporationID: params.CorporationID,
-		RequestID:     params.RequestID,
 		OperatorID:    operatorID.(uint),
 		Date:          params.Date,
 		Title:         params.Title,
