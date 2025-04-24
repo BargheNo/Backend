@@ -228,7 +228,7 @@ func (repo *CorporationRepository) UpdateCorporation(db database.Database, corpo
 	return db.GetDB().Save(&corporation).Error
 }
 
-func (repo *CorporationRepository) FindCorporationByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) []*entity.Corporation {
+func (repo *CorporationRepository) FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) []*entity.Corporation {
 	var corporations []*entity.Corporation
 	query := db.GetDB().Where("status IN ?", status)
 	for _, opt := range opts {
