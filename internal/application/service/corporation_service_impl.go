@@ -427,6 +427,7 @@ func (corporationService *CorporationService) getContactInfo(corporationID uint)
 			continue
 		}
 		response[i] = corporationdto.ContactInformationResponse{
+			ID:          contact.ID,
 			ContactType: corporationdto.ContactTypeResponse{ID: contactType.ID, Name: contactType.Name},
 			Value:       contact.Value,
 		}
