@@ -1,6 +1,9 @@
 name: CD
 
 on:
+  push:
+    branches:
+      - fix/deploy
   pull_request:
     branches:
       - develop
