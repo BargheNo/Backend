@@ -235,6 +235,7 @@ func (corporationController *CustomerCorporationController) DeleteContactInforma
 
 	contactInfo := corporationdto.DeleteContactInformationRequest{
 		ApplicantID:       userID.(uint),
+		ContactID:         params.ContactInformationID,
 		CorporationID:     params.CorporationID,
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 	}
