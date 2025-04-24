@@ -21,8 +21,11 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		corpsSubgroup := corps.Group("/:corporationID")
 		{
 			corpsSubgroup.PUT("/basic", app.Controllers.Customer.CorporationController.UpdateRegister)
-			corpsSubgroup.PUT("/contacts", app.Controllers.Customer.CorporationController.UpdateContactInfoCorporations)
-			corpsSubgroup.PUT("/address", app.Controllers.Customer.CorporationController.UpdateAddress)
+			corpsSubgroup.POST("/contacts", app.Controllers.Customer.CorporationController.AddContactInformation)
+			corpsSubgroup.DELETE("/contacts/:contactID", app.Controllers.Customer.CorporationController.DeleteContactInformation)
+			corpsSubgroup.POST("/address", app.Controllers.Customer.CorporationController.AddAddress)
+			corpsSubgroup.DELETE("/address/:addressID", app.Controllers.Customer.CorporationController.DeleteAddress)
+			corpsSubgroup.PUT("/certificates", app.Controllers.Customer.CorporationController.SubmitCertificateFiles)
 			corpsSubgroup.GET("", app.Controllers.Customer.CorporationController.GetCorporationPrivateDetails)
 		}
 	}

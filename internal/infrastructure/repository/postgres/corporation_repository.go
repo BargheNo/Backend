@@ -126,6 +126,18 @@ func (repo *CorporationRepository) FindContactInformationTypeValue(db database.D
 	return &contact, true
 }
 
+func (repo *CorporationRepository) FindContactInformationByID(db database.Database, contactID uint) (*entity.ContactInformation, bool) {
+	var contact entity.ContactInformation
+	result := db.GetDB().First(&contact, contactID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &contact, true
+}
+
 func (repo *CorporationRepository) FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, bool) {
 	var signatory entity.Signatory
 	result := db.GetDB().First(&signatory, signatoryID)
@@ -170,7 +182,7 @@ func (repo *CorporationRepository) CreateContactType(db database.Database, conta
 	return db.GetDB().Create(&contactType).Error
 }
 
-func (repo *CorporationRepository) GetContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool) {
+func (repo *CorporationRepository) FindContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool) {
 	var contactType entity.ContactType
 	result := db.GetDB().First(&contactType, contactTypeID)
 	if result.Error != nil {
@@ -182,7 +194,7 @@ func (repo *CorporationRepository) GetContactTypeByID(db database.Database, cont
 	return &contactType, true
 }
 
-func (repo *CorporationRepository) GetContactTypeByName(db database.Database, name string) (*entity.ContactType, bool) {
+func (repo *CorporationRepository) FindContactTypeByName(db database.Database, name string) (*entity.ContactType, bool) {
 	var contactType entity.ContactType
 	result := db.GetDB().Where("name = ?", name).First(&contactType)
 	if result.Error != nil {
@@ -194,17 +206,13 @@ func (repo *CorporationRepository) GetContactTypeByName(db database.Database, na
 	return &contactType, true
 }
 
-func (repo *CorporationRepository) GetContactTypes(db database.Database) []*entity.ContactType {
+func (repo *CorporationRepository) FindContactTypes(db database.Database) []*entity.ContactType {
 	var types []*entity.ContactType
 	err := db.GetDB().Find(&types).Error
 	if err != nil {
 		panic(err)
 	}
 	return types
-}
-
-func (repo *CorporationRepository) DeleteCorporationByCIN(db database.Database, cin string) error {
-	return db.GetDB().Where("cin = ?", cin).Delete(&entity.Corporation{}).Error
 }
 
 func (repo *CorporationRepository) UpdateCorporation(db database.Database, corporation *entity.Corporation) error {
@@ -237,6 +245,6 @@ func (repo *CorporationRepository) DeleteCorporationSignatories(db database.Data
 	return db.GetDB().Where(queryByCorporationID, corporationID).Delete(&entity.Signatory{}).Error
 }
 
-func (repo *CorporationRepository) DeleteCorporationContactInfo(db database.Database, corporationID uint) error {
-	return db.GetDB().Where(queryByCorporationID, corporationID).Delete(&entity.Signatory{}).Error
+func (repo *CorporationRepository) DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error {
+	return db.GetDB().Delete(contact).Error
 }

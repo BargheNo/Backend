@@ -11,5 +11,4 @@ type AddressService interface {
 	GetProvinceList() []addressdto.ProvinceResponse
 	GetCityProvinceCities(province addressdto.GetProvinceCitiesRequest) []addressdto.CityResponse
 	DeleteAddress(addressID uint)
-	ReplaceAddresses(ownerID uint, ownerType string, addresses []addressdto.CreateAddressRequest)
 }

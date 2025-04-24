@@ -12,10 +12,9 @@ type CorporationRepository interface {
 	CreateSignatory(db database.Database, signatory *entity.Signatory) error
 	CreateContactInformation(db database.Database, contact *entity.ContactInformation) error
 	CreateContactType(db database.Database, contactType *entity.ContactType) error
-	GetContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool)
-	GetContactTypeByName(db database.Database, name string) (*entity.ContactType, bool)
-	GetContactTypes(db database.Database) []*entity.ContactType
-	DeleteCorporationByCIN(db database.Database, cin string) error
+	FindContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool)
+	FindContactTypeByName(db database.Database, name string) (*entity.ContactType, bool)
+	FindContactTypes(db database.Database) []*entity.ContactType
 	FindCorporationByCIN(db database.Database, cin string) (*entity.Corporation, bool)
 	FindCorporationByIBAN(db database.Database, iban string, status []enum.CorporationStatus) (*entity.Corporation, bool)
 	FindCorporationByID(db database.Database, id uint) (*entity.Corporation, bool)
@@ -25,11 +24,12 @@ type CorporationRepository interface {
 	FindCorporationStaff(db database.Database, staffID, corporationID uint) (*entity.CorporationStaff, bool)
 	FindContactInformationTypeByID(db database.Database, typeID uint) (*entity.ContactType, bool)
 	FindContactInformationTypeValue(db database.Database, typeID uint, value string) (*entity.ContactInformation, bool)
+	FindContactInformationByID(db database.Database, contactID uint) (*entity.ContactInformation, bool)
 	FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, bool)
 	FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool)
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
 	FindCorporationByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) []*entity.Corporation
 	FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation
 	DeleteCorporationSignatories(db database.Database, corporationID uint) error
-	DeleteCorporationContactInfo(db database.Database, corporationID uint) error
+	DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error
 }

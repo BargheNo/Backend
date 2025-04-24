@@ -130,7 +130,3 @@ func (repo *AddressRepository) CreateAddress(db database.Database, address *enti
 func (repo *AddressRepository) DeleteAddress(db database.Database, address *entity.Address) error {
 	return db.GetDB().Delete(&address).Error
 }
-
-func (repo *AddressRepository) DeleteOwnerAddresses(db database.Database, ownerID uint, ownerType string) error {
-	return db.GetDB().Where(queryByOwnerIDAndOwnerType, ownerID, ownerType).Delete(&entity.Address{}).Error
-}

@@ -13,11 +13,10 @@ type CorporationService interface {
 	UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest)
 	AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest)
 	AddContactInfo(contactInfo corporationdto.AddContactInformationRequest)
-	UpdateContactInfo(contactInfo corporationdto.AddContactInformationRequest)
+	DeleteContactInfo(contactInfo corporationdto.DeleteContactInformationRequest)
 	AddAddress(addressInfo corporationdto.AddCorporationAddressRequest)
-	UpdateAddress(addressInfo corporationdto.AddCorporationAddressRequest)
 	DeleteAddress(addressInfo corporationdto.DeleteAddressRequest)
 	GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) corporationdto.CorporationPrivateInfoResponse
-	GetContactInfo(corporationID uint) []corporationdto.ContactInformationResponse
 	GetContactTypes() []corporationdto.ContactTypeResponse
+	ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest)
 }

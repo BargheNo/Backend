@@ -33,6 +33,7 @@ var English = map[string]interface{}{
 	"permission":          "permission",
 	"ticketComment":       "ticket comment",
 	"report":              "report",
+	"contactInformation":  "contact information",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -80,6 +81,8 @@ var English = map[string]interface{}{
 		"cancelBid":                 "Your bid has been successfully canceled.",
 		"getBids":                   "Bids fetched successfully.",
 		"updateContactInfo":         "Contact information updated successfully.",
+		"deleteContactInfo":         "Contact information deleted successfully.",
+		"changeLogo":                "Corporation logo has been changed.",
 		"addAddress":                "Address added successfully.",
 		"editAddress":               "Address edited successfully.",
 		"deleteAddress":             "Address deleted successfully.",

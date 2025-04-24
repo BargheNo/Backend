@@ -33,6 +33,7 @@ var Persian = map[string]interface{}{
 	"permission":          "دسترسی",
 	"ticketComment":       "نظر در مورد درخواست پشتیبانی",
 	"report":              "گزارش",
+	"contactInformation":  "پل ارتباطی",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -80,6 +81,8 @@ var Persian = map[string]interface{}{
 		"cancelBid":                 "پیشنهاد شما با موفقیت لغو شد.",
 		"getBids":                   "پیشنهادات با موفقیت دریافت شد.",
 		"updateContactInfo":         "اطلاعات تماس با موفقیت به روز شد.",
+		"deleteContactInfo":         "اطلاعات تماس با موفقیت حذف شد.",
+		"changeLogo":                "لوگوی شرکت ب موفقیت عوض شد.",
 		"addAddress":                "آدرس با موفقیت اضافه شد.",
 		"editAddress":               "آدرس با موفقیت ویرایش شد.",
 		"deleteAddress":             "آدرس با موفقیت حذف شد.",

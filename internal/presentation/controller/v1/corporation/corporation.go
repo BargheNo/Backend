@@ -7,6 +7,7 @@ import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -29,57 +30,20 @@ func NewCorporationCorporationController(
 	}
 }
 
-func (corporationController *CorporationCorporationController) SubmitCertificateFiles(ctx *gin.Context) {
-	type certificatesParams struct {
-		CorporationID          uint                  `uri:"corporationID" validate:"required"`
-		VATTaxpayerCertificate *multipart.FileHeader `form:"vatTaxpayerCertificate"`
-		OfficialNewspaperAD    *multipart.FileHeader `form:"officialNewspaperAD"`
+func (corporationController *CorporationCorporationController) GetMyProfile(ctx *gin.Context) {
+	type GetCorporationParamsParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
-	params := controller.Validated[certificatesParams](ctx)
+	params := controller.Validated[GetCorporationParamsParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-
-	requestInfo := corporationdto.AddCertificatesRequest{
-		CorporationID:          params.CorporationID,
-		ApplicantID:            userID.(uint),
-		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
-		OfficialNewspaperAD:    params.OfficialNewspaperAD,
+	corporationRequest := corporationdto.CorporationDetailsRequest{
+		UserID:        userID.(uint),
+		CorporationID: params.CorporationID,
+		Status:        enum.CorpStatusApproved,
 	}
-	corporationController.corporationService.AddCertificateFiles(requestInfo)
 
-	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.addCorporationCertificate")
-	controller.Response(ctx, 200, message, nil)
-}
-
-func (corporationController *CorporationCorporationController) AddContactInformation(ctx *gin.Context) {
-	type contactInformation struct {
-		ContactTypeID uint   `json:"contactTypeID"`
-		ContactValue  string `json:"contactValue"`
-	}
-	type contactInformationParams struct {
-		CorporationID      uint                 `uri:"corporationID" validate:"required"`
-		ContactInformation []contactInformation `json:"contactInformation" validate:"required"`
-	}
-	params := controller.Validated[contactInformationParams](ctx)
-	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-
-	contacts := make([]corporationdto.ContactInformation, len(params.ContactInformation))
-	for i, contact := range params.ContactInformation {
-		contacts[i] = corporationdto.ContactInformation{
-			ContactTypeID: contact.ContactTypeID,
-			ContactValue:  contact.ContactValue,
-		}
-	}
-	contactInfo := corporationdto.AddContactInformationRequest{
-		ApplicantID:        userID.(uint),
-		CorporationID:      params.CorporationID,
-		ContactInformation: contacts,
-	}
-	corporationController.corporationService.AddContactInfo(contactInfo)
-
-	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.updateContactInfo")
-	controller.Response(ctx, 200, message, nil)
+	corporationDetails := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	controller.Response(ctx, 200, "", corporationDetails)
 }
 
 func (corporationController *CorporationCorporationController) AddAddress(ctx *gin.Context) {
@@ -113,9 +77,10 @@ func (corporationController *CorporationCorporationController) AddAddress(ctx *g
 	}
 
 	addressInfo := corporationdto.AddCorporationAddressRequest{
-		ApplicantID:   userID.(uint),
-		CorporationID: params.CorporationID,
-		Addresses:     addresses,
+		ApplicantID:       userID.(uint),
+		CorporationID:     params.CorporationID,
+		CorporationStatus: enum.CorpStatusApproved,
+		Addresses:         addresses,
 	}
 
 	corporationController.corporationService.AddAddress(addressInfo)
@@ -128,19 +93,94 @@ func (corporationController *CorporationCorporationController) AddAddress(ctx *g
 func (corporationController *CorporationCorporationController) DeleteAddress(ctx *gin.Context) {
 	type deleteAddressParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		AddressID     uint `json:"addressID" validate:"required"`
+		AddressID     uint `uri:"addressID" validate:"required"`
 	}
 	params := controller.Validated[deleteAddressParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
 
 	addressInfo := corporationdto.DeleteAddressRequest{
-		UserID:        userID.(uint),
-		CorporationID: params.CorporationID,
-		AddressID:     params.AddressID,
+		UserID:            userID.(uint),
+		CorporationID:     params.CorporationID,
+		CorporationStatus: enum.CorpStatusApproved,
+		AddressID:         params.AddressID,
 	}
 	corporationController.corporationService.DeleteAddress(addressInfo)
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteAddress")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) AddContactInformation(ctx *gin.Context) {
+	type contactInformation struct {
+		ContactTypeID uint   `json:"contactTypeID"`
+		ContactValue  string `json:"contactValue"`
+	}
+	type contactInformationParams struct {
+		CorporationID      uint                 `uri:"corporationID" validate:"required"`
+		ContactInformation []contactInformation `json:"contactInformation" validate:"required"`
+	}
+	params := controller.Validated[contactInformationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	contacts := make([]corporationdto.ContactInformation, len(params.ContactInformation))
+	for i, contact := range params.ContactInformation {
+		contacts[i] = corporationdto.ContactInformation{
+			ContactTypeID: contact.ContactTypeID,
+			ContactValue:  contact.ContactValue,
+		}
+	}
+	contactInfo := corporationdto.AddContactInformationRequest{
+		ApplicantID:        userID.(uint),
+		CorporationID:      params.CorporationID,
+		CorporationStatus:  enum.CorpStatusApproved,
+		ContactInformation: contacts,
+	}
+	corporationController.corporationService.AddContactInfo(contactInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateContactInfo")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) DeleteContactInformation(ctx *gin.Context) {
+	type contactInformationParams struct {
+		CorporationID        uint `uri:"corporationID" validate:"required"`
+		ContactInformationID uint `uri:"contactID" validate:"required"`
+	}
+	params := controller.Validated[contactInformationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	contactInfo := corporationdto.DeleteContactInformationRequest{
+		ApplicantID:       userID.(uint),
+		ContactID:         params.ContactInformationID,
+		CorporationID:     params.CorporationID,
+		CorporationStatus: enum.CorpStatusApproved,
+	}
+
+	corporationController.corporationService.DeleteContactInfo(contactInfo)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteContactInfo")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) ChangeLogo(ctx *gin.Context) {
+	type profileLogoParams struct {
+		CorporationID uint                  `uri:"corporationID" validate:"required"`
+		Logo          *multipart.FileHeader `form:"logo" validate:"required"`
+	}
+	params := controller.Validated[profileLogoParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	changeLogoRequest := corporationdto.ChangeLogoRequest{
+		ApplicantID:   userID.(uint),
+		CorporationID: params.CorporationID,
+		Logo:          params.Logo,
+	}
+	corporationController.corporationService.ChangeLogo(changeLogoRequest)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.changeLogo")
 	controller.Response(ctx, 200, message, nil)
 }
