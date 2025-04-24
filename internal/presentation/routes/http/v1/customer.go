@@ -18,10 +18,10 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	corps := routerGroup.Group("/corps")
 	{
 		corps.GET("/list", app.Controllers.Customer.CorporationController.GetCorporations)
-		registeration := corps.Group("/registeration")
+		registration := corps.Group("/registration")
 		{
-			registeration.POST("/basic", app.Controllers.Customer.CorporationController.Register)
-			corpsSubgroup := registeration.Group("/:corporationID")
+			registration.POST("/basic", app.Controllers.Customer.CorporationController.Register)
+			corpsSubgroup := registration.Group("/:corporationID")
 			{
 				corpsSubgroup.PUT("/basic", app.Controllers.Customer.CorporationController.UpdateRegister)
 				corpsSubgroup.POST("/contacts", app.Controllers.Customer.CorporationController.AddContactInformation)
