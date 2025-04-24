@@ -153,7 +153,7 @@ func (chatService *ChatService) validateRoomParticipantAccess(senderID, memberID
 	}
 }
 
-func (chatService *ChatService) SaveMessage(roomID, senderID uint, content string) {
+func (chatService *ChatService) SaveMessage(roomID, senderID uint, content string) chatdto.RoomMessagesResponse {
 	exist := chatService.userService.IsUserActive(senderID)
 	if !exist {
 		forbiddenError := exception.ForbiddenError{
@@ -183,6 +183,12 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 	if err := chatService.chatRepository.CreateMessage(chatService.db, message); err != nil {
 		panic(err)
 	}
+	sender := chatService.userService.GetUserCredential(message.SenderID)
+	return chatdto.RoomMessagesResponse{
+		ID:      message.ID,
+		Sender:  sender,
+		Content: message.Content,
+	}
 }
 
 func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRequest) []chatdto.RoomMessagesResponse {
@@ -200,6 +206,7 @@ func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRe
 	for i, message := range messages {
 		sender := chatService.userService.GetUserCredential(message.SenderID)
 		messagesResponse[i] = chatdto.RoomMessagesResponse{
+			ID:      message.ID,
 			Sender:  sender,
 			Content: message.Content,
 		}

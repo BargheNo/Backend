@@ -14,6 +14,7 @@ type CustomerNotificationController struct {
 	websocketSetting    *bootstrap.WebsocketSetting
 	notificationService service.NotificationService
 	jwtService          service.JWTService
+	userService         service.UserService
 	hub                 *websocket.Hub
 }
 
@@ -22,6 +23,7 @@ func NewCustomerNotificationController(
 	websocketSetting *bootstrap.WebsocketSetting,
 	notificationService service.NotificationService,
 	jwtService service.JWTService,
+	userService service.UserService,
 	hub *websocket.Hub,
 ) *CustomerNotificationController {
 	return &CustomerNotificationController{
@@ -29,6 +31,7 @@ func NewCustomerNotificationController(
 		websocketSetting:    websocketSetting,
 		notificationService: notificationService,
 		jwtService:          jwtService,
+		userService:         userService,
 		hub:                 hub,
 	}
 }

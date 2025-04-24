@@ -14,6 +14,7 @@ type ChatRoomDetailsResponse struct {
 }
 
 type RoomMessagesResponse struct {
+	ID      uint                       `json:"id"`
 	Sender  userdto.CredentialResponse `json:"sender"`
 	Content string                     `json:"content"`
 }
