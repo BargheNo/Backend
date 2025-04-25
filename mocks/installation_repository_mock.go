@@ -52,7 +52,7 @@ func (repo *InstallationRepositoryMock) CreateRequest(db database.Database, requ
 }
 
 func (repo *InstallationRepositoryMock) CreatePanel(db database.Database, panel *entity.Panel) error {
-	args := repo.Called(panel)
+	args := repo.Called(db, panel)
 	return args.Error(0)
 }
 
@@ -67,7 +67,7 @@ func (repo *InstallationRepositoryMock) FindCustomerPanels(db database.Database,
 }
 
 func (repo *InstallationRepositoryMock) FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool) {
-	args := repo.Called(panelName, customerID)
+	args := repo.Called(db, panelName, customerID)
 	return args.Get(0).(*entity.Panel), args.Bool(1)
 }
 

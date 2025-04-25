@@ -5,13 +5,13 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	mocks "github.com/BargheNo/Backend/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -279,6 +279,7 @@ func TestAddPanel(t *testing.T) {
 	addressService := mocks.NewAddressServiceMock()
 	userService := mocks.NewUserServiceMock()
 	corporationService := mocks.NewCorporationServiceMock()
+	chatService := mocks.NewChatServiceMock()
 	db := mocks.NewDatabaseMock()
 	config := bootstrap.Run()
 	constants := config.Constants
@@ -287,7 +288,7 @@ func TestAddPanel(t *testing.T) {
 		addressService,
 		userService,
 		corporationService,
-		nil,
+		chatService,
 		repo,
 		db,
 	)
@@ -295,28 +296,19 @@ func TestAddPanel(t *testing.T) {
 	t.Run("Success - Add Panel", func(t *testing.T) {
 		operatorID := uint(456)
 		corporationID := uint(123)
+		customerID := uint(789)
 
 		panelInfo := installationdto.AddPanelRequest{
-			CorporationID: corporationID,
-			OperatorID:   operatorID,
-			PanelName:         "Test Panel",
-			CustomerPhone:   "1234567890",
-			Power: 		1000,
-			Area: 		50,
-			BuildingType: "Residential",
-			Tilt: 		30,
-			Azimuth: 	45,
+			CorporationID:        corporationID,
+			OperatorID:           operatorID,
+			PanelName:            "Test Panel",
+			CustomerPhone:        "1234567890",
+			Power:                1000,
+			Area:                 50,
+			BuildingType:         "Residential",
+			Tilt:                 30,
+			Azimuth:              45,
 			TotalNumberOfModules: 10,
-			Address: addressdto.CreateAddressRequest{
-				ProvinceID:    1,
-				CityID:        2,
-				StreetAddress: "123 Test St",
-				PostalCode:    "12345",
-				HouseNumber:   "10A",
-				Unit:          5,
-				OwnerID:       123,
-				OwnerType:     constants.AddressOwners.Panel,
-			},	
 		}
 
 		corporationService.On("CheckApplicantAccess",
@@ -326,7 +318,44 @@ func TestAddPanel(t *testing.T) {
 
 		userService.On("FindUserByPhone",
 			panelInfo.CustomerPhone,
+		).Return(userdto.UserResponse{ID: customerID}).Once()
+
+		var nilPanel *entity.Panel = nil
+		repo.On("FindPanelByNameAndCustomerID",
+			db,
+			panelInfo.PanelName,
+			customerID,
+		).Return(nilPanel, false).Once()
+
+		repo.On("CreatePanel",
+			db,
+			mock.MatchedBy(func(panel *entity.Panel) bool {
+				return panel.Name == "Test Panel" &&
+					panel.CustomerID == customerID &&
+					panel.Power == 1000 &&
+					panel.Area == 50 &&
+					panel.BuildingType == "Residential" &&
+					panel.Tilt == 30 &&
+					panel.Azimuth == 45 &&
+					panel.TotalNumberOfModules == 10
+			},
+			),
 		).Return(nil).Once()
 
-		
-})
+		request := chatdto.CreateOrGetUserRoomRequest{
+			CorporationID: corporationID,
+			UserID:        customerID,
+		}
+
+		chatService.On("CreateOrGetRoom",
+			request,
+		).Return(chatdto.ChatRoomDetailsResponse{}).Once()
+
+		installationService.AddPanel(panelInfo)
+
+		repo.AssertExpectations(t)
+		addressService.AssertExpectations(t)
+		userService.AssertExpectations(t)
+		corporationService.AssertExpectations(t)
+	})
+}
