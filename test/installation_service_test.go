@@ -358,4 +358,51 @@ func TestAddPanel(t *testing.T) {
 		userService.AssertExpectations(t)
 		corporationService.AssertExpectations(t)
 	})
+
+	t.Run("Error - Panel Already Exists", func(t *testing.T) {
+		operatorID := uint(456)
+		corporationID := uint(123)
+		customerID := uint(789)
+
+		panelInfo := installationdto.AddPanelRequest{
+			CorporationID:        corporationID,
+			OperatorID:           operatorID,
+			PanelName:            "Test Panel",
+			CustomerPhone:        "1234567890",
+			Power:                1000,
+			Area:                 50,
+			BuildingType:         "Residential",
+			Tilt:                 30,
+			Azimuth:              45,
+			TotalNumberOfModules: 10,
+		}
+
+		corporationService.On("CheckApplicantAccess",
+			corporationID,
+			operatorID,
+		).Return(nil).Once()
+
+		userService.On("FindUserByPhone",
+			panelInfo.CustomerPhone,
+		).Return(userdto.UserResponse{ID: customerID}).Once()
+
+		existingPanel := &entity.Panel{
+			Name:       "Test Panel",
+			CustomerID: customerID,
+		}
+
+		repo.On("FindPanelByNameAndCustomerID",
+			db,
+			panelInfo.PanelName,
+			customerID,
+		).Return(existingPanel, true).Once()
+
+		assert.Panics(t, func() {
+			installationService.AddPanel(panelInfo)
+		})
+
+		repo.AssertExpectations(t)
+		userService.AssertExpectations(t)
+		corporationService.AssertExpectations(t)
+	})
 }
