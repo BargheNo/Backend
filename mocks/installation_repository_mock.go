@@ -22,7 +22,7 @@ func (repo *InstallationRepositoryMock) FindRequestByStatus(db database.Database
 }
 
 func (repo *InstallationRepositoryMock) FindRequestByID(db database.Database, requestID uint) (*entity.InstallationRequest, bool) {
-	args := repo.Called(requestID)
+	args := repo.Called(db, requestID)
 	return args.Get(0).(*entity.InstallationRequest), args.Bool(1)
 }
 

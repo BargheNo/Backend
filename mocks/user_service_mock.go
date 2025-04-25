@@ -96,3 +96,44 @@ func (s *UserServiceMock) UpdateProfile(profileInfo userdto.UpdateProfileRequest
 		panic(args.Get(0))
 	}
 }
+
+func (m *UserServiceMock) GetAllPermissions() []userdto.PermissionResponse {
+	args := m.Called()
+	return args.Get(0).([]userdto.PermissionResponse)
+}
+
+func (m *UserServiceMock) GetAllRoles() []userdto.RoleResponse {
+	args := m.Called()
+	return args.Get(0).([]userdto.RoleResponse)
+}
+
+func (m *UserServiceMock) CreateRole(newRoleRequest userdto.NewRoleRequest) {
+	m.Called(newRoleRequest)
+}
+
+func (m *UserServiceMock) GetRoomDetails(roleID uint) userdto.RoleResponse {
+	args := m.Called(roleID)
+	return args.Get(0).(userdto.RoleResponse)
+}
+
+func (m *UserServiceMock) GetRoleOwners(roleID uint) []userdto.CredentialResponse {
+	args := m.Called(roleID)
+	return args.Get(0).([]userdto.CredentialResponse)
+}
+
+func (m *UserServiceMock) GetUserRoles(userID uint) []userdto.RoleResponse {
+	args := m.Called(userID)
+	return args.Get(0).([]userdto.RoleResponse)
+}
+
+func (m *UserServiceMock) DeleteRole(roleID uint) {
+	m.Called(roleID)
+}
+
+func (m *UserServiceMock) UpdateRole(newRoleRequest userdto.UpdateRoleRequest) {
+	m.Called(newRoleRequest)
+}
+
+func (m *UserServiceMock) UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) {
+	m.Called(userRolesRequest)
+}
