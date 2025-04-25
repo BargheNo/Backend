@@ -278,6 +278,7 @@ func TestAddPanel(t *testing.T) {
 	repo := mocks.NewInstallationRepositoryMock()
 	addressService := mocks.NewAddressServiceMock()
 	userService := mocks.NewUserServiceMock()
+	corporationService := mocks.NewCorporationServiceMock()
 	db := mocks.NewDatabaseMock()
 	config := bootstrap.Run()
 	constants := config.Constants
@@ -285,7 +286,7 @@ func TestAddPanel(t *testing.T) {
 		constants,
 		addressService,
 		userService,
-		nil,
+		corporationService,
 		nil,
 		repo,
 		db,
@@ -318,7 +319,14 @@ func TestAddPanel(t *testing.T) {
 			},	
 		}
 
-		corporation.On
+		corporationService.On("CheckApplicantAccess",
+			corporationID,
+			operatorID,
+		).Return(nil).Once()
+
+		userService.On("FindUserByPhone",
+			panelInfo.CustomerPhone,
+		).Return(nil).Once()
 
 		
 })
