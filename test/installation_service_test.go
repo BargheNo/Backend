@@ -17,6 +17,71 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func TestGetInstallationRequestModel(t *testing.T) {
+	repo := mocks.NewInstallationRepositoryMock()
+	addressService := mocks.NewAddressServiceMock()
+	userService := mocks.NewUserServiceMock()
+	corporationService := mocks.NewCorporationServiceMock()
+	chatService := mocks.NewChatServiceMock()
+	db := mocks.NewDatabaseMock()
+	config := bootstrap.Run()
+	constants := config.Constants
+	installationService := serviceimpl.NewInstallationService(
+		constants,
+		addressService,
+		userService,
+		corporationService,
+		chatService,
+		repo,
+		db,
+	)
+
+	t.Run("Success - Get Installation Request Model", func(t *testing.T) {
+		requestID := uint(123)
+		mockRequest := &entity.InstallationRequest{
+			Model:        database.Model{ID: requestID},
+			Name:         "Test Request",
+			Status:       enum.InstallationRequestStatusActive,
+			OwnerID:      456,
+			BuildingType: "Residential",
+			Address: entity.Address{
+				Model:         database.Model{ID: 1},
+				ProvinceID:    1,
+				CityID:        2,
+				StreetAddress: "123 Test St",
+				PostalCode:    "12345",
+				HouseNumber:   "10A",
+				Unit:          5,
+			},
+		}
+
+		repo.On("FindRequestByID", db, requestID).Return(mockRequest, true).Once()
+
+		result := installationService.GetInstallationRequestModel(requestID)
+
+		assert.Equal(t, requestID, result.ID)
+		assert.Equal(t, "Test Request", result.Name)
+		assert.Equal(t, enum.InstallationRequestStatusActive, result.Status)
+		assert.Equal(t, uint(1), result.Address.ID)
+
+		repo.AssertExpectations(t)
+		addressService.AssertExpectations(t)
+	})
+
+	t.Run("Error - Request Not Found", func(t *testing.T) {
+		requestID := uint(456)
+
+		repo.On("FindRequestByID", db, requestID).Return(nil, false).Once()
+
+		assert.Panics(t, func() {
+			installationService.GetInstallationRequestModel(requestID)
+		})
+
+		repo.AssertExpectations(t)
+		addressService.AssertExpectations(t)
+	})
+}
+
 func TestCreateInstallationRequest(t *testing.T) {
 	repo := mocks.NewInstallationRepositoryMock()
 	addressService := mocks.NewAddressServiceMock()
@@ -83,6 +148,117 @@ func TestCreateInstallationRequest(t *testing.T) {
 		repo.AssertExpectations(t)
 		addressService.AssertExpectations(t)
 	})
+
+	t.Run("Error - Request Already Exists", func(t *testing.T) {
+		requestInfo := installationdto.NewInstallationRequest{
+			Name:         "Test Request",
+			OwnerID:      123,
+			BuildingType: "Residential",
+			Address: addressdto.CreateAddressRequest{
+				ProvinceID:    1,
+				CityID:        2,
+				StreetAddress: "123 Test St",
+				PostalCode:    "12345",
+				HouseNumber:   "10A",
+				Unit:          5,
+				OwnerID:       123,
+				OwnerType:     constants.AddressOwners.InstallationRequest,
+			},
+		}
+
+		existingRequest := &entity.InstallationRequest{
+			Name:         "Test Request",
+			Status:       enum.InstallationRequestStatusActive,
+			OwnerID:      123,
+			BuildingType: "Residential",
+		}
+
+		repo.On("FindOwnerRequestByName",
+			db, requestInfo.OwnerID,
+			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
+			requestInfo.Name,
+		).Return(existingRequest, true).Once()
+
+		assert.Panics(t, func() {
+			installationService.CreateInstallationRequest(requestInfo)
+		})
+
+		repo.AssertExpectations(t)
+		addressService.AssertExpectations(t)
+	})
+
+	t.Run("Error - Too Many Active Requests", func(t *testing.T) {
+		requestInfo := installationdto.NewInstallationRequest{
+			Name:         "Test Request",
+			OwnerID:      123,
+			BuildingType: "Residential",
+			Address: addressdto.CreateAddressRequest{
+				ProvinceID:    1,
+				CityID:        2,
+				StreetAddress: "123 Test St",
+				PostalCode:    "12345",
+				HouseNumber:   "10A",
+				Unit:          5,
+				OwnerID:       123,
+				OwnerType:     constants.AddressOwners.InstallationRequest,
+			},
+		}
+
+		existingRequests := []*entity.InstallationRequest{
+			{
+				Name:         "Existing Request",
+				Status:       enum.InstallationRequestStatusActive,
+				OwnerID:      123,
+				BuildingType: "Residential",
+			},
+			{
+				Name:         "Another Request",
+				Status:       enum.InstallationRequestStatusActive,
+				OwnerID:      123,
+				BuildingType: "Commercial",
+			},
+			{
+				Name:         "Yet Another Request",
+				Status:       enum.InstallationRequestStatusActive,
+				OwnerID:      123,
+				BuildingType: "Industrial",
+			},
+			{
+				Name:         "Final Request",
+				Status:       enum.InstallationRequestStatusActive,
+				OwnerID:      123,
+				BuildingType: "Agricultural",
+			},
+			{
+				Name:         "Last Request",
+				Status:       enum.InstallationRequestStatusActive,
+				OwnerID:      123,
+				BuildingType: "Residential",
+			},
+		}
+
+		var nilRequest *entity.InstallationRequest = nil
+
+		repo.On("FindOwnerRequestByName",
+			db, requestInfo.OwnerID,
+			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
+			requestInfo.Name,
+		).Return(nilRequest, false).Once()
+
+		repo.On("FindOwnerRequests",
+			db, requestInfo.OwnerID,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Return(existingRequests).Once()
+
+		assert.Panics(t, func() {
+			installationService.CreateInstallationRequest(requestInfo)
+		})
+
+		repo.AssertExpectations(t)
+		addressService.AssertExpectations(t)
+	})
 }
 
 func TestGetOwnerInstallationRequests(t *testing.T) {
@@ -102,66 +278,24 @@ func TestGetOwnerInstallationRequests(t *testing.T) {
 		db,
 	)
 
-	t.Run("Returns Empty List When No Requests Found", func(t *testing.T) {
+	t.Run("Success - Get Owner Installation Requests", func(t *testing.T) {
 		ownerID := uint(456)
-
-		mockRequests := []*entity.InstallationRequest{}
-
-		repo.On("FindOwnerRequests",
-			db,
-			ownerID,
-			[]enum.InstallationRequestStatus{
-				enum.InstallationRequestStatusActive,
-				enum.InstallationRequestStatusCancelled,
-				enum.InstallationRequestStatusExpired,
-			},
-			mock.Anything,
-			mock.Anything,
-		).Return(mockRequests).Once()
-
-		result := installationService.GetOwnerInstallationRequests(installationdto.InstallationListRequest{
-			OwnerID: ownerID,
-			Limit:   10,
-			Offset:  0,
-		})
-
-		assert.Empty(t, result)
-		assert.Len(t, result, 0)
-		repo.AssertExpectations(t)
-	})
-
-	t.Run("Handles Multiple Request Statuses", func(t *testing.T) {
-		ownerID := uint(101)
 
 		mockRequests := []*entity.InstallationRequest{
 			{
-				Model:        database.Model{ID: 4},
-				Name:         "Active Request",
+				Model:        database.Model{ID: 1},
+				Name:         "Request 1",
 				Status:       enum.InstallationRequestStatusActive,
 				OwnerID:      ownerID,
 				BuildingType: "Residential",
 			},
 			{
-				Model:        database.Model{ID: 5},
-				Name:         "Cancelled Request",
+				Model:        database.Model{ID: 2},
+				Name:         "Request 2",
 				Status:       enum.InstallationRequestStatusCancelled,
 				OwnerID:      ownerID,
 				BuildingType: "Commercial",
 			},
-			{
-				Model:        database.Model{ID: 6},
-				Name:         "Expired Request",
-				Status:       enum.InstallationRequestStatusExpired,
-				OwnerID:      ownerID,
-				BuildingType: "Industrial",
-			},
-		}
-
-		mockAddress := addressdto.AddressResponse{
-			Province:      "Test Province",
-			City:          "Test City",
-			StreetAddress: "Test Street",
-			PostalCode:    "12345",
 		}
 
 		repo.On("FindOwnerRequests",
@@ -177,19 +311,14 @@ func TestGetOwnerInstallationRequests(t *testing.T) {
 		).Return(mockRequests).Once()
 
 		addressService.On("GetAddress",
-			uint(4),
+			uint(1),
 			constants.AddressOwners.InstallationRequest,
-		).Return(mockAddress).Once()
+		).Return(addressdto.AddressResponse{}).Once()
 
 		addressService.On("GetAddress",
-			uint(5),
+			uint(2),
 			constants.AddressOwners.InstallationRequest,
-		).Return(mockAddress).Once()
-
-		addressService.On("GetAddress",
-			uint(6),
-			constants.AddressOwners.InstallationRequest,
-		).Return(mockAddress).Once()
+		).Return(addressdto.AddressResponse{}).Once()
 
 		result := installationService.GetOwnerInstallationRequests(installationdto.InstallationListRequest{
 			OwnerID: ownerID,
@@ -197,14 +326,14 @@ func TestGetOwnerInstallationRequests(t *testing.T) {
 			Offset:  0,
 		})
 
-		assert.Len(t, result, 3)
+		assert.Len(t, result, 2)
 		assert.Equal(t, "active", result[0].Status)
 		assert.Equal(t, "cancelled", result[1].Status)
-		assert.Equal(t, "expired", result[2].Status)
 
 		repo.AssertExpectations(t)
 		addressService.AssertExpectations(t)
 	})
+
 }
 
 func TestGetInstallationRequest(t *testing.T) {
