@@ -13,30 +13,45 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	mocks "github.com/BargheNo/Backend/mocks"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestGetInstallationRequestModel(t *testing.T) {
-	repo := mocks.NewInstallationRepositoryMock()
-	addressService := mocks.NewAddressServiceMock()
-	userService := mocks.NewUserServiceMock()
-	corporationService := mocks.NewCorporationServiceMock()
-	chatService := mocks.NewChatServiceMock()
-	db := mocks.NewDatabaseMock()
-	config := bootstrap.Run()
-	constants := config.Constants
-	installationService := serviceimpl.NewInstallationService(
-		constants,
-		addressService,
-		userService,
-		corporationService,
-		chatService,
-		repo,
-		db,
-	)
+type InstallationServiceTestSuite struct {
+	suite.Suite
+	repo                *mocks.InstallationRepositoryMock
+	addressService      *mocks.AddressServiceMock
+	userService         *mocks.UserServiceMock
+	corporationService  *mocks.CorporationServiceMock
+	chatService         *mocks.ChatServiceMock
+	db                  *mocks.DatabaseMock
+	constants           *bootstrap.Constants
+	installationService *serviceimpl.InstallationService
+}
 
-	t.Run("Success - Get Installation Request Model", func(t *testing.T) {
+func (s *InstallationServiceTestSuite) SetupTest() {
+	s.repo = mocks.NewInstallationRepositoryMock()
+	s.addressService = mocks.NewAddressServiceMock()
+	s.userService = mocks.NewUserServiceMock()
+	s.corporationService = mocks.NewCorporationServiceMock()
+	s.chatService = mocks.NewChatServiceMock()
+	s.db = mocks.NewDatabaseMock()
+	config := bootstrap.Run()
+	s.constants = config.Constants
+
+	s.installationService = serviceimpl.NewInstallationService(
+		s.constants,
+		s.addressService,
+		s.userService,
+		s.corporationService,
+		s.chatService,
+		s.repo,
+		s.db,
+	)
+}
+
+func (s *InstallationServiceTestSuite) TestGetInstallationRequestModel() {
+	s.Run("Success - Get Installation Request Model", func() {
 		requestID := uint(123)
 		mockRequest := &entity.InstallationRequest{
 			Model:        database.Model{ID: requestID},
@@ -55,51 +70,35 @@ func TestGetInstallationRequestModel(t *testing.T) {
 			},
 		}
 
-		repo.On("FindRequestByID", db, requestID).Return(mockRequest, true).Once()
+		s.repo.On("FindRequestByID", s.db, requestID).Return(mockRequest, true).Once()
 
-		result := installationService.GetInstallationRequestModel(requestID)
+		result := s.installationService.GetInstallationRequestModel(requestID)
 
-		assert.Equal(t, requestID, result.ID)
-		assert.Equal(t, "Test Request", result.Name)
-		assert.Equal(t, enum.InstallationRequestStatusActive, result.Status)
-		assert.Equal(t, uint(1), result.Address.ID)
+		s.Equal(requestID, result.ID)
+		s.Equal("Test Request", result.Name)
+		s.Equal(enum.InstallationRequestStatusActive, result.Status)
+		s.Equal(uint(1), result.Address.ID)
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
 	})
 
-	t.Run("Error - Request Not Found", func(t *testing.T) {
+	s.Run("Error - Request Not Found", func() {
 		requestID := uint(456)
 
-		repo.On("FindRequestByID", db, requestID).Return(nil, false).Once()
+		s.repo.On("FindRequestByID", s.db, requestID).Return(nil, false).Once()
 
-		assert.Panics(t, func() {
-			installationService.GetInstallationRequestModel(requestID)
+		s.Panics(func() {
+			s.installationService.GetInstallationRequestModel(requestID)
 		})
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
 	})
 }
 
-func TestCreateInstallationRequest(t *testing.T) {
-	repo := mocks.NewInstallationRepositoryMock()
-	addressService := mocks.NewAddressServiceMock()
-	userService := mocks.NewUserServiceMock()
-	db := mocks.NewDatabaseMock()
-	config := bootstrap.Run()
-	constants := config.Constants
-	installationService := serviceimpl.NewInstallationService(
-		constants,
-		addressService,
-		userService,
-		nil,
-		nil,
-		repo,
-		db,
-	)
-
-	t.Run("Success - Create Installation Request", func(t *testing.T) {
+func (s *InstallationServiceTestSuite) TestCreateInstallationRequest() {
+	s.Run("Success - Create Installation Request", func() {
 		requestInfo := installationdto.NewInstallationRequest{
 			Name:         "Test Request",
 			OwnerID:      123,
@@ -112,28 +111,28 @@ func TestCreateInstallationRequest(t *testing.T) {
 				HouseNumber:   "10A",
 				Unit:          5,
 				OwnerID:       123,
-				OwnerType:     constants.AddressOwners.InstallationRequest,
+				OwnerType:     s.constants.AddressOwners.InstallationRequest,
 			},
 		}
 
 		var nilRequest *entity.InstallationRequest = nil
 
-		repo.On("FindOwnerRequestByName",
-			db, requestInfo.OwnerID,
+		s.repo.On("FindOwnerRequestByName",
+			s.db, requestInfo.OwnerID,
 			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
 			requestInfo.Name,
 		).Return(nilRequest, false).Once()
 
-		repo.On("FindOwnerRequests",
-			db,
+		s.repo.On("FindOwnerRequests",
+			s.db,
 			requestInfo.OwnerID,
 			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
 			mock.Anything,
 			mock.Anything,
 		).Return([]*entity.InstallationRequest{nil}).Once()
 
-		repo.On("CreateRequest",
-			db,
+		s.repo.On("CreateRequest",
+			s.db,
 			mock.MatchedBy(func(r *entity.InstallationRequest) bool {
 				return r.Name == "Test Request" &&
 					r.OwnerID == 123 &&
@@ -143,13 +142,13 @@ func TestCreateInstallationRequest(t *testing.T) {
 			}),
 		).Return(nil).Once()
 
-		installationService.CreateInstallationRequest(requestInfo)
+		s.installationService.CreateInstallationRequest(requestInfo)
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
 	})
 
-	t.Run("Error - Request Already Exists", func(t *testing.T) {
+	s.Run("Error - Request Already Exists", func() {
 		requestInfo := installationdto.NewInstallationRequest{
 			Name:         "Test Request",
 			OwnerID:      123,
@@ -162,7 +161,7 @@ func TestCreateInstallationRequest(t *testing.T) {
 				HouseNumber:   "10A",
 				Unit:          5,
 				OwnerID:       123,
-				OwnerType:     constants.AddressOwners.InstallationRequest,
+				OwnerType:     s.constants.AddressOwners.InstallationRequest,
 			},
 		}
 
@@ -173,21 +172,21 @@ func TestCreateInstallationRequest(t *testing.T) {
 			BuildingType: "Residential",
 		}
 
-		repo.On("FindOwnerRequestByName",
-			db, requestInfo.OwnerID,
+		s.repo.On("FindOwnerRequestByName",
+			s.db, requestInfo.OwnerID,
 			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
 			requestInfo.Name,
 		).Return(existingRequest, true).Once()
 
-		assert.Panics(t, func() {
-			installationService.CreateInstallationRequest(requestInfo)
+		s.Panics(func() {
+			s.installationService.CreateInstallationRequest(requestInfo)
 		})
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
 	})
 
-	t.Run("Error - Too Many Active Requests", func(t *testing.T) {
+	s.Run("Error - Too Many Active Requests", func() {
 		requestInfo := installationdto.NewInstallationRequest{
 			Name:         "Test Request",
 			OwnerID:      123,
@@ -200,7 +199,7 @@ func TestCreateInstallationRequest(t *testing.T) {
 				HouseNumber:   "10A",
 				Unit:          5,
 				OwnerID:       123,
-				OwnerType:     constants.AddressOwners.InstallationRequest,
+				OwnerType:     s.constants.AddressOwners.InstallationRequest,
 			},
 		}
 
@@ -239,46 +238,30 @@ func TestCreateInstallationRequest(t *testing.T) {
 
 		var nilRequest *entity.InstallationRequest = nil
 
-		repo.On("FindOwnerRequestByName",
-			db, requestInfo.OwnerID,
+		s.repo.On("FindOwnerRequestByName",
+			s.db, requestInfo.OwnerID,
 			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
 			requestInfo.Name,
 		).Return(nilRequest, false).Once()
 
-		repo.On("FindOwnerRequests",
-			db, requestInfo.OwnerID,
+		s.repo.On("FindOwnerRequests",
+			s.db, requestInfo.OwnerID,
 			mock.Anything,
 			mock.Anything,
 			mock.Anything,
 		).Return(existingRequests).Once()
 
-		assert.Panics(t, func() {
-			installationService.CreateInstallationRequest(requestInfo)
+		s.Panics(func() {
+			s.installationService.CreateInstallationRequest(requestInfo)
 		})
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
 	})
 }
 
-func TestGetOwnerInstallationRequests(t *testing.T) {
-	repo := mocks.NewInstallationRepositoryMock()
-	addressService := mocks.NewAddressServiceMock()
-	userService := mocks.NewUserServiceMock()
-	db := mocks.NewDatabaseMock()
-	config := bootstrap.Run()
-	constants := config.Constants
-	installationService := serviceimpl.NewInstallationService(
-		constants,
-		addressService,
-		userService,
-		nil,
-		nil,
-		repo,
-		db,
-	)
-
-	t.Run("Success - Get Owner Installation Requests", func(t *testing.T) {
+func (s *InstallationServiceTestSuite) TestGetOwnerInstallationRequests() {
+	s.Run("Success - Get Owner Installation Requests", func() {
 		ownerID := uint(456)
 
 		mockRequests := []*entity.InstallationRequest{
@@ -298,8 +281,8 @@ func TestGetOwnerInstallationRequests(t *testing.T) {
 			},
 		}
 
-		repo.On("FindOwnerRequests",
-			db,
+		s.repo.On("FindOwnerRequests",
+			s.db,
 			ownerID,
 			[]enum.InstallationRequestStatus{
 				enum.InstallationRequestStatusActive,
@@ -310,50 +293,33 @@ func TestGetOwnerInstallationRequests(t *testing.T) {
 			mock.Anything,
 		).Return(mockRequests).Once()
 
-		addressService.On("GetAddress",
+		s.addressService.On("GetAddress",
 			uint(1),
-			constants.AddressOwners.InstallationRequest,
+			s.constants.AddressOwners.InstallationRequest,
 		).Return(addressdto.AddressResponse{}).Once()
 
-		addressService.On("GetAddress",
+		s.addressService.On("GetAddress",
 			uint(2),
-			constants.AddressOwners.InstallationRequest,
+			s.constants.AddressOwners.InstallationRequest,
 		).Return(addressdto.AddressResponse{}).Once()
 
-		result := installationService.GetOwnerInstallationRequests(installationdto.InstallationListRequest{
+		result := s.installationService.GetOwnerInstallationRequests(installationdto.InstallationListRequest{
 			OwnerID: ownerID,
 			Limit:   10,
 			Offset:  0,
 		})
 
-		assert.Len(t, result, 2)
-		assert.Equal(t, "active", result[0].Status)
-		assert.Equal(t, "cancelled", result[1].Status)
+		s.Len(result, 2)
+		s.Equal("active", result[0].Status)
+		s.Equal("cancelled", result[1].Status)
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
 	})
-
 }
 
-func TestGetInstallationRequest(t *testing.T) {
-	repo := mocks.NewInstallationRepositoryMock()
-	addressService := mocks.NewAddressServiceMock()
-	userService := mocks.NewUserServiceMock()
-	db := mocks.NewDatabaseMock()
-	config := bootstrap.Run()
-	constants := config.Constants
-	installationService := serviceimpl.NewInstallationService(
-		constants,
-		addressService,
-		userService,
-		nil,
-		nil,
-		repo,
-		db,
-	)
-
-	t.Run("Success - Get Installation Request", func(t *testing.T) {
+func (s *InstallationServiceTestSuite) TestGetInstallationRequest() {
+	s.Run("Success - Get Installation Request", func() {
 		requestID := uint(789)
 
 		mockRequest := &entity.InstallationRequest{
@@ -383,46 +349,28 @@ func TestGetInstallationRequest(t *testing.T) {
 			Unit:          5,
 		}
 
-		repo.On("FindRequestByID", db, requestID).Return(mockRequest, true).Once()
+		s.repo.On("FindRequestByID", s.db, requestID).Return(mockRequest, true).Once()
 
-		addressService.On("GetAddress", requestID, constants.AddressOwners.InstallationRequest).Return(mockAddress).Once()
+		s.addressService.On("GetAddress", requestID, s.constants.AddressOwners.InstallationRequest).Return(mockAddress).Once()
 
-		userService.On("GetUserCredential", mockRequest.OwnerID).Return(userdto.CredentialResponse{
+		s.userService.On("GetUserCredential", mockRequest.OwnerID).Return(userdto.CredentialResponse{
 			ID: mockRequest.OwnerID,
 		}).Once()
 
-		result := installationService.GetInstallationRequest(requestID)
+		result := s.installationService.GetInstallationRequest(requestID)
 
-		assert.Equal(t, requestID, result.ID)
-		assert.Equal(t, "Test Request", result.Name)
-		assert.Equal(t, "active", result.Status)
-		assert.Equal(t, uint(1), result.Address.ID)
+		s.Equal(requestID, result.ID)
+		s.Equal("Test Request", result.Name)
+		s.Equal("active", result.Status)
+		s.Equal(uint(1), result.Address.ID)
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
 	})
 }
 
-func TestAddPanel(t *testing.T) {
-	repo := mocks.NewInstallationRepositoryMock()
-	addressService := mocks.NewAddressServiceMock()
-	userService := mocks.NewUserServiceMock()
-	corporationService := mocks.NewCorporationServiceMock()
-	chatService := mocks.NewChatServiceMock()
-	db := mocks.NewDatabaseMock()
-	config := bootstrap.Run()
-	constants := config.Constants
-	installationService := serviceimpl.NewInstallationService(
-		constants,
-		addressService,
-		userService,
-		corporationService,
-		chatService,
-		repo,
-		db,
-	)
-
-	t.Run("Success - Add Panel", func(t *testing.T) {
+func (s *InstallationServiceTestSuite) TestAddPanel() {
+	s.Run("Success - Add Panel", func() {
 		operatorID := uint(456)
 		corporationID := uint(123)
 		customerID := uint(789)
@@ -440,24 +388,24 @@ func TestAddPanel(t *testing.T) {
 			TotalNumberOfModules: 10,
 		}
 
-		corporationService.On("CheckApplicantAccess",
+		s.corporationService.On("CheckApplicantAccess",
 			corporationID,
 			operatorID,
 		).Return(nil).Once()
 
-		userService.On("FindUserByPhone",
+		s.userService.On("FindUserByPhone",
 			panelInfo.CustomerPhone,
 		).Return(userdto.UserResponse{ID: customerID}).Once()
 
 		var nilPanel *entity.Panel = nil
-		repo.On("FindPanelByNameAndCustomerID",
-			db,
+		s.repo.On("FindPanelByNameAndCustomerID",
+			s.db,
 			panelInfo.PanelName,
 			customerID,
 		).Return(nilPanel, false).Once()
 
-		repo.On("CreatePanel",
-			db,
+		s.repo.On("CreatePanel",
+			s.db,
 			mock.MatchedBy(func(panel *entity.Panel) bool {
 				return panel.Name == "Test Panel" &&
 					panel.CustomerID == customerID &&
@@ -476,19 +424,19 @@ func TestAddPanel(t *testing.T) {
 			UserID:        customerID,
 		}
 
-		chatService.On("CreateOrGetRoom",
+		s.chatService.On("CreateOrGetRoom",
 			request,
 		).Return(chatdto.ChatRoomDetailsResponse{}).Once()
 
-		installationService.AddPanel(panelInfo)
+		s.installationService.AddPanel(panelInfo)
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
-		userService.AssertExpectations(t)
-		corporationService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
 	})
 
-	t.Run("Error - Panel Already Exists", func(t *testing.T) {
+	s.Run("Error - Panel Already Exists", func() {
 		operatorID := uint(456)
 		corporationID := uint(123)
 		customerID := uint(789)
@@ -506,12 +454,12 @@ func TestAddPanel(t *testing.T) {
 			TotalNumberOfModules: 10,
 		}
 
-		corporationService.On("CheckApplicantAccess",
+		s.corporationService.On("CheckApplicantAccess",
 			corporationID,
 			operatorID,
 		).Return(nil).Once()
 
-		userService.On("FindUserByPhone",
+		s.userService.On("FindUserByPhone",
 			panelInfo.CustomerPhone,
 		).Return(userdto.UserResponse{ID: customerID}).Once()
 
@@ -520,22 +468,22 @@ func TestAddPanel(t *testing.T) {
 			CustomerID: customerID,
 		}
 
-		repo.On("FindPanelByNameAndCustomerID",
-			db,
+		s.repo.On("FindPanelByNameAndCustomerID",
+			s.db,
 			panelInfo.PanelName,
 			customerID,
 		).Return(existingPanel, true).Once()
 
-		assert.Panics(t, func() {
-			installationService.AddPanel(panelInfo)
+		s.Panics(func() {
+			s.installationService.AddPanel(panelInfo)
 		})
 
-		repo.AssertExpectations(t)
-		userService.AssertExpectations(t)
-		corporationService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
 	})
 
-	t.Run("Error - Invalid Corporation Access", func(t *testing.T) {
+	s.Run("Error - Invalid Corporation Access", func() {
 		operatorID := uint(456)
 		corporationID := uint(123)
 
@@ -552,22 +500,22 @@ func TestAddPanel(t *testing.T) {
 			TotalNumberOfModules: 10,
 		}
 
-		corporationService.On("CheckApplicantAccess",
+		s.corporationService.On("CheckApplicantAccess",
 			corporationID,
 			operatorID,
 		).Return(nil).Once()
 
-		assert.Panics(t, func() {
-			installationService.AddPanel(panelInfo)
+		s.Panics(func() {
+			s.installationService.AddPanel(panelInfo)
 		})
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
-		userService.AssertExpectations(t)
-		corporationService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
 	})
 
-	t.Run("Error - User Not Found", func(t *testing.T) {
+	s.Run("Error - User Not Found", func() {
 		operatorID := uint(456)
 		corporationID := uint(123)
 
@@ -584,22 +532,26 @@ func TestAddPanel(t *testing.T) {
 			TotalNumberOfModules: 10,
 		}
 
-		corporationService.On("CheckApplicantAccess",
+		s.corporationService.On("CheckApplicantAccess",
 			corporationID,
 			operatorID,
 		).Return(nil).Once()
 
-		userService.On("FindUserByPhone",
+		s.userService.On("FindUserByPhone",
 			panelInfo.CustomerPhone,
 		).Return(userdto.UserResponse{}).Once()
 
-		assert.Panics(t, func() {
-			installationService.AddPanel(panelInfo)
+		s.Panics(func() {
+			s.installationService.AddPanel(panelInfo)
 		})
 
-		repo.AssertExpectations(t)
-		addressService.AssertExpectations(t)
-		userService.AssertExpectations(t)
-		corporationService.AssertExpectations(t)
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
 	})
+}
+
+func TestInstallationService(t *testing.T) {
+	suite.Run(t, new(InstallationServiceTestSuite))
 }
