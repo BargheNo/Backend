@@ -405,4 +405,72 @@ func TestAddPanel(t *testing.T) {
 		userService.AssertExpectations(t)
 		corporationService.AssertExpectations(t)
 	})
+
+	t.Run("Error - Invalid Corporation Access", func(t *testing.T) {
+		operatorID := uint(456)
+		corporationID := uint(123)
+
+		panelInfo := installationdto.AddPanelRequest{
+			CorporationID:        corporationID,
+			OperatorID:           operatorID,
+			PanelName:            "Test Panel",
+			CustomerPhone:        "1234567890",
+			Power:                1000,
+			Area:                 50,
+			BuildingType:         "Residential",
+			Tilt:                 30,
+			Azimuth:              45,
+			TotalNumberOfModules: 10,
+		}
+
+		corporationService.On("CheckApplicantAccess",
+			corporationID,
+			operatorID,
+		).Return(nil).Once()
+
+		assert.Panics(t, func() {
+			installationService.AddPanel(panelInfo)
+		})
+
+		repo.AssertExpectations(t)
+		addressService.AssertExpectations(t)
+		userService.AssertExpectations(t)
+		corporationService.AssertExpectations(t)
+	})
+
+	t.Run("Error - User Not Found", func(t *testing.T) {
+		operatorID := uint(456)
+		corporationID := uint(123)
+
+		panelInfo := installationdto.AddPanelRequest{
+			CorporationID:        corporationID,
+			OperatorID:           operatorID,
+			PanelName:            "Test Panel",
+			CustomerPhone:        "1234567890",
+			Power:                1000,
+			Area:                 50,
+			BuildingType:         "Residential",
+			Tilt:                 30,
+			Azimuth:              45,
+			TotalNumberOfModules: 10,
+		}
+
+		corporationService.On("CheckApplicantAccess",
+			corporationID,
+			operatorID,
+		).Return(nil).Once()
+
+		userService.On("FindUserByPhone",
+			panelInfo.CustomerPhone,
+		).Return(userdto.UserResponse{}).Once()
+
+		assert.Panics(t, func() {
+			installationService.AddPanel(panelInfo)
+		})
+
+		repo.AssertExpectations(t)
+		addressService.AssertExpectations(t)
+		userService.AssertExpectations(t)
+		corporationService.AssertExpectations(t)
+	})
 }
