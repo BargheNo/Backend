@@ -6,6 +6,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
@@ -552,6 +553,144 @@ func (s *InstallationServiceTestSuite) TestAddPanel() {
 	})
 }
 
+func (s *InstallationServiceTestSuite) TestGetCorporationPanels() {
+	s.Run("Success - Get Corporation Panels", func() {
+		corporationID := uint(123)
+		operatorID := uint(456)
+		customerID := uint(789)
+		panelID1 := uint(1)
+		panelID2 := uint(2)
+		panels := []*entity.Panel{
+			{
+				Model:                database.Model{ID: panelID1},
+				Name:                 "Panel 1",
+				CustomerID:           customerID,
+				CorporationID:        corporationID,
+				OperatorID:           operatorID,
+				Power:                1000,
+				Area:                 50,
+				BuildingType:         "Residential",
+				Tilt:                 30,
+				Azimuth:              45,
+				TotalNumberOfModules: 10,
+			},
+			{
+				Model:                database.Model{ID: panelID2},
+				Name:                 "Panel 2",
+				CustomerID:           customerID,
+				CorporationID:        corporationID,
+				OperatorID:           operatorID,
+				Power:                2000,
+				Area:                 100,
+				BuildingType:         "Commercial",
+				Tilt:                 40,
+				Azimuth:              50,
+				TotalNumberOfModules: 20,
+			},
+		}
+		s.corporationService.On("CheckApplicantAccess",
+			corporationID,
+			operatorID,
+		).Return(nil).Once()
+
+		s.repo.On("FindCorporationPanels",
+			s.db,
+			corporationID,
+		).Return(panels).Once()
+		s.addressService.On("GetAddress",
+			uint(1),
+			s.constants.AddressOwners.Panel,
+		).Return(addressdto.AddressResponse{}).Once()
+		s.addressService.On("GetAddress",
+			uint(2),
+			s.constants.AddressOwners.Panel,
+		).Return(addressdto.AddressResponse{}).Once()
+
+		s.userService.On("GetUserCredential", customerID).Return(userdto.CredentialResponse{}).Twice()
+		s.userService.On("GetUserCredential", operatorID).Return(userdto.CredentialResponse{}).Twice()
+
+		request := installationdto.CorporationPanelListRequest{
+			CorporationID: corporationID,
+			OperatorID:    operatorID,
+			Offset:        0,
+			Limit:         10,
+		}
+		result := s.installationService.GetCorporationPanels(request)
+		s.Len(result, 2)
+		s.Equal("Panel 1", result[0].PanelName)
+		s.Equal("Panel 2", result[1].PanelName)
+
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+}
+
+func (s *InstallationServiceTestSuite) TestGetCustomerPanels() {
+	s.Run("Success - Get Customer Panels", func() {
+		customerID := uint(789)
+		corporationID := uint(123)
+		panelID1 := uint(1)
+		panelID2 := uint(2)
+		panels := []*entity.Panel{
+			{
+				Model:                database.Model{ID: panelID1},
+				Name:                 "Panel 1",
+				CustomerID:           customerID,
+				CorporationID:        corporationID,
+				Power:                1000,
+				Area:                 50,
+				BuildingType:         "Residential",
+				Tilt:                 30,
+				Azimuth:              45,
+				TotalNumberOfModules: 10,
+			},
+			{
+				Model:                database.Model{ID: panelID2},
+				Name:                 "Panel 2",
+				CustomerID:           customerID,
+				CorporationID:        corporationID,
+				Power:                2000,
+				Area:                 100,
+				BuildingType:         "Commercial",
+				Tilt:                 40,
+				Azimuth:              50,
+				TotalNumberOfModules: 20,
+			},
+		}
+
+		s.repo.On("FindCustomerPanels",
+			s.db,
+			customerID,
+		).Return(panels).Once()
+
+		s.addressService.On("GetAddress",
+			uint(1),
+			s.constants.AddressOwners.Panel,
+		).Return(addressdto.AddressResponse{}).Once()
+		s.addressService.On("GetAddress",
+			uint(2),
+			s.constants.AddressOwners.Panel,
+		).Return(addressdto.AddressResponse{}).Once()
+
+		s.corporationService.On("GetCorporationCredentials", corporationID).Return(corporationdto.CorporationCredentialResponse{}).Once()
+		s.corporationService.On("GetCorporationCredentials", corporationID).Return(corporationdto.CorporationCredentialResponse{}).Once()
+
+		request := installationdto.CustomerPanelListRequest{
+			OwnerID: customerID,
+			Offset:  0,
+			Limit:   10,
+		}
+		result := s.installationService.GetCustomerPanels(request)
+		s.Len(result, 2)
+		s.Equal("Panel 1", result[0].PanelName)
+		s.Equal("Panel 2", result[1].PanelName)
+
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
+	})
+}
 func TestInstallationService(t *testing.T) {
 	suite.Run(t, new(InstallationServiceTestSuite))
 }

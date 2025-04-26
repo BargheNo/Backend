@@ -17,7 +17,7 @@ func NewInstallationRepositoryMock() *InstallationRepositoryMock {
 }
 
 func (repo *InstallationRepositoryMock) FindRequestByStatus(db database.Database, status []enum.InstallationRequestStatus, modifiers ...repository.QueryModifier) []*entity.InstallationRequest {
-	args := repo.Called(status)
+	args := repo.Called(db, status)
 	return args.Get(0).([]*entity.InstallationRequest)
 }
 
@@ -57,12 +57,12 @@ func (repo *InstallationRepositoryMock) CreatePanel(db database.Database, panel 
 }
 
 func (repo *InstallationRepositoryMock) FindCorporationPanels(db database.Database, corporationID uint, modifiers ...repository.QueryModifier) []*entity.Panel {
-	args := repo.Called(corporationID)
+	args := repo.Called(db, corporationID)
 	return args.Get(0).([]*entity.Panel)
 }
 
 func (repo *InstallationRepositoryMock) FindCustomerPanels(db database.Database, customerID uint, modifiers ...repository.QueryModifier) []*entity.Panel {
-	args := repo.Called(customerID)
+	args := repo.Called(db, customerID)
 	return args.Get(0).([]*entity.Panel)
 }
 
@@ -72,6 +72,6 @@ func (repo *InstallationRepositoryMock) FindPanelByNameAndCustomerID(db database
 }
 
 func (repo *InstallationRepositoryMock) FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool) {
-	args := repo.Called(panelID)
+	args := repo.Called(db, panelID)
 	return args.Get(0).(*entity.Panel), args.Bool(1)
 }
