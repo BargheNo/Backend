@@ -14,6 +14,8 @@ COPY . .
 COPY ./internal/application/adapter/jwt/privateKey.pem ./internal/application/adapter/jwt/
 COPY ./internal/application/adapter/jwt/publicKey.pem /internal/application/adapter/jwt/
 
+COPY ./internal/application/service/communication/email/templates ./internal/application/service/communication/email/templates
+
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o main ./cmd/app
 
@@ -26,8 +28,10 @@ WORKDIR /app
 COPY --from=builder /app/main .
 
 RUN mkdir -p /app/internal/application/adapter/jwt
+RUN mkdir -p /app/internal/application/service/communication/email/templates
 COPY ./internal/application/adapter/jwt/privateKey.pem ./internal/application/adapter/jwt/
 COPY ./internal/application/adapter/jwt/publicKey.pem ./internal/application/adapter/jwt/
+COPY ./internal/application/service/communication/email/templates ./internal/application/service/communication/email/templates
 
 COPY .env .
 
