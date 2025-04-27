@@ -369,6 +369,59 @@ func (s *InstallationServiceTestSuite) TestGetInstallationRequest() {
 	})
 }
 
+func (s *InstallationServiceTestSuite) TestGetInstallationRequests() {
+	s.Run("Success - Get Installation Requests", func() {
+		ownerID := uint(456)
+		mockRequests := []*entity.InstallationRequest{
+			{
+				Model:        database.Model{ID: 1},
+				Name:         "Request 1",
+				Status:       enum.InstallationRequestStatusActive,
+				OwnerID:      ownerID,
+				BuildingType: "Residential",
+			},
+			{
+				Model:        database.Model{ID: 2},
+				Name:         "Request 2",
+				Status:       enum.InstallationRequestStatusCancelled,
+				OwnerID:      ownerID,
+				BuildingType: "Commercial",
+			},
+		}
+
+		allowedStatuses := []enum.InstallationRequestStatus{
+			enum.InstallationRequestStatusActive,
+		}
+		s.repo.On("FindRequestByStatus",
+			s.db,
+			allowedStatuses,
+		).Return(mockRequests).Once()
+
+		s.addressService.On("GetAddress",
+			uint(1),
+			s.constants.AddressOwners.InstallationRequest,
+		).Return(addressdto.AddressResponse{}).Once()
+
+		s.addressService.On("GetAddress",
+			uint(2),
+			s.constants.AddressOwners.InstallationRequest,
+		).Return(addressdto.AddressResponse{}).Once()
+
+		s.userService.On("GetUserCredential", ownerID).Return(userdto.CredentialResponse{}).Once()
+		s.userService.On("GetUserCredential", ownerID).Return(userdto.CredentialResponse{}).Once()
+
+		requestInfo := installationdto.InstallationListRequest{}
+		result := s.installationService.GetInstallationRequests(requestInfo)
+
+		s.Len(result, 2)
+		s.Equal("active", result[0].Status)
+		s.Equal("cancelled", result[1].Status)
+
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+}
+
 func (s *InstallationServiceTestSuite) TestAddPanel() {
 	s.Run("Success - Add Panel", func() {
 		operatorID := uint(456)
