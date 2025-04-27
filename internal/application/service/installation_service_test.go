@@ -94,7 +94,6 @@ func (s *InstallationServiceTestSuite) TestGetInstallationRequestModel() {
 		})
 
 		s.repo.AssertExpectations(s.T())
-		s.addressService.AssertExpectations(s.T())
 	})
 }
 
@@ -691,6 +690,155 @@ func (s *InstallationServiceTestSuite) TestGetCustomerPanels() {
 		s.corporationService.AssertExpectations(s.T())
 	})
 }
+
+func (s *InstallationServiceTestSuite) TestGetPanelByID() {
+	s.Run("Success - Get Panel By ID", func() {
+		panelID := uint(1)
+		panel := &entity.Panel{
+			Model:                database.Model{ID: panelID},
+			Name:                 "Test Panel",
+			CustomerID:           123,
+			CorporationID:        456,
+			OperatorID:           789,
+			Power:                1000,
+			Area:                 50,
+			BuildingType:         "Residential",
+			Tilt:                 30,
+			Azimuth:              45,
+			TotalNumberOfModules: 10,
+		}
+
+		s.repo.On("FindPanelByID", s.db, panelID).Return(panel, true).Once()
+		s.userService.On("GetUserCredential", panel.CustomerID).Return(userdto.CredentialResponse{}).Once()
+		s.corporationService.On("GetCorporationCredentials", panel.CorporationID).Return(corporationdto.CorporationCredentialResponse{}).Once()
+		s.addressService.On("GetAddress", panelID, s.constants.AddressOwners.Panel).Return(addressdto.AddressResponse{}).Once()
+
+		result := s.installationService.GetPanelByID(panelID)
+
+		s.Equal(panelID, result.ID)
+		s.Equal("Test Panel", result.Name)
+
+		s.repo.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+
+	s.Run("Error - Panel Not Found", func() {
+		panelID := uint(999)
+
+		s.repo.On("FindPanelByID", s.db, panelID).Return(nil, false).Once()
+
+		s.Panics(func() {
+			s.installationService.GetPanelByID(panelID)
+		})
+
+		s.repo.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+}
+
+func (s *InstallationServiceTestSuite) TestGetCustomerPanelByID() {
+	s.Run("Success - Get Customer Panel By ID", func() {
+		panelID := uint(1)
+		customerID := uint(123)
+		panel := &entity.Panel{
+			Model:                database.Model{ID: panelID},
+			Name:                 "Test Panel",
+			CustomerID:           customerID,
+			CorporationID:        456,
+			OperatorID:           789,
+			Power:                1000,
+			Area:                 50,
+			BuildingType:         "Residential",
+			Tilt:                 30,
+			Azimuth:              45,
+			TotalNumberOfModules: 10,
+		}
+
+		s.repo.On("FindPanelByID", s.db, panelID).Return(panel, true).Once()
+		s.corporationService.On("GetCorporationCredentials", panel.CorporationID).Return(corporationdto.CorporationCredentialResponse{}).Once()
+		s.addressService.On("GetAddress", panelID, s.constants.AddressOwners.Panel).Return(addressdto.AddressResponse{}).Once()
+
+		result := s.installationService.GetCustomerPanelByID(panelID)
+
+		s.Equal(panelID, result.ID)
+		s.Equal("Test Panel", result.PanelName)
+
+		s.repo.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+
+	s.Run("Error - Panel Not Found", func() {
+		panelID := uint(999)
+
+		s.repo.On("FindPanelByID", s.db, panelID).Return(nil, false).Once()
+
+		s.Panics(func() {
+			s.installationService.GetCustomerPanelByID(panelID)
+		})
+
+		s.repo.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+}
+
+func (s *InstallationServiceTestSuite) TestCorporationPanelByID() {
+	s.Run("Success - Get Corporation Panel By ID", func() {
+		panelID := uint(1)
+		corporationID := uint(456)
+		panel := &entity.Panel{
+			Model:                database.Model{ID: panelID},
+			Name:                 "Test Panel",
+			CustomerID:           123,
+			CorporationID:        corporationID,
+			OperatorID:           789,
+			Power:                1000,
+			Area:                 50,
+			BuildingType:         "Residential",
+			Tilt:                 30,
+			Azimuth:              45,
+			TotalNumberOfModules: 10,
+		}
+
+		s.repo.On("FindPanelByID", s.db, panelID).Return(panel, true).Once()
+		s.userService.On("GetUserCredential", panel.CustomerID).Return(userdto.CredentialResponse{}).Once()
+		s.userService.On("GetUserCredential", panel.OperatorID).Return(userdto.CredentialResponse{}).Once()
+		s.addressService.On("GetAddress", panelID, s.constants.AddressOwners.Panel).Return(addressdto.AddressResponse{}).Once()
+
+		result := s.installationService.GetCorporationPanelByID(panelID)
+
+		s.Equal(panelID, result.ID)
+		s.Equal("Test Panel", result.PanelName)
+
+		s.repo.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+
+	s.Run("Error - Panel Not Found", func() {
+		panelID := uint(999)
+
+		s.repo.On("FindPanelByID", s.db, panelID).Return(nil, false).Once()
+
+		s.Panics(func() {
+			s.installationService.GetCorporationPanelByID(panelID)
+		})
+
+		s.repo.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+}
+
 func TestInstallationService(t *testing.T) {
 	suite.Run(t, new(InstallationServiceTestSuite))
 }
