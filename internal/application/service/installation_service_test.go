@@ -369,6 +369,89 @@ func (s *InstallationServiceTestSuite) TestGetInstallationRequest() {
 	})
 }
 
+func (s *InstallationServiceTestSuite) TestGetOwnerInstallationRequest() {
+	s.Run("Success - Get Owner Installation Request", func() {
+		requestID := uint(789)
+		ownerID := uint(123)
+
+		mockRequest := &entity.InstallationRequest{
+			Model:        database.Model{ID: requestID},
+			Name:         "Test Request",
+			Status:       enum.InstallationRequestStatusActive,
+			OwnerID:      ownerID,
+			BuildingType: "Residential",
+			Address: entity.Address{
+				Model:         database.Model{ID: 1},
+				ProvinceID:    1,
+				CityID:        2,
+				StreetAddress: "123 Test St",
+				PostalCode:    "12345",
+				HouseNumber:   "10A",
+				Unit:          5,
+			},
+		}
+
+		mockAddress := addressdto.AddressResponse{
+			ID:            1,
+			Province:      "Test Province",
+			City:          "Test City",
+			StreetAddress: "Test Street",
+			PostalCode:    "12345",
+			HouseNumber:   "10A",
+			Unit:          5,
+		}
+		s.repo.On("FindRequestByID", s.db, requestID).Return(mockRequest, true).Once()
+		s.addressService.On("GetAddress", requestID, s.constants.AddressOwners.InstallationRequest).Return(mockAddress).Once()
+
+		request := installationdto.GetOwnerRequest{
+			OwnerID:   ownerID,
+			RequestID: requestID,
+		}
+
+		result := s.installationService.GetOwnerInstallationRequest(request)
+
+		s.Equal(requestID, result.ID)
+		s.Equal("Test Request", result.Name)
+
+		s.addressService.AssertExpectations(s.T())
+		s.repo.AssertExpectations(s.T())
+	})
+
+	s.Run("Error - Request Owner Mismatch", func() {
+		requestID := uint(789)
+		ownerID := uint(123)
+
+		mockRequest := &entity.InstallationRequest{
+			Model:        database.Model{ID: requestID},
+			Name:         "Test Request",
+			Status:       enum.InstallationRequestStatusActive,
+			OwnerID:      456,
+			BuildingType: "Residential",
+			Address: entity.Address{
+				Model:         database.Model{ID: 1},
+				ProvinceID:    1,
+				CityID:        2,
+				StreetAddress: "123 Test St",
+				PostalCode:    "12345",
+				HouseNumber:   "10A",
+				Unit:          5,
+			},
+		}
+
+		s.repo.On("FindRequestByID", s.db, requestID).Return(mockRequest, true).Once()
+		request := installationdto.GetOwnerRequest{
+			OwnerID:   ownerID,
+			RequestID: requestID,
+		}
+
+		s.Panics(func() {
+			s.installationService.GetOwnerInstallationRequest(request)
+		})
+
+		s.repo.AssertExpectations(s.T())
+	})
+}
+
 func (s *InstallationServiceTestSuite) TestGetInstallationRequests() {
 	s.Run("Success - Get Installation Requests", func() {
 		ownerID := uint(456)
