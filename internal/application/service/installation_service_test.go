@@ -1,6 +1,7 @@
 package serviceimpl_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/BargheNo/Backend/bootstrap"
@@ -87,7 +88,8 @@ func (s *InstallationServiceTestSuite) TestGetInstallationRequestModel() {
 	s.Run("Error - Request Not Found", func() {
 		requestID := uint(456)
 
-		s.repo.On("FindRequestByID", s.db, requestID).Return(nil, false).Once()
+		var nilRequest *entity.InstallationRequest = nil
+		s.repo.On("FindRequestByID", s.db, requestID).Return(nilRequest, false).Once()
 
 		s.Panics(func() {
 			s.installationService.GetInstallationRequestModel(requestID)
@@ -116,6 +118,7 @@ func (s *InstallationServiceTestSuite) TestCreateInstallationRequest() {
 		}
 
 		var nilRequest *entity.InstallationRequest = nil
+		var nilRequests []*entity.InstallationRequest = nil
 
 		s.repo.On("FindOwnerRequestByName",
 			s.db, requestInfo.OwnerID,
@@ -129,7 +132,7 @@ func (s *InstallationServiceTestSuite) TestCreateInstallationRequest() {
 			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
 			mock.Anything,
 			mock.Anything,
-		).Return([]*entity.InstallationRequest{nil}).Once()
+		).Return(nilRequests).Once()
 
 		s.repo.On("CreateRequest",
 			s.db,
@@ -250,6 +253,54 @@ func (s *InstallationServiceTestSuite) TestCreateInstallationRequest() {
 			mock.Anything,
 			mock.Anything,
 		).Return(existingRequests).Once()
+
+		s.Panics(func() {
+			s.installationService.CreateInstallationRequest(requestInfo)
+		})
+
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+
+	s.Run("Error - Repository Error", func() {
+		requestInfo := installationdto.NewInstallationRequest{
+			Name:         "Test Request",
+			OwnerID:      123,
+			BuildingType: "Residential",
+			Address: addressdto.CreateAddressRequest{
+				ProvinceID:    1,
+				CityID:        2,
+				StreetAddress: "123 Test St",
+				PostalCode:    "12345",
+				HouseNumber:   "10A",
+				Unit:          5,
+				OwnerID:       123,
+				OwnerType:     s.constants.AddressOwners.InstallationRequest,
+			},
+		}
+
+		var nilRequest *entity.InstallationRequest = nil
+		var nilRequests []*entity.InstallationRequest = nil
+
+		s.repo.On("FindOwnerRequestByName",
+			s.db, requestInfo.OwnerID,
+			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
+			requestInfo.Name,
+		).Return(nilRequest, false).Once()
+
+		s.repo.On("FindOwnerRequests",
+			s.db,
+			requestInfo.OwnerID,
+			[]enum.InstallationRequestStatus{enum.InstallationRequestStatusActive},
+			mock.Anything,
+			mock.Anything,
+		).Return(nilRequests).Once()
+
+		repoError := errors.New("repository error")
+		s.repo.On("CreateRequest",
+			s.db,
+			mock.Anything,
+		).Return(repoError).Once()
 
 		s.Panics(func() {
 			s.installationService.CreateInstallationRequest(requestInfo)
@@ -686,6 +737,56 @@ func (s *InstallationServiceTestSuite) TestAddPanel() {
 		s.userService.AssertExpectations(s.T())
 		s.corporationService.AssertExpectations(s.T())
 	})
+
+	s.Run("Error - Repository Error", func() {
+		operatorID := uint(456)
+		corporationID := uint(123)
+		customerID := uint(789)
+
+		panelInfo := installationdto.AddPanelRequest{
+			CorporationID:        corporationID,
+			OperatorID:           operatorID,
+			PanelName:            "Test Panel",
+			CustomerPhone:        "1234567890",
+			Power:                1000,
+			Area:                 50,
+			BuildingType:         "Residential",
+			Tilt:                 30,
+			Azimuth:              45,
+			TotalNumberOfModules: 10,
+		}
+
+		s.corporationService.On("CheckApplicantAccess",
+			corporationID,
+			operatorID,
+		).Return(nil).Once()
+
+		s.userService.On("FindUserByPhone",
+			panelInfo.CustomerPhone,
+		).Return(userdto.UserResponse{ID: customerID}).Once()
+
+		var nilPanel *entity.Panel = nil
+		s.repo.On("FindPanelByNameAndCustomerID",
+			s.db,
+			panelInfo.PanelName,
+			customerID,
+		).Return(nilPanel, false).Once()
+
+		repoError := errors.New("repository error")
+		s.repo.On("CreatePanel",
+			s.db,
+			mock.Anything,
+		).Return(repoError).Once()
+
+		s.Panics(func() {
+			s.installationService.AddPanel(panelInfo)
+		})
+
+		s.repo.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.corporationService.AssertExpectations(s.T())
+	})
 }
 
 func (s *InstallationServiceTestSuite) TestGetCorporationPanels() {
@@ -863,7 +964,8 @@ func (s *InstallationServiceTestSuite) TestGetPanelByID() {
 	s.Run("Error - Panel Not Found", func() {
 		panelID := uint(999)
 
-		s.repo.On("FindPanelByID", s.db, panelID).Return(nil, false).Once()
+		var nilPanel *entity.Panel = nil
+		s.repo.On("FindPanelByID", s.db, panelID).Return(nilPanel, false).Once()
 
 		s.Panics(func() {
 			s.installationService.GetPanelByID(panelID)
@@ -912,7 +1014,8 @@ func (s *InstallationServiceTestSuite) TestGetCustomerPanelByID() {
 	s.Run("Error - Panel Not Found", func() {
 		panelID := uint(999)
 
-		s.repo.On("FindPanelByID", s.db, panelID).Return(nil, false).Once()
+		var nilPanel *entity.Panel = nil
+		s.repo.On("FindPanelByID", s.db, panelID).Return(nilPanel, false).Once()
 
 		s.Panics(func() {
 			s.installationService.GetCustomerPanelByID(panelID)
@@ -962,7 +1065,8 @@ func (s *InstallationServiceTestSuite) TestCorporationPanelByID() {
 	s.Run("Error - Panel Not Found", func() {
 		panelID := uint(999)
 
-		s.repo.On("FindPanelByID", s.db, panelID).Return(nil, false).Once()
+		var nilPanel *entity.Panel = nil
+		s.repo.On("FindPanelByID", s.db, panelID).Return(nilPanel, false).Once()
 
 		s.Panics(func() {
 			s.installationService.GetCorporationPanelByID(panelID)
