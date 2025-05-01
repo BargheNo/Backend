@@ -29,7 +29,7 @@ type CorporationRepository interface {
 	FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool)
 	FindCorporationSignatories(db database.Database, corporationID uint) []*entity.Signatory
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
-	FindCorporationByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) []*entity.Corporation
+	FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) []*entity.Corporation
 	FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation
 	DeleteCorporationSignatories(db database.Database, corporationID uint) error
 	DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error

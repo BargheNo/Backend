@@ -102,9 +102,10 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 	for i, report := range reports {
 		panel := reportService.installationService.GetPanelByID(report.ObjectID)
 		reportResponses[i] = reportdto.PanelReportResponse{
-			ID:     report.ID,
-			Panel:  panel,
-			Status: report.Status.String(),
+			ID:          report.ID,
+			Panel:       panel,
+			Description: report.Description,
+			Status:      report.Status.String(),
 		}
 	}
 

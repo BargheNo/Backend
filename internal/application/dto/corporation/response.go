@@ -29,11 +29,12 @@ type CorporationPrivateInfoResponse struct {
 type SignatoryResponse struct {
 	ID                 uint   `json:"id"`
 	Name               string `json:"name"`
-	NationalCardNumber string `json:"nationalID"`
+	NationalCardNumber string `json:"nationalCardNumber"`
 	Position           string `json:"position"`
 }
 
 type ContactInformationResponse struct {
+	ID          uint
 	ContactType ContactTypeResponse `json:"contactType"`
 	Value       string              `json:"value"`
 }

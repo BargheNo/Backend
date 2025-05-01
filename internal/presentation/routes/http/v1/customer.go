@@ -15,18 +15,22 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		profile.PUT("", app.Controllers.Customer.UserController.UpdateProfile)
 	}
 
-	corps := routerGroup.Group("corps/registration")
+	corps := routerGroup.Group("/corps")
 	{
-		corps.POST("/basic", app.Controllers.Customer.CorporationController.Register)
-		corpsSubgroup := corps.Group("/:corporationID")
+		corps.GET("/list", app.Controllers.Customer.CorporationController.GetCorporations)
+		registration := corps.Group("/registration")
 		{
-			corpsSubgroup.PUT("/basic", app.Controllers.Customer.CorporationController.UpdateRegister)
-			corpsSubgroup.POST("/contacts", app.Controllers.Customer.CorporationController.AddContactInformation)
-			corpsSubgroup.DELETE("/contacts/:contactID", app.Controllers.Customer.CorporationController.DeleteContactInformation)
-			corpsSubgroup.POST("/address", app.Controllers.Customer.CorporationController.AddAddress)
-			corpsSubgroup.DELETE("/address/:addressID", app.Controllers.Customer.CorporationController.DeleteAddress)
-			corpsSubgroup.PUT("/certificates", app.Controllers.Customer.CorporationController.SubmitCertificateFiles)
-			corpsSubgroup.GET("", app.Controllers.Customer.CorporationController.GetCorporationPrivateDetails)
+			registration.POST("/basic", app.Controllers.Customer.CorporationController.Register)
+			corpsSubgroup := registration.Group("/:corporationID")
+			{
+				corpsSubgroup.PUT("/basic", app.Controllers.Customer.CorporationController.UpdateRegister)
+				corpsSubgroup.POST("/contacts", app.Controllers.Customer.CorporationController.AddContactInformation)
+				corpsSubgroup.DELETE("/contacts/:contactID", app.Controllers.Customer.CorporationController.DeleteContactInformation)
+				corpsSubgroup.POST("/address", app.Controllers.Customer.CorporationController.AddAddress)
+				corpsSubgroup.DELETE("/address/:addressID", app.Controllers.Customer.CorporationController.DeleteAddress)
+				corpsSubgroup.PUT("/certificates", app.Controllers.Customer.CorporationController.SubmitCertificateFiles)
+				corpsSubgroup.GET("", app.Controllers.Customer.CorporationController.GetCorporationPrivateDetails)
+			}
 		}
 	}
 
