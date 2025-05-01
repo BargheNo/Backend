@@ -284,6 +284,7 @@ func (installationService *InstallationService) GetPanelByID(panelID uint) insta
 	address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
 	return installationdto.PanleResponse{
 		ID:                   panel.ID,
+		Name:                 panel.Name,
 		Customer:             customer,
 		Corporation:          corporation,
 		Address:              address,
