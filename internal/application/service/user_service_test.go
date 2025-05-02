@@ -308,7 +308,86 @@ func (s *UserServiceTestSuite) TestRegister() {
 		s.otpService.AssertExpectations(s.T())
 		s.userCacheRepository.AssertExpectations(s.T())
 	})
+}
 
+func (s *UserServiceTestSuite) TestVerifyPhone() {
+	s.Run("success - Phone verified", func() {
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(&entity.User{}, true).Once()
+		s.otpService.On("VerifyOTP", mock.Anything, mock.Anything).Return(nil).Once()
+		s.userRepository.On("UpdateUser", s.db, mock.Anything).Return(nil).Once()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   "123456",
+		}
+
+		s.userService.VerifyPhone(request)
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+	})
+	s.Run("Error - User not found", func() {
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   "123456",
+		}
+
+		s.Panics(func() {
+			s.userService.VerifyPhone(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Phone already verified", func() {
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(&entity.User{PhoneVerified: true}, true).Once()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   "123456",
+		}
+
+		s.Panics(func() {
+			s.userService.VerifyPhone(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - OTP verification failed", func() {
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(&entity.User{}, true).Once()
+		s.otpService.On("VerifyOTP", mock.Anything, mock.Anything).Return(errors.New("invalid OTP")).Once()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   "123456",
+		}
+
+		s.Panics(func() {
+			s.userService.VerifyPhone(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+	})
+	s.Run("Error - Update User Error", func() {
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(&entity.User{}, true).Once()
+		s.otpService.On("VerifyOTP", mock.Anything, mock.Anything).Return(nil).Once()
+		s.userRepository.On("UpdateUser", s.db, mock.Anything).Return(errors.New("update error")).Once()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   "123456",
+		}
+
+		s.Panics(func() {
+			s.userService.VerifyPhone(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+	})
 }
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
