@@ -2,10 +2,12 @@ package serviceimpl_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/mocks"
 	"github.com/stretchr/testify/suite"
 )
@@ -88,11 +90,49 @@ func (s *UserServiceTestSuite) TestIsUserActive() {
 		userID := uint(1)
 		var nilUser *entity.User = nil
 
-		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, true).Once()
+		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, false).Once()
 
 		s.Panics(func() {
 			s.userService.IsUserActive(userID)
 		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestGetUserCredential() {
+	s.Run("success - User Credentials found", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
+
+		s.userService.GetUserCredential(userID)
+
+		s.userRepository.AssertExpectations(s.T())
+
+	})
+	s.Run("Error - User Not Found", func() {
+		userID := uint(1)
+		var nilUser *entity.User = nil
+
+		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, false).Once()
+
+		s.Panics(func() {
+			s.userService.GetUserCredential(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("success - Get User With Profile Picture", func() {
+		userID := uint(1)
+		profilePicPath := "profile.jpg"
+		profilePic := "https://example.com/profile.jpg"
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{
+			ProfilePicPath: profilePicPath,
+		}, true).Once()
+
+		s.s3Storage.On("GetPresignedURL", enum.ProfilePic, profilePicPath, 8*time.Hour).Return(profilePic).Once()
+
+		s.userService.GetUserCredential(userID)
 
 		s.userRepository.AssertExpectations(s.T())
 	})
