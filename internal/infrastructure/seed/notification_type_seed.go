@@ -22,17 +22,14 @@ func NewNotificationTypeSeeder(
 	}
 }
 
-var notificationTypes = map[enum.NotificationType]string{
-	enum.ChatNotificationType: "شما یک پیام جدید دارید.",
-}
-
 func (seeder *NotificationTypeSeeder) SeedNotificationTypes() {
-	for name, description := range notificationTypes {
-		_, exist := seeder.notificationRepository.GetNotificationTypeByName(seeder.db, name)
+	for _, notification := range enum.GetAllNotificationTypes() {
+		_, exist := seeder.notificationRepository.GetNotificationTypeByName(seeder.db, notification)
 		if !exist {
 			notificationType := &entity.NotificationType{
-				Name:        name,
-				Description: description,
+				Name:              notification,
+				Description:       notification.Description(),
+				EmailTemplatePath: notification.EmailTemplatePath(),
 			}
 			err := seeder.notificationRepository.CreateNotificationType(seeder.db, notificationType)
 			if err != nil {

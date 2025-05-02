@@ -7,6 +7,7 @@ import (
 
 type NotificationType struct {
 	database.Model
-	Name        enum.NotificationType `gorm:"unique;not null"`
-	Description string                `gorm:"type:text"`
+	Name              enum.NotificationType `gorm:"unique;not null"`
+	Description       string                `gorm:"type:text"`
+	EmailTemplatePath string
 }

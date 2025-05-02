@@ -6,7 +6,7 @@ import (
 )
 
 type NotificationService interface {
-	CreateNotification(typeID uint, recipientID uint, additionalData map[string]string)
+	CreateAndSendNotification(typeID uint, recipientID uint, additionalData interface{}) error
 	CreateNotificationSettings(userID uint)
 	GetUserNotificationSettings(userID uint) []notificationdto.NotificationSettingResponse
 	GetUserNotifications(userID uint) []notificationdto.NotificationListResponse

@@ -20,7 +20,7 @@ func NewEmailService(senderAccount *bootstrap.EmailAccount, templatesPath *boots
 	}
 }
 
-func (emailService *EmailService) SendEmail(toEmail string, subject string, templateFile string, data interface{}) {
+func (emailService *EmailService) SendEmail(toEmail string, subject string, templateFile string, data interface{}) error {
 	from := emailService.senderAccount.EmailFrom
 	password := emailService.senderAccount.EmailPassword
 	smtpHost := emailService.senderAccount.SMTPHost
@@ -28,7 +28,7 @@ func (emailService *EmailService) SendEmail(toEmail string, subject string, temp
 
 	tmpl, err := template.ParseFiles(emailService.templatesPath.Path + templateFile)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	var body bytes.Buffer
@@ -37,12 +37,14 @@ func (emailService *EmailService) SendEmail(toEmail string, subject string, temp
 	body.Write([]byte("MIME-version: 1.0;\r\nContent-Type: text/html; charset=\"UTF-8\";\r\n\r\n"))
 	err = tmpl.Execute(&body, data)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{toEmail}, body.Bytes())
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }

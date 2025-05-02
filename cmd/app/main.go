@@ -57,6 +57,16 @@ func main() {
 	app.Seeds.RoleSeeder.SeedRoles()
 	app.Seeds.ContactType.SeedContactTypes()
 
+	if err := app.Consumers.Register.Start(); err != nil {
+		panic(err)
+	}
+	if err := app.Consumers.Push.Start(); err != nil {
+		panic(err)
+	}
+	if err := app.Consumers.Email.Start(); err != nil {
+		panic(err)
+	}
+
 	routes.Run(ginEngine, app)
 
 	ginEngine.Run(fmt.Sprintf(":%v", config.Env.Server.Port))

@@ -1,10 +1,14 @@
 package service
 
-import userdto "github.com/BargheNo/Backend/internal/application/dto/user"
+import (
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
+	"github.com/BargheNo/Backend/internal/domain/entity"
+)
 
 type UserService interface {
 	DoesUserExist(userID uint)
 	IsUserActive(userID uint) bool
+	GetUserByID(userID uint) *entity.User
 	GetUserCredential(userID uint) userdto.CredentialResponse
 	Register(registerInfo userdto.BasicRegisterRequest)
 	VerifyPhone(verifyInfo userdto.VerifyPhoneRequest)

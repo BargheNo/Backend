@@ -9,6 +9,7 @@ import (
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/exception"
+	"github.com/BargheNo/Backend/internal/domain/message"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
@@ -19,6 +20,7 @@ type NotificationService struct {
 	userService            service.UserService
 	notificationRepository repository.NotificationRepository
 	wsHub                  *websocket.Hub
+	rabbitMQ               message.Broker
 	db                     database.Database
 }
 
@@ -27,6 +29,7 @@ func NewNotificationService(
 	userService service.UserService,
 	notificationRepository repository.NotificationRepository,
 	wsHub *websocket.Hub,
+	rabbitMQ message.Broker,
 	db database.Database,
 ) *NotificationService {
 	return &NotificationService{
@@ -34,14 +37,13 @@ func NewNotificationService(
 		userService:            userService,
 		notificationRepository: notificationRepository,
 		wsHub:                  wsHub,
+		rabbitMQ:               rabbitMQ,
 		db:                     db,
 	}
 }
 
-func (notificationService *NotificationService) CreateNotification(
-	typeID, recipientID uint,
-	additionalData map[string]string,
-) {
+func (notificationService *NotificationService) CreateAndSendNotification(
+	typeID, recipientID uint, additionalData interface{}) error {
 	notificationService.userService.DoesUserExist(recipientID)
 	additionalDataJSON, err := json.Marshal(additionalData)
 	if err != nil {
@@ -57,48 +59,66 @@ func (notificationService *NotificationService) CreateNotification(
 
 	err = notificationService.notificationRepository.CreateNotification(notificationService.db, notification)
 	if err != nil {
-		panic(err)
-	}
-
-	settings, exist := notificationService.notificationRepository.GetNotificationSettingByUserAndType(notificationService.db, recipientID, typeID)
-	if !exist {
-		return
-	}
-
-	if settings.IsEmailEnabled {
-		if err := notificationService.SendNotification(notification); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func (notificationService *NotificationService) SendNotification(notification *entity.Notification) error {
-	notificationType, exist := notificationService.notificationRepository.GetNotificationTypeByID(notificationService.db, notification.TypeID)
-	if !exist {
-		return exception.NotFoundError{Item: notificationService.constants.Field.NotificationType}
-	}
-
-	var additionalData map[string]string
-	if err := json.Unmarshal([]byte(notification.AdditionalData), &additionalData); err != nil {
-		additionalData = nil
-	}
-
-	payload := websocket.NotificationPayload{
-		ID:             notification.ID,
-		Title:          notificationType.Name.String(),
-		Description:    notificationType.Description,
-		AdditionalData: additionalData,
-		Type:           notificationType.Name.String(),
-		IsRead:         notification.IsRead,
-		CreatedAt:      notification.CreatedAt.Format(time.RFC3339),
-	}
-
-	content, err := json.Marshal(payload)
-	if err != nil {
 		return err
 	}
 
-	notificationService.wsHub.SendToUser(notification.RecipientID, websocket.MessageTypeNotification, content)
+	settings, _ := notificationService.notificationRepository.GetNotificationSettingByUserAndType(notificationService.db, recipientID, typeID)
+
+	if settings.IsEmailEnabled {
+		if err := notificationService.SendNotification(notification); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (notificationService *NotificationService) SendNotification(notification *entity.Notification) error {
+	settings, _ := notificationService.notificationRepository.GetNotificationSettingByUserAndType(notificationService.db, notification.RecipientID, notification.TypeID)
+	notificationType, _ := notificationService.notificationRepository.GetNotificationTypeByID(notificationService.db, settings.TypeID)
+	if settings.IsPushEnabled {
+		msg := struct {
+			ID             uint      `json:"id"`
+			Timestamp      time.Time `json:"timestamp"`
+			Type           string    `json:"type"`
+			Description    string    `json:"description"`
+			AdditionalData string    `json:"additionalData"`
+			IsRead         bool      `json:"isRead"`
+			RecipientID    uint      `json:"recipientID"`
+		}{
+			ID:             notification.ID,
+			Timestamp:      notification.CreatedAt,
+			Type:           notificationType.Name.String(),
+			Description:    notificationType.Description,
+			AdditionalData: notification.AdditionalData,
+			IsRead:         notification.IsRead,
+			RecipientID:    notification.RecipientID,
+		}
+		if err := notificationService.rabbitMQ.PublishMessage(notificationService.constants.RabbitMQ.Events.NotificationsPush, msg); err != nil {
+			return err
+		}
+	}
+
+	if settings.IsEmailEnabled {
+		user := notificationService.userService.GetUserByID(notification.RecipientID)
+		if !user.EmailVerified {
+			return nil
+		}
+		msg := struct {
+			ToEmail      string      `json:"toEmail"`
+			Subject      string      `json:"subject"`
+			TemplateFile string      `json:"templateFile"`
+			Data         interface{} `json:"data"`
+		}{
+			ToEmail:      user.Email,
+			Subject:      "hello",
+			TemplateFile: "/sample/sample.html",
+			Data:         nil,
+		}
+		if err := notificationService.rabbitMQ.PublishMessage(notificationService.constants.RabbitMQ.Events.NotificationsEmail, msg); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -149,11 +169,15 @@ func (notificationService *NotificationService) CreateNotificationSettings(userI
 	notificationService.userService.DoesUserExist(userID)
 	notificationTypes := notificationService.notificationRepository.GetNotificationTypes(notificationService.db)
 	for _, notificationType := range notificationTypes {
+		_, exist := notificationService.notificationRepository.GetNotificationSettingByUserAndType(notificationService.db, userID, notificationType.ID)
+		if exist {
+			continue
+		}
 		setting := &entity.NotificationSetting{
 			UserID:         userID,
 			TypeID:         notificationType.ID,
 			IsEmailEnabled: true,
-			IsPushEnabled:  true,
+			IsPushEnabled:  false,
 		}
 		err := notificationService.notificationRepository.CreateNotificationSetting(notificationService.db, setting)
 		if err != nil {
