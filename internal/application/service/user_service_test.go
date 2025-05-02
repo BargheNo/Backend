@@ -1,14 +1,19 @@
 package serviceimpl_test
 
 import (
+	"context"
+	"errors"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/mocks"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -138,6 +143,173 @@ func (s *UserServiceTestSuite) TestGetUserCredential() {
 	})
 }
 
+func (s *UserServiceTestSuite) TestRegister() {
+	s.Run("success - User registered", func() {
+		var nilOTPData *userdto.OTPData = nil
+		var nilUser *entity.User = nil
+		otp := "123456"
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.userRepository.On("DeleteUserByPhone", s.db, mock.Anything).Return(nil).Once()
+		s.userRepository.On("CreateUser", s.db, mock.Anything).Return(nil).Once()
+		s.otpService.On("GenerateOTP").Return(otp, 1234567890).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, otp, mock.Anything).Return(nil).Once()
+
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  "Password@123",
+		}
+		s.userService.Register(request)
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - duplicate phone number(pending for registration)", func() {
+		otpData := &userdto.OTPData{}
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(otpData, true).Once()
+
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  "Password@123",
+		}
+		s.Panics(func() {
+			s.userService.Register(request)
+		})
+
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - duplicate phone number(verified)", func() {
+		var nilOTPData *userdto.OTPData = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(&entity.User{PhoneVerified: true}, true).Once()
+
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  "Password@123",
+		}
+
+		s.Panics(func() {
+			s.userService.Register(request)
+		})
+		s.userRepository.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Password too weak", func() {
+		var nilOTPData *userdto.OTPData = nil
+		var nilUser *entity.User = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  "weakpassword",
+		}
+
+		s.Panics(func() {
+			s.userService.Register(request)
+		})
+		s.userRepository.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Hash Password Error", func() {
+		var nilOTPData *userdto.OTPData = nil
+		var nilUser *entity.User = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  strings.Repeat("A1@j", 100),
+		}
+
+		s.Panics(func() {
+			s.userService.Register(request)
+		})
+		s.userRepository.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Delete User Error", func() {
+		var nilOTPData *userdto.OTPData = nil
+		var nilUser *entity.User = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		s.userRepository.On("DeleteUserByPhone", s.db, mock.Anything).Return(errors.New("delete error")).Once()
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  "Password@123",
+		}
+		s.Panics(func() {
+			s.userService.Register(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Create User Error", func() {
+		var nilOTPData *userdto.OTPData = nil
+		var nilUser *entity.User = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.userRepository.On("DeleteUserByPhone", s.db, mock.Anything).Return(nil).Once()
+
+		s.userRepository.On("CreateUser", s.db, mock.Anything).Return(errors.New("create error")).Once()
+
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  "Password@123",
+		}
+		s.Panics(func() {
+			s.userService.Register(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Set OTP to Cache Error", func() {
+		var nilOTPData *userdto.OTPData = nil
+		var nilUser *entity.User = nil
+		otp := "123456"
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.userRepository.On("DeleteUserByPhone", s.db, mock.Anything).Return(nil).Once()
+		s.userRepository.On("CreateUser", s.db, mock.Anything).Return(nil).Once()
+		s.otpService.On("GenerateOTP").Return(otp, 1234567890).Once()
+
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, otp, mock.Anything).Return(errors.New("cache error")).Once()
+
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  "Password@123",
+		}
+
+		s.Panics(func() {
+			s.userService.Register(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+
+}
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
