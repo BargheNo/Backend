@@ -74,6 +74,30 @@ func (s *UserServiceTestSuite) TestDoesUserExist() {
 	})
 }
 
+func (s *UserServiceTestSuite) TestIsUserActive() {
+	s.Run("success - User is active", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
+
+		s.userService.IsUserActive(userID)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+
+	s.Run("Error - User is not active", func() {
+		userID := uint(1)
+		var nilUser *entity.User = nil
+
+		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, true).Once()
+
+		s.Panics(func() {
+			s.userService.IsUserActive(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
