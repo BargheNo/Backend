@@ -8,6 +8,7 @@ import (
 	notificationdto "github.com/BargheNo/Backend/internal/application/dto/notification"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
@@ -43,39 +44,37 @@ func NewNotificationService(
 }
 
 func (notificationService *NotificationService) CreateAndSendNotification(
-	typeID, recipientID uint, additionalData interface{}) error {
+	typeName enum.NotificationType, recipientID uint, additionalData interface{}) error {
 	notificationService.userService.DoesUserExist(recipientID)
 	additionalDataJSON, err := json.Marshal(additionalData)
 	if err != nil {
 		panic(err)
 	}
-
+	notificationType, exist := notificationService.notificationRepository.GetNotificationTypeByName(notificationService.db, typeName)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: notificationService.constants.Field.NotificationType}
+		panic(notFoundError)
+	}
 	notification := &entity.Notification{
-		TypeID:         typeID,
+		TypeID:         notificationType.ID,
 		RecipientID:    recipientID,
 		AdditionalData: string(additionalDataJSON),
 		IsRead:         false,
 	}
 
-	err = notificationService.notificationRepository.CreateNotification(notificationService.db, notification)
-	if err != nil {
+	if err = notificationService.notificationRepository.CreateNotification(notificationService.db, notification); err != nil {
 		return err
 	}
 
-	settings, _ := notificationService.notificationRepository.GetNotificationSettingByUserAndType(notificationService.db, recipientID, typeID)
-
-	if settings.IsEmailEnabled {
-		if err := notificationService.SendNotification(notification); err != nil {
-			return err
-		}
+	if err := notificationService.SendNotification(notification, notificationType); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (notificationService *NotificationService) SendNotification(notification *entity.Notification) error {
+func (notificationService *NotificationService) SendNotification(notification *entity.Notification, notificationType *entity.NotificationType) error {
 	settings, _ := notificationService.notificationRepository.GetNotificationSettingByUserAndType(notificationService.db, notification.RecipientID, notification.TypeID)
-	notificationType, _ := notificationService.notificationRepository.GetNotificationTypeByID(notificationService.db, settings.TypeID)
 	if settings.IsPushEnabled {
 		msg := struct {
 			ID             uint      `json:"id"`
@@ -177,7 +176,7 @@ func (notificationService *NotificationService) CreateNotificationSettings(userI
 			UserID:         userID,
 			TypeID:         notificationType.ID,
 			IsEmailEnabled: true,
-			IsPushEnabled:  false,
+			IsPushEnabled:  true,
 		}
 		err := notificationService.notificationRepository.CreateNotificationSetting(notificationService.db, setting)
 		if err != nil {

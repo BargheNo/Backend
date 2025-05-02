@@ -4,20 +4,25 @@ type NotificationType uint
 
 const (
 	ChatNotificationType NotificationType = iota + 1
+	CorpSendBidNotificationType
 )
 
 var notificationDescriptions = map[NotificationType]string{
-	ChatNotificationType: "پیام جدید",
+	ChatNotificationType:        "پیام جدید",
+	CorpSendBidNotificationType: "پیشنهاد جدید از سوی شرکت",
 }
 
 var notificationEmailTemplate = map[NotificationType]string{
-	ChatNotificationType: "/sample/sample.html",
+	ChatNotificationType:        "/sample/sample.html",
+	CorpSendBidNotificationType: "/sample/sample.html",
 }
 
 func (NotificationType NotificationType) String() string {
 	switch NotificationType {
 	case ChatNotificationType:
 		return "chat"
+	case CorpSendBidNotificationType:
+		return "bid"
 	}
 	return ""
 }
@@ -39,5 +44,6 @@ func (NotificationType NotificationType) EmailTemplatePath() string {
 func GetAllNotificationTypes() []NotificationType {
 	return []NotificationType{
 		ChatNotificationType,
+		CorpSendBidNotificationType,
 	}
 }
