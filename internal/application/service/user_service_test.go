@@ -1,4 +1,4 @@
-package serviceimpl_test
+package serviceimpl
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
-	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/mocks"
@@ -28,7 +27,7 @@ type UserServiceTestSuite struct {
 	userRepository      *mocks.UserRepositoryMock
 	userCacheRepository *mocks.UserCacheRepositoryMock
 	db                  *mocks.DatabaseMock
-	userService         *serviceimpl.UserService
+	userService         *UserService
 }
 
 func (s *UserServiceTestSuite) SetupTest() {
@@ -43,7 +42,7 @@ func (s *UserServiceTestSuite) SetupTest() {
 	s.userCacheRepository = mocks.NewUserCacheRepositoryMock()
 	s.db = mocks.NewDatabaseMock()
 
-	deps := serviceimpl.UserServiceDeps{
+	deps := UserServiceDeps{
 		Constants:           s.constants,
 		OTPService:          s.otpService,
 		JWTService:          s.jwtService,
@@ -54,7 +53,7 @@ func (s *UserServiceTestSuite) SetupTest() {
 		UserCacheRepository: s.userCacheRepository,
 		DB:                  s.db,
 	}
-	s.userService = serviceimpl.NewUserService(deps)
+	s.userService = NewUserService(deps)
 }
 
 func (s *UserServiceTestSuite) TestDoesUserExist() {
@@ -403,9 +402,25 @@ func (s *UserServiceTestSuite) TestFindUserPermissions() {
 			},
 		}
 		s.userRepository.On("FindUserRoles", s.db, user).Return(nil)
-
+		for _, role := range user.Roles {
+			s.userRepository.On("FindRolePermissions", s.db, &role).Return(nil)
+		}
 		s.userService.FindUserPermissions(user)
 
+		s.userRepository.AssertExpectations(s.T())
+
+	})
+	s.Run("Error - User roles not found", func() {
+		user := &entity.User{
+			Roles: []entity.Role{},
+		}
+		s.userRepository.On("FindUserRoles", s.db, user).Return(errors.New("roles not found"))
+
+		s.Panics(func() {
+			s.userService.FindUserPermissions(user)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
 	})
 }
 func TestUserService(t *testing.T) {
