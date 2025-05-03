@@ -389,6 +389,25 @@ func (s *UserServiceTestSuite) TestVerifyPhone() {
 		s.otpService.AssertExpectations(s.T())
 	})
 }
+
+func (s *UserServiceTestSuite) TestFindUserPermissions() {
+	s.Run("success - User permissions found", func() {
+		user := &entity.User{
+			Roles: []entity.Role{
+				{
+					Name: "admin",
+				},
+				{
+					Name: "common",
+				},
+			},
+		}
+		s.userRepository.On("FindUserRoles", s.db, user).Return(nil)
+
+		s.userService.FindUserPermissions(user)
+
+	})
+}
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
