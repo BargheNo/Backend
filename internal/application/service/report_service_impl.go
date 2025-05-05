@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"log"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -15,26 +17,29 @@ import (
 type ReportService struct {
 	constants           *bootstrap.Constants
 	userService         service.UserService
-	reportRepository    repository.ReportRepository
 	maintenanceService  service.MaintenanceService
 	installationService service.InstallationService
+	notificationService service.NotificationService
+	reportRepository    repository.ReportRepository
 	db                  database.Database
 }
 
 func NewReportService(
 	constants *bootstrap.Constants,
 	userService service.UserService,
-	reportRepository repository.ReportRepository,
 	maintenanceService service.MaintenanceService,
 	installationService service.InstallationService,
+	notificationService service.NotificationService,
+	reportRepository repository.ReportRepository,
 	db database.Database,
 ) *ReportService {
 	return &ReportService{
 		constants:           constants,
 		userService:         userService,
-		reportRepository:    reportRepository,
 		maintenanceService:  maintenanceService,
 		installationService: installationService,
+		notificationService: notificationService,
+		reportRepository:    reportRepository,
 		db:                  db,
 	}
 }
@@ -55,6 +60,16 @@ func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdt
 	if err != nil {
 		panic(err)
 	}
+
+	acceptedPermissions := []enum.PermissionType{enum.ReportViewAll, enum.PermissionAll}
+	users := reportService.userService.GetUsersByPermission(acceptedPermissions)
+	for _, user := range users {
+		err := reportService.notificationService.CreateAndSendNotification(enum.ReportCreated, user.ID, nil)
+		if err != nil {
+			log.Printf("there is an issue with sending notification to admin: %v", err)
+			continue
+		}
+	}
 }
 
 func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) {
@@ -71,6 +86,16 @@ func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.Crea
 	err := reportService.reportRepository.CreateReport(reportService.db, report)
 	if err != nil {
 		panic(err)
+	}
+
+	acceptedPermissions := []enum.PermissionType{enum.ReportViewAll, enum.PermissionAll}
+	users := reportService.userService.GetUsersByPermission(acceptedPermissions)
+	for _, user := range users {
+		err := reportService.notificationService.CreateAndSendNotification(enum.ReportCreated, user.ID, nil)
+		if err != nil {
+			log.Printf("there is an issue with sending notification to admin: %v", err)
+			continue
+		}
 	}
 }
 

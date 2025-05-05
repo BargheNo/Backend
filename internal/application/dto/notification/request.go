@@ -5,6 +5,11 @@ type NotificationInfoRequest struct {
 	UserID         uint
 }
 
+type NotificationListRequest struct {
+	Types  []uint
+	UserID uint
+}
+
 type UpdateSettingsRequest struct {
 	SettingID      uint
 	UserID         uint

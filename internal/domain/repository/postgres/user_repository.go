@@ -7,6 +7,7 @@ import (
 )
 
 type UserRepository interface {
+	FindUsers(db database.Database) []*entity.User
 	FindUserByID(db database.Database, id uint) (*entity.User, bool)
 	FindUserByPhone(db database.Database, phone string) (*entity.User, bool)
 	FindUserByEmail(db database.Database, email string) (*entity.User, bool)
@@ -28,6 +29,7 @@ type UserRepository interface {
 	FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, bool)
 	FindRoleByID(db database.Database, roleID uint) (*entity.Role, bool)
 	FindUsersByRoleID(db database.Database, roleID uint) []*entity.User
+	FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) []*entity.User
 	DeleteRole(db database.Database, roleID uint) error
 	UpdateRole(db database.Database, role *entity.Role) error
 	ReplaceRolePermissions(db database.Database, role *entity.Role, permissions []entity.Permission) error

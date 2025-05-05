@@ -53,8 +53,17 @@ func (notificationController *CustomerNotificationController) MarkAsRead(ctx *gi
 }
 
 func (notificationController *CustomerNotificationController) GetUserNotifications(ctx *gin.Context) {
+	type notificationsParams struct {
+		Types []uint `form:"notificationTypes" validate:"required"`
+	}
+	params := controller.Validated[notificationsParams](ctx)
 	userID, _ := ctx.Get(notificationController.constants.Context.ID)
-	notificationsDetails := notificationController.notificationService.GetUserNotifications(userID.(uint))
+
+	notificationsRequest := notificationdto.NotificationListRequest{
+		Types:  params.Types,
+		UserID: userID.(uint),
+	}
+	notificationsDetails := notificationController.notificationService.GetUserNotifications(notificationsRequest)
 	controller.Response(ctx, 200, "", notificationsDetails)
 }
 
@@ -67,8 +76,8 @@ func (notificationController *CustomerNotificationController) GetUserNotificatio
 func (notificationController *CustomerNotificationController) UpdateSettings(ctx *gin.Context) {
 	type settingsParams struct {
 		SettingID      uint `uri:"settingID" validate:"required"`
-		IsEmailEnabled bool `json:"isEmailEnabled" validate:"required"`
-		IsPushEnabled  bool `json:"isPushEnabled" validate:"required"`
+		IsEmailEnabled bool `json:"isEmailEnabled"`
+		IsPushEnabled  bool `json:"isPushEnabled"`
 	}
 	params := controller.Validated[settingsParams](ctx)
 	userID, _ := ctx.Get(notificationController.constants.Context.ID)

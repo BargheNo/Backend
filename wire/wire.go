@@ -14,12 +14,15 @@ import (
 	"github.com/BargheNo/Backend/internal/application/service/communication/sms"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
+	"github.com/BargheNo/Backend/internal/domain/message"
 	"github.com/BargheNo/Backend/internal/domain/metrics"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	cinimpl "github.com/BargheNo/Backend/internal/infrastructure/cin"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
+	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
@@ -112,15 +115,18 @@ var AdapterProviderSet = wire.NewSet(
 	jwtimpl.NewJWTKeyManager,
 	metricsimpl.NewPrometheusMetrics,
 	storage.NewS3Storage,
+	rabbitmq.NewRabbitMQ,
 	wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)),
 	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
 	wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)),
+	wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)),
 )
 
 var GeneralControllerProviderSet = wire.NewSet(
 	user.NewGeneralUserController,
 	address.NewGeneralAddressController,
 	corporation.NewGeneralCorporationController,
+	notification.NewGeneralNotificationController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -176,6 +182,13 @@ var SeederProviderSet = wire.NewSet(
 	seed.NewRoleSeeder,
 	seed.NewContactTypeSeeder,
 	wire.Struct(new(Seeds), "*"),
+)
+
+var ConsumerProviderSet = wire.NewSet(
+	consumer.NewRegisterConsumer,
+	consumer.NewPushConsumer,
+	consumer.NewEmailConsumer,
+	wire.Struct(new(Consumers), "*"),
 )
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
@@ -242,6 +255,14 @@ func ProvideSuperAdminCredential(container *bootstrap.Config) *bootstrap.AdminCr
 	return &container.Env.SuperAdmin
 }
 
+func ProvideRabbitMQConfig(container *bootstrap.Config) *bootstrap.RabbitMQ {
+	return &container.Env.RabbitMQ
+}
+
+func ProvideRabbitMQConstants(container *bootstrap.Config) *bootstrap.RabbitMQConstants {
+	return &container.Constants.RabbitMQ
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -254,6 +275,7 @@ var ProviderSet = wire.NewSet(
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	SeederProviderSet,
+	ConsumerProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -270,6 +292,8 @@ var ProviderSet = wire.NewSet(
 	ProvideWebsocketSetting,
 	ProvideEmailSenderAccount,
 	ProvideSuperAdminCredential,
+	ProvideRabbitMQConfig,
+	ProvideRabbitMQConstants,
 )
 
 type Database struct {
@@ -278,9 +302,10 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController        *user.GeneralUserController
-	AddressController     *address.GeneralAddressController
-	CorporationController *corporation.GeneralCorporationController
+	UserController         *user.GeneralUserController
+	AddressController      *address.GeneralAddressController
+	CorporationController  *corporation.GeneralCorporationController
+	NotificationController *notification.GeneralNotificationController
 }
 
 type CustomerControllers struct {
@@ -335,11 +360,18 @@ type Seeds struct {
 	ContactType            *seed.ContactTypeSeeder
 }
 
+type Consumers struct {
+	Register *consumer.RegisterConsumer
+	Push     *consumer.PushConsumer
+	Email    *consumer.EmailConsumer
+}
+
 type Application struct {
 	Database    *Database
 	Controllers *Controllers
 	Middlewares *Middlewares
 	Seeds       *Seeds
+	Consumers   *Consumers
 }
 
 func NewApplication(
@@ -347,12 +379,14 @@ func NewApplication(
 	controllers *Controllers,
 	middlewares *Middlewares,
 	seeds *Seeds,
+	consumers *Consumers,
 ) *Application {
 	return &Application{
 		Database:    database,
 		Controllers: controllers,
 		Middlewares: middlewares,
 		Seeds:       seeds,
+		Consumers:   consumers,
 	}
 }
 

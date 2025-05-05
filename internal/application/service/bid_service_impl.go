@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"log"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -16,6 +18,7 @@ type BidService struct {
 	installationService service.InstallationService
 	userService         service.UserService
 	corporationService  service.CorporationService
+	notificationService service.NotificationService
 	bidRepository       repository.BidRepository
 	db                  database.Database
 }
@@ -25,6 +28,7 @@ func NewBidService(
 	installationService service.InstallationService,
 	userService service.UserService,
 	corporationService service.CorporationService,
+	notificationService service.NotificationService,
 	bidRepository repository.BidRepository,
 	db database.Database,
 ) *BidService {
@@ -33,6 +37,7 @@ func NewBidService(
 		installationService: installationService,
 		userService:         userService,
 		corporationService:  corporationService,
+		notificationService: notificationService,
 		bidRepository:       bidRepository,
 		db:                  db,
 	}
@@ -75,6 +80,10 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	err := bidService.bidRepository.CreateBid(bidService.db, bid)
 	if err != nil {
 		panic(err)
+	}
+
+	if err := bidService.notificationService.CreateAndSendNotification(enum.CorpSendBidNotificationType, installationRequest.Customer.ID, nil); err != nil {
+		log.Printf("error during send notification after bid: %v", err)
 	}
 }
 
