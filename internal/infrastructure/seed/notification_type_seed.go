@@ -8,15 +8,18 @@ import (
 )
 
 type NotificationTypeSeeder struct {
+	userRepository         repository.UserRepository
 	notificationRepository repository.NotificationRepository
 	db                     database.Database
 }
 
 func NewNotificationTypeSeeder(
+	userRepository repository.UserRepository,
 	notificationRepository repository.NotificationRepository,
 	db database.Database,
 ) *NotificationTypeSeeder {
 	return &NotificationTypeSeeder{
+		userRepository:         userRepository,
 		notificationRepository: notificationRepository,
 		db:                     db,
 	}
@@ -29,13 +32,31 @@ func (seeder *NotificationTypeSeeder) SeedNotificationTypes() {
 			notificationType := &entity.NotificationType{
 				Name:              notification,
 				Description:       notification.Description(),
+				SupportsEmail:     notification.SupportsEmail(),
+				SupportsPush:      notification.SupportsPush(),
 				EmailTemplatePath: notification.EmailTemplatePath(),
 			}
 			err := seeder.notificationRepository.CreateNotificationType(seeder.db, notificationType)
 			if err != nil {
 				panic(err)
 			}
+			seeder.syncNewNotificationTypesForUsers(notificationType)
 		}
+	}
+}
 
+func (seeder *NotificationTypeSeeder) syncNewNotificationTypesForUsers(newType *entity.NotificationType) {
+	users := seeder.userRepository.FindUsers(seeder.db)
+	for _, user := range users {
+		setting := &entity.NotificationSetting{
+			UserID:         user.ID,
+			TypeID:         newType.ID,
+			IsEmailEnabled: newType.SupportsEmail,
+			IsPushEnabled:  newType.SupportsPush,
+		}
+		err := seeder.notificationRepository.CreateNotificationSetting(seeder.db, setting)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

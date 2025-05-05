@@ -204,6 +204,10 @@ func (userService *UserService) GetUserCredential(userID uint) userdto.Credentia
 	}
 }
 
+func (userService *UserService) GetUsersByPermission(permissionTypes []enum.PermissionType) []*entity.User {
+	return userService.userRepository.FindUsersByPermission(userService.db, permissionTypes)
+}
+
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) {
 	err := userService.validateDuplicatePhone(registerInfo.Phone)
 	if err != nil {

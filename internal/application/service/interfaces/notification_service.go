@@ -9,8 +9,9 @@ import (
 type NotificationService interface {
 	CreateAndSendNotification(typeName enum.NotificationType, recipientID uint, additionalData interface{}) error
 	CreateNotificationSettings(userID uint)
+	GetNotificationsType() []notificationdto.NotificationTypeResponse
 	GetUserNotificationSettings(userID uint) []notificationdto.NotificationSettingResponse
-	GetUserNotifications(userID uint) []notificationdto.NotificationListResponse
+	GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) []notificationdto.NotificationListResponse
 	MarkAsRead(notificationInfo notificationdto.NotificationInfoRequest)
 	SendNotification(notification *entity.Notification, notificationType *entity.NotificationType) error
 	UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest)

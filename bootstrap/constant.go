@@ -63,6 +63,7 @@ type ErrorField struct {
 	Room                string
 	NotificationType    string
 	Notification        string
+	NotificationSetting string
 	PanelName           string
 	Panel               string
 	MaintenanceRequest  string
@@ -230,6 +231,7 @@ func NewConstants() *Constants {
 			TicketComment:       "ticketComment",
 			Report:              "report",
 			ContactInformation:  "contactInformation",
+			NotificationSetting: "notificationSetting",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",

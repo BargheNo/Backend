@@ -10,20 +10,23 @@ import (
 )
 
 type RoleSeeder struct {
-	superAdmin     *bootstrap.AdminCredentials
-	userRepository repository.UserRepository
-	db             database.Database
+	superAdmin             *bootstrap.AdminCredentials
+	userRepository         repository.UserRepository
+	notificationRepository repository.NotificationRepository
+	db                     database.Database
 }
 
 func NewRoleSeeder(
 	superAdmin *bootstrap.AdminCredentials,
 	userRepository repository.UserRepository,
+	notificationRepository repository.NotificationRepository,
 	db database.Database,
 ) *RoleSeeder {
 	return &RoleSeeder{
-		superAdmin:     superAdmin,
-		userRepository: userRepository,
-		db:             db,
+		superAdmin:             superAdmin,
+		userRepository:         userRepository,
+		notificationRepository: notificationRepository,
+		db:                     db,
 	}
 }
 
@@ -118,27 +121,45 @@ func (roleSeeder *RoleSeeder) seedSuperAdmin(adminCred *bootstrap.AdminCredentia
 
 func (roleSeeder *RoleSeeder) getOrCreateAdmin(adminCred *bootstrap.AdminCredentials) *entity.User {
 	admin, exist := roleSeeder.userRepository.FindUserByPhone(roleSeeder.db, adminCred.Phone)
-	if exist {
-		return admin
+	if !exist {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminCred.Password), 14)
+		if err != nil {
+			panic(err)
+		}
+		admin = &entity.User{
+			FirstName:     adminCred.FirstName,
+			LastName:      adminCred.LastName,
+			Phone:         adminCred.Phone,
+			PhoneVerified: true,
+			Password:      string(hashedPassword),
+			Email:         adminCred.Email,
+			EmailVerified: true,
+			NationalCode:  adminCred.NationalCode,
+			Status:        enum.UserStatusActive,
+		}
+		err = roleSeeder.userRepository.CreateUser(roleSeeder.db, admin)
+		if err != nil {
+			panic(err)
+		}
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminCred.Password), 14)
-	if err != nil {
-		panic(err)
+
+	notificationTypes := roleSeeder.notificationRepository.GetNotificationTypes(roleSeeder.db)
+	for _, notificationType := range notificationTypes {
+		_, exist := roleSeeder.notificationRepository.GetNotificationSettingByUserAndType(roleSeeder.db, admin.ID, notificationType.ID)
+		if exist {
+			continue
+		}
+		setting := &entity.NotificationSetting{
+			UserID:         admin.ID,
+			TypeID:         notificationType.ID,
+			IsEmailEnabled: notificationType.SupportsEmail,
+			IsPushEnabled:  notificationType.SupportsPush,
+		}
+		err := roleSeeder.notificationRepository.CreateNotificationSetting(roleSeeder.db, setting)
+		if err != nil {
+			panic(err)
+		}
 	}
-	admin = &entity.User{
-		FirstName:     adminCred.FirstName,
-		LastName:      adminCred.LastName,
-		Phone:         adminCred.Phone,
-		PhoneVerified: true,
-		Password:      string(hashedPassword),
-		Email:         adminCred.Email,
-		EmailVerified: true,
-		NationalCode:  adminCred.NationalCode,
-		Status:        enum.UserStatusActive,
-	}
-	err = roleSeeder.userRepository.CreateUser(roleSeeder.db, admin)
-	if err != nil {
-		panic(err)
-	}
+
 	return admin
 }

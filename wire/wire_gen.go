@@ -95,10 +95,14 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationRepository := repositoryimpl.NewCorporationRepository()
 	corporationService := serviceimpl.NewCorporationService(constants, userService, addressService, s3Storage, corporationRepository, postgresDatabase)
 	generalCorporationController := corporation.NewGeneralCorporationController(constants, corporationService)
+	notificationRepository := repositoryimpl.NewNotificationRepository()
+	notificationService := serviceimpl.NewNotificationService(constants, userService, notificationRepository, hub, rabbitmqRabbitMQ, postgresDatabase)
+	generalNotificationController := notification.NewGeneralNotificationController(constants, notificationService)
 	generalControllers := &GeneralControllers{
-		UserController:        generalUserController,
-		AddressController:     generalAddressController,
-		CorporationController: generalCorporationController,
+		UserController:         generalUserController,
+		AddressController:      generalAddressController,
+		CorporationController:  generalCorporationController,
+		NotificationController: generalNotificationController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
 	pagination := ProvidePaginationConfig(container)
@@ -109,8 +113,6 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
 	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService)
-	notificationRepository := repositoryimpl.NewNotificationRepository()
-	notificationService := serviceimpl.NewNotificationService(constants, userService, notificationRepository, hub, rabbitmqRabbitMQ, postgresDatabase)
 	bidRepository := repositoryimpl.NewBidRepository()
 	bidService := serviceimpl.NewBidService(constants, installationService, userService, corporationService, notificationService, bidRepository, postgresDatabase)
 	customerBidController := bid.NewCustomerBidController(constants, pagination, bidService)
@@ -124,7 +126,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	ticketService := serviceimpl.NewTicketService(constants, ticketRepository, userService, s3Storage, postgresDatabase)
 	customerTicketController := ticket.NewCustomerTicketController(constants, ticketService, pagination)
 	reportRepository := repositoryimpl.NewReportRepository()
-	reportService := serviceimpl.NewReportService(constants, userService, reportRepository, maintenanceService, installationService, postgresDatabase)
+	reportService := serviceimpl.NewReportService(constants, userService, maintenanceService, installationService, notificationService, reportRepository, postgresDatabase)
 	customerReportController := report.NewCustomerReportController(constants, reportService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
@@ -192,9 +194,9 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		WebsocketMiddleware: websocketMiddleware,
 	}
 	addressSeeder := seed.NewAddressSeeder(addressRepository, postgresDatabase)
-	notificationTypeSeeder := seed.NewNotificationTypeSeeder(notificationRepository, postgresDatabase)
+	notificationTypeSeeder := seed.NewNotificationTypeSeeder(userRepository, notificationRepository, postgresDatabase)
 	adminCredentials := ProvideSuperAdminCredential(container)
-	roleSeeder := seed.NewRoleSeeder(adminCredentials, userRepository, postgresDatabase)
+	roleSeeder := seed.NewRoleSeeder(adminCredentials, userRepository, notificationRepository, postgresDatabase)
 	contactTypeSeeder := seed.NewContactTypeSeeder(corporationRepository, postgresDatabase)
 	seeds := &Seeds{
 		AddressSeeder:          addressSeeder,
@@ -224,7 +226,7 @@ var ServiceProviderSet = wire.NewSet(wire.Struct(new(serviceimpl.UserServiceDeps
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)))
 
-var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, wire.Struct(new(GeneralControllers), "*"))
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, wire.Struct(new(CustomerControllers), "*"))
 
@@ -351,9 +353,10 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController        *user.GeneralUserController
-	AddressController     *address.GeneralAddressController
-	CorporationController *corporation.GeneralCorporationController
+	UserController         *user.GeneralUserController
+	AddressController      *address.GeneralAddressController
+	CorporationController  *corporation.GeneralCorporationController
+	NotificationController *notification.GeneralNotificationController
 }
 
 type CustomerControllers struct {

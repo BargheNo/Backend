@@ -143,10 +143,25 @@ func (notificationService *NotificationService) MarkAsRead(notificationInfo noti
 	}
 }
 
-func (notificationService *NotificationService) GetUserNotifications(userID uint) []notificationdto.NotificationListResponse {
-	notificationService.userService.DoesUserExist(userID)
+func (notificationService *NotificationService) GetNotificationsType() []notificationdto.NotificationTypeResponse {
+	notificationTypes := notificationService.notificationRepository.GetNotificationTypes(notificationService.db)
+	notificationTypesResponse := make([]notificationdto.NotificationTypeResponse, len(notificationTypes))
 
-	notifications := notificationService.notificationRepository.GetNotificationsByUserID(notificationService.db, userID)
+	for i, notificationType := range notificationTypes {
+		notificationTypesResponse[i] = notificationdto.NotificationTypeResponse{
+			Name:          notificationType.Name.String(),
+			Description:   notificationType.Description,
+			SupportsEmail: notificationType.SupportsEmail,
+			SupportsPush:  notificationType.SupportsPush,
+		}
+	}
+	return notificationTypesResponse
+}
+
+func (notificationService *NotificationService) GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) []notificationdto.NotificationListResponse {
+	notificationService.userService.DoesUserExist(notificationsRequest.UserID)
+
+	notifications := notificationService.notificationRepository.GetNotificationsByTypesAndUserID(notificationService.db, notificationsRequest.UserID, notificationsRequest.Types)
 	notificationsResponse := make([]notificationdto.NotificationListResponse, len(notifications))
 
 	for i, notification := range notifications {
@@ -154,9 +169,15 @@ func (notificationService *NotificationService) GetUserNotifications(userID uint
 		if !exist {
 			continue
 		}
+		notificationTypeResponse := notificationdto.NotificationTypeResponse{
+			Name:          notificationType.Name.String(),
+			Description:   notificationType.Description,
+			SupportsEmail: notificationType.SupportsEmail,
+			SupportsPush:  notificationType.SupportsPush,
+		}
 		notificationsResponse[i] = notificationdto.NotificationListResponse{
 			ID:             notification.ID,
-			Type:           notificationdto.NotificationTypeResponse{Name: notificationType.Name.String(), Description: notificationType.Description},
+			Type:           notificationTypeResponse,
 			AdditionalData: notification.AdditionalData,
 			IsRead:         notification.IsRead,
 		}
@@ -175,8 +196,8 @@ func (notificationService *NotificationService) CreateNotificationSettings(userI
 		setting := &entity.NotificationSetting{
 			UserID:         userID,
 			TypeID:         notificationType.ID,
-			IsEmailEnabled: true,
-			IsPushEnabled:  true,
+			IsEmailEnabled: notificationType.SupportsEmail,
+			IsPushEnabled:  notificationType.SupportsPush,
 		}
 		err := notificationService.notificationRepository.CreateNotificationSetting(notificationService.db, setting)
 		if err != nil {
@@ -196,10 +217,15 @@ func (notificationService *NotificationService) GetUserNotificationSettings(user
 		if !exist {
 			continue
 		}
+		notificationTypeResponse := notificationdto.NotificationTypeResponse{
+			Name:          notificationType.Name.String(),
+			Description:   notificationType.Description,
+			SupportsEmail: notificationType.SupportsEmail,
+			SupportsPush:  notificationType.SupportsPush,
+		}
 		settingsResponse[i] = notificationdto.NotificationSettingResponse{
-			UserID:           userID,
-			TypeID:           setting.TypeID,
-			NotificationType: notificationdto.NotificationTypeResponse{Name: notificationType.Name.String(), Description: notificationType.Description},
+			ID:               setting.ID,
+			NotificationType: notificationTypeResponse,
 			IsEmailEnabled:   setting.IsEmailEnabled,
 			IsPushEnabled:    setting.IsPushEnabled,
 		}
@@ -211,10 +237,15 @@ func (notificationService *NotificationService) UpdateNotificationSettings(newSe
 	notificationService.userService.DoesUserExist(newSettingInfo.UserID)
 	setting, exist := notificationService.notificationRepository.GetNotificationSettingByID(notificationService.db, newSettingInfo.SettingID)
 	if !exist {
+		notFoundError := exception.NotFoundError{Item: notificationService.constants.Field.NotificationSetting}
+		panic(notFoundError)
+	}
+	notificationType, exist := notificationService.notificationRepository.GetNotificationTypeByID(notificationService.db, setting.TypeID)
+	if !exist {
 		notFoundError := exception.NotFoundError{Item: notificationService.constants.Field.NotificationType}
 		panic(notFoundError)
 	}
-	setting.IsEmailEnabled = newSettingInfo.IsEmailEnabled
-	setting.IsPushEnabled = newSettingInfo.IsPushEnabled
+	setting.IsEmailEnabled = newSettingInfo.IsEmailEnabled && notificationType.SupportsEmail
+	setting.IsPushEnabled = newSettingInfo.IsPushEnabled && notificationType.SupportsPush
 	notificationService.notificationRepository.UpdateNotificationSetting(notificationService.db, setting)
 }

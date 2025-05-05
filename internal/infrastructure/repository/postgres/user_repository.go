@@ -13,6 +13,18 @@ func NewUserRepository() *UserRepository {
 	return &UserRepository{}
 }
 
+func (repo *UserRepository) FindUsers(db database.Database) []*entity.User {
+	var users []*entity.User
+	result := db.GetDB().Find(&users)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(result.Error)
+	}
+	return users
+}
+
 func (repo *UserRepository) FindUserByID(db database.Database, id uint) (*entity.User, bool) {
 	var user entity.User
 	result := db.GetDB().First(&user, id)
@@ -66,7 +78,7 @@ func (repo *UserRepository) CreateUser(db database.Database, user *entity.User) 
 }
 
 func (repo *UserRepository) DeleteUserByPhone(db database.Database, phone string) error {
-	return db.GetDB().Where("phone = ?", phone).Delete(&entity.User{}).Error
+	return db.GetDB().Where("phone = ?", phone).Unscoped().Delete(&entity.User{}).Error
 }
 
 func (repo *UserRepository) UpdateUser(db database.Database, user *entity.User) error {
@@ -188,6 +200,25 @@ func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint)
 		}
 		panic(result.Error)
 	}
+	return users
+}
+
+func (repo *UserRepository) FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) []*entity.User {
+	var users []*entity.User
+
+	result := db.GetDB().
+		Joins("JOIN user_roles ON users.id = user_roles.user_id").
+		Joins("JOIN roles ON user_roles.role_id = roles.id").
+		Joins("JOIN role_permissions ON roles.id = role_permissions.role_id").
+		Joins("JOIN permissions ON role_permissions.permission_id = permissions.id").
+		Where("permissions.type IN ?", permissionTypes).
+		Distinct().
+		Find(&users)
+
+	if result.Error != nil {
+		panic(result.Error)
+	}
+
 	return users
 }
 

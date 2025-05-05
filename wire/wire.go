@@ -126,6 +126,7 @@ var GeneralControllerProviderSet = wire.NewSet(
 	user.NewGeneralUserController,
 	address.NewGeneralAddressController,
 	corporation.NewGeneralCorporationController,
+	notification.NewGeneralNotificationController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -301,9 +302,10 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController        *user.GeneralUserController
-	AddressController     *address.GeneralAddressController
-	CorporationController *corporation.GeneralCorporationController
+	UserController         *user.GeneralUserController
+	AddressController      *address.GeneralAddressController
+	CorporationController  *corporation.GeneralCorporationController
+	NotificationController *notification.GeneralNotificationController
 }
 
 type CustomerControllers struct {
