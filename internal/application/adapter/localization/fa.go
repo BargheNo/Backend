@@ -116,6 +116,8 @@ var Persian = map[string]interface{}{
 		"ticketResolved":            "درخواست پشتیبانی با موفقیت بررسی شد.",
 		"createReport":              "گزارش شما با موفقیت ثبت شد.",
 		"reportResolved":            "گزارش شما با موفقیت بررسی شد.",
+		"banUser":                   "کاربر با موفقیت محدود شد.",
+		"unbanUser":                 "کاربر با موفقیت رفع محدود شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

@@ -29,6 +29,7 @@ type UserRepository interface {
 	FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, bool)
 	FindRoleByID(db database.Database, roleID uint) (*entity.Role, bool)
 	FindUsersByRoleID(db database.Database, roleID uint) []*entity.User
+	FindUserByStatus(db database.Database, status []enum.UserStatus, opts ...QueryModifier) []*entity.User
 	FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) []*entity.User
 	DeleteRole(db database.Database, roleID uint) error
 	UpdateRole(db database.Database, role *entity.Role) error

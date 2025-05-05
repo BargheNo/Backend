@@ -45,6 +45,25 @@ func (s *UserServiceMock) GetUsersByPermission(permissionTypes []enum.Permission
 	return args.Get(0).([]*entity.User)
 }
 
+func (s *UserServiceMock) GetUsersByStatus(request userdto.GetUsersListRequest) []userdto.CredentialResponse {
+	args := s.Called(request)
+	return args.Get(0).([]userdto.CredentialResponse)
+}
+
+func (s *UserServiceMock) BanUser(userID uint) {
+	banArgs := s.Called(userID)
+	if banArgs.Get(0) != nil {
+		panic(banArgs.Get(0))
+	}
+}
+
+func (s *UserServiceMock) UnbanUser(userID uint) {
+	unbanArgs := s.Called(userID)
+	if unbanArgs.Get(0) != nil {
+		panic(unbanArgs.Get(0))
+	}
+}
+
 func (s *UserServiceMock) Register(registerInfo userdto.BasicRegisterRequest) {
 	args := s.Called(registerInfo)
 	if args.Get(0) != nil {

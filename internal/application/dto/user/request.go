@@ -69,3 +69,9 @@ type UpdateUserRolesRequest struct {
 	UserID  uint
 	RoleIDs []uint
 }
+
+type GetUsersListRequest struct {
+	Statuses []uint
+	Offset   int
+	Limit    int
+}

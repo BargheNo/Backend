@@ -208,6 +208,68 @@ func (userService *UserService) GetUsersByPermission(permissionTypes []enum.Perm
 	return userService.userRepository.FindUsersByPermission(userService.db, permissionTypes)
 }
 
+func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) []userdto.CredentialResponse {
+	statuses := make([]enum.UserStatus, len(request.Statuses))
+	for i, status := range request.Statuses {
+		statuses[i] = enum.UserStatus(status)
+	}
+	users := userService.userRepository.FindUserByStatus(userService.db, statuses)
+	usersResponse := make([]userdto.CredentialResponse, len(users))
+	for i, user := range users {
+		profilePic := ""
+		if user.ProfilePicPath != "" {
+			profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+		}
+		usersResponse[i] = userdto.CredentialResponse{
+			ID:         user.ID,
+			FirstName:  user.FirstName,
+			LastName:   user.LastName,
+			Phone:      user.Phone,
+			Email:      user.Email,
+			NationalID: user.NationalCode,
+			ProfilePic: profilePic,
+			Status:     user.Status.String(),
+		}
+	}
+	return usersResponse
+}
+
+func (userService *UserService) BanUser(userID uint) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if user.Status == enum.UserStatusBlock {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.User, userService.constants.Tag.AlreadyBlocked)
+		panic(conflictErrors)
+	}
+	user.Status = enum.UserStatusBlock
+	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (userService *UserService) UnbanUser(userID uint) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if user.Status == enum.UserStatusActive {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.User, userService.constants.Tag.AlreadyActive)
+		panic(conflictErrors)
+	}
+	user.Status = enum.UserStatusActive
+	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) {
 	err := userService.validateDuplicatePhone(registerInfo.Phone)
 	if err != nil {
