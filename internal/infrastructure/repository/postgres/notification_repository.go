@@ -25,9 +25,9 @@ func (repo *NotificationRepository) GetNotificationByID(db database.Database, no
 	return notification, true
 }
 
-func (repo *NotificationRepository) GetNotificationsByUserID(db database.Database, userID uint) []*entity.Notification {
+func (repo *NotificationRepository) GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint) []*entity.Notification {
 	var notifications []*entity.Notification
-	result := db.GetDB().Where("user_id = ?", userID).Find(&notifications)
+	result := db.GetDB().Where("recipient_id = ? and type_id IN ?", userID, types).Find(&notifications)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil

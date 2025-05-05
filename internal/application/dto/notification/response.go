@@ -8,14 +8,15 @@ type NotificationListResponse struct {
 }
 
 type NotificationTypeResponse struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	SupportsEmail bool   `json:"supportsEmail"`
+	SupportsPush  bool   `json:"supportsPush"`
 }
 
 type NotificationSettingResponse struct {
-	UserID           uint                     `gorm:"not null;index"`
-	TypeID           uint                     `gorm:"not null;index"`
-	NotificationType NotificationTypeResponse `gorm:"foreignKey:TypeID"`
-	IsEmailEnabled   bool                     `gorm:"default:true"`
-	IsPushEnabled    bool                     `gorm:"default:true"`
+	ID               uint                     `json:"id"`
+	NotificationType NotificationTypeResponse `json:"notificationType"`
+	IsEmailEnabled   bool                     `json:"isEmailEnabled"`
+	IsPushEnabled    bool                     `json:"isPushEnabled"`
 }

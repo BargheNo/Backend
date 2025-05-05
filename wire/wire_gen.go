@@ -17,12 +17,15 @@ import (
 	"github.com/BargheNo/Backend/internal/application/service/communication/sms"
 	"github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/logger"
+	"github.com/BargheNo/Backend/internal/domain/message"
 	"github.com/BargheNo/Backend/internal/domain/metrics"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/cin"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
+	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
@@ -66,6 +69,9 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	emailAccount := ProvideEmailSenderAccount(container)
 	emailTemplates := ProvideEmailTemplates(container)
 	emailService := email.NewEmailService(emailAccount, emailTemplates)
+	rabbitMQ := ProvideRabbitMQConfig(container)
+	rabbitMQConstants := ProvideRabbitMQConstants(container)
+	rabbitmqRabbitMQ := rabbitmq.NewRabbitMQ(rabbitMQ, rabbitMQConstants)
 	s3 := ProvideStorageConfig(container)
 	s3Storage := storage.NewS3Storage(constants, s3)
 	userRepository := repositoryimpl.NewUserRepository()
@@ -75,6 +81,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		JWTService:          jwtService,
 		SMSService:          smsService,
 		EmailService:        emailService,
+		RabbitMQ:            rabbitmqRabbitMQ,
 		S3Storage:           s3Storage,
 		UserRepository:      userRepository,
 		UserCacheRepository: userCacheRepository,
@@ -88,10 +95,14 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationRepository := repositoryimpl.NewCorporationRepository()
 	corporationService := serviceimpl.NewCorporationService(constants, userService, addressService, s3Storage, corporationRepository, postgresDatabase)
 	generalCorporationController := corporation.NewGeneralCorporationController(constants, corporationService)
+	notificationRepository := repositoryimpl.NewNotificationRepository()
+	notificationService := serviceimpl.NewNotificationService(constants, userService, notificationRepository, hub, rabbitmqRabbitMQ, postgresDatabase)
+	generalNotificationController := notification.NewGeneralNotificationController(constants, notificationService)
 	generalControllers := &GeneralControllers{
-		UserController:        generalUserController,
-		AddressController:     generalAddressController,
-		CorporationController: generalCorporationController,
+		UserController:         generalUserController,
+		AddressController:      generalAddressController,
+		CorporationController:  generalCorporationController,
+		NotificationController: generalNotificationController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
 	pagination := ProvidePaginationConfig(container)
@@ -103,12 +114,10 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
 	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService)
 	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, installationService, userService, corporationService, bidRepository, postgresDatabase)
+	bidService := serviceimpl.NewBidService(constants, installationService, userService, corporationService, notificationService, bidRepository, postgresDatabase)
 	customerBidController := bid.NewCustomerBidController(constants, pagination, bidService)
 	websocketSetting := ProvideWebsocketSetting(container)
 	customerChatController := chat.NewCustomerChatController(constants, pagination, websocketSetting, chatService, jwtService, userService, hub)
-	notificationRepository := repositoryimpl.NewNotificationRepository()
-	notificationService := serviceimpl.NewNotificationService(constants, userService, notificationRepository, hub, postgresDatabase)
 	customerNotificationController := notification.NewCustomerNotificationController(constants, websocketSetting, notificationService, jwtService, userService, hub)
 	maintenanceRepository := repositoryimpl.NewMaintenanceRepository()
 	maintenanceService := serviceimpl.NewMaintenanceService(constants, userService, installationService, corporationService, addressService, maintenanceRepository, postgresDatabase)
@@ -117,7 +126,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	ticketService := serviceimpl.NewTicketService(constants, ticketRepository, userService, s3Storage, postgresDatabase)
 	customerTicketController := ticket.NewCustomerTicketController(constants, ticketService, pagination)
 	reportRepository := repositoryimpl.NewReportRepository()
-	reportService := serviceimpl.NewReportService(constants, userService, reportRepository, maintenanceService, installationService, postgresDatabase)
+	reportService := serviceimpl.NewReportService(constants, userService, maintenanceService, installationService, notificationService, reportRepository, postgresDatabase)
 	customerReportController := report.NewCustomerReportController(constants, reportService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
@@ -185,9 +194,9 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		WebsocketMiddleware: websocketMiddleware,
 	}
 	addressSeeder := seed.NewAddressSeeder(addressRepository, postgresDatabase)
-	notificationTypeSeeder := seed.NewNotificationTypeSeeder(notificationRepository, postgresDatabase)
+	notificationTypeSeeder := seed.NewNotificationTypeSeeder(userRepository, notificationRepository, postgresDatabase)
 	adminCredentials := ProvideSuperAdminCredential(container)
-	roleSeeder := seed.NewRoleSeeder(adminCredentials, userRepository, postgresDatabase)
+	roleSeeder := seed.NewRoleSeeder(adminCredentials, userRepository, notificationRepository, postgresDatabase)
 	contactTypeSeeder := seed.NewContactTypeSeeder(corporationRepository, postgresDatabase)
 	seeds := &Seeds{
 		AddressSeeder:          addressSeeder,
@@ -195,7 +204,15 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		RoleSeeder:             roleSeeder,
 		ContactType:            contactTypeSeeder,
 	}
-	application := NewApplication(wireDatabase, controllers, middlewares, seeds)
+	registerConsumer := consumer.NewRegisterConsumer(rabbitMQConstants, rabbitmqRabbitMQ, notificationService)
+	pushConsumer := consumer.NewPushConsumer(rabbitMQConstants, rabbitmqRabbitMQ, hub)
+	emailConsumer := consumer.NewEmailConsumer(rabbitMQConstants, rabbitmqRabbitMQ, emailService)
+	consumers := &Consumers{
+		Register: registerConsumer,
+		Push:     pushConsumer,
+		Email:    emailConsumer,
+	}
+	application := NewApplication(wireDatabase, controllers, middlewares, seeds, consumers)
 	return application, nil
 }
 
@@ -207,9 +224,9 @@ var RepositoryProviderSet = wire.NewSet(repositoryimpl.NewUserRepository, reposi
 
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(serviceimpl.UserServiceDeps), "*"), serviceimpl.NewUserService, serviceimpl.NewOTPService, sms.NewSMSService, email.NewEmailService, serviceimpl.NewJWTService, serviceimpl.NewInstallationService, serviceimpl.NewAddressService, serviceimpl.NewCorporationService, cinimpl.NewCINService, serviceimpl.NewBidService, serviceimpl.NewChatService, serviceimpl.NewNotificationService, serviceimpl.NewMaintenanceService, serviceimpl.NewTicketService, serviceimpl.NewReportService, wire.Bind(new(service.UserService), new(*serviceimpl.UserService)), wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)), wire.Bind(new(service.SMSService), new(*sms.SMSService)), wire.Bind(new(service.EmailService), new(*email.EmailService)), wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)), wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)), wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)), wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)), wire.Bind(new(service.CINService), new(*cinimpl.CINService)), wire.Bind(new(service.BidService), new(*serviceimpl.BidService)), wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)), wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)), wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)), wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)), wire.Bind(new(service.ReportService), new(*serviceimpl.ReportService)))
 
-var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, storage.NewS3Storage, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)))
+var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)))
 
-var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, wire.Struct(new(GeneralControllers), "*"))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, wire.Struct(new(GeneralControllers), "*"))
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, wire.Struct(new(CustomerControllers), "*"))
 
@@ -222,6 +239,8 @@ var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware.NewCorsMiddleware, middleware.NewRecovery, middleware.NewLocalization, middleware.NewRateLimit, middleware.NewLoggerMiddleware, middleware.NewPrometheusMiddleware, middleware.NewWebsocketMiddleware, wire.Struct(new(Middlewares), "*"))
 
 var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, seed.NewNotificationTypeSeeder, seed.NewRoleSeeder, seed.NewContactTypeSeeder, wire.Struct(new(Seeds), "*"))
+
+var ConsumerProviderSet = wire.NewSet(consumer.NewRegisterConsumer, consumer.NewPushConsumer, consumer.NewEmailConsumer, wire.Struct(new(Consumers), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -287,6 +306,14 @@ func ProvideSuperAdminCredential(container *bootstrap.Config) *bootstrap.AdminCr
 	return &container.Env.SuperAdmin
 }
 
+func ProvideRabbitMQConfig(container *bootstrap.Config) *bootstrap.RabbitMQ {
+	return &container.Env.RabbitMQ
+}
+
+func ProvideRabbitMQConstants(container *bootstrap.Config) *bootstrap.RabbitMQConstants {
+	return &container.Constants.RabbitMQ
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -299,6 +326,7 @@ var ProviderSet = wire.NewSet(
 	ControllersProviderSet,
 	MiddlewareProviderSet,
 	SeederProviderSet,
+	ConsumerProviderSet,
 	ProvideConstants,
 	ProvideLoggerConfig,
 	ProvideRateLimitConfig,
@@ -315,6 +343,8 @@ var ProviderSet = wire.NewSet(
 	ProvideWebsocketSetting,
 	ProvideEmailSenderAccount,
 	ProvideSuperAdminCredential,
+	ProvideRabbitMQConfig,
+	ProvideRabbitMQConstants,
 )
 
 type Database struct {
@@ -323,9 +353,10 @@ type Database struct {
 }
 
 type GeneralControllers struct {
-	UserController        *user.GeneralUserController
-	AddressController     *address.GeneralAddressController
-	CorporationController *corporation.GeneralCorporationController
+	UserController         *user.GeneralUserController
+	AddressController      *address.GeneralAddressController
+	CorporationController  *corporation.GeneralCorporationController
+	NotificationController *notification.GeneralNotificationController
 }
 
 type CustomerControllers struct {
@@ -380,22 +411,31 @@ type Seeds struct {
 	ContactType            *seed.ContactTypeSeeder
 }
 
+type Consumers struct {
+	Register *consumer.RegisterConsumer
+	Push     *consumer.PushConsumer
+	Email    *consumer.EmailConsumer
+}
+
 type Application struct {
 	Database    *Database
 	Controllers *Controllers
 	Middlewares *Middlewares
 	Seeds       *Seeds
+	Consumers   *Consumers
 }
 
 func NewApplication(database2 *Database,
 	controllers *Controllers,
 	middlewares *Middlewares,
 	seeds *Seeds,
+	consumers *Consumers,
 ) *Application {
 	return &Application{
 		Database:    database2,
 		Controllers: controllers,
 		Middlewares: middlewares,
 		Seeds:       seeds,
+		Consumers:   consumers,
 	}
 }
