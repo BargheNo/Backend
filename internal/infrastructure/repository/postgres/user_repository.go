@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -35,6 +36,22 @@ func (repo *UserRepository) FindUserByID(db database.Database, id uint) (*entity
 		panic(result.Error)
 	}
 	return &user, true
+}
+
+func (repo *UserRepository) FindUserByStatus(db database.Database, statuses []enum.UserStatus, opts ...repository.QueryModifier) []*entity.User {
+	var users []*entity.User
+	query := db.GetDB().Where("status IN ?", statuses)
+
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+
+	result := query.Find(&users)
+
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return users
 }
 
 func (repo *UserRepository) FindUserByEmail(db database.Database, email string) (*entity.User, bool) {

@@ -116,6 +116,8 @@ var English = map[string]interface{}{
 		"ticketResolved":            "Ticket has been successfully resolved.",
 		"createReport":              "Report has been successfully created.",
 		"reportResolved":            "Report has been successfully resolved.",
+		"banUser":                   "User get banned successfully.",
+		"unbanUser":                 "User get unbanned successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",
