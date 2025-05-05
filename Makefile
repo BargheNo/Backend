@@ -5,3 +5,9 @@ up:
 
 ps:
 	docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+
+test:
+	go test ./internal/application/service -coverprofile=coverage.out 
+
+cover:
+	go tool cover -html=coverage.out

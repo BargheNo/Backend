@@ -7,3 +7,4 @@ db-data
 db_data
 .air.toml
 tmp
+coverage.out
