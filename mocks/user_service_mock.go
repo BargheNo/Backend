@@ -2,6 +2,8 @@ package mocks
 
 import (
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
+	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -28,9 +30,19 @@ func (s *UserServiceMock) IsUserActive(userID uint) bool {
 	return args.Get(1).(bool)
 }
 
+func (s *UserServiceMock) GetUserByID(userID uint) *entity.User {
+	args := s.Called(userID)
+	return args.Get(0).(*entity.User)
+}
+
 func (s *UserServiceMock) GetUserCredential(userID uint) userdto.CredentialResponse {
 	args := s.Called(userID)
 	return args.Get(0).(userdto.CredentialResponse)
+}
+
+func (s *UserServiceMock) GetUsersByPermission(permissionTypes []enum.PermissionType) []*entity.User {
+	args := s.Called(permissionTypes)
+	return args.Get(0).([]*entity.User)
 }
 
 func (s *UserServiceMock) Register(registerInfo userdto.BasicRegisterRequest) {
