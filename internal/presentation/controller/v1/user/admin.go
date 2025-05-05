@@ -10,15 +10,18 @@ import (
 
 type AdminUserController struct {
 	constants   *bootstrap.Constants
+	pagination  *bootstrap.Pagination
 	userService service.UserService
 }
 
 func NewAdminUserController(
 	constants *bootstrap.Constants,
+	pagination *bootstrap.Pagination,
 	userService service.UserService,
 ) *AdminUserController {
 	return &AdminUserController{
 		constants:   constants,
+		pagination:  pagination,
 		userService: userService,
 	}
 }
@@ -127,5 +130,48 @@ func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateUserRoles")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (userController *AdminUserController) GetUsers(ctx *gin.Context) {
+	type usersParams struct {
+		Statuses []uint `form:"statuses"`
+	}
+	params := controller.Validated[usersParams](ctx)
+	pagination := controller.GetPagination(ctx, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+	request := userdto.GetUsersListRequest{
+		Statuses: params.Statuses,
+		Offset:   offset,
+		Limit:    limit,
+	}
+	users := userController.userService.GetUsersByStatus(request)
+
+	controller.Response(ctx, 200, "", users)
+}
+
+func (userController *AdminUserController) BanUser(ctx *gin.Context) {
+	type banParams struct {
+		UserID uint `uri:"userID"`
+	}
+	params := controller.Validated[banParams](ctx)
+
+	userController.userService.BanUser(params.UserID)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.banUser")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (userController *AdminUserController) UnbanUser(ctx *gin.Context) {
+	type unbanParams struct {
+		UserID uint `uri:"userID"`
+	}
+	params := controller.Validated[unbanParams](ctx)
+
+	userController.userService.UnbanUser(params.UserID)
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.unbanUser")
 	controller.Response(ctx, 200, message, nil)
 }
