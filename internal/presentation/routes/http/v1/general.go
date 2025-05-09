@@ -34,7 +34,7 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	news := routerGroup.Group("/news")
 	{
-		news.GET("")
-		news.GET(":/newsID")
+		news.GET("", app.Controllers.General.NewsController.GetNewsList)
+		news.GET(":/newsID", app.Controllers.General.NewsController.GetNews)
 	}
 }
