@@ -45,19 +45,19 @@ func (role RoleName) Permissions() []PermissionType {
 func (role RoleName) String() string {
 	switch role {
 	case SuperAdmin:
-		return "superAdmin"
+		return "سوپر ادمین"
 	case Customer:
-		return "customer"
+		return "مشتری"
 	case Technician:
-		return "technician"
+		return "تکنسین"
 	case CorporationManager:
-		return "corporationManager"
+		return "مدیر سازمان"
 	case SupportAgent:
-		return "supportAgent"
+		return "پشتیبان"
 	case ContentManager:
-		return "contentManager"
+		return "مدیر محتوا"
 	case Moderator:
-		return "moderator"
+		return "ناظر"
 	}
 	return "unknown"
 }
