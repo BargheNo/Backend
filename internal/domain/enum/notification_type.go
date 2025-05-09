@@ -35,11 +35,11 @@ var notificationEmailTemplate = map[NotificationType]string{
 func (notificationType NotificationType) String() string {
 	switch notificationType {
 	case ChatNotificationType:
-		return "chat"
+		return "پیام جدید"
 	case CorpSendBidNotificationType:
-		return "bid"
+		return "پیشنهادات قیمت جدید"
 	case ReportCreated:
-		return "report"
+		return "گزارشات جدید"
 	}
 	return ""
 }
