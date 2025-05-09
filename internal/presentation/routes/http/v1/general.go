@@ -31,4 +31,10 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		notifications.GET("/type", app.Controllers.General.NotificationController.GetContactTypes)
 	}
+
+	news := routerGroup.Group("/news")
+	{
+		news.GET("")
+		news.GET(":/newsID")
+	}
 }

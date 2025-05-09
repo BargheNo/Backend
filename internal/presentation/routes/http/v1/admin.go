@@ -55,4 +55,19 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		report.GET("/panel", app.Controllers.Admin.ReportController.GetPanelReports)
 		report.POST("/resolve/:reportID", app.Controllers.Admin.ReportController.ResolveReport)
 	}
+
+	news := routerGroup.Group("/news")
+	{
+		news.POST("/draft")
+		news.GET("")
+
+		newsSubgroup := news.Group("/:newsID")
+		{
+			newsSubgroup.POST("/finalize")
+			newsSubgroup.GET("")
+			newsSubgroup.PUT("")
+			newsSubgroup.DELETE("")
+		}
+
+	}
 }
