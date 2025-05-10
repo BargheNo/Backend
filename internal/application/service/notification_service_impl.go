@@ -149,6 +149,7 @@ func (notificationService *NotificationService) GetNotificationsType() []notific
 
 	for i, notificationType := range notificationTypes {
 		notificationTypesResponse[i] = notificationdto.NotificationTypeResponse{
+			ID:            notificationType.ID,
 			Name:          notificationType.Name.String(),
 			Description:   notificationType.Description,
 			SupportsEmail: notificationType.SupportsEmail,
@@ -170,6 +171,7 @@ func (notificationService *NotificationService) GetUserNotifications(notificatio
 			continue
 		}
 		notificationTypeResponse := notificationdto.NotificationTypeResponse{
+			ID:            notificationType.ID,
 			Name:          notificationType.Name.String(),
 			Description:   notificationType.Description,
 			SupportsEmail: notificationType.SupportsEmail,
@@ -218,6 +220,7 @@ func (notificationService *NotificationService) GetUserNotificationSettings(user
 			continue
 		}
 		notificationTypeResponse := notificationdto.NotificationTypeResponse{
+			ID:            notificationType.ID,
 			Name:          notificationType.Name.String(),
 			Description:   notificationType.Description,
 			SupportsEmail: notificationType.SupportsEmail,
