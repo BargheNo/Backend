@@ -13,6 +13,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/message"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 )
 
@@ -149,6 +150,7 @@ func (notificationService *NotificationService) GetNotificationsType() []notific
 
 	for i, notificationType := range notificationTypes {
 		notificationTypesResponse[i] = notificationdto.NotificationTypeResponse{
+			ID:            notificationType.ID,
 			Name:          notificationType.Name.String(),
 			Description:   notificationType.Description,
 			SupportsEmail: notificationType.SupportsEmail,
@@ -160,8 +162,10 @@ func (notificationService *NotificationService) GetNotificationsType() []notific
 
 func (notificationService *NotificationService) GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) []notificationdto.NotificationListResponse {
 	notificationService.userService.DoesUserExist(notificationsRequest.UserID)
+	paginationModifier := repositoryimpl.NewPaginationModifier(notificationsRequest.Limit, notificationsRequest.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
-	notifications := notificationService.notificationRepository.GetNotificationsByTypesAndUserID(notificationService.db, notificationsRequest.UserID, notificationsRequest.Types)
+	notifications := notificationService.notificationRepository.GetNotificationsByTypesAndUserID(notificationService.db, notificationsRequest.UserID, notificationsRequest.Types, paginationModifier, sortingModifier)
 	notificationsResponse := make([]notificationdto.NotificationListResponse, len(notifications))
 
 	for i, notification := range notifications {
@@ -170,6 +174,7 @@ func (notificationService *NotificationService) GetUserNotifications(notificatio
 			continue
 		}
 		notificationTypeResponse := notificationdto.NotificationTypeResponse{
+			ID:            notificationType.ID,
 			Name:          notificationType.Name.String(),
 			Description:   notificationType.Description,
 			SupportsEmail: notificationType.SupportsEmail,
@@ -218,6 +223,7 @@ func (notificationService *NotificationService) GetUserNotificationSettings(user
 			continue
 		}
 		notificationTypeResponse := notificationdto.NotificationTypeResponse{
+			ID:            notificationType.ID,
 			Name:          notificationType.Name.String(),
 			Description:   notificationType.Description,
 			SupportsEmail: notificationType.SupportsEmail,

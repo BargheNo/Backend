@@ -8,6 +8,7 @@ type NotificationListResponse struct {
 }
 
 type NotificationTypeResponse struct {
+	ID            uint   `json:"id"`
 	Name          string `json:"name"`
 	Description   string `json:"description"`
 	SupportsEmail bool   `json:"supportsEmail"`
