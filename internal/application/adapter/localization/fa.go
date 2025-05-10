@@ -36,6 +36,7 @@ var Persian = map[string]interface{}{
 	"ticketComment":       "نظر در مورد درخواست پشتیبانی",
 	"report":              "گزارش",
 	"contactInformation":  "پل ارتباطی",
+	"news":                "اخبار",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",

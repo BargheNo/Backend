@@ -7,7 +7,6 @@ import (
 
 type News struct {
 	database.Model
-	ID       string `json:"id"`
 	Title    string `json:"title"`
 	Content  string `json:"content_html"`
 	AuthorID uint   `gorm:"not null;index"`

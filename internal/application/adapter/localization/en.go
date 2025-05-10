@@ -36,6 +36,7 @@ var English = map[string]interface{}{
 	"ticketComment":       "ticket comment",
 	"report":              "report",
 	"contactInformation":  "contact information",
+	"news":                "news",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
