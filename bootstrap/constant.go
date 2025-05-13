@@ -101,6 +101,7 @@ type ErrorTag struct {
 	AlreadyBlocked         string
 	AlreadyActive          string
 	AlreadyResolved        string
+	AlreadyDraft           string
 }
 
 type SMSTemplates struct {
@@ -259,6 +260,7 @@ func NewConstants() *Constants {
 			AlreadyBlocked:         "alreadyBlocked",
 			AlreadyActive:          "alreadyActive",
 			AlreadyResolved:        "alreadyResolved",
+			AlreadyDraft:           "alreadyDraft",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

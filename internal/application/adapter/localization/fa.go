@@ -74,6 +74,7 @@ var Persian = map[string]interface{}{
 		"alreadyBlocked":         "این {0} از پیش مسدود شده است.",
 		"alreadyActive":          "این {0} از پیش فعال شده است.",
 		"alreadyResolved":        "این {0} قبلا بررسی شده است.",
+		"alreadyDraft":           "این {0} قبلا در حالت پیش نویس قرار گرفته است.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
@@ -121,6 +122,9 @@ var Persian = map[string]interface{}{
 		"banUser":                   "کاربر با موفقیت محدود شد.",
 		"unbanUser":                 "کاربر با موفقیت رفع محدود شد.",
 		"createDraftNews":           "پیش نویس خبر با موفقیت ساخته شد.",
+		"editNews":                  "خبر با موفقیت به روز رسانی شد.",
+		"publishNews":               "خبر با موفقیت منتشر شد.",
+		"unpublishNews":             "خبر با موفقیت به حالت پیش نویس تغییر کرد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

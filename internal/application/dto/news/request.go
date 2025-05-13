@@ -8,3 +8,17 @@ type CreateNewsRequest struct {
 	AuthorID uint
 	Status   enum.NewsStatus
 }
+
+type EditNewsRequest struct {
+	NewsID   uint
+	AuthorID uint
+	Title    *string
+	Content  *string
+	Status   uint
+}
+
+type EditNewsStatusRequest struct {
+	NewsID   uint
+	AuthorID uint
+	Status   uint
+}

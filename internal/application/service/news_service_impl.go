@@ -5,6 +5,7 @@ import (
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -31,7 +32,7 @@ func NewNewsService(
 	}
 }
 
-func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) {
+func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) newsdto.NewsResponse {
 	ok := newsService.userService.IsUserActive(request.AuthorID)
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
@@ -53,6 +54,74 @@ func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) {
 		Status:   request.Status,
 	}
 	if err := newsService.newsRepository.CreateNews(newsService.db, news); err != nil {
+		panic(err)
+	}
+	newsResponse := newsdto.NewsResponse{
+		ID:      news.ID,
+		Title:   news.Title,
+		Content: news.Content,
+		Status:  news.Status,
+	}
+	return newsResponse
+}
+
+func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) {
+	ok := newsService.userService.IsUserActive(request.AuthorID)
+	if !ok {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.News,
+		}
+		panic(forbiddenError)
+	}
+	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
+		panic(notFoundError)
+	}
+
+	if request.Title != nil {
+		news.Title = *request.Title
+	}
+	if request.Content != nil {
+		news.Content = *request.Content
+	}
+	news.Status = enum.NewsStatus(request.Status)
+
+	if err := newsService.newsRepository.UpdateNews(newsService.db, news); err != nil {
+		panic(err)
+	}
+}
+
+func (newsService *NewsService) UpdateNewsStatus(request newsdto.EditNewsStatusRequest) {
+	ok := newsService.userService.IsUserActive(request.AuthorID)
+	if !ok {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.News,
+		}
+		panic(forbiddenError)
+	}
+
+	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
+		panic(notFoundError)
+	}
+
+	if enum.NewsStatus(request.Status) == enum.NewsStatusActive && news.Status == enum.NewsStatusActive {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(newsService.constants.Field.News, newsService.constants.Tag.AlreadyActive)
+		panic(conflictErrors)
+	}
+	if enum.NewsStatus(request.Status) == enum.NewsStatusDraft && news.Status == enum.NewsStatusDraft {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(newsService.constants.Field.News, newsService.constants.Tag.AlreadyDraft)
+		panic(conflictErrors)
+	}
+
+	news.Status = enum.NewsStatus(request.Status)
+	if err := newsService.newsRepository.UpdateNews(newsService.db, news); err != nil {
 		panic(err)
 	}
 }

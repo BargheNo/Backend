@@ -74,6 +74,7 @@ var English = map[string]interface{}{
 		"alreadyBlocked":         "This {0} has been already blocked.",
 		"alreadyActive":          "This {0} has been already active.",
 		"alreadyResolved":        "This {0} has been already resolved.",
+		"alreadyDraft":           "This {0} has been already drafted.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -121,6 +122,9 @@ var English = map[string]interface{}{
 		"banUser":                   "User get banned successfully.",
 		"unbanUser":                 "User get unbanned successfully.",
 		"createDraftNews":           "Draft news has been created successfully.",
+		"editNews":                  "News has been updated successfully.",
+		"publishNews":               "News has been successfully published.",
+		"unpublishNews":             "News has been successfully drafted.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",
