@@ -40,6 +40,12 @@ func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) {
 		}
 		panic(forbiddenError)
 	}
+	_, exist := newsService.newsRepository.FindNewsByTittle(newsService.db, request.Title)
+	if exist {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(newsService.constants.Field.Name, newsService.constants.Tag.AlreadyExist)
+		panic(conflictErrors)
+	}
 	news := &entity.News{
 		Title:    request.Title,
 		Content:  request.Content,

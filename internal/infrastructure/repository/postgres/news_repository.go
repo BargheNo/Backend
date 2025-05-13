@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	"gorm.io/gorm"
 )
 
 type NewsRepository struct {
@@ -12,6 +13,18 @@ func NewNewsRepository() *NewsRepository {
 	return &NewsRepository{}
 }
 
-func (repo *UserRepository) CreateNews(db database.Database, news *entity.News) error {
+func (repo *NewsRepository) FindNewsByTittle(db database.Database, title string) (*entity.News, bool) {
+	var news entity.News
+	result := db.GetDB().Where("title = ?", title).First(&news)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &news, true
+}
+
+func (repo *NewsRepository) CreateNews(db database.Database, news *entity.News) error {
 	return db.GetDB().Create(&news).Error
 }

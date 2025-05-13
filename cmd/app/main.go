@@ -50,6 +50,7 @@ func main() {
 		&entity.Ticket{},
 		&entity.TicketComment{},
 		&entity.Report{},
+		&entity.News{},
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()

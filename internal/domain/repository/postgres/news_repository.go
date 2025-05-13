@@ -6,5 +6,6 @@ import (
 )
 
 type NewsRepository interface {
+	FindNewsByTittle(db database.Database, title string) (*entity.News, bool)
 	CreateNews(db database.Database, news *entity.News) error
 }

@@ -37,6 +37,7 @@ var English = map[string]interface{}{
 	"report":              "report",
 	"contactInformation":  "contact information",
 	"news":                "news",
+	"tittle":              "tittle",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -119,6 +120,7 @@ var English = map[string]interface{}{
 		"reportResolved":            "Report has been successfully resolved.",
 		"banUser":                   "User get banned successfully.",
 		"unbanUser":                 "User get unbanned successfully.",
+		"createDraftNews":           "Draft news has been created successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

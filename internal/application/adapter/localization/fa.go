@@ -37,6 +37,7 @@ var Persian = map[string]interface{}{
 	"report":              "گزارش",
 	"contactInformation":  "پل ارتباطی",
 	"news":                "اخبار",
+	"tittle":              "عنوان",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -119,6 +120,7 @@ var Persian = map[string]interface{}{
 		"reportResolved":            "گزارش شما با موفقیت بررسی شد.",
 		"banUser":                   "کاربر با موفقیت محدود شد.",
 		"unbanUser":                 "کاربر با موفقیت رفع محدود شد.",
+		"createDraftNews":           "پیش نویس خبر با موفقیت ساخته شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",
