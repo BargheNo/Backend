@@ -14,6 +14,7 @@ import (
 	"github.com/BargheNo/Backend/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserServiceTestSuite struct {
@@ -141,7 +142,6 @@ func (s *UserServiceTestSuite) TestGetUserCredential() {
 		s.userRepository.AssertExpectations(s.T())
 	})
 }
-
 func (s *UserServiceTestSuite) TestRegister() {
 	s.Run("success - User registered", func() {
 		var nilOTPData *userdto.OTPData = nil
@@ -388,7 +388,6 @@ func (s *UserServiceTestSuite) TestVerifyPhone() {
 		s.otpService.AssertExpectations(s.T())
 	})
 }
-
 func (s *UserServiceTestSuite) TestFindUserPermissions() {
 	s.Run("success - User permissions found", func() {
 		user := &entity.User{
@@ -421,6 +420,119 @@ func (s *UserServiceTestSuite) TestFindUserPermissions() {
 		})
 
 		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestLogin() {
+	s.Run("success - User logged in", func() {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Password@123"), 14)
+		mockAccessToken := "mock-access-token"
+		mockRefreshToken := "mock-refresh-token"
+		user := &entity.User{
+			FirstName:     "John",
+			LastName:      "Doe",
+			PhoneVerified: true,
+			Password:      string(hashedPassword),
+			Roles: []entity.Role{
+				{
+					Name: "admin",
+				},
+				{
+					Name: "common",
+				},
+			},
+		}
+
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+		s.jwtService.On("GenerateToken", mock.Anything).Return(mockAccessToken, mockRefreshToken).Once()
+		s.userRepository.On("FindUserRoles", s.db, user).Return(nil).Once()
+		s.userRepository.On("FindRolePermissions", s.db, mock.Anything).Return(nil).Twice()
+
+		request := userdto.LoginRequest{
+			Phone:    "1234567890",
+			Password: "Password@123",
+		}
+		response := s.userService.Login(request)
+
+		s.Equal(response.AccessToken, mockAccessToken)
+		s.Equal(response.RefreshToken, mockRefreshToken)
+		s.Equal(response.FirstName, user.FirstName)
+		s.Equal(response.LastName, user.LastName)
+
+		s.userRepository.AssertExpectations(s.T())
+		s.jwtService.AssertExpectations(s.T())
+	})
+	s.Run("error - Wrong Password", func() {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Password@123"), 14)
+		user := &entity.User{
+			PhoneVerified: true,
+			Password:      string(hashedPassword),
+			Roles: []entity.Role{
+				{
+					Name: "admin",
+				},
+				{
+					Name: "common",
+				},
+			},
+		}
+
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.LoginRequest{
+			Phone:    "1234567890",
+			Password: "Password@1234",
+		}
+		s.Panics(func() {
+			s.userService.Login(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.jwtService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.LoginRequest{
+			Phone:    "1234567890",
+			Password: "Password@1234",
+		}
+		s.Panics(func() {
+			s.userService.Login(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.jwtService.AssertExpectations(s.T())
+	})
+	s.Run("error - Phone not verified", func() {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Password@123"), 14)
+		user := &entity.User{
+			PhoneVerified: false,
+			Password:      string(hashedPassword),
+			Roles: []entity.Role{
+				{
+					Name: "admin",
+				},
+				{
+					Name: "common",
+				},
+			},
+		}
+
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.LoginRequest{
+			Phone:    "1234567890",
+			Password: "Password@1234",
+		}
+		s.Panics(func() {
+			s.userService.Login(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.jwtService.AssertExpectations(s.T())
 	})
 }
 func TestUserService(t *testing.T) {
