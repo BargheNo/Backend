@@ -535,6 +535,76 @@ func (s *UserServiceTestSuite) TestLogin() {
 		s.jwtService.AssertExpectations(s.T())
 	})
 }
+
+func (s *UserServiceTestSuite) TestForgotPassword() {
+	s.Run("success - OTP sent", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		otp := "123456"
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+		s.otpService.On("GenerateOTP").Return(otp, 2)
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, otp, mock.Anything).Return(nil).Once()
+
+		request := userdto.ForgotPasswordRequest{
+			Phone: "1234567890",
+		}
+		s.userService.ForgotPassword(request)
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.ForgotPasswordRequest{
+			Phone: "1234567890",
+		}
+		s.Panics(func() {
+			s.userService.ForgotPassword(request)
+		})
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Phone not verified", func() {
+		user := &entity.User{
+			PhoneVerified: false,
+		}
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.ForgotPasswordRequest{
+			Phone: "1234567890",
+		}
+		s.Panics(func() {
+			s.userService.ForgotPassword(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Set OTP to cache error", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		otp := "123456"
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+		s.otpService.On("GenerateOTP").Return(otp, 2)
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, otp, mock.Anything).Return(errors.New("test error")).Once()
+
+		request := userdto.ForgotPasswordRequest{
+			Phone: "1234567890",
+		}
+		s.Panics(func() {
+			s.userService.ForgotPassword(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+	})
+}
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
