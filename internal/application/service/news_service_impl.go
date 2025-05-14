@@ -38,6 +38,7 @@ func (newsService *NewsService) GetAllNewsStatuses() []newsdto.NewsStatusesRespo
 		enum.NewsStatusActive,
 		enum.NewsStatusDraft,
 	}
+
 	statuses := make([]newsdto.NewsStatusesResponse, len(allowedStatuses))
 	for i, status := range allowedStatuses {
 		statuses[i] = newsdto.NewsStatusesResponse{
@@ -48,11 +49,18 @@ func (newsService *NewsService) GetAllNewsStatuses() []newsdto.NewsStatusesRespo
 	return statuses
 }
 
-func (newsService *NewsService) GetNews(newsID uint) newsdto.NewsResponse {
-	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, newsID)
+func (newsService *NewsService) GetNews(request newsdto.GetNewsRequest) newsdto.NewsResponse {
+	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
 		panic(notFoundError)
+	}
+	if request.UserType == enum.UserTypeGuest && news.Status == enum.NewsStatusDraft {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.News,
+		}
+		panic(forbiddenError)
 	}
 	return newsdto.NewsResponse{
 		ID:      news.ID,

@@ -33,3 +33,8 @@ type GetNewsListRequest struct {
 	Offset   int
 	Limit    int
 }
+
+type GetNewsRequest struct {
+	NewsID   uint
+	UserType enum.UserType
+}

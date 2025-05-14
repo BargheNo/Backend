@@ -6,7 +6,7 @@ import (
 
 type NewsService interface {
 	GetAllNewsStatuses() []newsdto.NewsStatusesResponse
-	GetNews(newsID uint) newsdto.NewsResponse
+	GetNews(request newsdto.GetNewsRequest) newsdto.NewsResponse
 	GetNewsList(request newsdto.GetNewsListRequest) []newsdto.NewsResponse
 	CreateNews(request newsdto.CreateNewsRequest) newsdto.NewsResponse
 	EditNews(request newsdto.EditNewsRequest)

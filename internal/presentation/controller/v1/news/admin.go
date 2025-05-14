@@ -116,7 +116,7 @@ func (newsController *AdminNewsController) GetAllNewsStatuses(ctx *gin.Context) 
 
 func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 	type getNewsParams struct {
-		Statuses []uint `uri:"newsID" validate:"required"`
+		Statuses []uint `form:"statuses" validate:"required"`
 	}
 	params := controller.Validated[getNewsParams](ctx)
 	pagination := controller.GetPagination(ctx, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
@@ -137,7 +137,12 @@ func (newsController *AdminNewsController) GetNews(ctx *gin.Context) {
 		NewsID uint `uri:"newsID" validate:"required"`
 	}
 	params := controller.Validated[getNewsParams](ctx)
-	news := newsController.newsService.GetNews(params.NewsID)
+
+	getNewsRequest := newsdto.GetNewsRequest{
+		NewsID:   params.NewsID,
+		UserType: enum.UserTypeAdmin,
+	}
+	news := newsController.newsService.GetNews(getNewsRequest)
 
 	controller.Response(ctx, 200, "", news)
 }
