@@ -1027,6 +1027,152 @@ func (s *UserServiceTestSuite) TestFindUserByPhone() {
 		s.userRepository.AssertExpectations(s.T())
 	})
 }
+
+func (s *UserServiceTestSuite) TestUpdateProfile() {
+	s.Run("success - Profile updated", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(&userdto.OTPData{
+			OTP:      "123456",
+			Attempts: 0,
+		}, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.otpService.On("GenerateOTP").Return("123456", 2).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+		s.s3Storage.On("UploadObject", enum.ProfilePic, mock.Anything, mock.Anything).Return().Once()
+		s.s3Storage.On("DeleteObject", enum.ProfilePic, mock.Anything).Return(nil).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(nil).Once()
+
+		stringPtr := func(s string) *string {
+			return &s
+		}
+
+		request := userdto.UpdateProfileRequest{
+			UserID:       1,
+			FirstName:    stringPtr("John"),
+			LastName:     stringPtr("Doe"),
+			Email:        stringPtr("test@example.com"),
+			NationalCode: stringPtr("1234567890"),
+			ProfilePic: &multipart.FileHeader{
+				Filename: "test.jpg",
+				Size:     int64(len([]byte("test"))),
+			},
+			TemplateFile: "template.html",
+			EmailSubject: "Welcome",
+		}
+		s.userService.UpdateProfile(request)
+
+		s.userRepository.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.emailService.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.UpdateProfileRequest{
+			UserID: 1,
+		}
+		s.Panics(func() {
+			s.userService.UpdateProfile(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - S3 error", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(&userdto.OTPData{
+			OTP:      "123456",
+			Attempts: 0,
+		}, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.otpService.On("GenerateOTP").Return("123456", 2).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+		s.s3Storage.On("UploadObject", enum.ProfilePic, mock.Anything, mock.Anything).Return().Once()
+		s.s3Storage.On("DeleteObject", enum.ProfilePic, mock.Anything).Return(errors.New("S3 error")).Once()
+
+		stringPtr := func(s string) *string {
+			return &s
+		}
+
+		request := userdto.UpdateProfileRequest{
+			UserID:       1,
+			FirstName:    stringPtr("John"),
+			LastName:     stringPtr("Doe"),
+			Email:        stringPtr("test@example.com"),
+			NationalCode: stringPtr("1234567890"),
+			ProfilePic: &multipart.FileHeader{
+				Filename: "test.jpg",
+				Size:     int64(len([]byte("test"))),
+			},
+			TemplateFile: "template.html",
+			EmailSubject: "Welcome",
+		}
+		s.Panics(func() {
+			s.userService.UpdateProfile(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.emailService.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+	})
+	s.Run("error - Update User Error", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(&userdto.OTPData{
+			OTP:      "123456",
+			Attempts: 0,
+		}, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.otpService.On("GenerateOTP").Return("123456", 2).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+		s.s3Storage.On("UploadObject", enum.ProfilePic, mock.Anything, mock.Anything).Return().Once()
+		s.s3Storage.On("DeleteObject", enum.ProfilePic, mock.Anything).Return(nil).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(errors.New("update error")).Once()
+
+		stringPtr := func(s string) *string {
+			return &s
+		}
+
+		request := userdto.UpdateProfileRequest{
+			UserID:       1,
+			FirstName:    stringPtr("John"),
+			LastName:     stringPtr("Doe"),
+			Email:        stringPtr("test@example.com"),
+			NationalCode: stringPtr("1234567890"),
+			ProfilePic: &multipart.FileHeader{
+				Filename: "test.jpg",
+				Size:     int64(len([]byte("test"))),
+			},
+			TemplateFile: "template.html",
+			EmailSubject: "Welcome",
+		}
+		s.Panics(func() {
+			s.userService.UpdateProfile(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.emailService.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+	})
+
+}
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
