@@ -890,6 +890,103 @@ func (s *UserServiceTestSuite) TestVerifyEmail() {
 	})
 }
 
+func (s *UserServiceTestSuite) TestResetPassword() {
+	s.Run("success - Password reset", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(nil).Once()
+
+		request := userdto.ResetPasswordRequest{
+			ID:       1,
+			Password: "NewPassword@123",
+		}
+		s.userService.ResetPassword(request)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.ResetPasswordRequest{
+			ID:       1,
+			Password: "NewPassword@123",
+		}
+		s.Panics(func() {
+			s.userService.ResetPassword(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Phone not verified", func() {
+		user := &entity.User{
+			PhoneVerified: false,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.ResetPasswordRequest{
+			ID:       1,
+			Password: "NewPassword@123",
+		}
+		s.Panics(func() {
+			s.userService.ResetPassword(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Update User Error", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(errors.New("update error")).Once()
+
+		request := userdto.ResetPasswordRequest{
+			ID:       1,
+			Password: "NewPassword@123",
+		}
+		s.Panics(func() {
+			s.userService.ResetPassword(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Hash Password Error", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.ResetPasswordRequest{
+			ID:       1,
+			Password: strings.Repeat("A1@j", 100),
+		}
+		s.Panics(func() {
+			s.userService.ResetPassword(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Password too weak", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.ResetPasswordRequest{
+			ID:       1,
+			Password: "weakpassword",
+		}
+		s.Panics(func() {
+			s.userService.ResetPassword(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
