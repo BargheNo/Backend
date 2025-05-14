@@ -95,7 +95,7 @@ func (userService *UserService) validateDuplicateEmail(email string) error {
 
 	user, userExist := userService.userRepository.FindUserByEmail(userService.db, email)
 	if userExist && user.EmailVerified {
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.AlreadyRegistered)
+		conflictErrors.Add(userService.constants.Field.Email, userService.constants.Tag.AlreadyRegistered)
 		return conflictErrors
 	}
 

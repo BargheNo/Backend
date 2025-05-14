@@ -33,8 +33,5 @@ func (s *S3StorageMock) GetPresignedURL(bucketType enum.BucketType, objectKey st
 }
 
 func (s *S3StorageMock) UploadObject(bucketType enum.BucketType, key string, file *multipart.FileHeader) {
-	args := s.Called(bucketType, key, file)
-	if args.Get(0) != nil {
-		panic(args.Get(0))
-	}
+	s.Called(bucketType, key, file)
 }

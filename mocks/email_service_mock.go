@@ -11,8 +11,5 @@ func NewEmailServiceMock() *EmailServiceMock {
 }
 
 func (s *EmailServiceMock) SendEmail(toEmail string, subject string, templateFile string, data interface{}) {
-	args := s.Called(toEmail, subject, templateFile, data)
-	if args.Get(0) != nil {
-		panic(args.Get(0))
-	}
+	s.Called(toEmail, subject, templateFile, data)
 }

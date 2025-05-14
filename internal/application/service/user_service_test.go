@@ -3,6 +3,7 @@ package serviceimpl
 import (
 	"context"
 	"errors"
+	"mime/multipart"
 	"strings"
 	"testing"
 	"time"
@@ -677,6 +678,93 @@ func (s *UserServiceTestSuite) TestVerifyOTP() {
 		s.otpService.AssertExpectations(s.T())
 	})
 }
+
+func (s *UserServiceTestSuite) TestCompleteRegister() {
+	s.Run("success - User registered", func() {
+		user := &entity.User{}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(nil).Once()
+
+		request := userdto.CompleteRegisterRequest{
+			UserID:       1,
+			NationalCode: "1234567890",
+			ProfilePic:   nil,
+			TemplateFile: "template.html",
+			EmailSubject: "Welcome",
+		}
+		s.userService.CompleteRegister(request)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("success - User entered new email", func() {
+		user := &entity.User{}
+		var nilUser *entity.User = nil
+
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(nil).Once()
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(&userdto.OTPData{
+			OTP:      "123456",
+			Attempts: 0,
+		}, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.otpService.On("GenerateOTP").Return("123456", 2).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+
+		request := userdto.CompleteRegisterRequest{
+			UserID: 1,
+			Email:  "test@example.com",
+		}
+		s.userService.CompleteRegister(request)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("success - User entered new profile pic", func() {
+		user := &entity.User{}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(nil).Once()
+		s.s3Storage.On("UploadObject", enum.ProfilePic, mock.Anything, mock.Anything).Return().Once()
+
+		request := userdto.CompleteRegisterRequest{
+			UserID: 1,
+			ProfilePic: &multipart.FileHeader{
+				Filename: "test.jpg",
+				Size:     int64(len([]byte("test"))),
+			},
+		}
+		s.userService.CompleteRegister(request)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.CompleteRegisterRequest{
+			UserID: 1,
+		}
+		s.Panics(func() {
+			s.userService.CompleteRegister(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Update User Error", func() {
+		user := &entity.User{}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(errors.New("update error")).Once()
+
+		request := userdto.CompleteRegisterRequest{
+			UserID: 1,
+		}
+		s.Panics(func() {
+			s.userService.CompleteRegister(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
