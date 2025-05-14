@@ -987,6 +987,46 @@ func (s *UserServiceTestSuite) TestResetPassword() {
 	})
 }
 
+func (s *UserServiceTestSuite) TestFindUserByPhone() {
+	s.Run("success - User found", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		phone := "1234567890"
+
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+
+		s.userService.FindUserByPhone(phone)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		phone := "1234567890"
+
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		s.Panics(func() {
+			s.userService.FindUserByPhone(phone)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Phone not verified", func() {
+		user := &entity.User{
+			PhoneVerified: false,
+		}
+		phone := "1234567890"
+
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+
+		s.Panics(func() {
+			s.userService.FindUserByPhone(phone)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
