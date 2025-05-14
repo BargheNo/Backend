@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -35,6 +36,19 @@ func (repo *NewsRepository) FindNewsByTittle(db database.Database, title string)
 		panic(result.Error)
 	}
 	return &news, true
+}
+
+func (repo *NewsRepository) FindNewsByStatus(db database.Database, statues []uint, opts ...repository.QueryModifier) []*entity.News {
+	var news []*entity.News
+	query := db.GetDB().Where("status IN ?", statues)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&news)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return news
 }
 
 func (repo *NewsRepository) UpdateNews(db database.Database, news *entity.News) error {

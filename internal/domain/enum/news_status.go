@@ -10,9 +10,9 @@ const (
 func (status NewsStatus) String() string {
 	switch status {
 	case NewsStatusActive:
-		return "active"
+		return "منتشر شده"
 	case NewsStatusDraft:
-		return "draft"
+		return "پیش نویس"
 	}
 	return ""
 }

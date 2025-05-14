@@ -27,3 +27,9 @@ type DeleteNewsRequest struct {
 	NewsIDs  []uint
 	AuthorID uint
 }
+
+type GetNewsListRequest struct {
+	Statuses []uint
+	Offset   int
+	Limit    int
+}

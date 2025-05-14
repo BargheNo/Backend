@@ -9,6 +9,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type NewsService struct {
@@ -30,6 +31,51 @@ func NewNewsService(
 		newsRepository: newsRepository,
 		db:             db,
 	}
+}
+
+func (newsService *NewsService) GetAllNewsStatuses() []newsdto.NewsStatusesResponse {
+	allowedStatuses := []enum.NewsStatus{
+		enum.NewsStatusActive,
+		enum.NewsStatusDraft,
+	}
+	statuses := make([]newsdto.NewsStatusesResponse, len(allowedStatuses))
+	for i, status := range allowedStatuses {
+		statuses[i] = newsdto.NewsStatusesResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return statuses
+}
+
+func (newsService *NewsService) GetNews(newsID uint) newsdto.NewsResponse {
+	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, newsID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
+		panic(notFoundError)
+	}
+	return newsdto.NewsResponse{
+		ID:      news.ID,
+		Title:   news.Title,
+		Content: news.Content,
+		Status:  news.Status,
+	}
+}
+
+func (newsService *NewsService) GetNewsList(request newsdto.GetNewsListRequest) []newsdto.NewsResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	news := newsService.newsRepository.FindNewsByStatus(newsService.db, request.Statuses, paginationModifier, sortingModifier)
+	newsResponse := make([]newsdto.NewsResponse, len(news))
+	for i, eachNews := range news {
+		newsResponse[i] = newsdto.NewsResponse{
+			ID:      eachNews.ID,
+			Title:   eachNews.Title,
+			Content: eachNews.Content,
+			Status:  eachNews.Status,
+		}
+	}
+	return newsResponse
 }
 
 func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) newsdto.NewsResponse {

@@ -8,3 +8,8 @@ type NewsResponse struct {
 	Content string          `json:"content"`
 	Status  enum.NewsStatus `json:"status"`
 }
+
+type NewsStatusesResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}

@@ -109,12 +109,37 @@ func (newsController *AdminNewsController) UnpublishNews(ctx *gin.Context) {
 	controller.Response(ctx, 200, message, nil)
 }
 
+func (newsController *AdminNewsController) GetAllNewsStatuses(ctx *gin.Context) {
+	statuses := newsController.newsService.GetAllNewsStatuses()
+	controller.Response(ctx, 200, "", statuses)
+}
+
 func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
-	// some codes here ...
+	type getNewsParams struct {
+		Statuses []uint `uri:"newsID" validate:"required"`
+	}
+	params := controller.Validated[getNewsParams](ctx)
+	pagination := controller.GetPagination(ctx, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	getNewsRequest := newsdto.GetNewsListRequest{
+		Statuses: params.Statuses,
+		Offset:   offset,
+		Limit:    limit,
+	}
+	news := newsController.newsService.GetNewsList(getNewsRequest)
+
+	controller.Response(ctx, 200, "", news)
 }
 
 func (newsController *AdminNewsController) GetNews(ctx *gin.Context) {
-	// some codes here ...
+	type getNewsParams struct {
+		NewsID uint `uri:"newsID" validate:"required"`
+	}
+	params := controller.Validated[getNewsParams](ctx)
+	news := newsController.newsService.GetNews(params.NewsID)
+
+	controller.Response(ctx, 200, "", news)
 }
 
 func (newsController *AdminNewsController) DeleteNews(ctx *gin.Context) {

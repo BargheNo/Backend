@@ -5,6 +5,9 @@ import (
 )
 
 type NewsService interface {
+	GetAllNewsStatuses() []newsdto.NewsStatusesResponse
+	GetNews(newsID uint) newsdto.NewsResponse
+	GetNewsList(request newsdto.GetNewsListRequest) []newsdto.NewsResponse
 	CreateNews(request newsdto.CreateNewsRequest) newsdto.NewsResponse
 	EditNews(request newsdto.EditNewsRequest)
 	UpdateNewsStatus(request newsdto.EditNewsStatusRequest)
