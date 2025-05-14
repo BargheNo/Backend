@@ -125,6 +125,7 @@ var English = map[string]interface{}{
 		"editNews":                  "News has been updated successfully.",
 		"publishNews":               "News has been successfully published.",
 		"unpublishNews":             "News has been successfully drafted.",
+		"deleteNews":                "ُSelected news has been successfully deleted.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

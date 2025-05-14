@@ -8,4 +8,5 @@ type NewsService interface {
 	CreateNews(request newsdto.CreateNewsRequest) newsdto.NewsResponse
 	EditNews(request newsdto.EditNewsRequest)
 	UpdateNewsStatus(request newsdto.EditNewsStatusRequest)
+	DeleteNewsStatus(request newsdto.DeleteNewsRequest)
 }

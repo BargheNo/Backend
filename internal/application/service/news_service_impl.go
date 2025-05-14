@@ -125,3 +125,22 @@ func (newsService *NewsService) UpdateNewsStatus(request newsdto.EditNewsStatusR
 		panic(err)
 	}
 }
+
+func (newsService *NewsService) DeleteNewsStatus(request newsdto.DeleteNewsRequest) {
+	ok := newsService.userService.IsUserActive(request.AuthorID)
+	if !ok {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.News,
+		}
+		panic(forbiddenError)
+	}
+
+	for _, newsID := range request.NewsIDs {
+		_, exist := newsService.newsRepository.FindNewsByID(newsService.db, newsID)
+		if !exist {
+			continue
+		}
+		newsService.newsRepository.DeleteNews(newsService.db, newsID)
+	}
+}

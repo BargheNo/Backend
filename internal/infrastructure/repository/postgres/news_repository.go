@@ -44,3 +44,7 @@ func (repo *NewsRepository) UpdateNews(db database.Database, news *entity.News) 
 func (repo *NewsRepository) CreateNews(db database.Database, news *entity.News) error {
 	return db.GetDB().Create(&news).Error
 }
+
+func (repo *NewsRepository) DeleteNews(db database.Database, newsID uint) error {
+	return db.GetDB().Delete(&entity.News{}, newsID).Error
+}

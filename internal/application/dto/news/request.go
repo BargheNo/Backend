@@ -22,3 +22,8 @@ type EditNewsStatusRequest struct {
 	AuthorID uint
 	Status   uint
 }
+
+type DeleteNewsRequest struct {
+	NewsIDs  []uint
+	AuthorID uint
+}

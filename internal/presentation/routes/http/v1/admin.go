@@ -60,6 +60,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		news.POST("/draft", app.Controllers.Admin.NewsController.CreateDraftNews)
 		news.GET("", app.Controllers.Admin.NewsController.GetNewsList)
+		news.DELETE("", app.Controllers.Admin.NewsController.DeleteNews)
 
 		newsSubgroup := news.Group("/:newsID")
 		{
@@ -67,7 +68,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			newsSubgroup.PUT("", app.Controllers.Admin.NewsController.EditNews)
 			newsSubgroup.PUT("/publish", app.Controllers.Admin.NewsController.PublishNews)
 			newsSubgroup.PUT("unpublish", app.Controllers.Admin.NewsController.UnpublishNews)
-			newsSubgroup.DELETE("", app.Controllers.Admin.NewsController.DeleteNews)
 		}
 
 	}

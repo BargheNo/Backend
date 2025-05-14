@@ -118,5 +118,19 @@ func (newsController *AdminNewsController) GetNews(ctx *gin.Context) {
 }
 
 func (newsController *AdminNewsController) DeleteNews(ctx *gin.Context) {
-	// some codes here ...
+	type deleteNewsParams struct {
+		NewsIDs []uint `uri:"newsIDs" validate:"required"`
+	}
+	params := controller.Validated[deleteNewsParams](ctx)
+	userID, _ := ctx.Get(newsController.constants.Context.ID)
+
+	deleteParams := newsdto.DeleteNewsRequest{
+		NewsIDs:  params.NewsIDs,
+		AuthorID: userID.(uint),
+	}
+	newsController.newsService.DeleteNewsStatus(deleteParams)
+
+	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteNews")
+	controller.Response(ctx, 200, message, nil)
 }

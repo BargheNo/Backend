@@ -10,4 +10,5 @@ type NewsRepository interface {
 	FindNewsByTittle(db database.Database, title string) (*entity.News, bool)
 	UpdateNews(db database.Database, news *entity.News) error
 	CreateNews(db database.Database, news *entity.News) error
+	DeleteNews(db database.Database, newsID uint) error
 }
