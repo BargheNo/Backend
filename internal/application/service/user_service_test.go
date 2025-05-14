@@ -467,14 +467,6 @@ func (s *UserServiceTestSuite) TestLogin() {
 		user := &entity.User{
 			PhoneVerified: true,
 			Password:      string(hashedPassword),
-			Roles: []entity.Role{
-				{
-					Name: "admin",
-				},
-				{
-					Name: "common",
-				},
-			},
 		}
 
 		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
@@ -511,14 +503,6 @@ func (s *UserServiceTestSuite) TestLogin() {
 		user := &entity.User{
 			PhoneVerified: false,
 			Password:      string(hashedPassword),
-			Roles: []entity.Role{
-				{
-					Name: "admin",
-				},
-				{
-					Name: "common",
-				},
-			},
 		}
 
 		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
@@ -603,6 +587,94 @@ func (s *UserServiceTestSuite) TestForgotPassword() {
 		s.userRepository.AssertExpectations(s.T())
 		s.otpService.AssertExpectations(s.T())
 		s.userCacheRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestVerifyOTP() {
+	s.Run("success - OTP verified", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+			Roles: []entity.Role{
+				{
+					Name: "admin",
+				},
+				{
+					Name: "common",
+				},
+			},
+		}
+		mockAccessToken := "mock-access-token"
+		mockRefreshToken := "mock-refresh-token"
+		otp := "123456"
+
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+		s.otpService.On("VerifyOTP", mock.Anything, otp).Return(nil).Once()
+		s.jwtService.On("GenerateToken", mock.Anything).Return(mockAccessToken, mockRefreshToken).Once()
+		s.userRepository.On("FindUserRoles", s.db, user).Return(nil).Once()
+		s.userRepository.On("FindRolePermissions", s.db, mock.Anything).Return(nil).Twice()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   otp,
+		}
+		s.userService.VerifyOTP(request)
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+		s.jwtService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		otp := "123456"
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   otp,
+		}
+		s.Panics(func() {
+			s.userService.VerifyOTP(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.jwtService.AssertExpectations(s.T())
+	})
+	s.Run("error - Phone not verified", func() {
+		user := &entity.User{
+			PhoneVerified: false,
+		}
+		otp := "123456"
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   otp,
+		}
+		s.Panics(func() {
+			s.userService.VerifyOTP(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+	})
+	s.Run("error - OTP verification failed", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		otp := "123456"
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+		s.otpService.On("VerifyOTP", mock.Anything, otp).Return(errors.New("invalid OTP")).Once()
+
+		request := userdto.VerifyPhoneRequest{
+			Phone: "1234567890",
+			OTP:   otp,
+		}
+		s.Panics(func() {
+			s.userService.VerifyOTP(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
 	})
 }
 func TestUserService(t *testing.T) {
