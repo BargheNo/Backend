@@ -594,6 +594,8 @@ func (s *UserServiceTestSuite) TestForgotPassword() {
 func (s *UserServiceTestSuite) TestVerifyOTP() {
 	s.Run("success - OTP verified", func() {
 		user := &entity.User{
+			FirstName:     "John",
+			LastName:      "Doe",
 			PhoneVerified: true,
 			Roles: []entity.Role{
 				{
@@ -618,7 +620,12 @@ func (s *UserServiceTestSuite) TestVerifyOTP() {
 			Phone: "1234567890",
 			OTP:   otp,
 		}
-		s.userService.VerifyOTP(request)
+		response := s.userService.VerifyOTP(request)
+
+		s.Equal(response.AccessToken, mockAccessToken)
+		s.Equal(response.RefreshToken, mockRefreshToken)
+		s.Equal(response.FirstName, user.FirstName)
+		s.Equal(response.LastName, user.LastName)
 
 		s.userRepository.AssertExpectations(s.T())
 		s.otpService.AssertExpectations(s.T())
@@ -762,6 +769,124 @@ func (s *UserServiceTestSuite) TestCompleteRegister() {
 		})
 
 		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestVerifyEmail() {
+	s.Run("success - Email verified", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+			EmailVerified: false,
+		}
+		otp := "123456"
+
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.otpService.On("VerifyOTP", mock.Anything, mock.Anything).Return(nil).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(nil).Once()
+
+		request := userdto.VerifyEmailRequest{
+			UserID: 1,
+			Email:  "test@example.com",
+			OTP:    otp,
+		}
+
+		s.userService.VerifyEmail(request)
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.VerifyEmailRequest{
+			UserID: 1,
+			Email:  "test@example.com",
+			OTP:    "123456",
+		}
+		s.Panics(func() {
+			s.userService.VerifyEmail(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+	})
+	s.Run("error - Phone not verified", func() {
+		user := &entity.User{
+			PhoneVerified: false,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.VerifyEmailRequest{
+			UserID: 1,
+			Email:  "test@example.com",
+			OTP:    "123456",
+		}
+		s.Panics(func() {
+			s.userService.VerifyEmail(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+	})
+	s.Run("error - Email already verified", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+			EmailVerified: true,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+
+		request := userdto.VerifyEmailRequest{
+			UserID: 1,
+			Email:  "test@example.com",
+			OTP:    "123456",
+		}
+		s.Panics(func() {
+			s.userService.VerifyEmail(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - OTP verification failed", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+			EmailVerified: false,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.otpService.On("VerifyOTP", mock.Anything, mock.Anything).Return(errors.New("invalid OTP")).Once()
+
+		request := userdto.VerifyEmailRequest{
+			UserID: 1,
+			Email:  "test@example.com",
+			OTP:    "123456",
+		}
+		s.Panics(func() {
+			s.userService.VerifyEmail(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+	})
+	s.Run("error - Update User Error", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+			EmailVerified: false,
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.otpService.On("VerifyOTP", mock.Anything, mock.Anything).Return(nil).Once()
+		s.userRepository.On("UpdateUser", s.db, user).Return(errors.New("update error")).Once()
+
+		request := userdto.VerifyEmailRequest{
+			UserID: 1,
+			Email:  "test@example.com",
+			OTP:    "123456",
+		}
+		s.Panics(func() {
+			s.userService.VerifyEmail(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
 	})
 }
 
