@@ -33,8 +33,8 @@ var supportsPush = map[NotificationType]bool{
 var notificationEmailTemplate = map[NotificationType]string{
 	ChatNotificationType:        "",
 	CorpSendBidNotificationType: "/get_bid/fa.html",
-	PanelReportCreated:          "/sample/sample.html",
-	MaintenanceReportCreated:    "/sample/sample.html",
+	PanelReportCreated:          "/panel_report/fa.html",
+	MaintenanceReportCreated:    "/maintenance_report/fa.html",
 }
 
 func (notificationType NotificationType) String() string {

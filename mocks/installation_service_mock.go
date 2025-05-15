@@ -72,9 +72,9 @@ func (m *InstallationServiceMock) GetCustomerPanels(listInfo installationdto.Cus
 	return args.Get(0).([]installationdto.CustomerPanelResponse)
 }
 
-func (m *InstallationServiceMock) GetPanelByID(panelID uint) installationdto.PanleResponse {
+func (m *InstallationServiceMock) GetPanelByID(panelID uint) installationdto.PanelResponse {
 	args := m.Called(panelID)
-	return args.Get(0).(installationdto.PanleResponse)
+	return args.Get(0).(installationdto.PanelResponse)
 }
 
 func (m *InstallationServiceMock) GetCustomerPanelByID(panelID uint) installationdto.CustomerPanelResponse {

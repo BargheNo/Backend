@@ -272,7 +272,7 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 	return response
 }
 
-func (installationService *InstallationService) GetPanelByID(panelID uint) installationdto.PanleResponse {
+func (installationService *InstallationService) GetPanelByID(panelID uint) installationdto.PanelResponse {
 	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
@@ -282,7 +282,7 @@ func (installationService *InstallationService) GetPanelByID(panelID uint) insta
 	customer := installationService.userService.GetUserCredential(panel.CustomerID)
 	corporation := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
 	address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
-	return installationdto.PanleResponse{
+	return installationdto.PanelResponse{
 		ID:                   panel.ID,
 		Name:                 panel.Name,
 		Customer:             customer,
