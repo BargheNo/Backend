@@ -66,6 +66,9 @@ func main() {
 	if err := app.Consumers.Email.Start(); err != nil {
 		panic(err)
 	}
+	if err := app.Consumers.Notification.Start(); err != nil {
+		panic(err)
+	}
 
 	routes.Run(ginEngine, app)
 

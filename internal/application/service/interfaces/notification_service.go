@@ -7,7 +7,7 @@ import (
 )
 
 type NotificationService interface {
-	CreateAndSendNotification(typeName enum.NotificationType, recipientID uint, additionalData interface{}) error
+	CreateAndSendNotification(typeName enum.NotificationType, recipientID uint, data []byte) error
 	CreateNotificationSettings(userID uint)
 	GetNotificationsType() []notificationdto.NotificationTypeResponse
 	GetUserNotificationSettings(userID uint) []notificationdto.NotificationSettingResponse

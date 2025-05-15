@@ -2,6 +2,8 @@ package websocket
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"sync"
 )
 
@@ -105,17 +107,48 @@ func (hub *Hub) handleBroadcast(message *Message) {
 	}
 }
 
-func (hub *Hub) SendToUser(userID uint, messageType string, content []byte) {
+func (hub *Hub) SendToUser(userID uint, messageType string, content []byte) error {
 	hub.mu.RLock()
 	defer hub.mu.RUnlock()
 
-	if clients, ok := hub.clients[userID]; ok {
-		for client := range clients {
+	clients, ok := hub.clients[userID]
+	if !ok || len(clients) == 0 {
+		return fmt.Errorf("no active connections for user %d", userID)
+	}
+
+	var safeClients []<-chan struct{}
+	for client := range clients {
+		select {
+		case <-client.done:
+			hub.mu.RUnlock()
+			hub.mu.Lock()
+			delete(clients, client)
+			if len(clients) == 0 {
+				delete(hub.clients, userID)
+			}
+			hub.mu.Unlock()
+			hub.mu.RLock()
+		default:
+			safeClients = append(safeClients, client.done)
+		}
+	}
+
+	if len(safeClients) == 0 {
+		return fmt.Errorf("all connections for user %d are closed", userID)
+	}
+
+	for client := range clients {
+		select {
+		case <-client.done:
+			continue
+		case client.send <- content:
+		default:
 			select {
-			case client.send <- content:
+			case hub.unregister <- client:
 			default:
-				hub.unregister <- client
+				log.Printf("Failed to unregister client: unregister channel is full")
 			}
 		}
 	}
+	return nil
 }

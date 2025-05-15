@@ -183,6 +183,7 @@ type Events struct {
 	NotificationsEmail string
 	NotificationsPush  string
 	UserRegistered     string
+	SendNotification   string
 }
 
 func NewConstants() *Constants {
@@ -322,6 +323,7 @@ func NewConstants() *Constants {
 				NotificationsEmail: "Notifications.Email",
 				NotificationsPush:  "Notifications.Push",
 				UserRegistered:     "Users.Register",
+				SendNotification:   "Notifications.Send",
 			},
 		},
 	}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اطلاعیه گزارش تعمیر و نگهداری</title>
+    <style>
+        body { font-family: 'Arial', 'Vazir', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background: #d32f2f; color: #ffffff; padding: 20px; text-align: center; }
+        .header img { max-width: 100px; }
+        .content { padding: 20px; }
+        .content h2 { color: #333333; }
+        .content p { color: #555555; line-height: 1.6; }
+        .report-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .report-details p { margin: 5px 0; }
+        .cta-button { display: inline-block; padding: 12px 25px; background: #d32f2f; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { background: #f4f4f4; padding: 10px; text-align: center; color: #777777; font-size: 12px; }
+        @media (max-width: 600px) { .container { margin: 10px; } .header, .content, .footer { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>گزارش جدید تعمیر و نگهداری ارسال شد</h1>
+        </div>
+        <div class="content">
+            <h2>مدیر محترم،</h2>
+            <p>یک گزارش تعمیر و نگهداری جدید برای یک پنل ارسال شده است. در زیر جزئیات گزارش آمده است:</p>
+            <div class="report-details">
+                <p><strong>نام پنل:</strong> {{.maintenanceRecord.panel.name}}</p>
+                <p><strong>مشتری:</strong> {{.maintenanceRecord.customer.firstName}} {{.maintenanceRecord.customer.lastName}}</p>
+                <p><strong>شرکت:</strong> {{.maintenanceRecord.corporation.name}}</p>
+                <p><strong>اپراتور:</strong> {{.maintenanceRecord.operator.firstName}} {{.maintenanceRecord.operator.lastName}}</p>
+                <p><strong>توضیحات گزارش:</strong> {{.description}}</p>
+                <p><strong>عنوان تعمیر و نگهداری:</strong> {{.maintenanceRecord.title}}</p>
+                <p><strong>جزئیات تعمیر و نگهداری:</strong> {{.maintenanceRecord.details}}</p>
+                <p><strong>تاریخ:</strong> {{.maintenanceRecord.date}}</p>
+                <p><strong>وضعیت:</strong> {{.status}}</p>
+                <p><strong>آدرس پنل:</strong>{{.maintenanceRecord.panel.address.street}}, {{.maintenanceRecord.panel.address.city}}, {{.maintenanceRecord.panel.address.province}}</p>
+            </div>
+            <p>لطفاً گزارش را بررسی کنید و اقدامات لازم را انجام دهید. می‌توانید جزئیات کامل را در داشبورد مدیریت مشاهده کنید.</p>
+            <a href="https://yourwebsite.com/admin/reports" class="cta-button">مشاهده جزئیات گزارش</a>
+        </div>
+        <div class="footer">
+            <p>© 2025 شرکت شما. تمامی حقوق محفوظ است.</p>
+            <p>با ما در support@yourwebsite.com تماس بگیرید</p>
+        </div>
+    </div>
+</body>
+</html>
