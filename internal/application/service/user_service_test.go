@@ -1402,6 +1402,359 @@ func (s *UserServiceTestSuite) TestCreateRole() {
 	})
 }
 
+func (s *UserServiceTestSuite) TestGetRoomDetails() {
+	s.Run("success - Room details found", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		role.Permissions = []entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("FindRolePermissions", s.db, role).Return(nil).Once()
+		response := s.userService.GetRoomDetails(1)
+
+		s.Equal(response.Name, "admin")
+		s.Equal(response.Permissions[0].Name, enum.PermissionGeneral.String())
+	})
+	s.Run("error - Role not found", func() {
+		var nilRole *entity.Role = nil
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(nilRole, false).Once()
+
+		s.Panics(func() {
+			s.userService.GetRoomDetails(1)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestGetRoleOwners() {
+	s.Run("success - Role owners found", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		users := []*entity.User{
+			{
+				Phone:          "09123456789",
+				ProfilePicPath: "profile.jpg",
+			},
+			{
+				Phone:          "09123456789",
+				ProfilePicPath: "profile.jpg",
+			},
+		}
+		role.Permissions = []entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("FindUsersByRoleID", s.db, mock.Anything).Return(users, nil).Once()
+		s.s3Storage.On("GetPresignedURL", enum.ProfilePic, mock.Anything, mock.Anything).Return("https://example.com/profile.jpg").Twice()
+
+		response := s.userService.GetRoleOwners(1)
+
+		s.Equal(response[0].Phone, "09123456789")
+		s.Equal(response[1].Phone, "09123456789")
+	})
+	s.Run("error - Role not found", func() {
+		var nilRole *entity.Role = nil
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(nilRole, false).Once()
+
+		s.Panics(func() {
+			s.userService.GetRoleOwners(1)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestGetUserRoles() {
+	s.Run("success - User roles found", func() {
+		user := &entity.User{
+			Roles: []entity.Role{
+				{
+					Name: "admin",
+				},
+				{
+					Name: "user",
+				},
+			},
+		}
+		user.Roles[0].Permissions = []entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+		user.Roles[1].Permissions = []entity.Permission{
+			{
+				Type:        enum.PermissionAll,
+				Description: "دسترسی کامل به سیستم",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("FindUserRoles", s.db, user).Return(nil).Once()
+		s.userRepository.On("FindRolePermissions", s.db, &user.Roles[0]).Return(nil).Once()
+		s.userRepository.On("FindRolePermissions", s.db, &user.Roles[1]).Return(nil).Once()
+
+		response := s.userService.GetUserRoles(1)
+
+		s.Equal(response[0].Name, "admin")
+		s.Equal(response[1].Name, "user")
+		s.Equal(response[0].Permissions[0].Name, enum.PermissionGeneral.String())
+		s.Equal(response[1].Permissions[0].Name, enum.PermissionAll.String())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		s.Panics(func() {
+			s.userService.GetUserRoles(1)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Find User Roles Error", func() {
+		user := &entity.User{}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("FindUserRoles", s.db, user).Return(errors.New("find user roles error")).Once()
+
+		s.Panics(func() {
+			s.userService.GetUserRoles(1)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestDeleteRole() {
+	s.Run("success - Role deleted", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("DeleteRole", s.db, mock.Anything).Return(nil).Once()
+
+		s.userService.DeleteRole(1)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Role not found", func() {
+		var nilRole *entity.Role = nil
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(nilRole, false).Once()
+
+		s.Panics(func() {
+			s.userService.DeleteRole(1)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Delete Role Error", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("DeleteRole", s.db, mock.Anything).Return(errors.New("delete role error")).Once()
+
+		s.Panics(func() {
+			s.userService.DeleteRole(1)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestUpdateRole() {
+	s.Run("success - Role updated", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		permissions := []*entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("ReplaceRolePermissions", s.db, role, mock.Anything).Return(nil).Once()
+		s.userRepository.On("FindPermissionByID", s.db, mock.Anything).Return(permissions[0], true).Once()
+
+		request := userdto.UpdateRoleRequest{
+			RoleID:        1,
+			PermissionIDs: []uint{1, 1},
+		}
+		s.userService.UpdateRole(request)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Role not found", func() {
+		var nilRole *entity.Role = nil
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(nilRole, false).Once()
+
+		s.Panics(func() {
+			s.userService.UpdateRole(userdto.UpdateRoleRequest{RoleID: 1, PermissionIDs: []uint{1, 1}})
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Role name update error", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		newName := "admin2"
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("UpdateRole", s.db, role).Return(errors.New("update role error")).Once()
+
+		request := userdto.UpdateRoleRequest{
+			RoleID: 1,
+			Name:   &newName,
+		}
+		s.Panics(func() {
+			s.userService.UpdateRole(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Permission not found", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		var nilPermission *entity.Permission = nil
+
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("FindPermissionByID", s.db, mock.Anything).Return(nilPermission, false).Once()
+
+		request := userdto.UpdateRoleRequest{
+			RoleID:        1,
+			PermissionIDs: []uint{1},
+		}
+		s.Panics(func() {
+			s.userService.UpdateRole(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Assign Permission to Role Error", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		permissions := []*entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("ReplaceRolePermissions", s.db, role, mock.Anything).Return(errors.New("assign permission to role error")).Once()
+		s.userRepository.On("FindPermissionByID", s.db, mock.Anything).Return(permissions[0], true).Once()
+
+		request := userdto.UpdateRoleRequest{
+			RoleID:        1,
+			PermissionIDs: []uint{1},
+		}
+		s.Panics(func() {
+			s.userService.UpdateRole(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestUpdateUserRoles() {
+	s.Run("success - User roles updated", func() {
+		user := &entity.User{
+			Roles: []entity.Role{
+				{
+					Name: "admin",
+				},
+				{
+					Name: "user",
+				},
+			},
+		}
+		role := &entity.Role{
+			Name: "admin2",
+		}
+
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("ReplaceUserRoles", s.db, user, mock.Anything).Return(nil).Once()
+
+		request := userdto.UpdateUserRolesRequest{
+			UserID:  1,
+			RoleIDs: []uint{1, 1},
+		}
+		s.userService.UpdateUserRoles(request)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - User not found", func() {
+		var nilUser *entity.User = nil
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		request := userdto.UpdateUserRolesRequest{
+			UserID:  1,
+			RoleIDs: []uint{1, 1},
+		}
+		s.Panics(func() {
+			s.userService.UpdateUserRoles(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Role not found", func() {
+		user := &entity.User{}
+		var nilRole *entity.Role = nil
+
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(nilRole, false).Once()
+
+		request := userdto.UpdateUserRolesRequest{
+			UserID:  1,
+			RoleIDs: []uint{1, 1},
+		}
+		s.Panics(func() {
+			s.userService.UpdateUserRoles(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Assign Role to User Error", func() {
+		user := &entity.User{}
+		role := &entity.Role{
+			Name: "admin",
+		}
+		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
+		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
+		s.userRepository.On("ReplaceUserRoles", s.db, user, mock.Anything).Return(errors.New("assign role to user error")).Once()
+
+		request := userdto.UpdateUserRolesRequest{
+			UserID:  1,
+			RoleIDs: []uint{1, 1},
+		}
+		s.Panics(func() {
+			s.userService.UpdateUserRoles(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
