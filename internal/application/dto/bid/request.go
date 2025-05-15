@@ -29,3 +29,7 @@ type GetRequestBidsRequest struct {
 	RequestID uint
 	UserID    uint
 }
+
+type BidNotificationData struct {
+	BidID                 uint
+}

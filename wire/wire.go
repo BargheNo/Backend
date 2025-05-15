@@ -77,6 +77,7 @@ var RepositoryProviderSet = wire.NewSet(
 
 var ServiceProviderSet = wire.NewSet(
 	wire.Struct(new(serviceimpl.UserServiceDeps), "*"),
+	wire.Struct(new(serviceimpl.NotificationServiceDeps), "*"),
 	serviceimpl.NewUserService,
 	serviceimpl.NewOTPService,
 	sms.NewSMSService,
@@ -188,6 +189,7 @@ var ConsumerProviderSet = wire.NewSet(
 	consumer.NewRegisterConsumer,
 	consumer.NewPushConsumer,
 	consumer.NewEmailConsumer,
+	consumer.NewSendNotificationConsumer,
 	wire.Struct(new(Consumers), "*"),
 )
 
@@ -361,9 +363,10 @@ type Seeds struct {
 }
 
 type Consumers struct {
-	Register *consumer.RegisterConsumer
-	Push     *consumer.PushConsumer
-	Email    *consumer.EmailConsumer
+	Register     *consumer.RegisterConsumer
+	Push         *consumer.PushConsumer
+	Email        *consumer.EmailConsumer
+	Notification *consumer.SendNotificationConsumer
 }
 
 type Application struct {

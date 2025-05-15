@@ -1,6 +1,7 @@
 package serviceimpl
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/BargheNo/Backend/bootstrap"
@@ -9,6 +10,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
+	"github.com/BargheNo/Backend/internal/domain/message"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
@@ -18,7 +20,7 @@ type BidService struct {
 	installationService service.InstallationService
 	userService         service.UserService
 	corporationService  service.CorporationService
-	notificationService service.NotificationService
+	rabbitMQ            message.Broker
 	bidRepository       repository.BidRepository
 	db                  database.Database
 }
@@ -28,7 +30,7 @@ func NewBidService(
 	installationService service.InstallationService,
 	userService service.UserService,
 	corporationService service.CorporationService,
-	notificationService service.NotificationService,
+	rabbitMQ message.Broker,
 	bidRepository repository.BidRepository,
 	db database.Database,
 ) *BidService {
@@ -37,7 +39,7 @@ func NewBidService(
 		installationService: installationService,
 		userService:         userService,
 		corporationService:  corporationService,
-		notificationService: notificationService,
+		rabbitMQ:            rabbitMQ,
 		bidRepository:       bidRepository,
 		db:                  db,
 	}
@@ -82,7 +84,25 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 		panic(err)
 	}
 
-	if err := bidService.notificationService.CreateAndSendNotification(enum.CorpSendBidNotificationType, installationRequest.Customer.ID, nil); err != nil {
+	additionalData := biddto.BidNotificationData{
+		BidID: bid.ID,
+	}
+	data, err := json.Marshal(additionalData)
+	if err != nil {
+		log.Println("Invalid data for message notification")
+	}
+
+	msg := struct {
+		TypeName    enum.NotificationType `json:"typeName"`
+		RecipientID uint                  `json:"recipientID"`
+		Data        []byte                `json:"data"`
+	}{
+		TypeName:    enum.CorpSendBidNotificationType,
+		RecipientID: installationRequest.Customer.ID,
+		Data:        data,
+	}
+
+	if err := bidService.rabbitMQ.PublishMessage(bidService.constants.RabbitMQ.Events.SendNotification, msg); err != nil {
 		log.Printf("error during send notification after bid: %v", err)
 	}
 }
@@ -128,6 +148,26 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 	}
 }
 
+func (bidService *BidService) GetBid(bidID uint) biddto.BidsResponse {
+	bid, exist := bidService.bidRepository.FindBidByID(bidService.db, bidID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
+		panic(notFoundError)
+	}
+
+	installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
+	bidder := bidService.userService.GetUserCredential(bid.BidderID)
+	return biddto.BidsResponse{
+		ID:                         bid.ID,
+		Bidder:                     bidder,
+		InstallationRequestDetails: installationRequest,
+		Description:                bid.Description,
+		Cost:                       bid.Cost,
+		InstallationTime:           bid.InstallationTime,
+		Status:                     bid.Status.String(),
+	}
+}
+
 func (bidService *BidService) GetCorporationBids(bidsRequest biddto.GetCorporationBidsRequest) []biddto.BidsResponse {
 	approved := bidService.corporationService.ISCorporationApproved(bidsRequest.CorporationID)
 	if !approved {
@@ -145,7 +185,7 @@ func (bidService *BidService) GetCorporationBids(bidsRequest biddto.GetCorporati
 	bidResponses := make([]biddto.BidsResponse, len(bids))
 	for i, bid := range bids {
 		installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
-		bidder := bidService.userService.GetUserCredential(bidsRequest.UserID)
+		bidder := bidService.userService.GetUserCredential(bid.BidderID)
 		bidResponses[i] = biddto.BidsResponse{
 			ID:                         bid.ID,
 			Bidder:                     bidder,
