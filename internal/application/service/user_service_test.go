@@ -1204,6 +1204,204 @@ func (s *UserServiceTestSuite) TestGetAllPermissions() {
 	})
 
 }
+
+func (s *UserServiceTestSuite) TestGetRolePermissions() {
+	s.Run("success - Role permissions found", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		role.Permissions = []entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+			{
+				Type:        enum.PermissionAll,
+				Description: "دسترسی کامل به سیستم",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+		s.userRepository.On("FindRolePermissions", s.db, role).Return(nil).Once()
+
+		response := s.userService.getRolePermissions(role)
+
+		s.Equal(response[0].Name, enum.PermissionGeneral.String())
+		s.Equal(response[1].Name, enum.PermissionAll.String())
+		s.Equal(response[0].Description, "دسترسی عمومی")
+		s.Equal(response[1].Description, "دسترسی کامل به سیستم")
+		s.Equal(response[0].Category, enum.CategoryGeneral.String())
+		s.Equal(response[1].Category, enum.CategoryGeneral.String())
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - repo error", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		s.userRepository.On("FindRolePermissions", s.db, role).Return(errors.New("repo error")).Once()
+		s.Panics(func() {
+			s.userService.getRolePermissions(role)
+		})
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestGetAllRoles() {
+	s.Run("success - Roles found", func() {
+		roles := []*entity.Role{
+			{
+				Name: "admin",
+			},
+			{
+				Name: "user",
+			},
+		}
+		roles[0].Permissions = []entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+		roles[1].Permissions = []entity.Permission{
+			{
+				Type:        enum.PermissionAll,
+				Description: "دسترسی کامل به سیستم",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+		s.userRepository.On("FindAllRoles", s.db).Return(roles, nil).Once()
+		s.userRepository.On("FindRolePermissions", s.db, roles[0]).Return(nil).Once()
+		s.userRepository.On("FindRolePermissions", s.db, roles[1]).Return(nil).Once()
+
+		response := s.userService.GetAllRoles()
+
+		s.Equal(response[0].Name, "admin")
+		s.Equal(response[1].Name, "user")
+		s.Equal(response[0].Permissions[0].Name, enum.PermissionGeneral.String())
+		s.Equal(response[1].Permissions[0].Name, enum.PermissionAll.String())
+		s.Equal(response[0].Permissions[0].Description, "دسترسی عمومی")
+		s.Equal(response[1].Permissions[0].Description, "دسترسی کامل به سیستم")
+		s.Equal(response[0].Permissions[0].Category, enum.CategoryGeneral.String())
+		s.Equal(response[1].Permissions[0].Category, enum.CategoryGeneral.String())
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestCreateRole() {
+	s.Run("success - Role created", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		var nilRole *entity.Role = nil
+		permissions := []*entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+			{
+				Type:        enum.PermissionAll,
+				Description: "دسترسی کامل به سیستم",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+		role.Permissions = nil
+		s.userRepository.On("FindRoleByName", s.db, "admin").Return(nilRole, false).Once()
+		s.userRepository.On("CreateRole", s.db, role).Return(nil).Once()
+		s.userRepository.On("FindPermissionByID", s.db, mock.Anything).Return(permissions[0], true).Once()
+		s.userRepository.On("AssignPermissionToRole", s.db, role, permissions[0]).Return(nil).Once()
+		s.userRepository.On("FindPermissionByID", s.db, mock.Anything).Return(permissions[1], true).Once()
+		s.userRepository.On("AssignPermissionToRole", s.db, role, permissions[1]).Return(nil).Once()
+
+		s.userService.CreateRole(userdto.NewRoleRequest{
+			Name:          "admin",
+			PermissionIDs: []uint{1, 2, 1},
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Role already exists", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+
+		s.userRepository.On("FindRoleByName", s.db, "admin").Return(role, true).Once()
+
+		request := userdto.NewRoleRequest{
+			Name:          "admin",
+			PermissionIDs: []uint{1},
+		}
+		s.Panics(func() {
+			s.userService.CreateRole(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Create Role Error", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		s.userRepository.On("FindRoleByName", s.db, "admin").Return(role, false).Once()
+		s.userRepository.On("CreateRole", s.db, role).Return(errors.New("create role error")).Once()
+
+		request := userdto.NewRoleRequest{
+			Name:          "admin",
+			PermissionIDs: []uint{1},
+		}
+		s.Panics(func() {
+			s.userService.CreateRole(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Permission not found", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		var nilPermission *entity.Permission = nil
+		s.userRepository.On("FindRoleByName", s.db, "admin").Return(role, false).Once()
+		s.userRepository.On("CreateRole", s.db, role).Return(nil).Once()
+		s.userRepository.On("FindPermissionByID", s.db, mock.Anything).Return(nilPermission, false).Once()
+
+		request := userdto.NewRoleRequest{
+			Name:          "admin",
+			PermissionIDs: []uint{1},
+		}
+		s.Panics(func() {
+			s.userService.CreateRole(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Assign Permission to Role Error", func() {
+		role := &entity.Role{
+			Name: "admin",
+		}
+		permission := &entity.Permission{
+			Type:        enum.PermissionGeneral,
+			Description: "دسترسی عمومی",
+			Category:    enum.CategoryGeneral,
+		}
+		s.userRepository.On("FindRoleByName", s.db, "admin").Return(role, false).Once()
+		s.userRepository.On("CreateRole", s.db, role).Return(nil).Once()
+		s.userRepository.On("FindPermissionByID", s.db, mock.Anything).Return(permission, true).Once()
+		s.userRepository.On("AssignPermissionToRole", s.db, role, permission).Return(errors.New("assign permission to role error")).Once()
+
+		request := userdto.NewRoleRequest{
+			Name:          "admin",
+			PermissionIDs: []uint{1},
+		}
+		s.Panics(func() {
+			s.userService.CreateRole(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestUserService(t *testing.T) {
 	suite.Run(t, new(UserServiceTestSuite))
 }
