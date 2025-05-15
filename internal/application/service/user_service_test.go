@@ -143,6 +143,7 @@ func (s *UserServiceTestSuite) TestGetUserCredential() {
 		s.userRepository.AssertExpectations(s.T())
 	})
 }
+
 func (s *UserServiceTestSuite) TestRegister() {
 	s.Run("success - User registered", func() {
 		var nilOTPData *userdto.OTPData = nil
@@ -389,6 +390,7 @@ func (s *UserServiceTestSuite) TestVerifyPhone() {
 		s.otpService.AssertExpectations(s.T())
 	})
 }
+
 func (s *UserServiceTestSuite) TestFindUserPermissions() {
 	s.Run("success - User permissions found", func() {
 		user := &entity.User{
@@ -1170,6 +1172,35 @@ func (s *UserServiceTestSuite) TestUpdateProfile() {
 		s.userCacheRepository.AssertExpectations(s.T())
 		s.emailService.AssertExpectations(s.T())
 		s.s3Storage.AssertExpectations(s.T())
+	})
+
+}
+
+func (s *UserServiceTestSuite) TestGetAllPermissions() {
+	s.Run("success - Permissions found", func() {
+		permissions := []*entity.Permission{
+			{
+				Type:        enum.PermissionGeneral,
+				Description: "دسترسی عمومی",
+				Category:    enum.CategoryGeneral,
+			},
+			{
+				Type:        enum.PermissionAll,
+				Description: "دسترسی کامل به سیستم",
+				Category:    enum.CategoryGeneral,
+			},
+		}
+		s.userRepository.On("FindAllPermissions", s.db).Return(permissions, nil).Once()
+		response := s.userService.GetAllPermissions()
+
+		s.Equal(response[0].Name, enum.PermissionGeneral.String())
+		s.Equal(response[1].Name, enum.PermissionAll.String())
+		s.Equal(response[0].Description, "دسترسی عمومی")
+		s.Equal(response[1].Description, "دسترسی کامل به سیستم")
+		s.Equal(response[0].Category, enum.CategoryGeneral.String())
+		s.Equal(response[1].Category, enum.CategoryGeneral.String())
+
+		s.userRepository.AssertExpectations(s.T())
 	})
 
 }
