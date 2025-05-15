@@ -185,6 +185,13 @@ func (notificationService *NotificationService) SendNotification(notification *e
 		if !user.EmailVerified {
 			return nil
 		}
+		// switch notificationType.Name {
+		// case enum.CorpSendBidNotificationType:
+		// 	data, err = notificationService.enrichBidData(notification.Data)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
 		msg := struct {
 			ToEmail      string      `json:"toEmail"`
 			Subject      string      `json:"subject"`
@@ -193,8 +200,8 @@ func (notificationService *NotificationService) SendNotification(notification *e
 		}{
 			ToEmail:      user.Email,
 			Subject:      "hello",
-			TemplateFile: "/sample/sample.html",
-			Data:         nil,
+			TemplateFile: notificationType.Name.EmailTemplatePath(),
+			Data:         data,
 		}
 
 		if err := notificationService.emailService.SendEmail(msg.ToEmail, msg.Subject, msg.TemplateFile, msg.Data); err != nil {

@@ -32,7 +32,7 @@ var supportsPush = map[NotificationType]bool{
 
 var notificationEmailTemplate = map[NotificationType]string{
 	ChatNotificationType:        "",
-	CorpSendBidNotificationType: "/sample/sample.html",
+	CorpSendBidNotificationType: "/get_bid/fa.html",
 	PanelReportCreated:          "/sample/sample.html",
 	MaintenanceReportCreated:    "/sample/sample.html",
 }

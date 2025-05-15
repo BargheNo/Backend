@@ -157,10 +157,12 @@ func (bidService *BidService) GetBid(bidID uint) biddto.BidsResponse {
 
 	installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
 	bidder := bidService.userService.GetUserCredential(bid.BidderID)
+	corporation := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
 	return biddto.BidsResponse{
 		ID:                         bid.ID,
 		Bidder:                     bidder,
 		InstallationRequestDetails: installationRequest,
+		Corporation:                corporation,
 		Description:                bid.Description,
 		Cost:                       bid.Cost,
 		InstallationTime:           bid.InstallationTime,
@@ -215,10 +217,12 @@ func (bidService *BidService) GetRequestBids(requestInfo biddto.GetRequestBidsRe
 	for i, bid := range bids {
 		installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
 		bidder := bidService.userService.GetUserCredential(bid.BidderID)
+		corporation := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
 		bidResponses[i] = biddto.BidsResponse{
 			ID:                         bid.ID,
 			Bidder:                     bidder,
 			InstallationRequestDetails: installationRequest,
+			Corporation:                corporation,
 			Description:                bid.Description,
 			Cost:                       bid.Cost,
 			InstallationTime:           bid.InstallationTime,
