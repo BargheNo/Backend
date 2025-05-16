@@ -1,9 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - test/installation
   pull_request:
     branches:
       - develop
@@ -27,4 +24,4 @@ jobs:
         run: go mod download
 
       - name: Run tests
-        run: go test ./test/
+        run: go test ./...
