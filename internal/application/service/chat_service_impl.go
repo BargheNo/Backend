@@ -162,6 +162,7 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 		}
 		panic(forbiddenError)
 	}
+
 	room, exist := chatService.chatRepository.GetRoomByID(chatService.db, roomID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: chatService.constants.Field.Room}
@@ -175,6 +176,7 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 		panic(forbiddenError)
 	}
 	chatService.validateRoomParticipantAccess(senderID, room.CustomerID, room.CorporationID)
+
 	message := &entity.ChatMessage{
 		RoomID:   roomID,
 		SenderID: senderID,
@@ -183,6 +185,7 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 	if err := chatService.chatRepository.CreateMessage(chatService.db, message); err != nil {
 		panic(err)
 	}
+
 	sender := chatService.userService.GetUserCredential(message.SenderID)
 	return chatdto.RoomMessagesResponse{
 		ID:        message.ID,

@@ -12,6 +12,7 @@ import (
 type CustomerNotificationController struct {
 	constants           *bootstrap.Constants
 	websocketSetting    *bootstrap.WebsocketSetting
+	pagination          *bootstrap.Pagination
 	notificationService service.NotificationService
 	jwtService          service.JWTService
 	userService         service.UserService
@@ -21,6 +22,7 @@ type CustomerNotificationController struct {
 func NewCustomerNotificationController(
 	constants *bootstrap.Constants,
 	websocketSetting *bootstrap.WebsocketSetting,
+	pagination *bootstrap.Pagination,
 	notificationService service.NotificationService,
 	jwtService service.JWTService,
 	userService service.UserService,
@@ -29,6 +31,7 @@ func NewCustomerNotificationController(
 	return &CustomerNotificationController{
 		constants:           constants,
 		websocketSetting:    websocketSetting,
+		pagination:          pagination,
 		notificationService: notificationService,
 		jwtService:          jwtService,
 		userService:         userService,
@@ -53,8 +56,21 @@ func (notificationController *CustomerNotificationController) MarkAsRead(ctx *gi
 }
 
 func (notificationController *CustomerNotificationController) GetUserNotifications(ctx *gin.Context) {
+	type notificationsParams struct {
+		Types []uint `form:"notificationTypes" validate:"required"`
+	}
+	params := controller.Validated[notificationsParams](ctx)
 	userID, _ := ctx.Get(notificationController.constants.Context.ID)
-	notificationsDetails := notificationController.notificationService.GetUserNotifications(userID.(uint))
+	pagination := controller.GetPagination(ctx, notificationController.pagination.DefaultPage, notificationController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	notificationsRequest := notificationdto.NotificationListRequest{
+		Types:  params.Types,
+		UserID: userID.(uint),
+		Offset: offset,
+		Limit:  limit,
+	}
+	notificationsDetails := notificationController.notificationService.GetUserNotifications(notificationsRequest)
 	controller.Response(ctx, 200, "", notificationsDetails)
 }
 
@@ -67,8 +83,8 @@ func (notificationController *CustomerNotificationController) GetUserNotificatio
 func (notificationController *CustomerNotificationController) UpdateSettings(ctx *gin.Context) {
 	type settingsParams struct {
 		SettingID      uint `uri:"settingID" validate:"required"`
-		IsEmailEnabled bool `json:"isEmailEnabled" validate:"required"`
-		IsPushEnabled  bool `json:"isPushEnabled" validate:"required"`
+		IsEmailEnabled bool `json:"isEmailEnabled"`
+		IsPushEnabled  bool `json:"isPushEnabled"`
 	}
 	params := controller.Validated[settingsParams](ctx)
 	userID, _ := ctx.Get(notificationController.constants.Context.ID)

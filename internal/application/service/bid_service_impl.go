@@ -1,12 +1,16 @@
 package serviceimpl
 
 import (
+	"encoding/json"
+	"log"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
+	"github.com/BargheNo/Backend/internal/domain/message"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
@@ -16,6 +20,7 @@ type BidService struct {
 	installationService service.InstallationService
 	userService         service.UserService
 	corporationService  service.CorporationService
+	rabbitMQ            message.Broker
 	bidRepository       repository.BidRepository
 	db                  database.Database
 }
@@ -25,6 +30,7 @@ func NewBidService(
 	installationService service.InstallationService,
 	userService service.UserService,
 	corporationService service.CorporationService,
+	rabbitMQ message.Broker,
 	bidRepository repository.BidRepository,
 	db database.Database,
 ) *BidService {
@@ -33,6 +39,7 @@ func NewBidService(
 		installationService: installationService,
 		userService:         userService,
 		corporationService:  corporationService,
+		rabbitMQ:            rabbitMQ,
 		bidRepository:       bidRepository,
 		db:                  db,
 	}
@@ -75,6 +82,28 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	err := bidService.bidRepository.CreateBid(bidService.db, bid)
 	if err != nil {
 		panic(err)
+	}
+
+	additionalData := biddto.BidNotificationData{
+		BidID: bid.ID,
+	}
+	data, err := json.Marshal(additionalData)
+	if err != nil {
+		log.Println("Invalid data for message notification")
+	}
+
+	msg := struct {
+		TypeName    enum.NotificationType `json:"typeName"`
+		RecipientID uint                  `json:"recipientID"`
+		Data        []byte                `json:"data"`
+	}{
+		TypeName:    enum.CorpSendBidNotificationType,
+		RecipientID: installationRequest.Customer.ID,
+		Data:        data,
+	}
+
+	if err := bidService.rabbitMQ.PublishMessage(bidService.constants.RabbitMQ.Events.SendNotification, msg); err != nil {
+		log.Printf("error during send notification after bid: %v", err)
 	}
 }
 
@@ -119,6 +148,28 @@ func (bidService *BidService) CancelBid(bidInfo biddto.CancelBidRequest) {
 	}
 }
 
+func (bidService *BidService) GetBid(bidID uint) biddto.BidsResponse {
+	bid, exist := bidService.bidRepository.FindBidByID(bidService.db, bidID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
+		panic(notFoundError)
+	}
+
+	installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
+	bidder := bidService.userService.GetUserCredential(bid.BidderID)
+	corporation := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
+	return biddto.BidsResponse{
+		ID:                         bid.ID,
+		Bidder:                     bidder,
+		InstallationRequestDetails: installationRequest,
+		Corporation:                corporation,
+		Description:                bid.Description,
+		Cost:                       bid.Cost,
+		InstallationTime:           bid.InstallationTime,
+		Status:                     bid.Status.String(),
+	}
+}
+
 func (bidService *BidService) GetCorporationBids(bidsRequest biddto.GetCorporationBidsRequest) []biddto.BidsResponse {
 	approved := bidService.corporationService.ISCorporationApproved(bidsRequest.CorporationID)
 	if !approved {
@@ -136,7 +187,7 @@ func (bidService *BidService) GetCorporationBids(bidsRequest biddto.GetCorporati
 	bidResponses := make([]biddto.BidsResponse, len(bids))
 	for i, bid := range bids {
 		installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
-		bidder := bidService.userService.GetUserCredential(bidsRequest.UserID)
+		bidder := bidService.userService.GetUserCredential(bid.BidderID)
 		bidResponses[i] = biddto.BidsResponse{
 			ID:                         bid.ID,
 			Bidder:                     bidder,
@@ -166,10 +217,12 @@ func (bidService *BidService) GetRequestBids(requestInfo biddto.GetRequestBidsRe
 	for i, bid := range bids {
 		installationRequest := bidService.installationService.GetInstallationRequest(bid.RequestID)
 		bidder := bidService.userService.GetUserCredential(bid.BidderID)
+		corporation := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
 		bidResponses[i] = biddto.BidsResponse{
 			ID:                         bid.ID,
 			Bidder:                     bidder,
 			InstallationRequestDetails: installationRequest,
+			Corporation:                corporation,
 			Description:                bid.Description,
 			Cost:                       bid.Cost,
 			InstallationTime:           bid.InstallationTime,

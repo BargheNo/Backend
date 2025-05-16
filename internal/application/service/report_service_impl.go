@@ -1,12 +1,16 @@
 package serviceimpl
 
 import (
+	"encoding/json"
+	"log"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
+	"github.com/BargheNo/Backend/internal/domain/message"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
@@ -15,27 +19,57 @@ import (
 type ReportService struct {
 	constants           *bootstrap.Constants
 	userService         service.UserService
-	reportRepository    repository.ReportRepository
 	maintenanceService  service.MaintenanceService
 	installationService service.InstallationService
+	rabbitMQ            message.Broker
+	reportRepository    repository.ReportRepository
 	db                  database.Database
 }
 
 func NewReportService(
 	constants *bootstrap.Constants,
 	userService service.UserService,
-	reportRepository repository.ReportRepository,
 	maintenanceService service.MaintenanceService,
 	installationService service.InstallationService,
+	rabbitMQ message.Broker,
+	reportRepository repository.ReportRepository,
 	db database.Database,
 ) *ReportService {
 	return &ReportService{
 		constants:           constants,
 		userService:         userService,
-		reportRepository:    reportRepository,
 		maintenanceService:  maintenanceService,
 		installationService: installationService,
+		rabbitMQ:            rabbitMQ,
+		reportRepository:    reportRepository,
 		db:                  db,
+	}
+}
+
+func (reportService *ReportService) sendReportNotification(acceptedPermissions []enum.PermissionType, reportID uint, notificationType enum.NotificationType) {
+	admins := reportService.userService.GetUsersByPermission(acceptedPermissions)
+	for _, admin := range admins {
+		additionalData := reportdto.ReportNotificationData{
+			ReportID: reportID,
+		}
+		data, err := json.Marshal(additionalData)
+		if err != nil {
+			log.Println("Invalid data for message notification")
+		}
+
+		msg := struct {
+			TypeName    enum.NotificationType `json:"typeName"`
+			RecipientID uint                  `json:"recipientID"`
+			Data        []byte                `json:"data"`
+		}{
+			TypeName:    notificationType,
+			RecipientID: admin.ID,
+			Data:        data,
+		}
+
+		if err := reportService.rabbitMQ.PublishMessage(reportService.constants.RabbitMQ.Events.SendNotification, msg); err != nil {
+			log.Printf("error during send notification after bid: %v", err)
+		}
 	}
 }
 
@@ -55,6 +89,9 @@ func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdt
 	if err != nil {
 		panic(err)
 	}
+
+	acceptedPermissions := []enum.PermissionType{enum.ReportViewAll, enum.PermissionAll}
+	reportService.sendReportNotification(acceptedPermissions, report.ID, enum.MaintenanceReportCreated)
 }
 
 func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) {
@@ -72,10 +109,44 @@ func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.Crea
 	if err != nil {
 		panic(err)
 	}
+
+	acceptedPermissions := []enum.PermissionType{enum.ReportViewAll, enum.PermissionAll}
+	reportService.sendReportNotification(acceptedPermissions, report.ID, enum.PanelReportCreated)
+}
+
+func (reportService *ReportService) GetMaintenanceReport(reportID uint) reportdto.MaintenanceReportResponse {
+	report, exist := reportService.reportRepository.GetReportByID(reportService.db, reportID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
+		panic(notFoundError)
+	}
+	maintenanceRecord := reportService.maintenanceService.GetMaintenanceRecordByID(report.ObjectID)
+	reportResponse := reportdto.MaintenanceReportResponse{
+		ID:                report.ID,
+		Description:       report.Description,
+		MaintenanceRecord: maintenanceRecord,
+		Status:            report.Status.String(),
+	}
+	return reportResponse
+}
+
+func (reportService *ReportService) GetPanelReport(reportID uint) reportdto.PanelReportResponse {
+	report, exist := reportService.reportRepository.GetReportByID(reportService.db, reportID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
+		panic(notFoundError)
+	}
+	panel := reportService.installationService.GetPanelByID(report.ObjectID)
+	reportResponse := reportdto.PanelReportResponse{
+		ID:          report.ID,
+		Panel:       panel,
+		Description: report.Description,
+		Status:      report.Status.String(),
+	}
+	return reportResponse
 }
 
 func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) []reportdto.MaintenanceReportResponse {
-	reportService.userService.GetUserCredential(requestInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	reports := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, paginationModifier, sortingModifier)
@@ -94,7 +165,6 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 }
 
 func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) []reportdto.PanelReportResponse {
-	reportService.userService.GetUserCredential(requestInfo.OwnerID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	reports := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, paginationModifier, sortingModifier)

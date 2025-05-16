@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bid Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background: #0073e6; color: #ffffff; padding: 20px; text-align: center; }
+        .header img { max-width: 100px; }
+        .content { padding: 20px; }
+        .content h2 { color: #333333; }
+        .content p { color: #555555; line-height: 1.6; }
+        .bid-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .bid-details p { margin: 5px 0; }
+        .cta-button { display: inline-block; padding: 12px 25px; background: #0073e6; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { background: #f4f4f4; padding: 10px; text-align: center; color: #777777; font-size: 12px; }
+        @media (max-width: 600px) { .container { margin: 10px; } .header, .content, .footer { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>New Bid on Your Request</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{.installationRequest.customer.firstName}} {{.installationRequest.customer.lastName}},</h2>
+            <p>We are excited to inform you that a new bid has been placed on your installation request by {{.corporation.name}}. Below are the details of the bid:</p>
+            <div class="bid-details">
+                <p><strong>Request:</strong> {{.installationRequest.name}}</p>
+                <p><strong>Bidder:</strong> {{.corporation.name}}</p>
+                <p><strong>Bid Amount:</strong> ${{.cost}}</p>
+                <p><strong>Proposed Installation Time:</strong> {{.installationTime}}</p>
+                <p><strong>Description:</strong> {{.description}}</p>
+                <p><strong>Request Address:</strong> {{.installationRequest.address.street}}, {{.installationRequest.address.city}}, {{.installationRequest.address.province}}</p>
+            </div>
+            <p>Please review the bid and take the necessary actions to proceed. You can contact {{.corporation.name}} for further details.</p>
+            <a href="https://yourwebsite.com/bids" class="cta-button">View Bid Details</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 Barghe No. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

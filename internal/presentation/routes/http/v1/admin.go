@@ -1,6 +1,7 @@
 package httpv1
 
 import (
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/wire"
 	"github.com/gin-gonic/gin"
 )
@@ -38,7 +39,14 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			userRoles.GET("", app.Controllers.Admin.UserController.GetUserRoles)
 			userRoles.PUT("", app.Controllers.Admin.UserController.UpdateUserRoles)
 		}
+	}
 
+	userManagement := routerGroup.Group("/users")
+	userManagement.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.UserManageRolesPermissions}))
+	{
+		userManagement.GET("", app.Controllers.Admin.UserController.GetUsers)
+		userManagement.PUT("/:userID/ban", app.Controllers.Admin.UserController.BanUser)
+		userManagement.PUT("/:userID/unban", app.Controllers.Admin.UserController.UnbanUser)
 	}
 
 	report := routerGroup.Group("/report")

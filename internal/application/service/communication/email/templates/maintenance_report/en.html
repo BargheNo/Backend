@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Report Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background: #d32f2f; color: #ffffff; padding: 20px; text-align: center; }
+        .header img { max-width: 100px; }
+        .content { padding: 20px; }
+        .content h2 { color: #333333; }
+        .content p { color: #555555; line-height: 1.6; }
+        .report-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .report-details p { margin: 5px 0; }
+        .cta-button { display: inline-block; padding: 12px 25px; background: #d32f2f; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { background: #f4f4f4; padding: 10px; text-align: center; color: #777777; font-size: 12px; }
+        @media (max-width: 600px) { .container { margin: 10px; } .header, .content, .footer { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>New Maintenance Report Submitted</h1>
+        </div>
+        <div class="content">
+            <h2>Dear Admin,</h2>
+            <p>A new maintenance report has been submitted for a panel. Below are the details of the report:</p>
+            <div class="report-details">
+                <p><strong>Panel Name:</strong> {{.maintenanceRecord.panel.name}}</p>
+                <p><strong>Customer:</strong> {{.maintenanceRecord.customer.firstName}} {{.maintenanceRecord.customer.lastName}}</p>
+                <p><strong>Corporation:</strong> {{.maintenanceRecord.corporation.name}}</p>
+                <p><strong>Operator:</strong> {{.maintenanceRecord.operator.firstName}} {{.maintenanceRecord.operator.lastName}}</p>
+                <p><strong>Report Description:</strong> {{.description}}</p>
+                <p><strong>Maintenance Title:</strong> {{.maintenanceRecord.title}}</p>
+                <p><strong>Maintenance Details:</strong> {{.maintenanceRecord.details}}</p>
+                <p><strong>Date:</strong> {{.maintenanceRecord.date.Format "2006-01-02"}}</p>
+                <p><strong>Status:</strong> {{.status}}</p>
+                <p><strong>Panel Address:</strong> {{.maintenanceRecord.panel.address.street}}, {{.maintenanceRecord.panel.address.city}}, {{.maintenanceRecord.panel.address.province}}</p>
+            </div>
+            <p>Please review the report and take appropriate actions. You can view the full details in the admin dashboard.</p>
+            <a href="https://yourwebsite.com/admin/reports" class="cta-button">View Report Details</a>
+        </div>
+        <div class="footer">
+            <p>© 2025 Your Company. All rights reserved.</p>
+            <p>Contact us at support@yourwebsite.com</p>
+        </div>
+    </div>
+</body>
+</html>

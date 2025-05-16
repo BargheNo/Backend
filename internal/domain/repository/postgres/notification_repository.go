@@ -8,7 +8,7 @@ import (
 
 type NotificationRepository interface {
 	GetNotificationByID(db database.Database, notificationID uint) (*entity.Notification, bool)
-	GetNotificationsByUserID(db database.Database, userID uint) []*entity.Notification
+	GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, opts ...QueryModifier) []*entity.Notification
 	GetNotificationSettingByID(db database.Database, settingID uint) (*entity.NotificationSetting, bool)
 	GetNotificationSettingByUserAndType(db database.Database, userID, typeID uint) (*entity.NotificationSetting, bool)
 	GetNotificationSettingByUserID(db database.Database, userID uint) []*entity.NotificationSetting

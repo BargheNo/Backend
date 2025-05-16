@@ -18,6 +18,7 @@ type Constants struct {
 	TicketCommentOwners TicketCommentOwners
 	ReportObjectTypes   ReportObjectTypes
 	ReportOwners        ReportOwners
+	RabbitMQ            RabbitMQConstants
 }
 
 type Context struct {
@@ -62,6 +63,7 @@ type ErrorField struct {
 	Room                string
 	NotificationType    string
 	Notification        string
+	NotificationSetting string
 	PanelName           string
 	Panel               string
 	MaintenanceRequest  string
@@ -153,6 +155,37 @@ type ReportOwners struct {
 	User string
 }
 
+type RabbitMQConstants struct {
+	Exchange Exchanges
+	Queue    Queues
+	Headers  Headers
+	Events   Events
+}
+
+type Exchanges struct {
+	Notifications string
+	DLX           string
+	TypeTopic     string
+	TypeFanout    string
+}
+
+type Queues struct {
+	DLQ string
+}
+
+type Headers struct {
+	RetryCount string
+	LastError  string
+	DeadLetter string
+}
+
+type Events struct {
+	NotificationsEmail string
+	NotificationsPush  string
+	UserRegistered     string
+	SendNotification   string
+}
+
 func NewConstants() *Constants {
 	return &Constants{
 		Context: Context{
@@ -199,6 +232,7 @@ func NewConstants() *Constants {
 			TicketComment:       "ticketComment",
 			Report:              "report",
 			ContactInformation:  "contactInformation",
+			NotificationSetting: "notificationSetting",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -231,11 +265,8 @@ func NewConstants() *Constants {
 		JWTKeysPath: JWTKeysPath{
 			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
 			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
-			// PublicKey:  "../../internal/application/adapter/jwt/publicKey.pem",
-			// PrivateKey: "../../internal/application/adapter/jwt/privateKey.pem",
 		},
 		EmailTemplates: EmailTemplates{
-			// Path:            "../../internal/application/service/communication/email/templates/",
 			Path:            "./internal/application/service/communication/email/templates/",
 			PersianFileName: "fa.html",
 			EnglishFileName: "en.html",
@@ -272,6 +303,28 @@ func NewConstants() *Constants {
 		},
 		ReportOwners: ReportOwners{
 			User: "users",
+		},
+		RabbitMQ: RabbitMQConstants{
+			Exchange: Exchanges{
+				Notifications: "notifications",
+				DLX:           "dlx_notifications",
+				TypeTopic:     "topic",
+				TypeFanout:    "fanout",
+			},
+			Queue: Queues{
+				DLQ: "dlq_notifications",
+			},
+			Headers: Headers{
+				RetryCount: "x-retry-count",
+				LastError:  "x-last-error",
+				DeadLetter: "x-dead-letter-exchange",
+			},
+			Events: Events{
+				NotificationsEmail: "Notifications.Email",
+				NotificationsPush:  "Notifications.Push",
+				UserRegistered:     "Users.Register",
+				SendNotification:   "Notifications.Send",
+			},
 		},
 	}
 }

@@ -25,11 +25,10 @@ type Message struct {
 }
 
 type NotificationPayload struct {
-	ID             uint              `json:"id"`
-	Title          string            `json:"title"`
-	Description    string            `json:"description"`
-	AdditionalData map[string]string `json:"additionalData"`
-	Type           string            `json:"type"`
-	IsRead         bool              `json:"is_read"`
-	CreatedAt      string            `json:"created_at"`
+	ID             uint        `json:"id"`
+	Type           string      `json:"type"`
+	Description    string      `json:"description"`
+	AdditionalData interface{} `json:"additionalData"`
+	IsRead         bool        `json:"is_read"`
+	CreatedAt      string      `json:"created_at"`
 }

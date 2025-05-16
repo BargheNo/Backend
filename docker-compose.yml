@@ -185,9 +185,32 @@ services:
           cpus: "0.1"
           memory: 128M
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "${AMQP_PORT}:5672" 
+      - "15672:15672"       
+    environment:
+      - RABBITMQ_DEFAULT_USER=${AMQP_USER}
+      - RABBITMQ_DEFAULT_PASS=${AMQP_PASSWORD}
+      - RABBITMQ_DEFAULT_VHOST=${AMQP_VHOST}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+
 volumes:
   db_data:
   rdb_data:
   prometheus_data:
   alertmanager_data:
   grafana_data:
+  rabbitmq_data:

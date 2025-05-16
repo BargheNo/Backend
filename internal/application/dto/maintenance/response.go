@@ -9,66 +9,66 @@ import (
 )
 
 type CustomerMaintenanceRequestResponse struct {
-	ID           uint
-	Panel        installationdto.CustomerPanelResponse
-	Corporation  corporationdto.CorporationCredentialResponse
-	OwnerID      uint
-	Subject      string
-	Description  string
-	UrgencyLevel string
-	Status       string
-	CreatedAt    time.Time
+	ID           uint                                         `json:"id"`
+	Panel        installationdto.CustomerPanelResponse        `json:"panel"`
+	Corporation  corporationdto.CorporationCredentialResponse `json:"corporation"`
+	OwnerID      uint                                         `json:"ownerID"`
+	Subject      string                                       `json:"subject"`
+	Description  string                                       `json:"description"`
+	UrgencyLevel string                                       `json:"urgencyLevel"`
+	Status       string                                       `json:"status"`
+	CreatedAt    time.Time                                    `json:"createdAt"`
 }
 
 type CorporationMaintenanceResponse struct {
-	ID           uint
-	Panel        installationdto.CorporationPanelResponse
-	Subject      string
-	Description  string
-	UrgencyLevel string
-	Status       string
-	CreatedAt    time.Time
-	OwnerPhone   string
+	ID           uint                                     `json:"id"`
+	Panel        installationdto.CorporationPanelResponse `json:"panel"`
+	Subject      string                                   `json:"subject"`
+	Description  string                                   `json:"description"`
+	UrgencyLevel string                                   `json:"urgencyLevel"`
+	Status       string                                   `json:"status"`
+	CreatedAt    time.Time                                `json:"createdAt"`
+	OwnerPhone   string                                   `json:"ownerPhone"`
 }
 
 type MaintenanceRequestResponse struct {
-	ID           uint
-	Panel        installationdto.PanleResponse
-	Corporation  corporationdto.CorporationCredentialResponse
-	Customer     userdto.CredentialResponse
-	Subject      string
-	Description  string
-	UrgencyLevel string
-	Status       string
-	CreatedAt    time.Time
+	ID           uint                                         `json:"id"`
+	Panel        installationdto.PanelResponse                `json:"panel"`
+	Corporation  corporationdto.CorporationCredentialResponse `json:"corporation"`
+	Customer     userdto.CredentialResponse                   `json:"customer"`
+	Subject      string                                       `json:"subject"`
+	Description  string                                       `json:"description"`
+	UrgencyLevel string                                       `json:"urgencyLevel"`
+	Status       string                                       `json:"status"`
+	CreatedAt    time.Time                                    `json:"createdAt"`
 }
 
 type CorporationMaintenanceRecordResponse struct {
-	ID       uint
-	Panel    installationdto.CorporationPanelResponse
-	Operator userdto.CredentialResponse
-	Title    string
-	Details  string
-	Date     time.Time
+	ID       uint                                     `json:"id"`
+	Panel    installationdto.CorporationPanelResponse `json:"panel"`
+	Operator userdto.CredentialResponse               `json:"operator"`
+	Title    string                                   `json:"title"`
+	Details  string                                   `json:"details"`
+	Date     time.Time                                `json:"date"`
 }
 
 type CustomerMaintenanceRecordResponse struct {
-	ID          uint
-	Panel       installationdto.CustomerPanelResponse
-	Corporation corporationdto.CorporationCredentialResponse
-	Operator    userdto.CredentialResponse
-	Title       string
-	Details     string
-	Date        time.Time
+	ID          uint                                         `json:"id"`
+	Panel       installationdto.CustomerPanelResponse        `json:"panel"`
+	Corporation corporationdto.CorporationCredentialResponse `json:"corporation"`
+	Operator    userdto.CredentialResponse                   `json:"operator"`
+	Title       string                                       `json:"title"`
+	Details     string                                       `json:"details"`
+	Date        time.Time                                    `json:"date"`
 }
 
 type MaintenanceRecordResponse struct {
-	ID          uint
-	Panel       installationdto.PanleResponse
-	Corporation corporationdto.CorporationCredentialResponse
-	Customer    userdto.CredentialResponse
-	Operator    userdto.CredentialResponse
-	Title       string
-	Details     string
-	Date        time.Time
+	ID          uint                                         `json:"id"`
+	Panel       installationdto.PanelResponse                `json:"panel"`
+	Corporation corporationdto.CorporationCredentialResponse `json:"corporation"`
+	Customer    userdto.CredentialResponse                   `json:"customer"`
+	Operator    userdto.CredentialResponse                   `json:"operator"`
+	Title       string                                       `json:"title"`
+	Details     string                                       `json:"details"`
+	Date        time.Time                                    `json:"date"`
 }

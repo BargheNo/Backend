@@ -13,6 +13,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/logger"
+	"github.com/BargheNo/Backend/internal/domain/message"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -26,6 +27,7 @@ type UserService struct {
 	jwtService          service.JWTService
 	smsService          service.SMSService
 	emailService        service.EmailService
+	rabbitMQ            message.Broker
 	s3Storage           s3.S3Storage
 	userRepository      repository.UserRepository
 	userCacheRepository cacherepository.UserCacheRepository
@@ -38,6 +40,7 @@ type UserServiceDeps struct {
 	JWTService          service.JWTService
 	SMSService          service.SMSService
 	EmailService        service.EmailService
+	RabbitMQ            message.Broker
 	S3Storage           s3.S3Storage
 	UserRepository      repository.UserRepository
 	UserCacheRepository cacherepository.UserCacheRepository
@@ -51,6 +54,7 @@ func NewUserService(deps UserServiceDeps) *UserService {
 		jwtService:          deps.JWTService,
 		smsService:          deps.SMSService,
 		emailService:        deps.EmailService,
+		rabbitMQ:            deps.RabbitMQ,
 		s3Storage:           deps.S3Storage,
 		userRepository:      deps.UserRepository,
 		userCacheRepository: deps.UserCacheRepository,
@@ -146,7 +150,9 @@ func (userService *UserService) enterNewEmail(firstName, lastName, email, emailS
 		ExpiryMinute: expiryMinute,
 		Year:         time.Now().Year(),
 	}
-	userService.emailService.SendEmail(email, emailSubject, templateFile, data)
+	if err := userService.emailService.SendEmail(email, emailSubject, templateFile, data); err != nil {
+		panic(err)
+	}
 }
 
 func (userService *UserService) DoesUserExist(userID uint) {
@@ -165,6 +171,15 @@ func (userService *UserService) IsUserActive(userID uint) bool {
 	}
 	isActive := enum.UserStatusActive == user.Status
 	return isActive
+}
+
+func (userService *UserService) GetUserByID(userID uint) *entity.User {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	return user
 }
 
 func (userService *UserService) GetUserCredential(userID uint) userdto.CredentialResponse {
@@ -186,6 +201,72 @@ func (userService *UserService) GetUserCredential(userID uint) userdto.Credentia
 		NationalID: user.NationalCode,
 		ProfilePic: profilePic,
 		Status:     user.Status.String(),
+	}
+}
+
+func (userService *UserService) GetUsersByPermission(permissionTypes []enum.PermissionType) []*entity.User {
+	return userService.userRepository.FindUsersByPermission(userService.db, permissionTypes)
+}
+
+func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) []userdto.CredentialResponse {
+	statuses := make([]enum.UserStatus, len(request.Statuses))
+	for i, status := range request.Statuses {
+		statuses[i] = enum.UserStatus(status)
+	}
+	users := userService.userRepository.FindUserByStatus(userService.db, statuses)
+	usersResponse := make([]userdto.CredentialResponse, len(users))
+	for i, user := range users {
+		profilePic := ""
+		if user.ProfilePicPath != "" {
+			profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+		}
+		usersResponse[i] = userdto.CredentialResponse{
+			ID:         user.ID,
+			FirstName:  user.FirstName,
+			LastName:   user.LastName,
+			Phone:      user.Phone,
+			Email:      user.Email,
+			NationalID: user.NationalCode,
+			ProfilePic: profilePic,
+			Status:     user.Status.String(),
+		}
+	}
+	return usersResponse
+}
+
+func (userService *UserService) BanUser(userID uint) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if user.Status == enum.UserStatusBlock {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.User, userService.constants.Tag.AlreadyBlocked)
+		panic(conflictErrors)
+	}
+	user.Status = enum.UserStatusBlock
+	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (userService *UserService) UnbanUser(userID uint) {
+	user, userExist := userService.userRepository.FindUserByID(userService.db, userID)
+	if !userExist {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		panic(notFoundError)
+	}
+	if user.Status == enum.UserStatusActive {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.User, userService.constants.Tag.AlreadyActive)
+		panic(conflictErrors)
+	}
+	user.Status = enum.UserStatusActive
+	err := userService.userRepository.UpdateUser(userService.db, user)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -228,6 +309,15 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(registerInfo.Phone)
 	err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
 	if err != nil {
+		panic(err)
+	}
+
+	msg := struct {
+		UserID uint `json:"userID"`
+	}{
+		UserID: user.ID,
+	}
+	if err = userService.rabbitMQ.PublishMessage(userService.constants.RabbitMQ.Events.UserRegistered, msg); err != nil {
 		panic(err)
 	}
 	// userService.smsService.SendOTP(registerInfo.Phone, otp)

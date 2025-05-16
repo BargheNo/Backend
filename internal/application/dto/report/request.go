@@ -18,3 +18,7 @@ type ResolveReportRequest struct {
 	ReportID uint
 	UserID   uint
 }
+
+type ReportNotificationData struct {
+	ReportID uint
+}

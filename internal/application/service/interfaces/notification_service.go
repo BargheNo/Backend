@@ -3,14 +3,16 @@ package service
 import (
 	notificationdto "github.com/BargheNo/Backend/internal/application/dto/notification"
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 )
 
 type NotificationService interface {
-	CreateNotification(typeID uint, recipientID uint, additionalData map[string]string)
+	CreateAndSendNotification(typeName enum.NotificationType, recipientID uint, data []byte) error
 	CreateNotificationSettings(userID uint)
+	GetNotificationsType() []notificationdto.NotificationTypeResponse
 	GetUserNotificationSettings(userID uint) []notificationdto.NotificationSettingResponse
-	GetUserNotifications(userID uint) []notificationdto.NotificationListResponse
+	GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) []notificationdto.NotificationListResponse
 	MarkAsRead(notificationInfo notificationdto.NotificationInfoRequest)
-	SendNotification(notification *entity.Notification) error
+	SendNotification(notification *entity.Notification, notificationType *entity.NotificationType) error
 	UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest)
 }
