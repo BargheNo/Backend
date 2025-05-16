@@ -31,6 +31,7 @@ type UserServiceTestSuite struct {
 	userCacheRepository *mocks.UserCacheRepositoryMock
 	db                  *mocks.DatabaseMock
 	userService         *UserService
+	rabbitMQ            *mocks.BrokerMock
 }
 
 func (s *UserServiceTestSuite) SetupTest() {
@@ -44,6 +45,7 @@ func (s *UserServiceTestSuite) SetupTest() {
 	s.userRepository = mocks.NewUserRepositoryMock()
 	s.userCacheRepository = mocks.NewUserCacheRepositoryMock()
 	s.db = mocks.NewDatabaseMock()
+	s.rabbitMQ = mocks.NewBrokerMock()
 
 	deps := UserServiceDeps{
 		Constants:           s.constants,
@@ -55,6 +57,7 @@ func (s *UserServiceTestSuite) SetupTest() {
 		UserRepository:      s.userRepository,
 		UserCacheRepository: s.userCacheRepository,
 		DB:                  s.db,
+		RabbitMQ:            s.rabbitMQ,
 	}
 	s.userService = NewUserService(deps)
 }
@@ -164,7 +167,7 @@ func (s *UserServiceTestSuite) TestEnterNewEmail() {
 
 		s.otpService.On("GenerateOTP").Return("123456", 10).Once()
 		s.userCacheRepository.On("Set", context.Background(), mock.Anything, "123456", mock.Anything).Return(nil).Once()
-		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s.userService.enterNewEmail("John", "Doe", "test@example.com", "test subject", "test template")
 
@@ -184,6 +187,7 @@ func (s *UserServiceTestSuite) TestEnterNewEmail() {
 
 		s.userCacheRepository.AssertExpectations(s.T())
 		s.userRepository.AssertExpectations(s.T())
+		s.emailService.AssertExpectations(s.T())
 	})
 	s.Run("Error - Set OTP to Cache Error", func() {
 		var nilUser *entity.User = nil
@@ -201,6 +205,25 @@ func (s *UserServiceTestSuite) TestEnterNewEmail() {
 		s.userCacheRepository.AssertExpectations(s.T())
 		s.userRepository.AssertExpectations(s.T())
 	})
+	s.Run("Error - Send Email Error", func() {
+		var nilUser *entity.User = nil
+		var nilOTPData *userdto.OTPData = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		s.otpService.On("GenerateOTP").Return("123456", 10).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, "123456", mock.Anything).Return(nil).Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("send email error")).Once()
+
+		s.Panics(func() {
+			s.userService.enterNewEmail("John", "Doe", "test@example.com", "test subject", "test template")
+		})
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+		s.emailService.AssertExpectations(s.T())
+	})
+
 }
 
 func (s *UserServiceTestSuite) TestDoesUserExist() {
@@ -251,6 +274,29 @@ func (s *UserServiceTestSuite) TestIsUserActive() {
 	})
 }
 
+func (s *UserServiceTestSuite) TestGetUserByID() {
+	s.Run("success - User found", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
+
+		s.userService.GetUserByID(userID)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - User not found", func() {
+		userID := uint(1)
+		var nilUser *entity.User = nil
+
+		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, false).Once()
+
+		s.Panics(func() {
+			s.userService.GetUserByID(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
 func (s *UserServiceTestSuite) TestGetUserCredential() {
 	s.Run("success - User Credentials found", func() {
 		userID := uint(1)
@@ -289,6 +335,136 @@ func (s *UserServiceTestSuite) TestGetUserCredential() {
 	})
 }
 
+func (s *UserServiceTestSuite) TestGetUsersByPermission() {
+	s.Run("success - Users found", func() {
+		permissionTypes := []enum.PermissionType{enum.PermissionAll, enum.PermissionGeneral}
+		s.userRepository.On("FindUsersByPermission", s.db, permissionTypes).Return([]*entity.User{}, true).Once()
+
+		s.userService.GetUsersByPermission(permissionTypes)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestGetUsersByStatus() {
+	s.Run("success - Users found", func() {
+		request := userdto.GetUsersListRequest{
+			Statuses: []uint{1, 2},
+		}
+		statuses := make([]enum.UserStatus, len(request.Statuses))
+		for i, status := range request.Statuses {
+			statuses[i] = enum.UserStatus(status)
+		}
+		users := []*entity.User{
+			{
+				Status:         enum.UserStatusActive,
+				ProfilePicPath: "profile.jpg",
+			},
+			{
+				Status:         enum.UserStatusBlock,
+				ProfilePicPath: "profile.jpg",
+			},
+		}
+		s.userRepository.On("FindUserByStatus", s.db, statuses, mock.Anything).Return(users, true).Once()
+		s.s3Storage.On("GetPresignedURL", enum.ProfilePic, "profile.jpg", 8*time.Hour).Return("https://example.com/profile.jpg").Twice()
+
+		s.userService.GetUsersByStatus(request)
+
+		s.userRepository.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestBanUser() {
+	s.Run("success - User banned", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
+		s.userRepository.On("UpdateUser", s.db, mock.Anything).Return(nil).Once()
+
+		s.userService.BanUser(userID)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - User not found", func() {
+		userID := uint(1)
+		var nilUser *entity.User = nil
+
+		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, false).Once()
+
+		s.Panics(func() {
+			s.userService.BanUser(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - User already banned", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{Status: enum.UserStatusBlock}, true).Once()
+
+		s.Panics(func() {
+			s.userService.BanUser(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Update User Error", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
+		s.userRepository.On("UpdateUser", s.db, mock.Anything).Return(errors.New("update error")).Once()
+
+		s.Panics(func() {
+			s.userService.BanUser(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestUnbanUser() {
+	s.Run("success - User unbanned", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
+		s.userRepository.On("UpdateUser", s.db, mock.Anything).Return(nil).Once()
+
+		s.userService.UnbanUser(userID)
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - User not found", func() {
+		userID := uint(1)
+		var nilUser *entity.User = nil
+
+		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, false).Once()
+
+		s.Panics(func() {
+			s.userService.UnbanUser(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - User already unbanned", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{Status: enum.UserStatusActive}, true).Once()
+
+		s.Panics(func() {
+			s.userService.UnbanUser(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Update User Error", func() {
+		userID := uint(1)
+		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
+		s.userRepository.On("UpdateUser", s.db, mock.Anything).Return(errors.New("update error")).Once()
+
+		s.Panics(func() {
+			s.userService.UnbanUser(userID)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
 func (s *UserServiceTestSuite) TestRegister() {
 	s.Run("success - User registered", func() {
 		var nilOTPData *userdto.OTPData = nil
@@ -300,6 +476,7 @@ func (s *UserServiceTestSuite) TestRegister() {
 		s.userRepository.On("CreateUser", s.db, mock.Anything).Return(nil).Once()
 		s.otpService.On("GenerateOTP").Return(otp, 1234567890).Once()
 		s.userCacheRepository.On("Set", context.Background(), mock.Anything, otp, mock.Anything).Return(nil).Once()
+		s.rabbitMQ.On("PublishMessage", mock.Anything, mock.Anything).Return(nil).Once()
 
 		request := userdto.BasicRegisterRequest{
 			FirstName: "John",
@@ -312,8 +489,9 @@ func (s *UserServiceTestSuite) TestRegister() {
 		s.userRepository.AssertExpectations(s.T())
 		s.otpService.AssertExpectations(s.T())
 		s.userCacheRepository.AssertExpectations(s.T())
+		s.rabbitMQ.AssertExpectations(s.T())
 	})
-	s.Run("Error - duplicate phone number(pending for registration)", func() {
+	s.Run("Error - duplicate phone number", func() {
 		otpData := &userdto.OTPData{}
 		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(otpData, true).Once()
 
@@ -327,24 +505,6 @@ func (s *UserServiceTestSuite) TestRegister() {
 			s.userService.Register(request)
 		})
 
-		s.userCacheRepository.AssertExpectations(s.T())
-	})
-	s.Run("Error - duplicate phone number(verified)", func() {
-		var nilOTPData *userdto.OTPData = nil
-		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
-		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(&entity.User{PhoneVerified: true}, true).Once()
-
-		request := userdto.BasicRegisterRequest{
-			FirstName: "John",
-			LastName:  "Doe",
-			Phone:     "1234567890",
-			Password:  "Password@123",
-		}
-
-		s.Panics(func() {
-			s.userService.Register(request)
-		})
-		s.userRepository.AssertExpectations(s.T())
 		s.userCacheRepository.AssertExpectations(s.T())
 	})
 	s.Run("Error - Password too weak", func() {
@@ -453,6 +613,33 @@ func (s *UserServiceTestSuite) TestRegister() {
 		s.userRepository.AssertExpectations(s.T())
 		s.otpService.AssertExpectations(s.T())
 		s.userCacheRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Publish Message Error", func() {
+		var nilOTPData *userdto.OTPData = nil
+		var nilUser *entity.User = nil
+		otp := "123456"
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.userRepository.On("DeleteUserByPhone", s.db, mock.Anything).Return(nil).Once()
+		s.userRepository.On("CreateUser", s.db, mock.Anything).Return(nil).Once()
+		s.otpService.On("GenerateOTP").Return(otp, 1234567890).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, otp, mock.Anything).Return(nil).Once()
+		s.rabbitMQ.On("PublishMessage", mock.Anything, mock.Anything).Return(errors.New("publish message error")).Once()
+
+		request := userdto.BasicRegisterRequest{
+			FirstName: "John",
+			LastName:  "Doe",
+			Phone:     "1234567890",
+			Password:  "Password@123",
+		}
+		s.Panics(func() {
+			s.userService.Register(request)
+		})
+
+		s.userRepository.AssertExpectations(s.T())
+		s.otpService.AssertExpectations(s.T())
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.rabbitMQ.AssertExpectations(s.T())
 	})
 }
 
@@ -863,7 +1050,7 @@ func (s *UserServiceTestSuite) TestCompleteRegister() {
 		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
 		s.otpService.On("GenerateOTP").Return("123456", 2).Once()
 		s.userCacheRepository.On("Set", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		request := userdto.CompleteRegisterRequest{
 			UserID: 1,
@@ -872,6 +1059,7 @@ func (s *UserServiceTestSuite) TestCompleteRegister() {
 		s.userService.CompleteRegister(request)
 
 		s.userRepository.AssertExpectations(s.T())
+		s.emailService.AssertExpectations(s.T())
 	})
 	s.Run("success - User entered new profile pic", func() {
 		user := &entity.User{}
@@ -1189,7 +1377,7 @@ func (s *UserServiceTestSuite) TestUpdateProfile() {
 		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
 		s.otpService.On("GenerateOTP").Return("123456", 2).Once()
 		s.userCacheRepository.On("Set", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		s.s3Storage.On("UploadObject", enum.ProfilePic, mock.Anything, mock.Anything).Return().Once()
 		s.s3Storage.On("DeleteObject", enum.ProfilePic, mock.Anything).Return(nil).Once()
 		s.userRepository.On("UpdateUser", s.db, user).Return(nil).Once()
@@ -1244,7 +1432,7 @@ func (s *UserServiceTestSuite) TestUpdateProfile() {
 		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
 		s.otpService.On("GenerateOTP").Return("123456", 2).Once()
 		s.userCacheRepository.On("Set", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		s.s3Storage.On("UploadObject", enum.ProfilePic, mock.Anything, mock.Anything).Return().Once()
 		s.s3Storage.On("DeleteObject", enum.ProfilePic, mock.Anything).Return(errors.New("S3 error")).Once()
 
@@ -1287,7 +1475,7 @@ func (s *UserServiceTestSuite) TestUpdateProfile() {
 		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
 		s.otpService.On("GenerateOTP").Return("123456", 2).Once()
 		s.userCacheRepository.On("Set", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		s.s3Storage.On("UploadObject", enum.ProfilePic, mock.Anything, mock.Anything).Return().Once()
 		s.s3Storage.On("DeleteObject", enum.ProfilePic, mock.Anything).Return(nil).Once()
 		s.userRepository.On("UpdateUser", s.db, user).Return(errors.New("update error")).Once()

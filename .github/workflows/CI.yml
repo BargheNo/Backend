@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - test/installation
+      - test/user
   pull_request:
     branches:
       - develop

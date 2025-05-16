@@ -3,6 +3,7 @@ package mocks
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/stretchr/testify/mock"
 )
@@ -13,6 +14,11 @@ type UserRepositoryMock struct {
 
 func NewUserRepositoryMock() *UserRepositoryMock {
 	return &UserRepositoryMock{}
+}
+
+func (u *UserRepositoryMock) FindUsers(db database.Database) []*entity.User {
+	args := u.Called(db)
+	return args.Get(0).([]*entity.User)
 }
 
 func (u *UserRepositoryMock) FindUserByID(db database.Database, id uint) (*entity.User, bool) {
@@ -117,6 +123,16 @@ func (u *UserRepositoryMock) FindRoleByID(db database.Database, roleID uint) (*e
 
 func (u *UserRepositoryMock) FindUsersByRoleID(db database.Database, roleID uint) []*entity.User {
 	args := u.Called(db, roleID)
+	return args.Get(0).([]*entity.User)
+}
+
+func (u *UserRepositoryMock) FindUserByStatus(db database.Database, status []enum.UserStatus, opts ...repository.QueryModifier) []*entity.User {
+	args := u.Called(db, status, opts)
+	return args.Get(0).([]*entity.User)
+}
+
+func (u *UserRepositoryMock) FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) []*entity.User {
+	args := u.Called(db, permissionTypes)
 	return args.Get(0).([]*entity.User)
 }
 
