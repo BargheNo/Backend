@@ -12,6 +12,7 @@ import (
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -56,6 +57,150 @@ func (s *UserServiceTestSuite) SetupTest() {
 		DB:                  s.db,
 	}
 	s.userService = NewUserService(deps)
+}
+
+func (s *UserServiceTestSuite) TestValidatePasswordTests() {
+	s.Run("success - Password is valid", func() {
+		s.userService.validatePasswordTests(nil, "Password@123", "Password@123", "Password@123")
+	})
+}
+
+func (s *UserServiceTestSuite) TestPasswordValidation() {
+	s.Run("success - Password is valid", func() {
+		s.userService.passwordValidation("Password@123")
+	})
+}
+
+func (s *UserServiceTestSuite) TestValidateDuplicateEmail() {
+	s.Run("success - Email is not registered", func() {
+		var nilUser *entity.User = nil
+		var nilOTPData *userdto.OTPData = nil
+
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		s.userService.validateDuplicateEmail("test@example.com")
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("success - Email is registered but not verified", func() {
+		otpData := &userdto.OTPData{
+			OTP:      "123456",
+			Attempts: 0,
+		}
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(otpData, true).Once()
+
+		response := s.userService.validateDuplicateEmail("test@example.com")
+		s.IsType(exception.ConflictErrors{}, response)
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("success - Email is registered and verified", func() {
+		user := &entity.User{
+			EmailVerified: true,
+		}
+		var nilOTPData *userdto.OTPData = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(user, true).Once()
+
+		response := s.userService.validateDuplicateEmail("test@example.com")
+		s.IsType(exception.ConflictErrors{}, response)
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
+
+}
+
+func (s *UserServiceTestSuite) TestValidateDuplicatePhone() {
+	s.Run("success - Phone is not registered", func() {
+		var nilUser *entity.User = nil
+		var nilOTPData *userdto.OTPData = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		s.userService.validateDuplicatePhone("1234567890")
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("success - Phone is registered but not verified", func() {
+		otpData := &userdto.OTPData{
+			OTP:      "123456",
+			Attempts: 0,
+		}
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(otpData, true).Once()
+
+		response := s.userService.validateDuplicatePhone("1234567890")
+		s.IsType(exception.ConflictErrors{}, response)
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("success - Phone is registered and verified", func() {
+		user := &entity.User{
+			PhoneVerified: true,
+		}
+		var nilOTPData *userdto.OTPData = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
+
+		response := s.userService.validateDuplicatePhone("1234567890")
+		s.IsType(exception.ConflictErrors{}, response)
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *UserServiceTestSuite) TestEnterNewEmail() {
+	s.Run("success - Email is not registered", func() {
+		var nilUser *entity.User = nil
+		var nilOTPData *userdto.OTPData = nil
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
+
+		s.otpService.On("GenerateOTP").Return("123456", 10).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, "123456", mock.Anything).Return(nil).Once()
+		s.emailService.On("SendEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return().Once()
+
+		s.userService.enterNewEmail("John", "Doe", "test@example.com", "test subject", "test template")
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Duplicate Email", func() {
+		otpData := &userdto.OTPData{
+			OTP:      "123456",
+			Attempts: 0,
+		}
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(otpData, true).Once()
+
+		s.Panics(func() {
+			s.userService.enterNewEmail("John", "Doe", "test@example.com", "test subject", "test template")
+		})
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
+	s.Run("Error - Set OTP to Cache Error", func() {
+		var nilUser *entity.User = nil
+		var nilOTPData *userdto.OTPData = nil
+
+		s.userCacheRepository.On("Get", context.Background(), mock.Anything).Return(nilOTPData, false).Once()
+		s.userRepository.On("FindUserByEmail", s.db, mock.Anything).Return(nilUser, false).Once()
+		s.otpService.On("GenerateOTP").Return("123456", 10).Once()
+		s.userCacheRepository.On("Set", context.Background(), mock.Anything, "123456", mock.Anything).Return(errors.New("set OTP to cache error")).Once()
+
+		s.Panics(func() {
+			s.userService.enterNewEmail("John", "Doe", "test@example.com", "test subject", "test template")
+		})
+
+		s.userCacheRepository.AssertExpectations(s.T())
+		s.userRepository.AssertExpectations(s.T())
+	})
 }
 
 func (s *UserServiceTestSuite) TestDoesUserExist() {
