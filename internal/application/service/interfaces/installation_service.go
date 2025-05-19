@@ -15,7 +15,7 @@ type InstallationService interface {
 	AddPanel(panelInfo installationdto.AddPanelRequest)
 	GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelResponse
 	GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelResponse
-	GetPanelByID(panelID uint) installationdto.PanleResponse
+	GetPanelByID(panelID uint) installationdto.PanelResponse
 	GetCustomerPanelByID(panelID uint) installationdto.CustomerPanelResponse
 	GetCorporationPanelByID(panelID uint) installationdto.CorporationPanelResponse
 }

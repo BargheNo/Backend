@@ -64,7 +64,7 @@ func NewRabbitMQ(config *bootstrap.RabbitMQ, constants *bootstrap.RabbitMQConsta
 		panic(err)
 	}
 
-	queues := []string{constants.Events.UserRegistered, constants.Events.NotificationsEmail, constants.Events.NotificationsPush}
+	queues := []string{constants.Events.UserRegistered, constants.Events.NotificationsEmail, constants.Events.NotificationsPush, constants.Events.SendNotification}
 
 	for _, queue := range queues {
 		if err := rmq.declareQueueWithDLX(queue, constants.Exchange.DLX); err != nil {
@@ -264,7 +264,7 @@ func (rmq *RabbitMQ) redeclareQueues() error {
 			); err != nil {
 				return err
 			}
-		} else if queue == rmq.constants.Events.NotificationsEmail || queue == rmq.constants.Events.NotificationsPush || queue == rmq.constants.Events.UserRegistered {
+		} else if queue == rmq.constants.Events.NotificationsEmail || queue == rmq.constants.Events.NotificationsPush || queue == rmq.constants.Events.UserRegistered || queue == rmq.constants.Events.SendNotification {
 			if err := rmq.declareQueueWithDLX(queue, rmq.constants.Exchange.DLX); err != nil {
 				return err
 			}
@@ -276,7 +276,7 @@ func (rmq *RabbitMQ) redeclareQueues() error {
 func (rmq *RabbitMQ) rebindQueues() error {
 	for queue, routingKeys := range rmq.bindings {
 		for _, routingKey := range routingKeys {
-			if queue == rmq.constants.Events.NotificationsEmail || queue == rmq.constants.Events.NotificationsPush || queue == rmq.constants.Events.UserRegistered {
+			if queue == rmq.constants.Events.NotificationsEmail || queue == rmq.constants.Events.NotificationsPush || queue == rmq.constants.Events.UserRegistered || queue == rmq.constants.Events.SendNotification {
 				if err := rmq.bindQueue(queue, rmq.constants.Exchange.Notifications, routingKey); err != nil {
 					return err
 				}

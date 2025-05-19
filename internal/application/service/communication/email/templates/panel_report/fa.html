@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اطلاعیه گزارش پنل</title>
+    <style>
+        body { font-family: 'Arial', 'Vazir', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background: #2e7d32; color: #ffffff; padding: 20px; text-align: center; }
+        .header img { max-width: 100px; }
+        .content { padding: 20px; }
+        .content h2 { color: #333333; }
+        .content p { color: #555555; line-height: 1.6; }
+        .report-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .report-details p { margin: 5px 0; }
+        .cta-button { display: inline-block; padding: 12px 25px; background: #2e7d32; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { background: #f4f4f4; padding: 10px; text-align: center; color: #777777; font-size: 12px; }
+        @media (max-width: 600px) { .container { margin: 10px; } .header, .content, .footer { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>گزارش جدید پنل ارسال شد</h1>
+        </div>
+        <div class="content">
+            <h2>مدیر محترم،</h2>
+            <p>یک گزارش جدید برای پنل ارسال شده است. در زیر جزئیات گزارش آمده است:</p>
+            <div class="report-details">
+                <p><strong>نام پنل:</strong> {{.panel.panelName}}</p>
+                <p><strong>مشتری:</strong> {{.panel.customer.firstName}} {{.panel.customer.lastName}}</p>
+                <p><strong>شرکت:</strong> {{.panel.corporation.name}}</p>
+                <p><strong>اپراتور:</strong> {{.panel.operator.firstName}} {{.panel.operator.lastName}}</p>
+                <p><strong>توضیحات گزارش:</strong> {{.description}}</p>
+                <p><strong>وضعیت:</strong> {{.status}}</p>
+                <p><strong>آدرس پنل:</strong> {{.panel.address.street}}، {{.panel.address.city}}، {{.panel.address.country}}</p>
+                <p><strong>قدرت:</strong> {{.panel.power}} وات</p>
+                <p><strong>نوع ساختمان:</strong> {{.panel.buildingType}}</p>
+                <p><strong>تعداد کل ماژول‌ها:</strong> {{.panel.totalNumberOfModules}}</p>
+            </div>
+            <p>لطفاً گزارش را بررسی کنید و اقدامات لازم را انجام دهید. می‌توانید جزئیات کامل را در داشبورد مدیریت مشاهده کنید.</p>
+            <a href="https://yourwebsite.com/admin/panel-reports" class="cta-button">مشاهده جزئیات گزارش</a>
+        </div>
+        <div class="footer">
+            <p>© 2025 شرکت شما. تمامی حقوق محفوظ است.</p>
+            <p>با ما در support@yourwebsite.com تماس بگیرید</p>
+        </div>
+    </div>
+</body>
+</html>

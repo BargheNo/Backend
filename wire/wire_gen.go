@@ -96,8 +96,29 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationRepository := repositoryimpl.NewCorporationRepository()
 	corporationService := serviceimpl.NewCorporationService(constants, userService, addressService, s3Storage, corporationRepository, postgresDatabase)
 	generalCorporationController := corporation.NewGeneralCorporationController(constants, corporationService)
+	chatRepository := repositoryimpl.NewChatRepository()
+	chatService := serviceimpl.NewChatService(constants, userService, corporationService, chatRepository, postgresDatabase)
+	installationRepository := repositoryimpl.NewInstallationRepository()
+	installationService := serviceimpl.NewInstallationService(constants, addressService, userService, corporationService, chatService, installationRepository, postgresDatabase)
+	bidRepository := repositoryimpl.NewBidRepository()
+	bidService := serviceimpl.NewBidService(constants, installationService, userService, corporationService, rabbitmqRabbitMQ, bidRepository, postgresDatabase)
+	maintenanceRepository := repositoryimpl.NewMaintenanceRepository()
+	maintenanceService := serviceimpl.NewMaintenanceService(constants, userService, installationService, corporationService, addressService, maintenanceRepository, postgresDatabase)
+	reportRepository := repositoryimpl.NewReportRepository()
+	reportService := serviceimpl.NewReportService(constants, userService, maintenanceService, installationService, rabbitmqRabbitMQ, reportRepository, postgresDatabase)
 	notificationRepository := repositoryimpl.NewNotificationRepository()
-	notificationService := serviceimpl.NewNotificationService(constants, userService, notificationRepository, hub, rabbitmqRabbitMQ, postgresDatabase)
+	notificationServiceDeps := serviceimpl.NotificationServiceDeps{
+		Constants:              constants,
+		UserService:            userService,
+		EmailService:           emailService,
+		BidService:             bidService,
+		ReportService:          reportService,
+		NotificationRepository: notificationRepository,
+		WSHub:                  hub,
+		RabbitMQ:               rabbitmqRabbitMQ,
+		DB:                     postgresDatabase,
+	}
+	notificationService := serviceimpl.NewNotificationService(notificationServiceDeps)
 	generalNotificationController := notification.NewGeneralNotificationController(constants, notificationService)
 	pagination := ProvidePaginationConfig(container)
 	newsRepository := repositoryimpl.NewNewsRepository()
@@ -115,23 +136,18 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	chatService := serviceimpl.NewChatService(constants, userService, corporationService, chatRepository, postgresDatabase)
 	installationRepository := repositoryimpl.NewInstallationRepository()
 	installationService := serviceimpl.NewInstallationService(constants, addressService, userService, corporationService, chatService, installationRepository, postgresDatabase)
+	pagination := ProvidePaginationConfig(container)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
 	customerAddressController := address.NewCustomerAddressController(constants, addressService)
 	customerCorporationController := corporation.NewCustomerCorporationController(constants, pagination, corporationService)
-	bidRepository := repositoryimpl.NewBidRepository()
-	bidService := serviceimpl.NewBidService(constants, installationService, userService, corporationService, notificationService, bidRepository, postgresDatabase)
 	customerBidController := bid.NewCustomerBidController(constants, pagination, bidService)
 	websocketSetting := ProvideWebsocketSetting(container)
 	customerChatController := chat.NewCustomerChatController(constants, pagination, websocketSetting, chatService, jwtService, userService, hub)
-	customerNotificationController := notification.NewCustomerNotificationController(constants, websocketSetting, notificationService, jwtService, userService, hub)
-	maintenanceRepository := repositoryimpl.NewMaintenanceRepository()
-	maintenanceService := serviceimpl.NewMaintenanceService(constants, userService, installationService, corporationService, addressService, maintenanceRepository, postgresDatabase)
+	customerNotificationController := notification.NewCustomerNotificationController(constants, websocketSetting, pagination, notificationService, jwtService, userService, hub)
 	customerMaintenanceController := maintenance.NewCustomerMaintenanceController(constants, pagination, maintenanceService)
 	ticketRepository := repositoryimpl.NewTicketRepository()
 	ticketService := serviceimpl.NewTicketService(constants, ticketRepository, userService, s3Storage, postgresDatabase)
 	customerTicketController := ticket.NewCustomerTicketController(constants, ticketService, pagination)
-	reportRepository := repositoryimpl.NewReportRepository()
-	reportService := serviceimpl.NewReportService(constants, userService, maintenanceService, installationService, notificationService, reportRepository, postgresDatabase)
 	customerReportController := report.NewCustomerReportController(constants, reportService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
@@ -214,10 +230,12 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	registerConsumer := consumer.NewRegisterConsumer(rabbitMQConstants, rabbitmqRabbitMQ, notificationService)
 	pushConsumer := consumer.NewPushConsumer(rabbitMQConstants, rabbitmqRabbitMQ, hub)
 	emailConsumer := consumer.NewEmailConsumer(rabbitMQConstants, rabbitmqRabbitMQ, emailService)
+	sendNotificationConsumer := consumer.NewSendNotificationConsumer(rabbitMQConstants, rabbitmqRabbitMQ, notificationService)
 	consumers := &Consumers{
-		Register: registerConsumer,
-		Push:     pushConsumer,
-		Email:    emailConsumer,
+		Register:     registerConsumer,
+		Push:         pushConsumer,
+		Email:        emailConsumer,
+		Notification: sendNotificationConsumer,
 	}
 	application := NewApplication(wireDatabase, controllers, middlewares, seeds, consumers)
 	return application, nil
@@ -247,7 +265,7 @@ var MiddlewareProviderSet = wire.NewSet(middleware.NewAuthMiddleware, middleware
 
 var SeederProviderSet = wire.NewSet(seed.NewAddressSeeder, seed.NewNotificationTypeSeeder, seed.NewRoleSeeder, seed.NewContactTypeSeeder, wire.Struct(new(Seeds), "*"))
 
-var ConsumerProviderSet = wire.NewSet(consumer.NewRegisterConsumer, consumer.NewPushConsumer, consumer.NewEmailConsumer, wire.Struct(new(Consumers), "*"))
+var ConsumerProviderSet = wire.NewSet(consumer.NewRegisterConsumer, consumer.NewPushConsumer, consumer.NewEmailConsumer, consumer.NewSendNotificationConsumer, wire.Struct(new(Consumers), "*"))
 
 func ProvideConstants(container *bootstrap.Config) *bootstrap.Constants {
 	return container.Constants
@@ -421,9 +439,10 @@ type Seeds struct {
 }
 
 type Consumers struct {
-	Register *consumer.RegisterConsumer
-	Push     *consumer.PushConsumer
-	Email    *consumer.EmailConsumer
+	Register     *consumer.RegisterConsumer
+	Push         *consumer.PushConsumer
+	Email        *consumer.EmailConsumer
+	Notification *consumer.SendNotificationConsumer
 }
 
 type Application struct {

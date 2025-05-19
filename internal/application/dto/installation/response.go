@@ -45,31 +45,31 @@ type CorporationPanelResponse struct {
 	Address              addressdto.AddressResponse `json:"address"`
 }
 
-type PanleResponse struct {
-	ID                   uint
-	Name                 string
-	Customer             userdto.CredentialResponse
-	Operator             userdto.CredentialResponse
-	Corporation          corporationdto.CorporationCredentialResponse
-	Address              addressdto.AddressResponse
-	PanelName            string
-	Power                uint
-	Area                 uint
-	BuildingType         string
-	Tilt                 uint
-	Azimuth              uint
-	TotalNumberOfModules uint
+type PanelResponse struct {
+	ID                   uint                                         `json:"id"`
+	Name                 string                                       `json:"name"`
+	Customer             userdto.CredentialResponse                   `json:"customer"`
+	Operator             userdto.CredentialResponse                   `json:"operator"`
+	Corporation          corporationdto.CorporationCredentialResponse `json:"corporation"`
+	Address              addressdto.AddressResponse                   `json:"address"`
+	PanelName            string                                       `json:"panelName"`
+	Power                uint                                         `json:"power"`
+	Area                 uint                                         `json:"area"`
+	BuildingType         string                                       `json:"buildingType"`
+	Tilt                 uint                                         `json:"tilt"`
+	Azimuth              uint                                         `json:"azimuth"`
+	TotalNumberOfModules uint                                         `json:"totalNumberOfModules"`
 }
 
 type CustomerPanelResponse struct {
-	ID                   uint   `json:"id"`
-	PanelName            string `json:"panelName"`
-	Corporation          corporationdto.CorporationCredentialResponse
-	Power                uint                       `json:"power"`
-	Area                 uint                       `json:"area"`
-	BuildingType         string                     `json:"buildingType"`
-	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
-	Tilt                 uint                       `json:"tilt"`
-	Azimuth              uint                       `json:"azimuth"`
-	Address              addressdto.AddressResponse `json:"address"`
+	ID                   uint                                         `json:"id"`
+	PanelName            string                                       `json:"name"`
+	Corporation          corporationdto.CorporationCredentialResponse `json:"corporation"`
+	Power                uint                                         `json:"power"`
+	Area                 uint                                         `json:"area"`
+	BuildingType         string                                       `json:"buildingType"`
+	TotalNumberOfModules uint                                         `json:"totalNumberOfModules"`
+	Tilt                 uint                                         `json:"tilt"`
+	Azimuth              uint                                         `json:"azimuth"`
+	Address              addressdto.AddressResponse                   `json:"address"`
 }

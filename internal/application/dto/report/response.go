@@ -6,15 +6,15 @@ import (
 )
 
 type MaintenanceReportResponse struct {
-	ID                uint
-	Description       string
-	MaintenanceRecord maintenancedto.MaintenanceRecordResponse
-	Status            string
+	ID                uint                                     `json:"id"`
+	Description       string                                   `json:"description"`
+	MaintenanceRecord maintenancedto.MaintenanceRecordResponse `json:"maintenanceRecord"`
+	Status            string                                   `json:"status"`
 }
 
 type PanelReportResponse struct {
-	ID          uint
-	Description string
-	Panel       installationdto.PanleResponse
-	Status      string
+	ID          uint                          `json:"id"`
+	Description string                        `json:"description"`
+	Panel       installationdto.PanelResponse `json:"panel"`
+	Status      string                        `json:"status"`
 }

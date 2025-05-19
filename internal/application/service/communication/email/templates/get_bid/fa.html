@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اطلاعیه پیشنهاد جدید</title>
+    <style>
+        body { font-family: 'Arial', 'Vazir', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background: #0073e6; color: #ffffff; padding: 20px; text-align: center; }
+        .header img { max-width: 100px; }
+        .content { padding: 20px; }
+        .content h2 { color: #333333; }
+        .content p { color: #555555; line-height: 1.6; }
+        .bid-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .bid-details p { margin: 5px 0; }
+        .cta-button { display: inline-block; padding: 12px 25px; background: #0073e6; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { background: #f4f4f4; padding: 10px; text-align: center; color: #777777; font-size: 12px; }
+        @media (max-width: 600px) { .container { margin: 10px; } .header, .content, .footer { padding: 15px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>پیشنهاد جدید برای درخواست شما</h1>
+        </div>
+        <div class="content">
+            <h2>سلام {{.installationRequest.customer.firstName}} {{.installationRequest.customer.lastName}}،</h2>
+            <p>خوشحالیم که به شما اطلاع دهیم یک پیشنهاد جدید برای درخواست نصب شما توسط {{.corporation.name}} ارائه شده است. در زیر جزئیات پیشنهاد آمده است:</p>
+            <div class="bid-details">
+                <p><strong>درخواست:</strong> {{.installationRequest.name}}</p>
+                <p><strong>پیشنهاد دهنده:</strong> {{.corporation.name}}</p>
+                <p><strong>مبلغ پیشنهاد:</strong> ${{.cost}}</p>
+                <p><strong>زمان پیشنهادی نصب:</strong> {{.installationTime}}</p>
+                <p><strong>توضیحات:</strong> {{.description}}</p>
+                <p><strong>آدرس درخواست:</strong> {{.installationRequest.address.street}}، {{.installationRequest.address.city}}، {{.installationRequest.address.province}}</p>
+            </div>
+            <p>لطفاً پیشنهاد را بررسی کنید و اقدامات لازم را برای ادامه انجام دهید. برای جزئیات بیشتر می‌توانید با {{.corporation.name}} تماس بگیرید.</p>
+            <a href="https://yourwebsite.com/bids" class="cta-button">مشاهده جزئیات پیشنهاد</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 برق نو. تمامی حقوق محفوظ است.</p>
+        </div>
+    </div>
+</body>
+</html>

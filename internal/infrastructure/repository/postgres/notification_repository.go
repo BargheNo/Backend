@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -25,13 +26,15 @@ func (repo *NotificationRepository) GetNotificationByID(db database.Database, no
 	return notification, true
 }
 
-func (repo *NotificationRepository) GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint) []*entity.Notification {
+func (repo *NotificationRepository) GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, opts ...repository.QueryModifier) []*entity.Notification {
 	var notifications []*entity.Notification
-	result := db.GetDB().Where("recipient_id = ? and type_id IN ?", userID, types).Find(&notifications)
+	query := db.GetDB().Where("recipient_id = ? and type_id IN ?", userID, types)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&notifications)
+
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil
-		}
 		panic(result.Error)
 	}
 	return notifications

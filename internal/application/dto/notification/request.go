@@ -8,6 +8,8 @@ type NotificationInfoRequest struct {
 type NotificationListRequest struct {
 	Types  []uint
 	UserID uint
+	Offset int
+	Limit  int
 }
 
 type UpdateSettingsRequest struct {
