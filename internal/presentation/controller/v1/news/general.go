@@ -55,3 +55,20 @@ func (newsController *GeneralNewsController) GetNews(ctx *gin.Context) {
 
 	controller.Response(ctx, 200, "", news)
 }
+
+func (newsController *GeneralNewsController) GetNewsMedia(ctx *gin.Context) {
+	type getNewsParams struct {
+		NewsID  uint `uri:"newsID" validate:"required"`
+		MediaID uint `uri:"mediaID" validate:"required"`
+	}
+	params := controller.Validated[getNewsParams](ctx)
+
+	mediaParams := newsdto.AccessMediaRequest{
+		NewsID:   params.NewsID,
+		MediaID:  params.MediaID,
+		UserType: enum.UserTypeGuest,
+	}
+	media := newsController.newsService.GetNewsMedia(mediaParams)
+
+	controller.Response(ctx, 200, "", media)
+}

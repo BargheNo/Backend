@@ -168,11 +168,11 @@ func (newsController *AdminNewsController) DeleteNews(ctx *gin.Context) {
 }
 
 func (newsController *AdminNewsController) AddNewsMedia(ctx *gin.Context) {
-	type deleteNewsParams struct {
+	type addMediaParams struct {
 		NewsID uint                  `uri:"newsID" validate:"required"`
 		Media  *multipart.FileHeader `form:"media" validate:"required"`
 	}
-	params := controller.Validated[deleteNewsParams](ctx)
+	params := controller.Validated[addMediaParams](ctx)
 	userID, _ := ctx.Get(newsController.constants.Context.ID)
 
 	mediaParams := newsdto.AddNewsMediaRequest{
@@ -188,11 +188,11 @@ func (newsController *AdminNewsController) AddNewsMedia(ctx *gin.Context) {
 }
 
 func (newsController *AdminNewsController) DeleteNewsMedia(ctx *gin.Context) {
-	type deleteNewsParams struct {
+	type deleteMediaParams struct {
 		NewsID  uint `uri:"newsID" validate:"required"`
 		MediaID uint `uri:"mediaID" validate:"required"`
 	}
-	params := controller.Validated[deleteNewsParams](ctx)
+	params := controller.Validated[deleteMediaParams](ctx)
 	userID, _ := ctx.Get(newsController.constants.Context.ID)
 
 	mediaParams := newsdto.AccessMediaRequest{
@@ -208,16 +208,14 @@ func (newsController *AdminNewsController) DeleteNewsMedia(ctx *gin.Context) {
 }
 
 func (newsController *AdminNewsController) GetNewsMedia(ctx *gin.Context) {
-	type deleteNewsParams struct {
+	type getMediaParams struct {
 		NewsID  uint `uri:"newsID" validate:"required"`
 		MediaID uint `uri:"mediaID" validate:"required"`
 	}
-	params := controller.Validated[deleteNewsParams](ctx)
-	userID, _ := ctx.Get(newsController.constants.Context.ID)
+	params := controller.Validated[getMediaParams](ctx)
 
 	mediaParams := newsdto.AccessMediaRequest{
 		NewsID:   params.NewsID,
-		AuthorID: userID.(uint),
 		MediaID:  params.MediaID,
 		UserType: enum.UserTypeAdmin,
 	}
