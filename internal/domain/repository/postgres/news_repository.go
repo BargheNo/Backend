@@ -12,5 +12,7 @@ type NewsRepository interface {
 	UpdateNews(db database.Database, news *entity.News) error
 	CreateNews(db database.Database, news *entity.News) error
 	DeleteNews(db database.Database, newsID uint) error
+	GetMediaByID(db database.Database, mediaID uint) (*entity.Media, bool)
 	AddMedia(db database.Database, media *entity.Media) error
+	DeleteMedia(db database.Database, mediaID uint) error
 }

@@ -63,6 +63,22 @@ func (repo *NewsRepository) DeleteNews(db database.Database, newsID uint) error 
 	return db.GetDB().Delete(&entity.News{}, newsID).Error
 }
 
+func (repo *NewsRepository) GetMediaByID(db database.Database, mediaID uint) (*entity.Media, bool) {
+	var media entity.Media
+	result := db.GetDB().First(&media, mediaID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &media, true
+}
+
 func (repo *NewsRepository) AddMedia(db database.Database, media *entity.Media) error {
 	return db.GetDB().Create(&media).Error
+}
+
+func (repo *NewsRepository) DeleteMedia(db database.Database, mediaID uint) error {
+	return db.GetDB().Delete(&entity.Media{}, mediaID).Error
 }

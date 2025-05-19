@@ -186,3 +186,42 @@ func (newsController *AdminNewsController) AddNewsMedia(ctx *gin.Context) {
 	message, _ := trans.Translate("successMessage.addMedia")
 	controller.Response(ctx, 200, message, media)
 }
+
+func (newsController *AdminNewsController) DeleteNewsMedia(ctx *gin.Context) {
+	type deleteNewsParams struct {
+		NewsID  uint `uri:"newsID" validate:"required"`
+		MediaID uint `uri:"mediaID" validate:"required"`
+	}
+	params := controller.Validated[deleteNewsParams](ctx)
+	userID, _ := ctx.Get(newsController.constants.Context.ID)
+
+	mediaParams := newsdto.AccessMediaRequest{
+		NewsID:   params.NewsID,
+		AuthorID: userID.(uint),
+		MediaID:  params.MediaID,
+	}
+	newsController.newsService.DeleteNewsMedia(mediaParams)
+
+	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteMedia")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (newsController *AdminNewsController) GetNewsMedia(ctx *gin.Context) {
+	type deleteNewsParams struct {
+		NewsID  uint `uri:"newsID" validate:"required"`
+		MediaID uint `uri:"mediaID" validate:"required"`
+	}
+	params := controller.Validated[deleteNewsParams](ctx)
+	userID, _ := ctx.Get(newsController.constants.Context.ID)
+
+	mediaParams := newsdto.AccessMediaRequest{
+		NewsID:   params.NewsID,
+		AuthorID: userID.(uint),
+		MediaID:  params.MediaID,
+		UserType: enum.UserTypeAdmin,
+	}
+	media := newsController.newsService.GetNewsMedia(mediaParams)
+
+	controller.Response(ctx, 200, "", media)
+}

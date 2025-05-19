@@ -48,3 +48,10 @@ type AddNewsMediaRequest struct {
 	AuthorID uint
 	Media    *multipart.FileHeader
 }
+
+type AccessMediaRequest struct {
+	NewsID   uint
+	AuthorID uint
+	MediaID  uint
+	UserType enum.UserType
+}

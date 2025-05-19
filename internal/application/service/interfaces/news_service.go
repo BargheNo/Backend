@@ -13,4 +13,6 @@ type NewsService interface {
 	UpdateNewsStatus(request newsdto.EditNewsStatusRequest)
 	DeleteNewsStatus(request newsdto.DeleteNewsRequest)
 	AddNewsMedia(request newsdto.AddNewsMediaRequest) uint
+	DeleteNewsMedia(request newsdto.AccessMediaRequest)
+	GetNewsMedia(request newsdto.AccessMediaRequest) string
 }

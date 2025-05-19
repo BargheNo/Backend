@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"time"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -231,14 +233,71 @@ func (newsService *NewsService) AddNewsMedia(request newsdto.AddNewsMediaRequest
 	return media.ID
 }
 
-func (newsService *NewsService) EditNewMedia() {
+func (newsService *NewsService) DeleteNewsMedia(request newsdto.AccessMediaRequest) {
+	ok := newsService.userService.IsUserActive(request.AuthorID)
+	if !ok {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.News,
+		}
+		panic(forbiddenError)
+	}
 
+	_, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
+		panic(notFoundError)
+	}
+
+	media, exist := newsService.newsRepository.GetMediaByID(newsService.db, request.MediaID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.Media}
+		panic(notFoundError)
+	}
+
+	if media.OwnerID != request.NewsID {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.Media,
+		}
+		panic(forbiddenError)
+	}
+
+	if err := newsService.s3Storage.DeleteObject(enum.NewsMedia, media.Path); err != nil {
+		panic(err)
+	}
+	if err := newsService.newsRepository.DeleteMedia(newsService.db, request.MediaID); err != nil {
+		panic(err)
+	}
 }
 
-func (newsService *NewsService) DeleteNewsMedia() {
+func (newsService *NewsService) GetNewsMedia(request newsdto.AccessMediaRequest) string {
+	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
+		panic(notFoundError)
+	}
+	if request.UserType == enum.UserTypeGuest && news.Status == enum.NewsStatusDraft {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.News,
+		}
+		panic(forbiddenError)
+	}
 
-}
+	media, exist := newsService.newsRepository.GetMediaByID(newsService.db, request.MediaID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.Media}
+		panic(notFoundError)
+	}
 
-func (newsService *NewsService) GetNewsMedia() {
+	if media.OwnerID != request.NewsID {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.Media,
+		}
+		panic(forbiddenError)
+	}
 
+	return newsService.s3Storage.GetPresignedURL(enum.NewsMedia, media.Path, 8*time.Hour)
 }
