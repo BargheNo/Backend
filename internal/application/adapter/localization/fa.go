@@ -126,6 +126,7 @@ var Persian = map[string]interface{}{
 		"publishNews":               "خبر با موفقیت منتشر شد.",
 		"unpublishNews":             "خبر با موفقیت به حالت پیش نویس تغییر کرد.",
 		"deleteNews":                "اخبار مورد نظر شما با موفقیت حذف شدند.",
+		"addMedia":                  "محتوای مورد نظر با موفقیت آپلود شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

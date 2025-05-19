@@ -101,7 +101,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	generalNotificationController := notification.NewGeneralNotificationController(constants, notificationService)
 	pagination := ProvidePaginationConfig(container)
 	newsRepository := repositoryimpl.NewNewsRepository()
-	newsService := serviceimpl.NewNewsService(constants, userService, newsRepository, postgresDatabase)
+	newsService := serviceimpl.NewNewsService(constants, userService, s3Storage, newsRepository, postgresDatabase)
 	generalNewsController := news.NewGeneralNewsController(constants, pagination, newsService)
 	generalControllers := &GeneralControllers{
 		UserController:         generalUserController,

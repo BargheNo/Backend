@@ -8,6 +8,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
@@ -15,6 +16,7 @@ import (
 type NewsService struct {
 	constants      *bootstrap.Constants
 	userService    service.UserService
+	s3Storage      s3.S3Storage
 	newsRepository repository.NewsRepository
 	db             database.Database
 }
@@ -22,12 +24,14 @@ type NewsService struct {
 func NewNewsService(
 	constants *bootstrap.Constants,
 	userService service.UserService,
+	s3Storage s3.S3Storage,
 	newsRepository repository.NewsRepository,
 	db database.Database,
 ) *NewsService {
 	return &NewsService{
 		constants:      constants,
 		userService:    userService,
+		s3Storage:      s3Storage,
 		newsRepository: newsRepository,
 		db:             db,
 	}
@@ -197,4 +201,44 @@ func (newsService *NewsService) DeleteNewsStatus(request newsdto.DeleteNewsReque
 		}
 		newsService.newsRepository.DeleteNews(newsService.db, newsID)
 	}
+}
+
+func (newsService *NewsService) AddNewsMedia(request newsdto.AddNewsMediaRequest) uint {
+	ok := newsService.userService.IsUserActive(request.AuthorID)
+	if !ok {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: newsService.constants.Field.News,
+		}
+		panic(forbiddenError)
+	}
+	_, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
+		panic(notFoundError)
+	}
+	mediaPath := newsService.constants.S3BucketPath.GetNewsMediaPath(request.NewsID, request.Media.Filename)
+	newsService.s3Storage.UploadObject(enum.NewsMedia, mediaPath, request.Media)
+
+	media := &entity.Media{
+		Path:      mediaPath,
+		OwnerID:   request.NewsID,
+		OwnerType: "news",
+	}
+	if err := newsService.newsRepository.AddMedia(newsService.db, media); err != nil {
+		panic(err)
+	}
+	return media.ID
+}
+
+func (newsService *NewsService) EditNewMedia() {
+
+}
+
+func (newsService *NewsService) DeleteNewsMedia() {
+
+}
+
+func (newsService *NewsService) GetNewsMedia() {
+
 }

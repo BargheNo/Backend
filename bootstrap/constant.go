@@ -354,3 +354,7 @@ func (path *BucketPath) GetTicketImagePath(ticketID uint, imageFilename string) 
 func (path *BucketPath) GetCorporationLogoPath(corporationID uint, logoFileName string) string {
 	return fmt.Sprintf("corporation/%d/logo/%s", corporationID, logoFileName)
 }
+
+func (path *BucketPath) GetNewsMediaPath(newsID uint, MediaFileName string) string {
+	return fmt.Sprintf("news/%d/media/%s", newsID, MediaFileName)
+}

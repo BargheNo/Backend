@@ -68,6 +68,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			newsSubgroup.PUT("", app.Controllers.Admin.NewsController.EditNews)
 			newsSubgroup.PUT("/publish", app.Controllers.Admin.NewsController.PublishNews)
 			newsSubgroup.PUT("unpublish", app.Controllers.Admin.NewsController.UnpublishNews)
+			newsSubgroup.POST("/media", app.Controllers.Admin.NewsController.AddNewsMedia)
 		}
 
 	}

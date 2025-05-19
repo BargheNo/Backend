@@ -1,6 +1,8 @@
 package news
 
 import (
+	"mime/multipart"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -163,4 +165,24 @@ func (newsController *AdminNewsController) DeleteNews(ctx *gin.Context) {
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteNews")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (newsController *AdminNewsController) AddNewsMedia(ctx *gin.Context) {
+	type deleteNewsParams struct {
+		NewsID uint                  `uri:"newsID" validate:"required"`
+		Media  *multipart.FileHeader `form:"media" validate:"required"`
+	}
+	params := controller.Validated[deleteNewsParams](ctx)
+	userID, _ := ctx.Get(newsController.constants.Context.ID)
+
+	mediaParams := newsdto.AddNewsMediaRequest{
+		NewsID:   params.NewsID,
+		AuthorID: userID.(uint),
+		Media:    params.Media,
+	}
+	media := newsController.newsService.AddNewsMedia(mediaParams)
+
+	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addMedia")
+	controller.Response(ctx, 200, message, media)
 }

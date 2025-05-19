@@ -7,10 +7,11 @@ import (
 
 type News struct {
 	database.Model
-	Title    string `json:"title"`
-	Content  string `json:"content_html"`
-	AuthorID uint   `gorm:"not null;index"`
-	Author   User   `gorm:"foreignKey:AuthorID"`
+	Title    string  `json:"title"`
+	Content  string  `json:"content_html"`
+	AuthorID uint    `gorm:"not null;index"`
+	Author   User    `gorm:"foreignKey:AuthorID"`
+	Media    []Media `gorm:"polymorphic:Owner;polymorphicValue:news"`
 	Status   enum.NewsStatus
 }
 
@@ -25,13 +26,4 @@ type News struct {
 //  Categories  []Category  `gorm:"many2many:news_categories;constraint:OnDelete:CASCADE"`
 //  like count
 //  subscribers
-// }
-
-// type Image struct {
-// 	ID       string
-// DocID	 uint
-// Doc 		 Document
-// 	S3Key    string
-// 	Caption  string
-// 	Position int
 // }

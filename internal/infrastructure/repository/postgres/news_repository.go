@@ -62,3 +62,7 @@ func (repo *NewsRepository) CreateNews(db database.Database, news *entity.News) 
 func (repo *NewsRepository) DeleteNews(db database.Database, newsID uint) error {
 	return db.GetDB().Delete(&entity.News{}, newsID).Error
 }
+
+func (repo *NewsRepository) AddMedia(db database.Database, media *entity.Media) error {
+	return db.GetDB().Create(&media).Error
+}
