@@ -26,4 +26,7 @@ type BidsResponse struct {
 	Cost                       uint                                         `json:"cost"`
 	InstallationTime           time.Time                                    `json:"installationTime"`
 	Status                     string                                       `json:"status"`
+	PaymentTerms              PaymentTermsResponse    `json:"paymentTerms"`
+	AvailableTimes            []AvailableTimeResponse `json:"availableTimes"`
+	Guarantee                 GuaranteeResponse       `json:"guarantee"`
 }

@@ -9,6 +9,8 @@ type SetBidRequest struct {
 	Cost                  uint
 	Description           string
 	InstallationTime      time.Time
+	PaymentTerms         PaymentTermsRequest    `json:"paymentTerms" validate:"required"`
+	AvailableTimes       []AvailableTimeRequest `json:"availableTimes" validate:"required,min=1,dive"`
 }
 
 type CancelBidRequest struct {

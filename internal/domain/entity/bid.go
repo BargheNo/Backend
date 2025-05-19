@@ -19,4 +19,9 @@ type Bid struct {
 	Cost             uint                `gorm:"not null"`
 	Description      string              `gorm:"type:text"`
 	InstallationTime time.Time           `gorm:"not null"`
+	PaymentTermsID   uint                `gorm:"not null;index"`
+	PaymentTerms     PaymentTerms        `gorm:"foreignKey:PaymentTermsID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	AvailableTimes   []AvailableTime     `gorm:"foreignKey:BidID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	GuaranteeID      *uint               `gorm:"index"`
+	Guarantee        *Guarantee          `gorm:"foreignKey:GuaranteeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 }
