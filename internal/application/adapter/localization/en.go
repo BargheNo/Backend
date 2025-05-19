@@ -36,6 +36,9 @@ var English = map[string]interface{}{
 	"ticketComment":       "ticket comment",
 	"report":              "report",
 	"contactInformation":  "contact information",
+	"news":                "news",
+	"tittle":              "tittle",
+	"media":               "media",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -72,6 +75,7 @@ var English = map[string]interface{}{
 		"alreadyBlocked":         "This {0} has been already blocked.",
 		"alreadyActive":          "This {0} has been already active.",
 		"alreadyResolved":        "This {0} has been already resolved.",
+		"alreadyDraft":           "This {0} has been already drafted.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -118,6 +122,13 @@ var English = map[string]interface{}{
 		"reportResolved":            "Report has been successfully resolved.",
 		"banUser":                   "User get banned successfully.",
 		"unbanUser":                 "User get unbanned successfully.",
+		"createDraftNews":           "Draft news has been created successfully.",
+		"editNews":                  "News has been updated successfully.",
+		"publishNews":               "News has been successfully published.",
+		"unpublishNews":             "News has been successfully drafted.",
+		"deleteNews":                "ُSelected news has been successfully deleted.",
+		"addMedia":                  "Media has been added successfully.",
+		"deleteMedia":               "Media has been deleted successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

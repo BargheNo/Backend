@@ -55,4 +55,23 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		report.GET("/panel", app.Controllers.Admin.ReportController.GetPanelReports)
 		report.POST("/resolve/:reportID", app.Controllers.Admin.ReportController.ResolveReport)
 	}
+
+	news := routerGroup.Group("/news")
+	{
+		news.POST("/draft", app.Controllers.Admin.NewsController.CreateDraftNews)
+		news.GET("", app.Controllers.Admin.NewsController.GetNewsList)
+		news.GET("/status", app.Controllers.Admin.NewsController.GetAllNewsStatuses)
+		news.DELETE("", app.Controllers.Admin.NewsController.DeleteNews)
+		newsSubgroup := news.Group("/:newsID")
+		{
+			newsSubgroup.GET("", app.Controllers.Admin.NewsController.GetNews)
+			newsSubgroup.PUT("", app.Controllers.Admin.NewsController.EditNews)
+			newsSubgroup.PUT("/publish", app.Controllers.Admin.NewsController.PublishNews)
+			newsSubgroup.PUT("unpublish", app.Controllers.Admin.NewsController.UnpublishNews)
+			newsSubgroup.POST("/media", app.Controllers.Admin.NewsController.AddNewsMedia)
+			newsSubgroup.DELETE("/media/:mediaID", app.Controllers.Admin.NewsController.DeleteNewsMedia)
+			newsSubgroup.GET("/media/:mediaID", app.Controllers.Admin.NewsController.GetNewsMedia)
+		}
+
+	}
 }

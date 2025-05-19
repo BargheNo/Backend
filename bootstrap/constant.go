@@ -74,6 +74,8 @@ type ErrorField struct {
 	TicketComment       string
 	Report              string
 	ContactInformation  string
+	News                string
+	Media               string
 }
 
 type ErrorTag struct {
@@ -100,6 +102,7 @@ type ErrorTag struct {
 	AlreadyBlocked         string
 	AlreadyActive          string
 	AlreadyResolved        string
+	AlreadyDraft           string
 }
 
 type SMSTemplates struct {
@@ -233,6 +236,8 @@ func NewConstants() *Constants {
 			Report:              "report",
 			ContactInformation:  "contactInformation",
 			NotificationSetting: "notificationSetting",
+			News:                "news",
+			Media:               "media",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -258,6 +263,7 @@ func NewConstants() *Constants {
 			AlreadyBlocked:         "alreadyBlocked",
 			AlreadyActive:          "alreadyActive",
 			AlreadyResolved:        "alreadyResolved",
+			AlreadyDraft:           "alreadyDraft",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
@@ -351,4 +357,8 @@ func (path *BucketPath) GetTicketImagePath(ticketID uint, imageFilename string) 
 
 func (path *BucketPath) GetCorporationLogoPath(corporationID uint, logoFileName string) string {
 	return fmt.Sprintf("corporation/%d/logo/%s", corporationID, logoFileName)
+}
+
+func (path *BucketPath) GetNewsMediaPath(newsID uint, MediaFileName string) string {
+	return fmt.Sprintf("news/%d/media/%s", newsID, MediaFileName)
 }
