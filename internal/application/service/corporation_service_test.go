@@ -354,6 +354,57 @@ func (s *CorporationServiceTestSuite) TestRegister() {
 	})
 }
 
+func (s *CorporationServiceTestSuite) TestReplaceSignatories() {
+	s.Run("success - Signatories replaced", func() {
+		corporation := &entity.Corporation{
+			Signatories: []entity.Signatory{
+				{
+					NationalCardNumber: "1234567890",
+					Position:           "existingPosition",
+				},
+			},
+		}
+		var nilSignatory *entity.Signatory = nil
+
+		s.corporationRepository.On("DeleteCorporationSignatories", s.db, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("FindCorporationSignatoryByNationalID", s.db, mock.Anything, mock.Anything, mock.Anything).Return(nilSignatory, false).Once()
+		s.corporationRepository.On("FindCorporationSignatoryByNationalID", s.db, mock.Anything, mock.Anything, mock.Anything).Return(&corporation.Signatories[0], true).Once()
+		s.corporationRepository.On("CreateSignatory", s.db, mock.Anything).Return(nil).Once()
+
+		s.corporationService.replaceSignatories(uint(1), []corporationdto.Signatory{{
+			NationalCardNumber: "1234567890",
+			Position:           "existingPosition",
+		}, {
+			NationalCardNumber: "1234567891",
+			Position:           "newPosition",
+		}})
+
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Delete corporation signatories failed", func() {
+		s.corporationRepository.On("DeleteCorporationSignatories", s.db, mock.Anything).Return(errors.New("error")).Once()
+
+		s.Panics(func() {
+			s.corporationService.replaceSignatories(uint(1), []corporationdto.Signatory{{}, {}})
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Create signatory failed", func() {
+		var nilSignatory *entity.Signatory = nil
+
+		s.corporationRepository.On("DeleteCorporationSignatories", s.db, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("FindCorporationSignatoryByNationalID", s.db, mock.Anything, mock.Anything, mock.Anything).Return(nilSignatory, false).Once()
+		s.corporationRepository.On("CreateSignatory", s.db, mock.Anything).Return(errors.New("error")).Once()
+
+		s.Panics(func() {
+			s.corporationService.replaceSignatories(uint(1), []corporationdto.Signatory{{}})
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestCorporationServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CorporationServiceTestSuite))
 }
