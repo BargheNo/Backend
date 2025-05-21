@@ -1,10 +1,12 @@
 package serviceimpl
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/mocks"
@@ -199,6 +201,155 @@ func (s *CorporationServiceTestSuite) TestCheckApplicantAccess() {
 			s.corporationService.CheckApplicantAccess(uint(1), uint(1))
 		})
 
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *CorporationServiceTestSuite) TestRegister() {
+	s.Run("success - Corporation registered", func() {
+		var nilCorporation *entity.Corporation = nil
+		var nilSignatory *entity.Signatory = nil
+		signatory := &entity.Signatory{}
+
+		s.userService.On("IsUserActive", mock.Anything).Return(true).Once()
+		s.corporationRepository.On("FindCorporationByName", s.db, "testName", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByNationalID", s.db, "testNationalID", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByRegistrationNumber", s.db, "testRegistrationNumber", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByIBAN", mock.Anything, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("CreateCorporation", s.db, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("CreateCorporationStaff", s.db, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("FindCorporationSignatoryByNationalID", s.db, mock.Anything, mock.Anything, mock.Anything).Return(signatory, true).Once()
+		s.corporationRepository.On("FindCorporationSignatoryByNationalID", s.db, mock.Anything, mock.Anything, mock.Anything).Return(nilSignatory, false).Once()
+		s.corporationRepository.On("CreateSignatory", s.db, mock.Anything).Return(nil).Once()
+
+		request := corporationdto.RegisterRequest{
+			ApplicantID:        1,
+			Name:               "testName",
+			NationalID:         "testNationalID",
+			RegistrationNumber: "testRegistrationNumber",
+			IBAN:               "testIBAN",
+			Signatories:        []corporationdto.Signatory{{}, {}},
+		}
+
+		response := s.corporationService.Register(request)
+
+		s.Equal(response.Name, request.Name)
+
+		s.userService.AssertExpectations(s.T())
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - User not active", func() {
+		s.userService.On("IsUserActive", mock.Anything).Return(false).Once()
+
+		s.Panics(func() {
+			s.corporationService.Register(corporationdto.RegisterRequest{})
+		})
+
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - Corporation credentials already exist", func() {
+		corporation := &entity.Corporation{
+			Name:               "testName",
+			NationalID:         "testNationalID",
+			IBAN:               "testIBAN",
+			RegistrationNumber: "testRegistrationNumber",
+		}
+
+		s.userService.On("IsUserActive", mock.Anything).Return(true).Once()
+		s.corporationRepository.On("FindCorporationByName", s.db, "testName", mock.Anything).Return(corporation, true).Once()
+		s.corporationRepository.On("FindCorporationByNationalID", s.db, "testNationalID", mock.Anything).Return(corporation, true).Once()
+		s.corporationRepository.On("FindCorporationByRegistrationNumber", s.db, "testRegistrationNumber", mock.Anything).Return(corporation, true).Once()
+		s.corporationRepository.On("FindCorporationByIBAN", mock.Anything, mock.Anything, mock.Anything).Return(corporation, true).Once()
+
+		request := corporationdto.RegisterRequest{
+			Name:               "testName",
+			NationalID:         "testNationalID",
+			RegistrationNumber: "testRegistrationNumber",
+			IBAN:               "testIBAN",
+		}
+
+		s.Panics(func() {
+			s.corporationService.Register(request)
+		})
+
+		s.userService.AssertExpectations(s.T())
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Create corporation failed", func() {
+		var nilCorporation *entity.Corporation = nil
+
+		s.userService.On("IsUserActive", mock.Anything).Return(true).Once()
+		s.corporationRepository.On("FindCorporationByName", s.db, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByNationalID", s.db, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByRegistrationNumber", s.db, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByIBAN", mock.Anything, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+
+		s.corporationRepository.On("CreateCorporation", s.db, mock.Anything).Return(errors.New("error")).Once()
+
+		request := corporationdto.RegisterRequest{
+			IBAN: "testIBAN",
+		}
+
+		s.Panics(func() {
+			s.corporationService.Register(request)
+		})
+
+		s.userService.AssertExpectations(s.T())
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Create corporation staff failed", func() {
+		var nilCorporation *entity.Corporation = nil
+
+		s.userService.On("IsUserActive", mock.Anything).Return(true).Once()
+		s.corporationRepository.On("FindCorporationByName", s.db, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByNationalID", s.db, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByRegistrationNumber", s.db, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByIBAN", mock.Anything, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("CreateCorporation", s.db, mock.Anything).Return(nil).Once()
+
+		s.corporationRepository.On("CreateCorporationStaff", s.db, mock.Anything).Return(errors.New("error")).Once()
+
+		request := corporationdto.RegisterRequest{
+			IBAN: "testIBAN",
+		}
+
+		s.Panics(func() {
+			s.corporationService.Register(request)
+		})
+
+		s.userService.AssertExpectations(s.T())
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Create signatory failed", func() {
+		var nilCorporation *entity.Corporation = nil
+		var nilSignatory *entity.Signatory = nil
+		signatory := &entity.Signatory{}
+
+		s.userService.On("IsUserActive", mock.Anything).Return(true).Once()
+		s.corporationRepository.On("FindCorporationByName", s.db, "testName", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByNationalID", s.db, "testNationalID", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByRegistrationNumber", s.db, "testRegistrationNumber", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByIBAN", mock.Anything, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("CreateCorporation", s.db, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("CreateCorporationStaff", s.db, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("FindCorporationSignatoryByNationalID", s.db, mock.Anything, mock.Anything, mock.Anything).Return(signatory, true).Once()
+		s.corporationRepository.On("FindCorporationSignatoryByNationalID", s.db, mock.Anything, mock.Anything, mock.Anything).Return(nilSignatory, false).Once()
+		s.corporationRepository.On("CreateSignatory", s.db, mock.Anything).Return(errors.New("error")).Once()
+
+		request := corporationdto.RegisterRequest{
+			ApplicantID:        1,
+			Name:               "testName",
+			NationalID:         "testNationalID",
+			RegistrationNumber: "testRegistrationNumber",
+			IBAN:               "testIBAN",
+			Signatories:        []corporationdto.Signatory{{}, {}},
+		}
+
+		s.Panics(func() {
+			s.corporationService.Register(request)
+		})
+
+		s.userService.AssertExpectations(s.T())
 		s.corporationRepository.AssertExpectations(s.T())
 	})
 }
