@@ -22,6 +22,7 @@ type Env struct {
 	EmailSenderAccount EmailAccount
 	SuperAdmin         AdminCredentials
 	RabbitMQ           RabbitMQ
+	MQTT               MQTT
 }
 
 type Server struct {
@@ -121,6 +122,14 @@ type RabbitMQ struct {
 	RetryDelay    time.Duration
 }
 
+type MQTT struct {
+	Broker   string
+	Port     string
+	ClientID string
+	Username string
+	Password string
+}
+
 func NewEnvironments() *Env {
 	// godotenv.Load("../../.env")
 	godotenv.Load(".env")
@@ -206,6 +215,13 @@ func NewEnvironments() *Env {
 			VHost:         os.Getenv("AMQP_VHOST"),
 			MaxRetryCount: getEnvInt("AMQP_MAX_RETRY", 3),
 			RetryDelay:    getEnvDuration("AMQP_RETRY_DELAY", 5*time.Second),
+		},
+		MQTT: MQTT{
+			Broker:   os.Getenv("MQTT_BROKER"),
+			Port:     os.Getenv("MQTT_PORT"),
+			ClientID: os.Getenv("MQTT_CLIENT_ID"),
+			Username: os.Getenv("MQTT_USERNAME"),
+			Password: os.Getenv("MQTT_PASSWORD"),
 		},
 	}
 }

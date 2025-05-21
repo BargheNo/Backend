@@ -16,11 +16,13 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	"github.com/BargheNo/Backend/internal/domain/metrics"
+	"github.com/BargheNo/Backend/internal/domain/mqtt"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	cinimpl "github.com/BargheNo/Backend/internal/infrastructure/cin"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	mqttimpl "github.com/BargheNo/Backend/internal/infrastructure/mqtt"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
@@ -34,6 +36,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/monitoring"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/news"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/report"
@@ -97,6 +100,7 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewTicketService,
 	serviceimpl.NewReportService,
 	serviceimpl.NewNewsService,
+	serviceimpl.NewMonitoringService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
@@ -113,6 +117,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)),
 	wire.Bind(new(service.ReportService), new(*serviceimpl.ReportService)),
 	wire.Bind(new(service.NewsService), new(*serviceimpl.NewsService)),
+	wire.Bind(new(service.MonitoringService), new(*serviceimpl.MonitoringService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -122,10 +127,12 @@ var AdapterProviderSet = wire.NewSet(
 	metricsimpl.NewPrometheusMetrics,
 	storage.NewS3Storage,
 	rabbitmq.NewRabbitMQ,
+	mqttimpl.NewClient,
 	wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)),
 	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
 	wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)),
 	wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)),
+	wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)),
 )
 
 var GeneralControllerProviderSet = wire.NewSet(
@@ -165,6 +172,7 @@ var AdminControllerProviderSet = wire.NewSet(
 	user.NewAdminUserController,
 	report.NewAdminReportController,
 	news.NewAdminNewsController,
+	monitoring.NewAdminMonitoringController,
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -272,6 +280,10 @@ func ProvideRabbitMQConstants(container *bootstrap.Config) *bootstrap.RabbitMQCo
 	return &container.Constants.RabbitMQ
 }
 
+func ProvideMQTTConfig(container *bootstrap.Config) *bootstrap.MQTT {
+	return &container.Env.MQTT
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -303,6 +315,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSuperAdminCredential,
 	ProvideRabbitMQConfig,
 	ProvideRabbitMQConstants,
+	ProvideMQTTConfig,
 )
 
 type Database struct {
@@ -340,10 +353,11 @@ type CorporationControllers struct {
 }
 
 type AdminControllers struct {
-	TicketController *ticket.AdminTicketController
-	UserController   *user.AdminUserController
-	ReportController *report.AdminReportController
-	NewsController   *news.AdminNewsController
+	TicketController     *ticket.AdminTicketController
+	UserController       *user.AdminUserController
+	ReportController     *report.AdminReportController
+	NewsController       *news.AdminNewsController
+	MonitoringController *monitoring.AdminMonitoringController
 }
 
 type Controllers struct {

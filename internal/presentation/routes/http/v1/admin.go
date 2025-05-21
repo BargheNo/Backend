@@ -73,5 +73,9 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			newsSubgroup.GET("/media/:mediaID", app.Controllers.Admin.NewsController.GetNewsMedia)
 		}
 
+		monitoring := routerGroup.Group("/monitoring")
+		{
+			monitoring.GET("/test", app.Controllers.Admin.MonitoringController.Test)
+		}
 	}
 }
