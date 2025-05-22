@@ -470,6 +470,46 @@ func (s *CorporationServiceTestSuite) TestUpdateRegister() {
 	})
 }
 
+func (s *CorporationServiceTestSuite) TestCheckCorporationConflicts() {
+	s.Run("success - Corporation conflicts checked", func() {
+		corporation := &entity.Corporation{
+			Name:               "testName",
+			NationalID:         "testNationalID",
+			RegistrationNumber: "testRegistrationNumber",
+			IBAN:               "testIBAN",
+		}
+		var nilCorporation *entity.Corporation = nil
+
+		s.corporationRepository.On("FindCorporationByName", s.db, "testName", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByNationalID", s.db, "testNationalID", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByRegistrationNumber", s.db, "testRegistrationNumber", mock.Anything).Return(nilCorporation, false).Once()
+		s.corporationRepository.On("FindCorporationByIBAN", mock.Anything, mock.Anything, mock.Anything).Return(nilCorporation, false).Once()
+
+		s.corporationService.checkCorporationConflicts(corporation, &corporation.Name, &corporation.NationalID, &corporation.RegistrationNumber, &corporation.IBAN)
+
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+	s.Run("error - Corporation conflicts checked", func() {
+		corporation := &entity.Corporation{
+			Name:               "testName",
+			NationalID:         "testNationalID",
+			RegistrationNumber: "testRegistrationNumber",
+			IBAN:               "testIBAN",
+		}
+
+		s.corporationRepository.On("FindCorporationByName", s.db, "testName", mock.Anything).Return(corporation, true).Once()
+		s.corporationRepository.On("FindCorporationByNationalID", s.db, "testNationalID", mock.Anything).Return(corporation, true).Once()
+		s.corporationRepository.On("FindCorporationByRegistrationNumber", s.db, "testRegistrationNumber", mock.Anything).Return(corporation, true).Once()
+		s.corporationRepository.On("FindCorporationByIBAN", mock.Anything, mock.Anything, mock.Anything).Return(corporation, true).Once()
+
+		s.Panics(func() {
+			s.corporationService.checkCorporationConflicts(corporation, &corporation.Name, &corporation.NationalID, &corporation.RegistrationNumber, &corporation.IBAN)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestCorporationServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CorporationServiceTestSuite))
 }
