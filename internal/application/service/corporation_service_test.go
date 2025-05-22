@@ -656,6 +656,207 @@ func (s *CorporationServiceTestSuite) TestAddCertificateFiles() {
 	})
 }
 
+func (s *CorporationServiceTestSuite) TestAddContactInfo() {
+	s.Run("success - Contact info added", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+		var nilContactInformation *entity.ContactInformation = nil
+		var nilContactType *entity.ContactType = nil
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+
+		s.corporationRepository.On("FindContactInformationTypeByID", s.db, uint(1)).Return(nilContactType, true).Once()
+		s.corporationRepository.On("FindContactInformationTypeValue", s.db, uint(1), "testContactValue").Return(nilContactInformation, false).Once()
+
+		s.corporationRepository.On("FindContactInformationTypeByID", s.db, uint(2)).Return(nilContactType, false).Once()
+		// s.corporationRepository.On("FindContactInformationTypeValue", s.db, uint(2), "testContactValue2").Return(nilContactInformation, false).Once()
+
+		s.corporationRepository.On("FindContactInformationTypeByID", s.db, uint(3)).Return(nilContactType, true).Once()
+		s.corporationRepository.On("FindContactInformationTypeValue", s.db, uint(3), "testContactValue3").Return(nilContactInformation, true).Once()
+
+		s.corporationRepository.On("CreateContactInformation", s.db, mock.Anything).Return(nil).Once()
+
+		request := corporationdto.AddContactInformationRequest{
+			CorporationID:     1,
+			ApplicantID:       1,
+			CorporationStatus: enum.CorpStatusApproved,
+			ContactInformation: []corporationdto.ContactInformation{
+				{
+					ContactTypeID: 1,
+					ContactValue:  "testContactValue",
+				},
+				{
+					ContactTypeID: 2,
+				},
+				{
+					ContactTypeID: 3,
+					ContactValue:  "testContactValue3",
+				},
+			},
+		}
+		s.corporationService.AddContactInfo(request)
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not active", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(false).Once()
+
+		request := corporationdto.AddContactInformationRequest{
+			CorporationID:     1,
+			ApplicantID:       1,
+			CorporationStatus: enum.CorpStatusApproved,
+		}
+		s.Panics(func() {
+			s.corporationService.AddContactInfo(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - Create contact information failed", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+		var nilContactInformation *entity.ContactInformation = nil
+		var nilContactType *entity.ContactType = nil
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.corporationRepository.On("FindContactInformationTypeByID", s.db, uint(1)).Return(nilContactType, true).Once()
+		s.corporationRepository.On("FindContactInformationTypeValue", s.db, uint(1), "testContactValue").Return(nilContactInformation, false).Once()
+		s.corporationRepository.On("CreateContactInformation", s.db, mock.Anything).Return(errors.New("error")).Once()
+
+		request := corporationdto.AddContactInformationRequest{
+			CorporationID:     1,
+			ApplicantID:       1,
+			CorporationStatus: enum.CorpStatusApproved,
+			ContactInformation: []corporationdto.ContactInformation{
+				{
+					ContactTypeID: 1,
+					ContactValue:  "testContactValue",
+				},
+			},
+		}
+		s.Panics(func() {
+			s.corporationService.AddContactInfo(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+}
+
+func (s *CorporationServiceTestSuite) TestDeleteContactInfo() {
+	s.Run("success - Contact info deleted", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+		contactInformation := &entity.ContactInformation{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.corporationRepository.On("FindContactInformationByID", s.db, uint(1)).Return(contactInformation, true).Once()
+		s.corporationRepository.On("DeleteContactInfo", s.db, mock.Anything).Return(nil).Once()
+
+		request := corporationdto.DeleteContactInformationRequest{
+			ApplicantID:       1,
+			ContactID:         1,
+			CorporationStatus: enum.CorpStatusApproved,
+			CorporationID:     1,
+		}
+		s.corporationService.DeleteContactInfo(request)
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not active", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(false).Once()
+
+		request := corporationdto.DeleteContactInformationRequest{
+			ApplicantID:       1,
+			ContactID:         1,
+			CorporationStatus: enum.CorpStatusApproved,
+			CorporationID:     1,
+		}
+		s.Panics(func() {
+			s.corporationService.DeleteContactInfo(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - Contact information not found", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+		var nilContactInformation *entity.ContactInformation = nil
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.corporationRepository.On("FindContactInformationByID", s.db, uint(1)).Return(nilContactInformation, false).Once()
+
+		request := corporationdto.DeleteContactInformationRequest{
+			ApplicantID:       1,
+			ContactID:         1,
+			CorporationStatus: enum.CorpStatusApproved,
+			CorporationID:     1,
+		}
+		s.Panics(func() {
+			s.corporationService.DeleteContactInfo(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+
+	})
+	s.Run("error - Delete contact information failed", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+		contactInformation := &entity.ContactInformation{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.corporationRepository.On("FindContactInformationByID", s.db, uint(1)).Return(contactInformation, true).Once()
+		s.corporationRepository.On("DeleteContactInfo", s.db, mock.Anything).Return(errors.New("error")).Once()
+
+		request := corporationdto.DeleteContactInformationRequest{
+			ApplicantID:       1,
+			ContactID:         1,
+			CorporationStatus: enum.CorpStatusApproved,
+			CorporationID:     1,
+		}
+		s.Panics(func() {
+			s.corporationService.DeleteContactInfo(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+}
+
 func TestCorporationServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CorporationServiceTestSuite))
 }
