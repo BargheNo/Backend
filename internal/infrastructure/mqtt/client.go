@@ -13,32 +13,29 @@ type Client struct {
 }
 
 func NewClient(config *bootstrap.MQTT) *Client {
-	opts := mqtt.NewClientOptions().
-		AddBroker(fmt.Sprintf("ssl://%s:%s", config.Broker, config.Port)).
-		SetClientID(config.ClientID).
-		SetUsername(config.Username).
-		SetPassword(config.Password)
+	var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+		fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
+	}
 
-	c := mqtt.NewClient(opts)
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(fmt.Sprintf("tls://%s:%s", config.Broker, config.Port))
+	opts.SetClientID(config.ClientID)
+	opts.SetUsername(config.Username)
+	opts.SetPassword(config.Password)
+	opts.SetDefaultPublishHandler(messagePubHandler)
 
-	if token := c.Connect(); token.Wait() && token.Error() != nil {
+	client := mqtt.NewClient(opts)
+	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
 
-	return &Client{client: c, config: config}
+	return &Client{client: client, config: config}
 }
 
-func (c *Client) Subscribe(topic string, handler func(payload []byte)) {
-	token := c.client.Subscribe(topic, 0, func(client mqtt.Client, msg mqtt.Message) {
-		handler(msg.Payload())
-		print(msg.Payload(), "\n")
-	})
-	print(2, "\n")
-	print(token.Error(), "\n")
+func (c *Client) Subscribe(topic string) {
+	token := c.client.Subscribe(topic, 1, nil)
 	if token.Wait() && token.Error() != nil {
-		// panic(token.Error())
-		// fmt.Println(token.Error())
-		print(1, "\n", token.Error())
+		panic(token.Error())
 	}
 }
 

@@ -1,8 +1,6 @@
 package serviceimpl
 
 import (
-	"fmt"
-
 	"github.com/BargheNo/Backend/internal/domain/mqtt"
 )
 
@@ -15,7 +13,5 @@ func NewMonitoringService(mqttClient mqtt.Client) *MonitoringService {
 }
 
 func (s *MonitoringService) Test() {
-	s.mqttClient.Subscribe("hello", func(payload []byte) {
-		fmt.Println("Received message:", string(payload))
-	})
+	s.mqttClient.Subscribe("test")
 }
