@@ -39,6 +39,7 @@ var English = map[string]interface{}{
 	"news":                "news",
 	"tittle":              "tittle",
 	"media":               "media",
+	"blog":                "blog",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -129,6 +130,7 @@ var English = map[string]interface{}{
 		"deleteNews":                "ُSelected news has been successfully deleted.",
 		"addMedia":                  "Media has been added successfully.",
 		"deleteMedia":               "Media has been deleted successfully.",
+		"createPost":                "Post has been created successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

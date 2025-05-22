@@ -56,4 +56,9 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 			records.GET("/list/:panelID", app.Controllers.Corporation.MaintenanceController.GetCorporationMaintenanceRecordsByPanel)
 		}
 	}
+
+	blog := routerGroup.Group(":corporationID/blog")
+	{
+		blog.POST("/create", app.Controllers.Corporation.BlogController.CreatePost)
+	}
 }

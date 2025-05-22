@@ -76,6 +76,7 @@ type ErrorField struct {
 	ContactInformation  string
 	News                string
 	Media               string
+	Blog                string
 }
 
 type ErrorTag struct {
@@ -238,6 +239,7 @@ func NewConstants() *Constants {
 			NotificationSetting: "notificationSetting",
 			News:                "news",
 			Media:               "media",
+			Blog:                "blog",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -361,4 +363,12 @@ func (path *BucketPath) GetCorporationLogoPath(corporationID uint, logoFileName 
 
 func (path *BucketPath) GetNewsMediaPath(newsID uint, MediaFileName string) string {
 	return fmt.Sprintf("news/%d/media/%s", newsID, MediaFileName)
+}
+
+func (path *BucketPath) GetBlogMediaPath(corporationID uint, mediaFileName string) string {
+	return fmt.Sprintf("corporation/%d/blog/media/%s", corporationID, mediaFileName)
+}
+
+func (path *BucketPath) GetBlogCoverImagePath(corporationID uint, mediaFileName string) string {
+	return fmt.Sprintf("corporation/%d/blog/cover-image/%s", corporationID, mediaFileName)
 }

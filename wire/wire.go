@@ -30,6 +30,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/blog"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
@@ -64,6 +65,7 @@ var RepositoryProviderSet = wire.NewSet(
 	repositoryimpl.NewTicketRepository,
 	repositoryimpl.NewReportRepository,
 	repositoryimpl.NewNewsRepository,
+	repositoryimpl.NewBlogRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
@@ -76,6 +78,7 @@ var RepositoryProviderSet = wire.NewSet(
 	wire.Bind(new(repository.TicketRepository), new(*repositoryimpl.TicketRepository)),
 	wire.Bind(new(repository.ReportRepository), new(*repositoryimpl.ReportRepository)),
 	wire.Bind(new(repository.NewsRepository), new(*repositoryimpl.NewsRepository)),
+	wire.Bind(new(repository.BlogRepository), new(*repositoryimpl.BlogRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -97,6 +100,7 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewTicketService,
 	serviceimpl.NewReportService,
 	serviceimpl.NewNewsService,
+	serviceimpl.NewBlogService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
@@ -113,6 +117,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)),
 	wire.Bind(new(service.ReportService), new(*serviceimpl.ReportService)),
 	wire.Bind(new(service.NewsService), new(*serviceimpl.NewsService)),
+	wire.Bind(new(service.BlogService), new(*serviceimpl.BlogService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -157,6 +162,7 @@ var CorporationControllerProviderSet = wire.NewSet(
 	chat.NewCorporationChatController,
 	bid.NewCorporationBidController,
 	maintenance.NewCorporationMaintenanceController,
+	blog.NewCorporationBlogController,
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
@@ -337,6 +343,7 @@ type CorporationControllers struct {
 	ChatController         *chat.CorporationChatController
 	BidController          *bid.CorporationBidController
 	MaintenanceController  *maintenance.CorporationMaintenanceController
+	BlogController         *blog.CorporationBlogController
 }
 
 type AdminControllers struct {
