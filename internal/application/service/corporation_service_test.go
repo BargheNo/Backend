@@ -2,6 +2,7 @@ package serviceimpl
 
 import (
 	"errors"
+	"mime/multipart"
 	"testing"
 
 	"github.com/BargheNo/Backend/bootstrap"
@@ -507,6 +508,151 @@ func (s *CorporationServiceTestSuite) TestCheckCorporationConflicts() {
 		})
 
 		s.corporationRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *CorporationServiceTestSuite) TestAddCertificateFiles() {
+	s.Run("success - Certificate files added", func() {
+		corporationStaff := &entity.CorporationStaff{}
+		corporation := &entity.Corporation{
+			Status:                 enum.CorpStatusAwaitingApproval,
+			VATTaxpayerCertificate: "testVATTaxpayerCertificate",
+			OfficialNewspaperAD:    "testOfficialNewspaperAD",
+		}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.s3Storage.On("UploadObject", enum.VATTaxpayerCertificate, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.VATTaxpayerCertificate, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("UploadObject", enum.OfficialNewspaperAD, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.OfficialNewspaperAD, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("UpdateCorporation", s.db, corporation).Return(nil).Once()
+
+		request := corporationdto.AddCertificatesRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+			VATTaxpayerCertificate: &multipart.FileHeader{
+				Filename: "testVATTaxpayerCertificate",
+			},
+			OfficialNewspaperAD: &multipart.FileHeader{
+				Filename: "testOfficialNewspaperAD",
+			},
+		}
+		s.corporationService.AddCertificateFiles(request)
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+	})
+	s.Run("error - User not active", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusAwaitingApproval,
+		}
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(false).Once()
+
+		request := corporationdto.AddCertificatesRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+		}
+		s.Panics(func() {
+			s.corporationService.AddCertificateFiles(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - Delete VAT Taxpayer Certificate failed", func() {
+		corporation := &entity.Corporation{
+			Status:                 enum.CorpStatusAwaitingApproval,
+			VATTaxpayerCertificate: "testVATTaxpayerCertificate",
+		}
+		corporationStaff := &entity.CorporationStaff{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.s3Storage.On("UploadObject", enum.VATTaxpayerCertificate, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.VATTaxpayerCertificate, mock.Anything).Return(errors.New("error")).Once()
+
+		request := corporationdto.AddCertificatesRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+			VATTaxpayerCertificate: &multipart.FileHeader{
+				Filename: "testVATTaxpayerCertificate",
+			},
+		}
+		s.Panics(func() {
+			s.corporationService.AddCertificateFiles(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+	})
+	s.Run("error - Delete Official Newspaper AD failed", func() {
+		corporation := &entity.Corporation{
+			Status:              enum.CorpStatusAwaitingApproval,
+			OfficialNewspaperAD: "testOfficialNewspaperAD",
+		}
+		corporationStaff := &entity.CorporationStaff{}
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.s3Storage.On("UploadObject", enum.OfficialNewspaperAD, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.OfficialNewspaperAD, mock.Anything).Return(errors.New("error")).Once()
+
+		request := corporationdto.AddCertificatesRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+			OfficialNewspaperAD: &multipart.FileHeader{
+				Filename: "testOfficialNewspaperAD",
+			},
+		}
+		s.Panics(func() {
+			s.corporationService.AddCertificateFiles(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - Update corporation failed", func() {
+		corporationStaff := &entity.CorporationStaff{}
+		corporation := &entity.Corporation{
+			Status:                 enum.CorpStatusAwaitingApproval,
+			VATTaxpayerCertificate: "testVATTaxpayerCertificate",
+			OfficialNewspaperAD:    "testOfficialNewspaperAD",
+		}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.s3Storage.On("UploadObject", enum.VATTaxpayerCertificate, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.VATTaxpayerCertificate, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("UploadObject", enum.OfficialNewspaperAD, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.OfficialNewspaperAD, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("UpdateCorporation", s.db, corporation).Return(errors.New("error")).Once()
+
+		request := corporationdto.AddCertificatesRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+			VATTaxpayerCertificate: &multipart.FileHeader{
+				Filename: "testVATTaxpayerCertificate",
+			},
+			OfficialNewspaperAD: &multipart.FileHeader{
+				Filename: "testOfficialNewspaperAD",
+			},
+		}
+		s.Panics(func() {
+			s.corporationService.AddCertificateFiles(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+
 	})
 }
 
