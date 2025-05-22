@@ -405,6 +405,71 @@ func (s *CorporationServiceTestSuite) TestReplaceSignatories() {
 	})
 }
 
+func (s *CorporationServiceTestSuite) TestUpdateRegister() {
+	s.Run("success - Corporation updated", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusAwaitingApproval,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.corporationRepository.On("UpdateCorporation", s.db, corporation).Return(nil).Once()
+		s.corporationRepository.On("DeleteCorporationSignatories", s.db, mock.Anything).Return(nil).Once()
+
+		request := corporationdto.UpdateRegisterRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+		}
+		s.corporationService.UpdateRegister(request)
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not active", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusAwaitingApproval,
+		}
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(false).Once()
+
+		request := corporationdto.UpdateRegisterRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+		}
+		s.Panics(func() {
+			s.corporationService.UpdateRegister(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - Update corporation failed", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusAwaitingApproval,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.corporationRepository.On("UpdateCorporation", s.db, corporation).Return(errors.New("error")).Once()
+
+		request := corporationdto.UpdateRegisterRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+		}
+
+		s.Panics(func() {
+			s.corporationService.UpdateRegister(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+}
+
 func TestCorporationServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CorporationServiceTestSuite))
 }
