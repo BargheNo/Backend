@@ -38,4 +38,9 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		news.GET("/:newsID", app.Controllers.General.NewsController.GetNews)
 		news.GET("/:newsID/media/:mediaID", app.Controllers.General.NewsController.GetNewsMedia)
 	}
+
+	blog := routerGroup.Group("/blog")
+	{
+		blog.GET("/corporation/:corporationID", app.Controllers.General.BlogController.GetCorporationPosts)
+	}
 }

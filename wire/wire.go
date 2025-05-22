@@ -139,6 +139,7 @@ var GeneralControllerProviderSet = wire.NewSet(
 	corporation.NewGeneralCorporationController,
 	notification.NewGeneralNotificationController,
 	news.NewGeneralNewsController,
+	blog.NewGeneralBlogController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -322,6 +323,7 @@ type GeneralControllers struct {
 	CorporationController  *corporation.GeneralCorporationController
 	NotificationController *notification.GeneralNotificationController
 	NewsController         *news.GeneralNewsController
+	BlogController         *blog.GeneralBlogController
 }
 
 type CustomerControllers struct {

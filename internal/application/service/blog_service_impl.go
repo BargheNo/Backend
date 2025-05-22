@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"time"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
@@ -62,4 +64,23 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (blogService *BlogService) GetCorporationPosts(corporationID uint) ([]blogdto.PostResponse, error) {
+	posts, err := blogService.blogRepository.GetCorporationPosts(blogService.db, corporationID)
+	if err != nil {
+		return nil, err
+	}
+	response := make([]blogdto.PostResponse, len(posts))
+	for i, post := range posts {
+		response[i] = blogdto.PostResponse{
+			ID:          post.ID,
+			Title:       post.Title,
+			Corporation: post.Corporation.Name,
+			Author:      post.Author.FirstName + " " + post.Author.LastName,
+			CoverImage:  post.CoverImage,
+			CreatedAt:   post.CreatedAt.Format(time.RFC3339),
+		}
+	}
+	return response, nil
 }

@@ -49,5 +49,4 @@ func (blogController *CorporationBlogController) CreatePost(ctx *gin.Context) {
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createPost")
 	controller.Response(ctx, 200, message, nil)
-
 }

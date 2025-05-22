@@ -18,3 +18,11 @@ func (repo *BlogRepository) CreatePost(db database.Database, post *entity.Post) 
 func (repo *BlogRepository) UpdatePost(db database.Database, post *entity.Post) error {
 	return db.GetDB().Save(post).Error
 }
+
+func (repo *BlogRepository) GetCorporationPosts(db database.Database, corporationID uint) ([]entity.Post, error) {
+	var posts []entity.Post
+	if err := db.GetDB().Where("corporation_id = ?", corporationID).Find(&posts).Error; err != nil {
+		return nil, err
+	}
+	return posts, nil
+}

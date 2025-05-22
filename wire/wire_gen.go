@@ -125,12 +125,16 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	newsRepository := repositoryimpl.NewNewsRepository()
 	newsService := serviceimpl.NewNewsService(constants, userService, s3Storage, newsRepository, postgresDatabase)
 	generalNewsController := news.NewGeneralNewsController(constants, pagination, newsService)
+	blogRepository := repositoryimpl.NewBlogRepository()
+	blogService := serviceimpl.NewBlogService(userService, corporationService, blogRepository, constants, s3Storage, postgresDatabase)
+	generalBlogController := blog.NewGeneralBlogController(constants, blogService)
 	generalControllers := &GeneralControllers{
 		UserController:         generalUserController,
 		AddressController:      generalAddressController,
 		CorporationController:  generalCorporationController,
 		NotificationController: generalNotificationController,
 		NewsController:         generalNewsController,
+		BlogController:         generalBlogController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
@@ -162,8 +166,6 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationChatController := chat.NewCorporationChatController(constants, chatService)
 	corporationBidController := bid.NewCorporationBidController(constants, pagination, bidService)
 	corporationMaintenanceController := maintenance.NewCorporationMaintenanceController(constants, pagination, maintenanceService)
-	blogRepository := repositoryimpl.NewBlogRepository()
-	blogService := serviceimpl.NewBlogService(userService, corporationService, blogRepository, constants, s3Storage, postgresDatabase)
 	corporationBlogController := blog.NewCorporationBlogController(constants, blogService)
 	corporationControllers := &CorporationControllers{
 		CorporationController:  corporationCorporationController,
@@ -251,7 +253,7 @@ var ServiceProviderSet = wire.NewSet(wire.Struct(new(serviceimpl.UserServiceDeps
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)))
 
-var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, news.NewGeneralNewsController, wire.Struct(new(GeneralControllers), "*"))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, wire.Struct(new(GeneralControllers), "*"))
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, wire.Struct(new(CustomerControllers), "*"))
 
@@ -383,6 +385,7 @@ type GeneralControllers struct {
 	CorporationController  *corporation.GeneralCorporationController
 	NotificationController *notification.GeneralNotificationController
 	NewsController         *news.GeneralNewsController
+	BlogController         *blog.GeneralBlogController
 }
 
 type CustomerControllers struct {
