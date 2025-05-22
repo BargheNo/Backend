@@ -4,5 +4,6 @@ import blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
 
 type BlogService interface {
 	CreatePost(request blogdto.CreatePostRequest)
-	GetCorporationPosts(corporationID uint) ([]blogdto.PostResponse, error)
+	GetCorporationPosts(request blogdto.GetCorporationPostsRequest) ([]blogdto.PostResponse, error)
+	GetPost(postID uint) blogdto.PostDetailsResponse
 }

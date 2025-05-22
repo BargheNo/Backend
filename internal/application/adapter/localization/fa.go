@@ -40,6 +40,7 @@ var Persian = map[string]interface{}{
 	"tittle":              "عنوان",
 	"media":               "محتوا",
 	"blog":                "بلاگ",
+	"post":                "پست",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -131,6 +132,7 @@ var Persian = map[string]interface{}{
 		"addMedia":                  "محتوای مورد نظر با موفقیت آپلود شد.",
 		"deleteMedia":               "محتوای مورد نظر با موفقیت حذف شد.",
 		"createPost":                "پست با موفقیت ساخته شد.",
+		"deletePost":                "پست با موفقیت حذف شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

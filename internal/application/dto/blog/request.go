@@ -9,3 +9,9 @@ type CreatePostRequest struct {
 	CorporationID uint                  `json:"-"`
 	CoverImage    *multipart.FileHeader `json:"cover_image"`
 }
+
+type GetCorporationPostsRequest struct {
+	CorporationID uint `uri:"corporationID" validate:"required"`
+	Offset        int  `query:"offset" validate:"required"`
+	Limit         int  `query:"limit" validate:"required"`
+}

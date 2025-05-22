@@ -127,7 +127,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	generalNewsController := news.NewGeneralNewsController(constants, pagination, newsService)
 	blogRepository := repositoryimpl.NewBlogRepository()
 	blogService := serviceimpl.NewBlogService(userService, corporationService, blogRepository, constants, s3Storage, postgresDatabase)
-	generalBlogController := blog.NewGeneralBlogController(constants, blogService)
+	generalBlogController := blog.NewGeneralBlogController(constants, blogService, pagination)
 	generalControllers := &GeneralControllers{
 		UserController:         generalUserController,
 		AddressController:      generalAddressController,

@@ -27,8 +27,8 @@ func NewCorporationBlogController(
 
 func (blogController *CorporationBlogController) CreatePost(ctx *gin.Context) {
 	type createPostParams struct {
-		Title         string                `json:"title"`
-		Content       string                `json:"content"`
+		Title         string                `json:"title" validate:"required"`
+		Content       string                `json:"content" validate:"required"`
 		AuthorID      uint                  `json:"author_id"`
 		CorporationID uint                  `uri:"corporationID" validate:"required"`
 		CoverImage    *multipart.FileHeader `form:"cover_image"`
