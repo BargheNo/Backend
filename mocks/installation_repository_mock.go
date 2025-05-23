@@ -75,3 +75,8 @@ func (repo *InstallationRepositoryMock) FindPanelByID(db database.Database, pane
 	args := repo.Called(db, panelID)
 	return args.Get(0).(*entity.Panel), args.Bool(1)
 }
+
+func (repo *InstallationRepositoryMock) FindAllPanelsID(db database.Database) []uint {
+	args := repo.Called(db)
+	return args.Get(0).([]uint)
+}

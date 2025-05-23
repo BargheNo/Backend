@@ -32,8 +32,10 @@ func NewClient(config *bootstrap.MQTT) *Client {
 	return &Client{client: client, config: config}
 }
 
-func (c *Client) Subscribe(topic string) {
-	token := c.client.Subscribe(topic, 1, nil)
+func (c *Client) Subscribe(topic string, handler func(topic string, payload []byte)) {
+	token := c.client.Subscribe(topic, 1, func(client mqtt.Client, msg mqtt.Message) {
+		handler(msg.Topic(), msg.Payload())
+	})
 	if token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}

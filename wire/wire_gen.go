@@ -177,7 +177,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	adminNewsController := news.NewAdminNewsController(constants, pagination, newsService)
 	mqtt := ProvideMQTTConfig(container)
 	client := mqttimpl.NewClient(mqtt)
-	monitoringService := serviceimpl.NewMonitoringService(client)
+	monitoringService := serviceimpl.NewMonitoringService(client, postgresDatabase, installationRepository)
 	adminMonitoringController := monitoring.NewAdminMonitoringController(monitoringService)
 	adminControllers := &AdminControllers{
 		TicketController:     adminTicketController,

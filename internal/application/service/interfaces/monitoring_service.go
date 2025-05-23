@@ -1,5 +1,5 @@
 package service
 
 type MonitoringService interface {
-	Test()
+	HandleMessage(topic string, payload []byte)
 }

@@ -125,3 +125,16 @@ func (repo *InstallationRepository) FindPanelByID(db database.Database, panelID 
 	}
 	return panel, true
 }
+
+func (repo *InstallationRepository) FindAllPanelsID(db database.Database) []uint {
+	var ids []uint
+	result := db.GetDB().Model(&entity.Panel{}).Select("id").Find(&ids)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return []uint{}
+		}
+		panic(result.Error)
+	}
+
+	return ids
+}

@@ -13,6 +13,4 @@ func NewAdminMonitoringController(monitoringService service.MonitoringService) *
 	return &AdminMonitoringController{monitoringService: monitoringService}
 }
 
-func (c *AdminMonitoringController) Test(ctx *gin.Context) {
-	c.monitoringService.Test()
-}
+func (c *AdminMonitoringController) Test(ctx *gin.Context) {}

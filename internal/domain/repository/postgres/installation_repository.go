@@ -17,4 +17,5 @@ type InstallationRepository interface {
 	FindCustomerPanels(db database.Database, customerID uint, opts ...QueryModifier) []*entity.Panel
 	FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool)
 	FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool)
+	FindAllPanelsID(db database.Database) []uint
 }
