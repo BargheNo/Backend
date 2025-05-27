@@ -138,28 +138,36 @@ func (notificationService *NotificationService) enrichPanelReportData(rawData []
 	return result, nil
 }
 
-func (notificationService *NotificationService) SendNotification(notification *entity.Notification, notificationType *entity.NotificationType) error {
-	settings, _ := notificationService.notificationRepository.GetNotificationSettingByUserAndType(notificationService.db, notification.RecipientID, notification.TypeID)
-
+func (notificationService *NotificationService) dataCatcher(notificationType enum.NotificationType, notificationData []byte) (map[string]interface{}, error) {
 	var data map[string]interface{}
 	var err error
 
-	switch notificationType.Name {
+	switch notificationType {
 	case enum.CorpSendBidNotificationType:
-		data, err = notificationService.enrichBidData(notification.Data)
+		data, err = notificationService.enrichBidData(notificationData)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	case enum.MaintenanceReportCreated:
-		data, err = notificationService.enrichMaintenanceReportData(notification.Data)
+		data, err = notificationService.enrichMaintenanceReportData(notificationData)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	case enum.PanelReportCreated:
-		data, err = notificationService.enrichPanelReportData(notification.Data)
+		data, err = notificationService.enrichPanelReportData(notificationData)
 		if err != nil {
-			return err
+			return nil, err
 		}
+	}
+	return data, nil
+}
+
+func (notificationService *NotificationService) SendNotification(notification *entity.Notification, notificationType *entity.NotificationType) error {
+	settings, _ := notificationService.notificationRepository.GetNotificationSettingByUserAndType(notificationService.db, notification.RecipientID, notification.TypeID)
+
+	data, err := notificationService.dataCatcher(notificationType.Name, notification.Data)
+	if err != nil {
+		return err
 	}
 
 	if settings.IsPushEnabled {
@@ -256,10 +264,7 @@ func (notificationService *NotificationService) GetUserNotifications(notificatio
 			continue
 		}
 
-		var data map[string]interface{}
-		if err := json.Unmarshal(notification.Data, &data); err != nil {
-			continue
-		}
+		data, _ := notificationService.dataCatcher(notificationType.Name, notification.Data)
 
 		notificationTypeResponse := notificationdto.NotificationTypeResponse{
 			ID:            notificationType.ID,
