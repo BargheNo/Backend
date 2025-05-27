@@ -133,6 +133,9 @@ var English = map[string]interface{}{
 		"deleteMedia":               "Media has been deleted successfully.",
 		"createPost":                "Post has been created successfully.",
 		"deletePost":                "Post has been deleted successfully.",
+		"editPost":                  "Post has been updated successfully.",
+		"publishPost":               "Post has been successfully published.",
+		"unpublishPost":             "Post has been successfully drafted.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

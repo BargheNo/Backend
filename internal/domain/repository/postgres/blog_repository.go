@@ -10,4 +10,8 @@ type BlogRepository interface {
 	UpdatePost(db database.Database, post *entity.Post) error
 	GetCorporationPosts(db database.Database, corporationID uint, opts ...QueryModifier) []entity.Post
 	FindPostByID(db database.Database, postID uint) (*entity.Post, bool)
+	GetMediaByID(db database.Database, mediaID uint) (*entity.Media, bool)
+	AddMedia(db database.Database, media *entity.Media) error
+	DeleteMedia(db database.Database, mediaID uint) error
+	DeletePost(db database.Database, postID uint) error
 }

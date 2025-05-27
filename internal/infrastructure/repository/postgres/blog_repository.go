@@ -45,3 +45,27 @@ func (repo *BlogRepository) FindPostByID(db database.Database, postID uint) (*en
 	}
 	return &post, true
 }
+
+func (repo *BlogRepository) GetMediaByID(db database.Database, mediaID uint) (*entity.Media, bool) {
+	var media entity.Media
+	result := db.GetDB().First(&media, mediaID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &media, true
+}
+
+func (repo *BlogRepository) AddMedia(db database.Database, media *entity.Media) error {
+	return db.GetDB().Create(&media).Error
+}
+
+func (repo *BlogRepository) DeleteMedia(db database.Database, mediaID uint) error {
+	return db.GetDB().Delete(&entity.Media{}, mediaID).Error
+}
+
+func (repo *BlogRepository) DeletePost(db database.Database, postID uint) error {
+	return db.GetDB().Delete(&entity.Post{}, postID).Error
+}

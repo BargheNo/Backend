@@ -6,6 +6,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -25,11 +26,10 @@ func NewCorporationBlogController(
 	}
 }
 
-func (blogController *CorporationBlogController) CreatePost(ctx *gin.Context) {
+func (blogController *CorporationBlogController) CreateDraftPost(ctx *gin.Context) {
 	type createPostParams struct {
 		Title         string                `json:"title" validate:"required"`
 		Content       string                `json:"content" validate:"required"`
-		AuthorID      uint                  `json:"author_id"`
 		CorporationID uint                  `uri:"corporationID" validate:"required"`
 		CoverImage    *multipart.FileHeader `form:"cover_image"`
 	}
@@ -42,6 +42,7 @@ func (blogController *CorporationBlogController) CreatePost(ctx *gin.Context) {
 		AuthorID:      authorID.(uint),
 		CorporationID: params.CorporationID,
 		CoverImage:    params.CoverImage,
+		Status:        enum.PostStatusDraft,
 	}
 
 	blogController.blogService.CreatePost(request)
@@ -50,3 +51,161 @@ func (blogController *CorporationBlogController) CreatePost(ctx *gin.Context) {
 	message, _ := trans.Translate("successMessage.createPost")
 	controller.Response(ctx, 200, message, nil)
 }
+
+func (blogController *CorporationBlogController) EditPost(ctx *gin.Context) {
+	type editPostParams struct {
+		PostID        uint                  `uri:"postID" validate:"required"`
+		Title         *string               `json:"title"`
+		Content       *string               `json:"content"`
+		CoverImage    *multipart.FileHeader `form:"cover_image"`
+		Status        uint                  `json:"status"`
+		CorporationID uint                  `uri:"corporationID" validate:"required"`
+	}
+
+	params := controller.Validated[editPostParams](ctx)
+	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+
+	request := blogdto.EditPostRequest{
+		PostID:        params.PostID,
+		AuthorID:      authorID.(uint),
+		Title:         params.Title,
+		Content:       params.Content,
+		CoverImage:    params.CoverImage,
+		Status:        params.Status,
+		CorporationID: params.CorporationID,
+	}
+
+	blogController.blogService.EditPost(request)
+
+	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.editPost")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (blogController *CorporationBlogController) PublishPost(ctx *gin.Context) {
+	type publishPostParams struct {
+		PostID        uint `uri:"postID" validate:"required"`
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[publishPostParams](ctx)
+	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+
+	request := blogdto.EditPostRequest{
+		PostID:        params.PostID,
+		AuthorID:      authorID.(uint),
+		Status:        uint(enum.PostStatusPublished),
+		CorporationID: params.CorporationID,
+	}
+	blogController.blogService.EditPost(request)
+
+	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.publishPost")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (blogController *CorporationBlogController) UnpublishPost(ctx *gin.Context) {
+	type unpublishPostParams struct {
+		PostID        uint `uri:"postID" validate:"required"`
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[unpublishPostParams](ctx)
+	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+
+	request := blogdto.EditPostRequest{
+		PostID:        params.PostID,
+		AuthorID:      authorID.(uint),
+		Status:        uint(enum.PostStatusDraft),
+		CorporationID: params.CorporationID,
+	}
+	blogController.blogService.EditPost(request)
+
+	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.unpublishPost")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (blogController *CorporationBlogController) DeletePost(ctx *gin.Context) {
+	type deletePostParams struct {
+		PostIDs       []uint `json:"postIDs" validate:"required"`
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[deletePostParams](ctx)
+	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+
+	deletParams := blogdto.DeletePostRequest{
+		PostIDs:       params.PostIDs,
+		AuthorID:      authorID.(uint),
+		CorporationID: params.CorporationID,
+	}
+	blogController.blogService.DeletePost(deletParams)
+
+	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deletePost")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (blogController *CorporationBlogController) AddPostMedia(ctx *gin.Context) {
+	type addPostMediaParams struct {
+		PostID        uint                  `uri:"postID" validate:"required"`
+		Media         *multipart.FileHeader `form:"media" validate:"required"`
+		CorporationID uint                  `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[addPostMediaParams](ctx)
+	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+
+	mediaParams := blogdto.AddPostMediaRequest{
+		PostID:        params.PostID,
+		AuthorID:      authorID.(uint),
+		Media:         params.Media,
+		CorporationID: params.CorporationID,
+	}
+
+	mediaID := blogController.blogService.AddPostMedia(mediaParams)
+
+	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addMedia")
+	controller.Response(ctx, 200, message, mediaID)
+}
+
+func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Context) {
+	type deletePostMediaParams struct {
+		PostID        uint `uri:"postID" validate:"required"`
+		MediaID       uint `uri:"mediaID" validate:"required"`
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[deletePostMediaParams](ctx)
+	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+
+	mediaParams := blogdto.AccessPostMediaRequest{
+		PostID:        params.PostID,
+		AuthorID:      authorID.(uint),
+		MediaID:       params.MediaID,
+		CorporationID: params.CorporationID,
+	}
+	blogController.blogService.DeletePostMedia(mediaParams)
+
+	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteMedia")
+	controller.Response(ctx, 200, message, nil)
+}
+
+// func (blogController *CorporationBlogController) GetPostMedia(ctx *gin.Context) {
+// 	type getPostMediaParams struct {
+// 		PostID        uint `uri:"postID" validate:"required"`
+// 		MediaID       uint `uri:"mediaID" validate:"required"`
+// 		CorporationID uint `uri:"corporationID" validate:"required"`
+// 	}
+// 	params := controller.Validated[getPostMediaParams](ctx)
+// 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+
+// 	mediaParams := blogdto.AccessPostMediaRequest{
+// 		PostID:        params.PostID,
+// 		AuthorID:      authorID.(uint),
+// 		MediaID:       params.MediaID,
+// 		CorporationID: params.CorporationID,
+// 	}
+
+// 	media := blogController.blogService.GetPostMedia(mediaParams)
+
+// 	controller.Response(ctx, 200, "", media)
+// }

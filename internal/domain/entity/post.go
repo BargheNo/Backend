@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
@@ -14,4 +15,5 @@ type Post struct {
 	CorporationID uint        `gorm:"not null;index"`
 	Corporation   Corporation `gorm:"foreignKey:CorporationID"`
 	Media         []Media     `gorm:"polymorphic:Owner;polymorphicValue:posts"`
+	Status        enum.PostStatus
 }

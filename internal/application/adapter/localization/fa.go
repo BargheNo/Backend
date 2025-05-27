@@ -133,6 +133,9 @@ var Persian = map[string]interface{}{
 		"deleteMedia":               "محتوای مورد نظر با موفقیت حذف شد.",
 		"createPost":                "پست با موفقیت ساخته شد.",
 		"deletePost":                "پست با موفقیت حذف شد.",
+		"editPost":                  "پست با موفقیت به روز رسانی شد.",
+		"publishPost":               "پست با موفقیت منتشر شد.",
+		"unpublishPost":             "پست با موفقیت به حالت پیش نویس تغییر کرد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

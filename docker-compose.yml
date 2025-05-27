@@ -1,25 +1,25 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: ghcr.io/bargheno/backend
-    container_name: backend
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 512M
-        reservations:
-          cpus: "0.1"
-          memory: 128M
-    env_file:
-      - ./.env
-    ports:
-      - ${SERVER_PORT}:${SERVER_PORT}
-    depends_on:
-      - db
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   image: ghcr.io/bargheno/backend
+  #   container_name: backend
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "0.5"
+  #         memory: 512M
+  #       reservations:
+  #         cpus: "0.1"
+  #         memory: 128M
+  #   env_file:
+  #     - ./.env
+  #   ports:
+  #     - ${SERVER_PORT}:${SERVER_PORT}
+  #   depends_on:
+  #     - db
 
   db:
     image: postgres:latest
@@ -190,8 +190,8 @@ services:
     container_name: rabbitmq
     restart: unless-stopped
     ports:
-      - "${AMQP_PORT}:5672" 
-      - "15672:15672"       
+      - "${AMQP_PORT}:5672"
+      - "15672:15672"
     environment:
       - RABBITMQ_DEFAULT_USER=${AMQP_USER}
       - RABBITMQ_DEFAULT_PASS=${AMQP_PASSWORD}

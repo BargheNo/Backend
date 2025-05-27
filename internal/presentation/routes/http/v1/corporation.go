@@ -59,6 +59,13 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 
 	blog := routerGroup.Group(":corporationID/blog")
 	{
-		blog.POST("/create", app.Controllers.Corporation.BlogController.CreatePost)
+		blog.POST("/create", app.Controllers.Corporation.BlogController.CreateDraftPost)
+		blog.PUT("/:postID/edit", app.Controllers.Corporation.BlogController.EditPost)
+		blog.PUT("/:postID/publish", app.Controllers.Corporation.BlogController.PublishPost)
+		blog.PUT("/:postID/unpublish", app.Controllers.Corporation.BlogController.UnpublishPost)
+		blog.DELETE("/", app.Controllers.Corporation.BlogController.DeletePost)
+		blog.POST("/:postID/media", app.Controllers.Corporation.BlogController.AddPostMedia)
+		blog.DELETE("/:postID/media/:mediaID", app.Controllers.Corporation.BlogController.DeletePostMedia)
+		// blog.GET("/:postID/media/:mediaID", app.Controllers.Corporation.BlogController.GetPostMedia)
 	}
 }
