@@ -34,14 +34,37 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		}
 	}
 
-	orders := routerGroup.Group("/installation")
+	installations := routerGroup.Group("/installation")
 	{
-		requests := orders.Group("/request")
+		requests := installations.Group("/request")
 		{
 			requests.POST("", app.Controllers.Customer.InstallationController.CreateInstallationRequest)
-			requests.GET("", app.Controllers.Customer.InstallationController.GetOwnerInstallationRequests)
-			requests.GET("/:requestID", app.Controllers.Customer.InstallationController.GetInstallationRequest)
-			requests.GET("/:requestID/bids", app.Controllers.Customer.BidController.GetBids)
+			requests.GET("", app.Controllers.Customer.InstallationController.GetInstallationRequests)
+			requestSubGroup := requests.Group("/:requestID")
+			{
+				requestSubGroup.GET("", app.Controllers.Customer.InstallationController.GetInstallationRequest)
+				requestSubGroup.PUT("/cancel", app.Controllers.Customer.InstallationController.CancelInstallationRequest)
+
+				bids := requestSubGroup.Group("/bid")
+				{
+					bids.GET("", app.Controllers.Customer.BidController.GetBids)
+					bidsSubGroup := bids.Group("/:bidID")
+					{
+						bidsSubGroup.GET("", app.Controllers.Customer.BidController.AcceptBid)
+						bidsSubGroup.POST("/accept", app.Controllers.Customer.BidController.AcceptBid)
+						bidsSubGroup.POST("/reject", app.Controllers.Customer.BidController.RejectBid)
+					}
+				}
+			}
+		}
+
+		panels := installations.Group("/panel")
+		{
+			panels.GET("", app.Controllers.Customer.InstallationController.GetCustomerPanels)
+			panelsSubGroup := panels.Group("/:panelID")
+			{
+				panelsSubGroup.GET("", app.Controllers.Customer.InstallationController.GetCustomerPanel)
+			}
 		}
 	}
 
@@ -66,11 +89,6 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		notification.GET("", app.Controllers.Customer.NotificationController.GetUserNotifications)
 		notification.GET("/setting", app.Controllers.Customer.NotificationController.GetUserNotificationSettings)
 		notification.PUT("/setting/:settingID", app.Controllers.Customer.NotificationController.UpdateSettings)
-	}
-
-	panels := routerGroup.Group("/panels")
-	{
-		panels.GET("/list", app.Controllers.Customer.InstallationController.GetCustomerPanels)
 	}
 
 	maintenance := routerGroup.Group("/maintenance")

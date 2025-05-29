@@ -4,8 +4,9 @@ import (
 	"time"
 
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
-	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
+	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
+	paymentdto "github.com/BargheNo/Backend/internal/application/dto/payment"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
@@ -17,16 +18,24 @@ type InstallationRequestDetails struct {
 	PowerRequest uint                       `json:"powerRequest"`
 }
 
-type BidsResponse struct {
-	ID                         uint                                         `json:"id"`
-	Bidder                     userdto.CredentialResponse                   `json:"bidder"`
-	InstallationRequestDetails installationdto.RequestDetailsResponse       `json:"installationRequest"`
-	Corporation                corporationdto.CorporationCredentialResponse `json:"corporation"`
-	Description                string                                       `json:"description"`
-	Cost                       uint                                         `json:"cost"`
-	InstallationTime           time.Time                                    `json:"installationTime"`
-	Status                     string                                       `json:"status"`
-	PaymentTerms              PaymentTermsResponse    `json:"paymentTerms"`
-	AvailableTimes            []AvailableTimeResponse `json:"availableTimes"`
-	Guarantee                 GuaranteeResponse       `json:"guarantee"`
+type AnonymousBidResponse struct {
+	ID               uint                            `json:"id"`
+	Description      string                          `json:"description"`
+	Cost             uint                            `json:"cost"`
+	InstallationTime time.Time                       `json:"installationTime"`
+	Status           string                          `json:"status"`
+	PaymentTerms     paymentdto.PaymentTermsResponse `json:"paymentTerms"`
+	Guarantee        guaranteedto.GuaranteeResponse  `json:"guarantee"`
+}
+
+type CorporationBidResponse struct {
+	ID                  uint                                      `json:"id"`
+	Bidder              userdto.CredentialResponse                `json:"bidder"`
+	InstallationRequest installationdto.AnonymousRequestsResponse `json:"request"`
+	Description         string                                    `json:"description"`
+	Cost                uint                                      `json:"cost"`
+	InstallationTime    time.Time                                 `json:"installationTime"`
+	Status              string                                    `json:"status"`
+	PaymentTerms        paymentdto.PaymentTermsResponse           `json:"paymentTerms"`
+	Guarantee           guaranteedto.GuaranteeResponse            `json:"guarantee"`
 }

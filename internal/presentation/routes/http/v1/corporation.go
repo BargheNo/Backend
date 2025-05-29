@@ -16,11 +16,50 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		profile.PUT("/logo", app.Controllers.Corporation.CorporationController.ChangeLogo)
 	}
 
-	bids := routerGroup.Group(":corporationID/bids")
+	guarantees := routerGroup.Group("/:corporationID/guarantee")
 	{
-		bids.POST("/set", app.Controllers.Corporation.BidController.SetBid)
-		bids.PUT("/cancel", app.Controllers.Corporation.BidController.CancelBid)
-		bids.GET("/list", app.Controllers.Corporation.BidController.GetBids)
+		guarantees.GET("", app.Controllers.Corporation.GuaranteeController.GetGuarantees)
+		guarantees.GET("/type", app.Controllers.Corporation.GuaranteeController.GetGuaranteeTypes)
+		guarantees.POST("", app.Controllers.Corporation.GuaranteeController.CreateGuarantee)
+		guaranteesSubGroup := guarantees.Group("/:guaranteeID")
+		{
+			guaranteesSubGroup.GET("", app.Controllers.Corporation.GuaranteeController.GetGuarantee)
+			guaranteesSubGroup.PUT("/status", app.Controllers.Corporation.GuaranteeController.UpdateGuarantee)
+		}
+	}
+
+	installations := routerGroup.Group("/:corporationID/installation")
+	{
+		requests := installations.Group("/request")
+		{
+			requests.GET("", app.Controllers.Corporation.InstallationController.GetInstallationRequests)
+			requestSubGroup := requests.Group("/:requestID")
+			{
+				requestSubGroup.GET("", app.Controllers.Corporation.InstallationController.GetInstallationRequest)
+				requestSubGroup.POST("/bid", app.Controllers.Corporation.BidController.SetBid)
+			}
+		}
+		panels := installations.Group("/panel")
+		{
+			panels.POST("", app.Controllers.Corporation.InstallationController.AddPanel)
+			panels.GET("", app.Controllers.Corporation.InstallationController.GetCorporationPanels)
+			panelsSubGroup := panels.Group("/:panelID")
+			{
+				panelsSubGroup.GET("", app.Controllers.Corporation.InstallationController.GetCorporationPanel)
+				panelsSubGroup.PUT("/complete", app.Controllers.Corporation.InstallationController.CompleteInstallation)
+			}
+		}
+	}
+
+	bids := routerGroup.Group(":corporationID/bid")
+	{
+		bids.GET("", app.Controllers.Corporation.BidController.GetBids)
+		bidsSubGroup := bids.Group("/:bidID")
+		{
+			bidsSubGroup.GET("", app.Controllers.Corporation.BidController.GetBid)
+			bidsSubGroup.PUT("", app.Controllers.Corporation.BidController.UpdateBid)
+			bidsSubGroup.PUT("/cancel", app.Controllers.Corporation.BidController.CancelBid)
+		}
 	}
 
 	chat := routerGroup.Group("/chat")
@@ -29,17 +68,6 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		chat.GET("/rooms/:corporationID", app.Controllers.Corporation.ChatController.GetRooms)
 		chat.PUT("/room/:roomID/block", app.Controllers.Corporation.ChatController.BlockRoom)
 		chat.PUT("/room/:roomID/unblock", app.Controllers.Corporation.ChatController.UnBlockRoom)
-	}
-
-	requests := routerGroup.Group(":corporationID/requests")
-	{
-		requests.GET("/installation", app.Controllers.Corporation.InstallationController.GetInstallationRequests)
-	}
-
-	panels := routerGroup.Group(":corporationID/panels")
-	{
-		panels.POST("add", app.Controllers.Corporation.InstallationController.AddPanel)
-		panels.GET("list", app.Controllers.Corporation.InstallationController.GetCorporationPanels)
 	}
 
 	maintenance := routerGroup.Group(":corporationID/maintenance")

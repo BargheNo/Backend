@@ -32,6 +32,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/guarantee"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
@@ -62,6 +63,8 @@ var RepositoryProviderSet = wire.NewSet(
 	repositoryimpl.NewMaintenanceRepository,
 	repositoryimpl.NewTicketRepository,
 	repositoryimpl.NewReportRepository,
+	repositoryimpl.NewGuaranteeRepository,
+	repositoryimpl.NewPaymentRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
@@ -73,11 +76,15 @@ var RepositoryProviderSet = wire.NewSet(
 	wire.Bind(new(repository.MaintenanceRepository), new(*repositoryimpl.MaintenanceRepository)),
 	wire.Bind(new(repository.TicketRepository), new(*repositoryimpl.TicketRepository)),
 	wire.Bind(new(repository.ReportRepository), new(*repositoryimpl.ReportRepository)),
+	wire.Bind(new(repository.GuaranteeRepository), new(*repositoryimpl.GuaranteeRepository)),
+	wire.Bind(new(repository.PaymentRepository), new(*repositoryimpl.PaymentRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
 	wire.Struct(new(serviceimpl.UserServiceDeps), "*"),
 	wire.Struct(new(serviceimpl.NotificationServiceDeps), "*"),
+	wire.Struct(new(serviceimpl.InstallationServiceDeps), "*"),
+	wire.Struct(new(serviceimpl.BidServiceDeps), "*"),
 	serviceimpl.NewUserService,
 	serviceimpl.NewOTPService,
 	sms.NewSMSService,
@@ -93,6 +100,8 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewMaintenanceService,
 	serviceimpl.NewTicketService,
 	serviceimpl.NewReportService,
+	serviceimpl.NewGuaranteeService,
+	serviceimpl.NewPaymentService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
@@ -108,6 +117,8 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)),
 	wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)),
 	wire.Bind(new(service.ReportService), new(*serviceimpl.ReportService)),
+	wire.Bind(new(service.GuaranteeService), new(*serviceimpl.GuaranteeService)),
+	wire.Bind(new(service.PaymentService), new(*serviceimpl.PaymentService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -128,6 +139,7 @@ var GeneralControllerProviderSet = wire.NewSet(
 	address.NewGeneralAddressController,
 	corporation.NewGeneralCorporationController,
 	notification.NewGeneralNotificationController,
+	installation.NewGeneralInstallationController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -151,6 +163,7 @@ var CorporationControllerProviderSet = wire.NewSet(
 	chat.NewCorporationChatController,
 	bid.NewCorporationBidController,
 	maintenance.NewCorporationMaintenanceController,
+	guarantee.NewCorporationGuaranteeController,
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
@@ -308,6 +321,7 @@ type GeneralControllers struct {
 	AddressController      *address.GeneralAddressController
 	CorporationController  *corporation.GeneralCorporationController
 	NotificationController *notification.GeneralNotificationController
+	InstallationController *installation.GeneralInstallationController
 }
 
 type CustomerControllers struct {
@@ -329,6 +343,7 @@ type CorporationControllers struct {
 	ChatController         *chat.CorporationChatController
 	BidController          *bid.CorporationBidController
 	MaintenanceController  *maintenance.CorporationMaintenanceController
+	GuaranteeController    *guarantee.CorporationGuaranteeController
 }
 
 type AdminControllers struct {

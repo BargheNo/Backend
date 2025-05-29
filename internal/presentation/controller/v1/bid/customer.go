@@ -28,16 +28,78 @@ func NewCustomerBidController(
 
 func (bidController *CustomerBidController) GetBids(ctx *gin.Context) {
 	type getBidsParams struct {
-		requestID uint `uri:"requestID" validate:"required"`
+		RequestID uint `uri:"requestID" validate:"required"`
+	}
+	params := controller.Validated[getBidsParams](ctx)
+	userID, _ := ctx.Get(bidController.constants.Context.ID)
+	pagination := controller.GetPagination(ctx, bidController.pagination.DefaultPage, bidController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	bidsRequest := biddto.GetListRequestBidsRequest{
+		RequestID: params.RequestID,
+		UserID:    userID.(uint),
+		Offset:    offset,
+		Limit:     limit,
+	}
+	bids := bidController.BidService.GetRequestAnonymousBids(bidsRequest)
+
+	controller.Response(ctx, 200, "", bids)
+}
+
+func (bidController *CustomerBidController) GetBid(ctx *gin.Context) {
+	type getBidsParams struct {
+		RequestID uint `uri:"requestID" validate:"required"`
+		BidID     uint `uri:"bidID" validate:"required"`
 	}
 	params := controller.Validated[getBidsParams](ctx)
 	userID, _ := ctx.Get(bidController.constants.Context.ID)
 
-	bidsRequest := biddto.GetRequestBidsRequest{
-		RequestID: params.requestID,
+	bidsRequest := biddto.GetCustomerBidRequest{
 		UserID:    userID.(uint),
+		RequestID: params.RequestID,
+		BidID:     params.BidID,
 	}
-	bids := bidController.BidService.GetRequestBids(bidsRequest)
+	bids := bidController.BidService.GetRequestAnonymousBid(bidsRequest)
 
 	controller.Response(ctx, 200, "", bids)
+}
+
+func (bidController *CustomerBidController) AcceptBid(ctx *gin.Context) {
+	type acceptBidsParams struct {
+		RequestID uint `uri:"requestID" validate:"required"`
+		BidID     uint `uri:"bidID" validate:"required"`
+	}
+	params := controller.Validated[acceptBidsParams](ctx)
+	userID, _ := ctx.Get(bidController.constants.Context.ID)
+
+	bidsRequest := biddto.GetCustomerBidRequest{
+		RequestID: params.RequestID,
+		BidID:     params.BidID,
+		UserID:    userID.(uint),
+	}
+	bidController.BidService.AcceptBid(bidsRequest)
+
+	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.acceptBid")
+	controller.Response(ctx, 201, message, nil)
+}
+
+func (bidController *CustomerBidController) RejectBid(ctx *gin.Context) {
+	type acceptBidsParams struct {
+		RequestID uint `uri:"requestID" validate:"required"`
+		BidID     uint `uri:"bidID" validate:"required"`
+	}
+	params := controller.Validated[acceptBidsParams](ctx)
+	userID, _ := ctx.Get(bidController.constants.Context.ID)
+
+	bidsRequest := biddto.GetCustomerBidRequest{
+		RequestID: params.RequestID,
+		BidID:     params.BidID,
+		UserID:    userID.(uint),
+	}
+	bidController.BidService.RejectBid(bidsRequest)
+
+	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.rejectBid")
+	controller.Response(ctx, 201, message, nil)
 }

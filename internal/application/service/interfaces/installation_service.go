@@ -2,20 +2,24 @@ package service
 
 import (
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
-	"github.com/BargheNo/Backend/internal/domain/entity"
 )
 
 type InstallationService interface {
-	GetInstallationRequestModel(requestID uint) *entity.InstallationRequest
-	CreateInstallationRequest(requestInfo installationdto.NewInstallationRequest)
-	GetOwnerInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.OwnerRequestsResponse
-	GetInstallationRequest(requestID uint) installationdto.RequestDetailsResponse
-	GetOwnerInstallationRequest(requestInfo installationdto.GetOwnerRequest) installationdto.OwnerRequestsResponse
-	GetInstallationRequests(listInfo installationdto.InstallationListRequest) []installationdto.RequestDetailsResponse
 	AddPanel(panelInfo installationdto.AddPanelRequest)
+	ChangeInstallationRequestStatus(request installationdto.ChangeRequestStatusRequest)
+	CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest)
+	CreateInstallationRequest(request installationdto.NewInstallationRequest)
+	GetAnonymousInstallationRequest(request installationdto.CorporationPanelRequest) installationdto.AnonymousRequestsResponse
+	GetAnonymousInstallationRequests(request installationdto.CorporationPanelListRequest) []installationdto.AnonymousRequestsResponse
+	GetBuildingTypes() []installationdto.EnumStatusResponse
+	GetCorporationPanel(request installationdto.CorporationPanelRequest) installationdto.CorporationPanelResponse
 	GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelResponse
+	GetCustomerPanel(panelInfo installationdto.GetOwnerRequest) installationdto.CustomerPanelResponse
 	GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelResponse
+	GetOwnerInstallationRequest(request installationdto.GetOwnerRequest) installationdto.AnonymousRequestsResponse
+	GetOwnerInstallationRequests(request installationdto.RequestsListRequest) []installationdto.AnonymousRequestsResponse
 	GetPanelByID(panelID uint) installationdto.PanelResponse
-	GetCustomerPanelByID(panelID uint) installationdto.CustomerPanelResponse
-	GetCorporationPanelByID(panelID uint) installationdto.CorporationPanelResponse
+	GetRequestStatuses() []installationdto.EnumStatusResponse
+	ValidateRequestOwnership(requestID, ownerID uint) (installationdto.PublicRequestDetailsResponse, error)
+	GetPublicInstallationRequest(requestID uint) installationdto.PublicRequestDetailsResponse
 }

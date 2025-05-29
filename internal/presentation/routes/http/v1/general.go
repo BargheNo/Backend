@@ -31,4 +31,18 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		notifications.GET("/type", app.Controllers.General.NotificationController.GetContactTypes)
 	}
+
+	installations := routerGroup.Group("/installation")
+	{
+		requests := installations.Group("/request")
+		{
+			requests.GET("/status", app.Controllers.General.InstallationController.GetRequestStatuses)
+			requests.GET("/building", app.Controllers.General.InstallationController.GetBuildingTypes)
+		}
+	}
+
+	guarantees := routerGroup.Group("/guarantee")
+	{
+		guarantees.GET("/status", app.Controllers.Corporation.GuaranteeController.GetGuaranteeStatuses)
+	}
 }

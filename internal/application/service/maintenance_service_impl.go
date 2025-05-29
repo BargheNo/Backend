@@ -2,6 +2,7 @@ package serviceimpl
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	maintenancedto "github.com/BargheNo/Backend/internal/application/dto/maintenance"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
@@ -53,6 +54,7 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestIn
 		panic(forbiddenError)
 	}
 	maintenanceService.corporationService.DoesCorporationExist(requestInfo.CorporationID)
+
 	panel := maintenanceService.installationService.GetPanelByID(requestInfo.PanelID)
 
 	if panel.Customer.ID != requestInfo.OwnerID {
@@ -92,19 +94,25 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByOwnerID(maintenanceService.db, listInfo.OwnerID, paginationModifier, sortingModifier)
 	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
-	for i, request := range maintenanceRequests {
-		panel := maintenanceService.installationService.GetCustomerPanelByID(request.PanelID)
-		corporation := maintenanceService.corporationService.GetCorporationCredentials(request.CorporationID)
+	for i, maintenanceRequest := range maintenanceRequests {
+		panelInfoRequest := installationdto.GetOwnerRequest{
+			OwnerID:        listInfo.OwnerID,
+			InstallationID: maintenanceRequest.PanelID,
+		}
+		panel := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
+
+		corporation := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
+
 		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
-			ID:           request.ID,
+			ID:           maintenanceRequest.ID,
 			Panel:        panel,
 			Corporation:  corporation,
-			OwnerID:      request.OwnerID,
-			Subject:      request.Subject,
-			Description:  request.Description,
-			UrgencyLevel: request.UrgencyLevel.String(),
-			Status:       request.Status.String(),
-			CreatedAt:    request.CreatedAt,
+			OwnerID:      maintenanceRequest.OwnerID,
+			Subject:      maintenanceRequest.Subject,
+			Description:  maintenanceRequest.Description,
+			UrgencyLevel: maintenanceRequest.UrgencyLevel.String(),
+			Status:       maintenanceRequest.Status.String(),
+			CreatedAt:    maintenanceRequest.CreatedAt,
 		}
 	}
 	return response
@@ -117,15 +125,20 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByCorporationID(maintenanceService.db, listInfo.CorporationID, paginationModifier, sortingModifier)
 	response := make([]maintenancedto.CorporationMaintenanceResponse, len(maintenanceRequests))
-	for i, request := range maintenanceRequests {
-		panel := maintenanceService.installationService.GetCorporationPanelByID(request.PanelID)
+	for i, maintenanceRequest := range maintenanceRequests {
+		panelInfoRequest := installationdto.CorporationPanelRequest{
+			CorporationID:  listInfo.CorporationID,
+			OperatorID:     listInfo.OperatorID,
+			InstallationID: maintenanceRequest.PanelID,
+		}
+		panel := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
 		response[i] = maintenancedto.CorporationMaintenanceResponse{
-			ID:           request.ID,
-			Subject:      request.Subject,
-			Description:  request.Description,
-			UrgencyLevel: request.UrgencyLevel.String(),
-			Status:       request.Status.String(),
-			CreatedAt:    request.CreatedAt,
+			ID:           maintenanceRequest.ID,
+			Subject:      maintenanceRequest.Subject,
+			Description:  maintenanceRequest.Description,
+			UrgencyLevel: maintenanceRequest.UrgencyLevel.String(),
+			Status:       maintenanceRequest.Status.String(),
+			CreatedAt:    maintenanceRequest.CreatedAt,
 			OwnerPhone:   panel.Customer.Phone,
 			Panel:        panel,
 		}
@@ -184,8 +197,15 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecords(r
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByCorporationID(maintenanceService.db, requestInfo.CorporationID, paginationModifier, sortingModifier)
 	response := make([]maintenancedto.CorporationMaintenanceRecordResponse, len(maintenanceRecords))
 	for i, record := range maintenanceRecords {
-		panel := maintenanceService.installationService.GetCorporationPanelByID(record.PanelID)
+		panelInfoRequest := installationdto.CorporationPanelRequest{
+			CorporationID:  requestInfo.CorporationID,
+			OperatorID:     requestInfo.OperatorID,
+			InstallationID: record.PanelID,
+		}
+		panel := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
+
 		operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
+
 		response[i] = maintenancedto.CorporationMaintenanceRecordResponse{
 			ID:       record.ID,
 			Panel:    panel,
@@ -206,7 +226,13 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecordsBy
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByPanelAndCorporationID(maintenanceService.db, requestInfo.PanelID, requestInfo.CorporationID, paginationModifier, sortingModifier)
 	response := make([]maintenancedto.CorporationMaintenanceRecordResponse, len(maintenanceRecords))
 	for i, record := range maintenanceRecords {
-		panel := maintenanceService.installationService.GetCorporationPanelByID(record.PanelID)
+		panelInfoRequest := installationdto.CorporationPanelRequest{
+			CorporationID:  requestInfo.CorporationID,
+			OperatorID:     requestInfo.OperatorID,
+			InstallationID: record.PanelID,
+		}
+		panel := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
+
 		operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
 		response[i] = maintenancedto.CorporationMaintenanceRecordResponse{
 			ID:       record.ID,
@@ -227,7 +253,12 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requ
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByCustomerID(maintenanceService.db, requestInfo.OwnerID, paginationModifier, sortingModifier)
 	response := make([]maintenancedto.CustomerMaintenanceRecordResponse, len(maintenanceRecords))
 	for i, record := range maintenanceRecords {
-		panel := maintenanceService.installationService.GetCustomerPanelByID(record.PanelID)
+		panelInfoRequest := installationdto.GetOwnerRequest{
+			OwnerID:        requestInfo.OwnerID,
+			InstallationID: record.PanelID,
+		}
+		panel := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
+
 		corporation := maintenanceService.corporationService.GetCorporationCredentials(record.CorporationID)
 		operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
 		response[i] = maintenancedto.CustomerMaintenanceRecordResponse{
@@ -251,7 +282,12 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPan
 	maintenanceRecords := maintenanceService.maintenanceRepository.FindCustomerMaintenanceRecordsByPanelID(maintenanceService.db, requestInfo.PanelID, requestInfo.OwnerID, paginationModifier, sortingModifier)
 	response := make([]maintenancedto.CustomerMaintenanceRecordResponse, len(maintenanceRecords))
 	for i, record := range maintenanceRecords {
-		panel := maintenanceService.installationService.GetCustomerPanelByID(record.PanelID)
+		panelInfoRequest := installationdto.GetOwnerRequest{
+			OwnerID:        requestInfo.OwnerID,
+			InstallationID: record.PanelID,
+		}
+		panel := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
+
 		corporation := maintenanceService.corporationService.GetCorporationCredentials(record.CorporationID)
 		operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
 		response[i] = maintenancedto.CustomerMaintenanceRecordResponse{

@@ -7,6 +7,8 @@ const (
 	BidStatusAccepted
 	BidStatusExpired
 	BidStatusRejected
+	BidStatusCanceled
+	BidStatusAll
 )
 
 func (s BidStatus) String() string {
@@ -19,6 +21,8 @@ func (s BidStatus) String() string {
 		return "expired"
 	case BidStatusRejected:
 		return "rejected"
+	case BidStatusCanceled:
+		return "canceled"
 	}
 	return "unknown"
 }

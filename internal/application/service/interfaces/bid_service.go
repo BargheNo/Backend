@@ -5,9 +5,13 @@ import (
 )
 
 type BidService interface {
+	AcceptBid(request biddto.GetCustomerBidRequest)
+	CancelBid(bidInfo biddto.GetBidRequest)
+	GetCorporationBid(request biddto.GetBidRequest) biddto.CorporationBidResponse
+	GetCorporationBids(request biddto.GetCorporationBidsRequest) []biddto.CorporationBidResponse
+	GetRequestAnonymousBid(requestInfo biddto.GetCustomerBidRequest) biddto.AnonymousBidResponse
+	GetRequestAnonymousBids(requestInfo biddto.GetListRequestBidsRequest) []biddto.AnonymousBidResponse
+	RejectBid(request biddto.GetCustomerBidRequest)
 	SetBid(bidInfo biddto.SetBidRequest)
-	CancelBid(bidInfo biddto.CancelBidRequest)
-	GetBid(bidID uint) biddto.BidsResponse
-	GetCorporationBids(bidsRequest biddto.GetCorporationBidsRequest) []biddto.BidsResponse
-	GetRequestBids(requestInfo biddto.GetRequestBidsRequest) []biddto.BidsResponse
+	UpdateBid(request biddto.UpdateBidRequest)
 }

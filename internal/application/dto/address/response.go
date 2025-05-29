@@ -3,6 +3,8 @@ package addressdto
 type AddressResponse struct {
 	ID            uint   `json:"ID"`
 	Province      string `json:"province"`
+	ProvinceID    uint   `json:"provinceID"`
+	CityID        uint   `json:"cityID"`
 	City          string `json:"city"`
 	StreetAddress string `json:"streetAddress"`
 	PostalCode    string `json:"postalCode"`

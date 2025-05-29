@@ -73,7 +73,9 @@ func (addressService *AddressService) GetAddress(ownerID uint, ownerType string)
 	city, _ := addressService.addressRepository.GetCityByID(addressService.db, address.CityID)
 	response := addressdto.AddressResponse{
 		ID:            address.ID,
+		ProvinceID:    province.ID,
 		Province:      province.Name,
+		CityID:        city.ID,
 		City:          city.Name,
 		StreetAddress: address.StreetAddress,
 		PostalCode:    address.PostalCode,

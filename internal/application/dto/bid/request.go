@@ -1,37 +1,68 @@
 package biddto
 
-import "time"
+import (
+	"time"
+
+	paymentdto "github.com/BargheNo/Backend/internal/application/dto/payment"
+	"github.com/BargheNo/Backend/internal/domain/enum"
+)
 
 type SetBidRequest struct {
-	CorporationID         uint
-	BidderID              uint
-	InstallationRequestID uint
-	Cost                  uint
-	Description           string
-	InstallationTime      time.Time
-	PaymentTerms         PaymentTermsRequest    `json:"paymentTerms" validate:"required"`
-	AvailableTimes       []AvailableTimeRequest `json:"availableTimes" validate:"required,min=1,dive"`
+	CorporationID    uint
+	RequestID        uint
+	BidderID         uint
+	Status           enum.BidStatus
+	Cost             uint
+	Area             uint
+	Power            uint
+	Description      string
+	InstallationTime time.Time
+	GuaranteeID      *uint
+	PaymentTerms     paymentdto.PaymentTermsRequest
 }
 
-type CancelBidRequest struct {
-	CorporationID         uint
-	BidderID              uint
-	BidID                 uint
-	InstallationRequestID uint
+type UpdateBidRequest struct {
+	CorporationID    uint
+	BidID            uint
+	BidderID         uint
+	Cost             *uint
+	Area             *uint
+	Power            *uint
+	Description      *string
+	InstallationTime *time.Time
+	GuaranteeID      *uint
+	PaymentTerms     *paymentdto.UpdatePaymentTermsRequest
+}
+
+type GetBidRequest struct {
+	CorporationID uint
+	UserID        uint
+	BidID         uint
 }
 
 type GetCorporationBidsRequest struct {
 	CorporationID uint
 	UserID        uint
+	Status        uint
 	Offset        int
 	Limit         int
 }
 
-type GetRequestBidsRequest struct {
+type GetListRequestBidsRequest struct {
 	RequestID uint
+	UserID    uint
+	Offset    int
+	Limit     int
+}
+
+type GetCustomerBidRequest struct {
+	RequestID uint
+	BidID     uint
 	UserID    uint
 }
 
 type BidNotificationData struct {
-	BidID                 uint
+	RequestID uint
+	BidID     uint
+	UserID    uint
 }
