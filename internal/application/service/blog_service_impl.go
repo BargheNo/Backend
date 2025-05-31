@@ -77,24 +77,39 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
 	}
 }
 
-func (blogService *BlogService) GetCorporationPosts(request blogdto.GetCorporationPostsRequest) ([]blogdto.PostResponse, error) {
+func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse {
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
-	posts := blogService.blogRepository.GetCorporationPosts(blogService.db, request.CorporationID, paginationModifier, sortingModifier)
+	if request.UserType == enum.UserTypeCorporation {
+		ok := blogService.userService.IsUserActive(request.UserID)
+		if !ok {
+			forbiddenError := exception.ForbiddenError{
+				Message:  "",
+				Resource: blogService.constants.Field.Post,
+			}
+			panic(forbiddenError)
+		}
+		blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	}
+
+	posts := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
 
 	response := make([]blogdto.PostResponse, len(posts))
 	for i, post := range posts {
+		// corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+		author := blogService.userService.GetUserCredential(post.AuthorID)
 		response[i] = blogdto.PostResponse{
-			ID:          post.ID,
-			Title:       post.Title,
-			Corporation: post.Corporation.Name,
-			Author:      post.Author.FirstName + " " + post.Author.LastName,
-			CoverImage:  post.CoverImage,
-			CreatedAt:   post.CreatedAt,
+			ID:     post.ID,
+			Title:  post.Title,
+			Status: uint(post.Status),
+			// Corporation: corporation.Name,
+			Author:     author.FirstName + " " + author.LastName,
+			CoverImage: post.CoverImage,
+			CreatedAt:  post.CreatedAt,
 		}
 	}
-	return response, nil
+	return response
 }
 
 func (blogService *BlogService) GetPost(postID uint) blogdto.PostDetailsResponse {

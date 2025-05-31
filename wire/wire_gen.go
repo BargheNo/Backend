@@ -166,7 +166,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationChatController := chat.NewCorporationChatController(constants, chatService)
 	corporationBidController := bid.NewCorporationBidController(constants, pagination, bidService)
 	corporationMaintenanceController := maintenance.NewCorporationMaintenanceController(constants, pagination, maintenanceService)
-	corporationBlogController := blog.NewCorporationBlogController(constants, blogService)
+	corporationBlogController := blog.NewCorporationBlogController(constants, blogService, pagination)
 	corporationControllers := &CorporationControllers{
 		CorporationController:  corporationCorporationController,
 		InstallationController: corporationInstallationController,

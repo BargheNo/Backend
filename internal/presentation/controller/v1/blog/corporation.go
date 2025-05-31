@@ -14,15 +14,18 @@ import (
 type CorporationBlogController struct {
 	constants   *bootstrap.Constants
 	blogService service.BlogService
+	pagination  *bootstrap.Pagination
 }
 
 func NewCorporationBlogController(
 	constants *bootstrap.Constants,
 	blogService service.BlogService,
+	pagination *bootstrap.Pagination,
 ) *CorporationBlogController {
 	return &CorporationBlogController{
 		constants:   constants,
 		blogService: blogService,
+		pagination:  pagination,
 	}
 }
 
@@ -187,6 +190,26 @@ func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Contex
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteMedia")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
+	type getPostsParams struct {
+		Statuses      []uint `form:"statuses" validate:"required"`
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getPostsParams](ctx)
+	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	getPostsRequest := blogdto.GetPostsRequest{
+		CorporationID: params.CorporationID,
+		Statuses:      params.Statuses,
+		Offset:        offset,
+		Limit:         limit,
+	}
+	posts := blogController.blogService.GetPosts(getPostsRequest)
+
+	controller.Response(ctx, 200, "", posts)
 }
 
 // func (blogController *CorporationBlogController) GetPostMedia(ctx *gin.Context) {

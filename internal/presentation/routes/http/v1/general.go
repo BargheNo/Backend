@@ -41,7 +41,7 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	blog := routerGroup.Group("/blog")
 	{
-		blog.GET("/corporation/:corporationID", app.Controllers.General.BlogController.GetCorporationPosts)
-		blog.GET("/:postID", app.Controllers.General.BlogController.GetPost)
+		blog.GET("/:corporationID", app.Controllers.General.BlogController.GetPosts)
+		// blog.GET("/:postID", app.Controllers.General.BlogController.GetPost)
 	}
 }

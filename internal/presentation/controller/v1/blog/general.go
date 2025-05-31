@@ -4,6 +4,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +27,7 @@ func NewGeneralBlogController(
 	}
 }
 
-func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Context) {
+func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
 	type getCorporationPostsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
@@ -34,15 +35,14 @@ func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Contex
 	offset, limit := pagination.GetOffsetLimit()
 	params := controller.Validated[getCorporationPostsParams](ctx)
 
-	request := blogdto.GetCorporationPostsRequest{
+	request := blogdto.GetPostsRequest{
+		Statuses:      []uint{1},
 		CorporationID: params.CorporationID,
+		UserType:      enum.UserTypeGuest,
 		Offset:        offset,
 		Limit:         limit,
 	}
-	posts, err := blogController.blogService.GetCorporationPosts(request)
-	if err != nil {
-		panic(err)
-	}
+	posts := blogController.blogService.GetPosts(request)
 
 	controller.Response(ctx, 200, "", posts)
 }

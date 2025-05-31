@@ -8,7 +8,7 @@ import (
 type BlogRepository interface {
 	CreatePost(db database.Database, post *entity.Post) error
 	UpdatePost(db database.Database, post *entity.Post) error
-	GetCorporationPosts(db database.Database, corporationID uint, opts ...QueryModifier) []entity.Post
+	GetCorporationPostsByStatus(db database.Database, corporationID uint, statuses []uint, opts ...QueryModifier) []entity.Post
 	FindPostByID(db database.Database, postID uint) (*entity.Post, bool)
 	GetMediaByID(db database.Database, mediaID uint) (*entity.Media, bool)
 	AddMedia(db database.Database, media *entity.Media) error

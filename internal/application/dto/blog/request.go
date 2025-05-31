@@ -7,46 +7,49 @@ import (
 )
 
 type CreatePostRequest struct {
-	Title         string                `json:"title"`
-	Content       string                `json:"content_html"`
-	AuthorID      uint                  `json:"-"`
-	CorporationID uint                  `json:"-"`
-	CoverImage    *multipart.FileHeader `json:"cover_image"`
-	Status        enum.PostStatus       `json:"status"`
+	Title         string
+	Content       string
+	AuthorID      uint
+	CorporationID uint
+	CoverImage    *multipart.FileHeader
+	Status        enum.PostStatus
 }
 
 type EditPostRequest struct {
-	PostID        uint                  `json:"-"`
-	AuthorID      uint                  `json:"-"`
-	CorporationID uint                  `json:"-"`
-	Title         *string               `json:"title"`
-	Content       *string               `json:"content_html"`
-	CoverImage    *multipart.FileHeader `json:"cover_image"`
-	Status        uint                  `json:"status"`
+	PostID        uint
+	AuthorID      uint
+	CorporationID uint
+	Title         *string
+	Content       *string
+	CoverImage    *multipart.FileHeader
+	Status        uint
 }
 
-type GetCorporationPostsRequest struct {
-	CorporationID uint `uri:"corporationID" validate:"required"`
-	Offset        int  `query:"offset" validate:"required"`
-	Limit         int  `query:"limit" validate:"required"`
+type GetPostsRequest struct {
+	UserID        uint
+	Statuses      []uint
+	CorporationID uint
+	Offset        int
+	Limit         int
+	UserType      enum.UserType
 }
 
 type DeletePostRequest struct {
-	PostIDs       []uint `json:"-"`
-	AuthorID      uint   `json:"-"`
-	CorporationID uint   `json:"-"`
+	PostIDs       []uint
+	AuthorID      uint
+	CorporationID uint
 }
 
 type AddPostMediaRequest struct {
-	PostID        uint                  `json:"-"`
-	AuthorID      uint                  `json:"-"`
-	Media         *multipart.FileHeader `json:"media" validate:"required"`
-	CorporationID uint                  `json:"-"`
+	PostID        uint
+	AuthorID      uint
+	Media         *multipart.FileHeader
+	CorporationID uint
 }
 
 type AccessPostMediaRequest struct {
-	PostID        uint `json:"-"`
-	AuthorID      uint `json:"-"`
-	MediaID       uint `json:"-"`
-	CorporationID uint `json:"-"`
+	PostID        uint
+	AuthorID      uint
+	MediaID       uint
+	CorporationID uint
 }

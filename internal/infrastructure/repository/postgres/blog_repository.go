@@ -21,9 +21,9 @@ func (repo *BlogRepository) UpdatePost(db database.Database, post *entity.Post) 
 	return db.GetDB().Save(post).Error
 }
 
-func (repo *BlogRepository) GetCorporationPosts(db database.Database, corporationID uint, opts ...repository.QueryModifier) []entity.Post {
+func (repo *BlogRepository) GetCorporationPostsByStatus(db database.Database, corporationID uint, statuses []uint, opts ...repository.QueryModifier) []entity.Post {
 	var posts []entity.Post
-	query := db.GetDB().Where("corporation_id = ?", corporationID)
+	query := db.GetDB().Where("corporation_id = ?", corporationID).Where("status IN (?)", statuses)
 	for _, opt := range opts {
 		query = opt.Apply(query).(*gorm.DB)
 	}
