@@ -53,7 +53,12 @@ func (blogController *GeneralBlogController) GetPost(ctx *gin.Context) {
 	}
 	params := controller.Validated[getPostParams](ctx)
 
-	post := blogController.blogService.GetPost(params.PostID)
+	getPostRequest := blogdto.GetPostRequest{
+		PostID:   params.PostID,
+		UserType: enum.UserTypeGuest,
+	}
+
+	post := blogController.blogService.GetPost(getPostRequest)
 
 	controller.Response(ctx, 200, "", post)
 }

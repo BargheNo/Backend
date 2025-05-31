@@ -212,6 +212,25 @@ func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 	controller.Response(ctx, 200, "", posts)
 }
 
+func (blogController *CorporationBlogController) GetPost(ctx *gin.Context) {
+	type getPostParams struct {
+		PostID        uint `uri:"postID" validate:"required"`
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getPostParams](ctx)
+	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+
+	getPostRequest := blogdto.GetPostRequest{
+		UserID:        authorID.(uint),
+		PostID:        params.PostID,
+		CorporationID: params.CorporationID,
+		UserType:      enum.UserTypeCorporation,
+	}
+	post := blogController.blogService.GetPost(getPostRequest)
+
+	controller.Response(ctx, 200, "", post)
+}
+
 // func (blogController *CorporationBlogController) GetPostMedia(ctx *gin.Context) {
 // 	type getPostMediaParams struct {
 // 		PostID        uint `uri:"postID" validate:"required"`

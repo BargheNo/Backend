@@ -112,17 +112,38 @@ func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blog
 	return response
 }
 
-func (blogService *BlogService) GetPost(postID uint) blogdto.PostDetailsResponse {
-	post, exist := blogService.blogRepository.FindPostByID(blogService.db, postID)
+func (blogService *BlogService) GetPost(request blogdto.GetPostRequest) blogdto.PostDetailsResponse {
+	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
 		panic(notFoundError)
 	}
+
+	if request.UserType == enum.UserTypeCorporation {
+		ok := blogService.userService.IsUserActive(request.UserID)
+		if !ok {
+			forbiddenError := exception.ForbiddenError{
+				Message:  "",
+				Resource: blogService.constants.Field.Post,
+			}
+			panic(forbiddenError)
+		}
+	}
+
+	if request.UserType == enum.UserTypeGuest && post.Status == enum.PostStatusDraft {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: blogService.constants.Field.Post,
+		}
+		panic(forbiddenError)
+	}
+	author := blogService.userService.GetUserCredential(post.AuthorID)
 	return blogdto.PostDetailsResponse{
 		ID:         post.ID,
 		Title:      post.Title,
 		Content:    post.Content,
-		Author:     post.Author.FirstName + " " + post.Author.LastName,
+		Status:     uint(post.Status),
+		Author:     author.FirstName + " " + author.LastName,
 		CoverImage: post.CoverImage,
 		CreatedAt:  post.CreatedAt,
 	}
