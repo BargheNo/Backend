@@ -68,6 +68,6 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		blog.DELETE("/:postID/media/:mediaID", app.Controllers.Corporation.BlogController.DeletePostMedia)
 		blog.GET("/list", app.Controllers.Corporation.BlogController.GetPosts)
 		blog.GET("/:postID", app.Controllers.Corporation.BlogController.GetPost)
-		// blog.GET("/:postID/media/:mediaID", app.Controllers.Corporation.BlogController.GetPostMedia)
+		blog.GET("/:postID/media/:mediaID", app.Controllers.Corporation.BlogController.GetPostMedia)
 	}
 }

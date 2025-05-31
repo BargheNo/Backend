@@ -177,11 +177,11 @@ func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Contex
 		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
 	params := controller.Validated[deletePostMediaParams](ctx)
-	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+	userID, _ := ctx.Get(blogController.constants.Context.ID)
 
 	mediaParams := blogdto.AccessPostMediaRequest{
 		PostID:        params.PostID,
-		AuthorID:      authorID.(uint),
+		UserID:        userID.(uint),
 		MediaID:       params.MediaID,
 		CorporationID: params.CorporationID,
 	}
@@ -231,23 +231,23 @@ func (blogController *CorporationBlogController) GetPost(ctx *gin.Context) {
 	controller.Response(ctx, 200, "", post)
 }
 
-// func (blogController *CorporationBlogController) GetPostMedia(ctx *gin.Context) {
-// 	type getPostMediaParams struct {
-// 		PostID        uint `uri:"postID" validate:"required"`
-// 		MediaID       uint `uri:"mediaID" validate:"required"`
-// 		CorporationID uint `uri:"corporationID" validate:"required"`
-// 	}
-// 	params := controller.Validated[getPostMediaParams](ctx)
-// 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
+func (blogController *CorporationBlogController) GetPostMedia(ctx *gin.Context) {
+	type getPostMediaParams struct {
+		PostID        uint `uri:"postID" validate:"required"`
+		MediaID       uint `uri:"mediaID" validate:"required"`
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getPostMediaParams](ctx)
+	userID, _ := ctx.Get(blogController.constants.Context.ID)
 
-// 	mediaParams := blogdto.AccessPostMediaRequest{
-// 		PostID:        params.PostID,
-// 		AuthorID:      authorID.(uint),
-// 		MediaID:       params.MediaID,
-// 		CorporationID: params.CorporationID,
-// 	}
+	mediaParams := blogdto.AccessPostMediaRequest{
+		PostID:        params.PostID,
+		UserID:        userID.(uint),
+		MediaID:       params.MediaID,
+		CorporationID: params.CorporationID,
+	}
 
-// 	media := blogController.blogService.GetPostMedia(mediaParams)
+	media := blogController.blogService.GetPostMedia(mediaParams)
 
-// 	controller.Response(ctx, 200, "", media)
-// }
+	controller.Response(ctx, 200, "", media)
+}

@@ -10,4 +10,5 @@ type BlogService interface {
 	DeletePost(request blogdto.DeletePostRequest)
 	AddPostMedia(request blogdto.AddPostMediaRequest) uint
 	DeletePostMedia(request blogdto.AccessPostMediaRequest)
+	GetPostMedia(request blogdto.AccessPostMediaRequest) string
 }

@@ -62,3 +62,20 @@ func (blogController *GeneralBlogController) GetPost(ctx *gin.Context) {
 
 	controller.Response(ctx, 200, "", post)
 }
+
+func (blogController *GeneralBlogController) GetPostMedia(ctx *gin.Context) {
+	type getPostMediaParams struct {
+		PostID  uint `uri:"postID" validate:"required"`
+		MediaID uint `uri:"mediaID" validate:"required"`
+	}
+	params := controller.Validated[getPostMediaParams](ctx)
+
+	mediaParams := blogdto.AccessPostMediaRequest{
+		PostID:   params.PostID,
+		MediaID:  params.MediaID,
+		UserType: enum.UserTypeGuest,
+	}
+	media := blogController.blogService.GetPostMedia(mediaParams)
+
+	controller.Response(ctx, 200, "", media)
+}

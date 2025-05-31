@@ -49,9 +49,10 @@ type AddPostMediaRequest struct {
 
 type AccessPostMediaRequest struct {
 	PostID        uint
-	AuthorID      uint
+	UserID        uint
 	MediaID       uint
 	CorporationID uint
+	UserType      enum.UserType
 }
 
 type GetPostRequest struct {

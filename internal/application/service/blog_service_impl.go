@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"time"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
@@ -244,7 +246,7 @@ func (blogService *BlogService) AddPostMedia(request blogdto.AddPostMediaRequest
 }
 
 func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaRequest) {
-	ok := blogService.userService.IsUserActive(request.AuthorID)
+	ok := blogService.userService.IsUserActive(request.UserID)
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
@@ -253,7 +255,7 @@ func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaR
 		panic(forbiddenError)
 	}
 
-	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
 
 	_, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
 	if !exist {
@@ -281,4 +283,48 @@ func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaR
 	if err := blogService.blogRepository.DeleteMedia(blogService.db, request.MediaID); err != nil {
 		panic(err)
 	}
+}
+
+func (BlogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequest) string {
+	post, exist := BlogService.blogRepository.FindPostByID(BlogService.db, request.PostID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: BlogService.constants.Field.Post}
+		panic(notFoundError)
+	}
+
+	if request.UserType == enum.UserTypeGuest && post.Status == enum.PostStatusDraft {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: BlogService.constants.Field.Post,
+		}
+		panic(forbiddenError)
+	}
+
+	if request.UserType == enum.UserTypeCorporation {
+		ok := BlogService.userService.IsUserActive(request.UserID)
+		if !ok {
+			forbiddenError := exception.ForbiddenError{
+				Message:  "",
+				Resource: BlogService.constants.Field.Post,
+			}
+			panic(forbiddenError)
+		}
+		BlogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	}
+
+	media, exist := BlogService.blogRepository.GetMediaByID(BlogService.db, request.MediaID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: BlogService.constants.Field.Media}
+		panic(notFoundError)
+	}
+
+	if media.OwnerID != request.PostID {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: BlogService.constants.Field.Media,
+		}
+		panic(forbiddenError)
+	}
+
+	return BlogService.s3Storage.GetPresignedURL(enum.BlogMedia, media.Path, 8*time.Hour)
 }
