@@ -377,3 +377,24 @@ func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) {
 		panic(err)
 	}
 }
+
+func (blogService *BlogService) UnlikePost(request blogdto.LikePostRequest) {
+	ok := blogService.userService.IsUserActive(request.UserID)
+	if !ok {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: blogService.constants.Field.Post,
+		}
+		panic(forbiddenError)
+	}
+
+	like, exist := blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Like}
+		panic(notFoundError)
+	}
+
+	if err := blogService.blogRepository.DeleteLike(blogService.db, like.ID); err != nil {
+		panic(err)
+	}
+}

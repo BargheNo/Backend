@@ -42,6 +42,7 @@ var English = map[string]interface{}{
 	"blog":                "blog",
 	"post":                "post",
 	"like":                "like",
+	"unlike":              "unlike",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",

@@ -16,4 +16,5 @@ type BlogRepository interface {
 	DeletePost(db database.Database, postID uint) error
 	CreateLike(db database.Database, like *entity.Like) error
 	FindLikeByUserAndOwner(db database.Database, userID, ownerID uint, ownerType string) (*entity.Like, bool)
+	DeleteLike(db database.Database, likeID uint) error
 }

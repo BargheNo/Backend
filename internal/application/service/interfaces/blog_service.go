@@ -12,4 +12,5 @@ type BlogService interface {
 	DeletePostMedia(request blogdto.AccessPostMediaRequest)
 	GetPostMedia(request blogdto.AccessPostMediaRequest) string
 	LikePost(request blogdto.LikePostRequest)
+	UnlikePost(request blogdto.LikePostRequest)
 }

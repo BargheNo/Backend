@@ -85,3 +85,7 @@ func (repo *BlogRepository) FindLikeByUserAndOwner(db database.Database, userID,
 	}
 	return &like, true
 }
+
+func (repo *BlogRepository) DeleteLike(db database.Database, likeID uint) error {
+	return db.GetDB().Delete(&entity.Like{}, likeID).Error
+}
