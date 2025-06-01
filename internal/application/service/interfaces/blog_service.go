@@ -6,7 +6,8 @@ type BlogService interface {
 	CreatePost(request blogdto.CreatePostRequest)
 	EditPost(request blogdto.EditPostRequest)
 	GetPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse
-	GetPost(request blogdto.GetPostRequest) blogdto.PostDetailsResponse
+	GetCorporationPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse
+	GetPost(request blogdto.GetPostRequest) blogdto.PostResponse
 	DeletePost(request blogdto.DeletePostRequest)
 	AddPostMedia(request blogdto.AddPostMediaRequest) uint
 	DeletePostMedia(request blogdto.AccessPostMediaRequest)

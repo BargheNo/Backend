@@ -79,7 +79,7 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
 	}
 }
 
-func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse {
+func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse {
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
@@ -106,10 +106,10 @@ func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blog
 		}
 		author := blogService.userService.GetUserCredential(post.AuthorID)
 		response[i] = blogdto.PostResponse{
-			ID:     post.ID,
-			Title:  post.Title,
-			Status: uint(post.Status),
-			// Corporation: corporation.Name,
+			ID:         post.ID,
+			Title:      post.Title,
+			Status:     uint(post.Status),
+			Content:    post.Content,
 			Author:     author.FirstName + " " + author.LastName,
 			CoverImage: coverImage,
 			CreatedAt:  post.CreatedAt,
@@ -118,7 +118,29 @@ func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blog
 	return response
 }
 
-func (blogService *BlogService) GetPost(request blogdto.GetPostRequest) blogdto.PostDetailsResponse {
+func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	posts := blogService.blogRepository.GetPostsByStatus(blogService.db, request.Statuses, paginationModifier, sortingModifier)
+
+	response := make([]blogdto.PostResponse, len(posts))
+	for i, post := range posts {
+		author := blogService.userService.GetUserCredential(post.AuthorID)
+		response[i] = blogdto.PostResponse{
+			ID:         post.ID,
+			Title:      post.Title,
+			Status:     uint(post.Status),
+			Content:    post.Content,
+			Author:     author.FirstName + " " + author.LastName,
+			CoverImage: post.CoverImage,
+			CreatedAt:  post.CreatedAt,
+		}
+	}
+	return response
+}
+
+func (blogService *BlogService) GetPost(request blogdto.GetPostRequest) blogdto.PostResponse {
 	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
@@ -148,7 +170,7 @@ func (blogService *BlogService) GetPost(request blogdto.GetPostRequest) blogdto.
 	if post.CoverImage != "" {
 		coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 	}
-	return blogdto.PostDetailsResponse{
+	return blogdto.PostResponse{
 		ID:         post.ID,
 		Title:      post.Title,
 		Content:    post.Content,

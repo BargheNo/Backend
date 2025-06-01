@@ -28,6 +28,21 @@ func NewGeneralBlogController(
 }
 
 func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
+	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	request := blogdto.GetPostsRequest{
+		Statuses: []uint{2},
+		UserType: enum.UserTypeGuest,
+		Offset:   offset,
+		Limit:    limit,
+	}
+	posts := blogController.blogService.GetPosts(request)
+
+	controller.Response(ctx, 200, "", posts)
+}
+
+func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Context) {
 	type getCorporationPostsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
 	}

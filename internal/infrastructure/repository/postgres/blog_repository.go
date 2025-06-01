@@ -89,3 +89,16 @@ func (repo *BlogRepository) FindLikeByUserAndOwner(db database.Database, userID,
 func (repo *BlogRepository) DeleteLike(db database.Database, likeID uint) error {
 	return db.GetDB().Delete(&entity.Like{}, likeID).Error
 }
+
+func (repo *BlogRepository) GetPostsByStatus(db database.Database, statuses []uint, opts ...repository.QueryModifier) []entity.Post {
+	var posts []entity.Post
+	query := db.GetDB().Where("status IN (?)", statuses)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&posts)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return posts
+}
