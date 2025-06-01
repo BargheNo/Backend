@@ -14,4 +14,6 @@ type BlogRepository interface {
 	AddMedia(db database.Database, media *entity.Media) error
 	DeleteMedia(db database.Database, mediaID uint) error
 	DeletePost(db database.Database, postID uint) error
+	CreateLike(db database.Database, like *entity.Like) error
+	FindLikeByUserAndOwner(db database.Database, userID, ownerID uint, ownerType string) (*entity.Like, bool)
 }

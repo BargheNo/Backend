@@ -336,3 +336,44 @@ func (BlogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 
 	return BlogService.s3Storage.GetPresignedURL(enum.BlogMedia, media.Path, 8*time.Hour)
 }
+
+func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) {
+	ok := blogService.userService.IsUserActive(request.UserID)
+	if !ok {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: blogService.constants.Field.Post,
+		}
+		panic(forbiddenError)
+	}
+
+	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
+		panic(notFoundError)
+	}
+
+	if post.Status == enum.PostStatusDraft {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: blogService.constants.Field.Post,
+		}
+		panic(forbiddenError)
+	}
+
+	_, exist = blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
+	if exist {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(blogService.constants.Field.Like, blogService.constants.Tag.AlreadyExist)
+		panic(conflictErrors)
+	}
+
+	like := &entity.Like{
+		UserID:    request.UserID,
+		OwnerID:   request.PostID,
+		OwnerType: "blog",
+	}
+	if err := blogService.blogRepository.CreateLike(blogService.db, like); err != nil {
+		panic(err)
+	}
+}

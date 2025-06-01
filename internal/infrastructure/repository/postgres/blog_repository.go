@@ -69,3 +69,19 @@ func (repo *BlogRepository) DeleteMedia(db database.Database, mediaID uint) erro
 func (repo *BlogRepository) DeletePost(db database.Database, postID uint) error {
 	return db.GetDB().Delete(&entity.Post{}, postID).Error
 }
+
+func (repo *BlogRepository) CreateLike(db database.Database, like *entity.Like) error {
+	return db.GetDB().Create(&like).Error
+}
+
+func (repo *BlogRepository) FindLikeByUserAndOwner(db database.Database, userID, ownerID uint, ownerType string) (*entity.Like, bool) {
+	var like entity.Like
+	result := db.GetDB().Where("user_id = ? AND owner_id = ? AND owner_type = ?", userID, ownerID, ownerType).First(&like)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return &like, true
+}

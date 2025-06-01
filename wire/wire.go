@@ -154,6 +154,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 	maintenance.NewCustomerMaintenanceController,
 	ticket.NewCustomerTicketController,
 	report.NewCustomerReportController,
+	blog.NewCustomerBlogController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -337,6 +338,7 @@ type CustomerControllers struct {
 	MaintenanceController  *maintenance.CustomerMaintenanceController
 	TicketController       *ticket.CustomerTicketController
 	ReportController       *report.CustomerReportController
+	BlogController         *blog.CustomerBlogController
 }
 
 type CorporationControllers struct {

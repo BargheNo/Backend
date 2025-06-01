@@ -61,3 +61,8 @@ type GetPostRequest struct {
 	CorporationID uint
 	UserType      enum.UserType
 }
+
+type LikePostRequest struct {
+	UserID uint
+	PostID uint
+}

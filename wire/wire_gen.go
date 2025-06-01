@@ -149,6 +149,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	ticketService := serviceimpl.NewTicketService(constants, ticketRepository, userService, s3Storage, postgresDatabase)
 	customerTicketController := ticket.NewCustomerTicketController(constants, ticketService, pagination)
 	customerReportController := report.NewCustomerReportController(constants, reportService)
+	customerBlogController := blog.NewCustomerBlogController(constants, blogService, pagination)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
@@ -160,6 +161,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		MaintenanceController:  customerMaintenanceController,
 		TicketController:       customerTicketController,
 		ReportController:       customerReportController,
+		BlogController:         customerBlogController,
 	}
 	corporationCorporationController := corporation.NewCorporationCorporationController(constants, pagination, corporationService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
@@ -255,7 +257,7 @@ var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, log
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, blog.NewCustomerBlogController, wire.Struct(new(CustomerControllers), "*"))
 
 var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, chat.NewCorporationChatController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, blog.NewCorporationBlogController, wire.Struct(new(CorporationControllers), "*"))
 
@@ -399,6 +401,7 @@ type CustomerControllers struct {
 	MaintenanceController  *maintenance.CustomerMaintenanceController
 	TicketController       *ticket.CustomerTicketController
 	ReportController       *report.CustomerReportController
+	BlogController         *blog.CustomerBlogController
 }
 
 type CorporationControllers struct {

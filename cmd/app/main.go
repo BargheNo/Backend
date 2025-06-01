@@ -53,6 +53,7 @@ func main() {
 		&entity.Media{},
 		&entity.News{},
 		&entity.Post{},
+		&entity.Like{},
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()

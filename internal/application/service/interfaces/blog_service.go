@@ -11,4 +11,5 @@ type BlogService interface {
 	AddPostMedia(request blogdto.AddPostMediaRequest) uint
 	DeletePostMedia(request blogdto.AccessPostMediaRequest)
 	GetPostMedia(request blogdto.AccessPostMediaRequest) string
+	LikePost(request blogdto.LikePostRequest)
 }

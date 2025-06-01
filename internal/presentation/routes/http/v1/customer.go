@@ -101,4 +101,9 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		report.POST("maintenance/:recordID", app.Controllers.Customer.ReportController.CreateMaintenanceReport)
 		report.POST("panel/:panelID", app.Controllers.Customer.ReportController.CreatePanelReport)
 	}
+
+	blog := routerGroup.Group("/blog")
+	{
+		blog.POST("/:postID/like", app.Controllers.Customer.BlogController.LikePost)
+	}
 }
