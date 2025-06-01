@@ -367,6 +367,10 @@ func (path *BucketPath) GetNewsMediaPath(newsID uint, MediaFileName string) stri
 	return fmt.Sprintf("news/%d/media/%s", newsID, MediaFileName)
 }
 
+func (path *BucketPath) GetNewsCoverImagePath(newsID uint, mediaFileName string) string {
+	return fmt.Sprintf("news/%d/cover-image/%s", newsID, mediaFileName)
+}
+
 func (path *BucketPath) GetBlogMediaPath(corporationID uint, mediaFileName string) string {
 	return fmt.Sprintf("corporation/%d/blog/media/%s", corporationID, mediaFileName)
 }

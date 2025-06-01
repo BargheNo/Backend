@@ -100,6 +100,10 @@ func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blog
 	response := make([]blogdto.PostResponse, len(posts))
 	for i, post := range posts {
 		// corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+		coverImage := ""
+		if post.CoverImage != "" {
+			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+		}
 		author := blogService.userService.GetUserCredential(post.AuthorID)
 		response[i] = blogdto.PostResponse{
 			ID:     post.ID,
@@ -107,7 +111,7 @@ func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blog
 			Status: uint(post.Status),
 			// Corporation: corporation.Name,
 			Author:     author.FirstName + " " + author.LastName,
-			CoverImage: post.CoverImage,
+			CoverImage: coverImage,
 			CreatedAt:  post.CreatedAt,
 		}
 	}
@@ -140,13 +144,17 @@ func (blogService *BlogService) GetPost(request blogdto.GetPostRequest) blogdto.
 		panic(forbiddenError)
 	}
 	author := blogService.userService.GetUserCredential(post.AuthorID)
+	coverImage := ""
+	if post.CoverImage != "" {
+		coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+	}
 	return blogdto.PostDetailsResponse{
 		ID:         post.ID,
 		Title:      post.Title,
 		Content:    post.Content,
 		Status:     uint(post.Status),
 		Author:     author.FirstName + " " + author.LastName,
-		CoverImage: post.CoverImage,
+		CoverImage: coverImage,
 		CreatedAt:  post.CreatedAt,
 	}
 }

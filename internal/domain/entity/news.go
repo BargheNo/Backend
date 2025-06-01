@@ -7,12 +7,13 @@ import (
 
 type News struct {
 	database.Model
-	Title    string  `json:"title"`
-	Content  string  `json:"content_html"`
-	AuthorID uint    `gorm:"not null;index"`
-	Author   User    `gorm:"foreignKey:AuthorID"`
-	Media    []Media `gorm:"polymorphic:Owner;polymorphicValue:news"`
-	Status   enum.NewsStatus
+	Title      string  `json:"title"`
+	Content    string  `json:"content_html"`
+	AuthorID   uint    `gorm:"not null;index"`
+	Author     User    `gorm:"foreignKey:AuthorID"`
+	CoverImage string  `gorm:"type:varchar(255);default:null"`
+	Media      []Media `gorm:"polymorphic:Owner;polymorphicValue:news"`
+	Status     enum.NewsStatus
 }
 
 // TODO: Better to update to this version

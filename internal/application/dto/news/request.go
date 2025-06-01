@@ -7,18 +7,20 @@ import (
 )
 
 type CreateNewsRequest struct {
-	Title    string
-	Content  string
-	AuthorID uint
-	Status   enum.NewsStatus
+	Title      string
+	Content    string
+	AuthorID   uint
+	Status     enum.NewsStatus
+	CoverImage *multipart.FileHeader
 }
 
 type EditNewsRequest struct {
-	NewsID   uint
-	AuthorID uint
-	Title    *string
-	Content  *string
-	Status   uint
+	NewsID     uint
+	AuthorID   uint
+	Title      *string
+	Content    *string
+	Status     uint
+	CoverImage *multipart.FileHeader
 }
 
 type EditNewsStatusRequest struct {
