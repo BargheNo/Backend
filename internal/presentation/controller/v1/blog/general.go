@@ -37,7 +37,7 @@ func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
 		Offset:   offset,
 		Limit:    limit,
 	}
-	posts := blogController.blogService.GetPosts(request)
+	posts := blogController.blogService.GetGeneralPosts(request)
 
 	controller.Response(ctx, 200, "", posts)
 }
@@ -51,13 +51,13 @@ func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Contex
 	params := controller.Validated[getCorporationPostsParams](ctx)
 
 	request := blogdto.GetPostsRequest{
-		Statuses:      []uint{1},
+		Statuses:      []uint{2},
 		CorporationID: params.CorporationID,
 		UserType:      enum.UserTypeGuest,
 		Offset:        offset,
 		Limit:         limit,
 	}
-	posts := blogController.blogService.GetPosts(request)
+	posts := blogController.blogService.GetCorporationPostsForGeneral(request)
 
 	controller.Response(ctx, 200, "", posts)
 }
@@ -73,7 +73,7 @@ func (blogController *GeneralBlogController) GetPost(ctx *gin.Context) {
 		UserType: enum.UserTypeGuest,
 	}
 
-	post := blogController.blogService.GetPost(getPostRequest)
+	post := blogController.blogService.GetGeneralPost(getPostRequest)
 
 	controller.Response(ctx, 200, "", post)
 }

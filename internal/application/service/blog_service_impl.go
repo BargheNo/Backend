@@ -80,105 +80,169 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
 	}
 }
 
-func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse {
+func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequest) []blogdto.CorporationPostResponse {
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
-	if request.UserType == enum.UserTypeCorporation {
-		ok := blogService.userService.IsUserActive(request.UserID)
-		if !ok {
-			forbiddenError := exception.ForbiddenError{
-				Message:  "",
-				Resource: blogService.constants.Field.Post,
-			}
-			panic(forbiddenError)
-		}
-		blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
-	}
-
-	posts := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
-
-	response := make([]blogdto.PostResponse, len(posts))
-	for i, post := range posts {
-		// corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
-		coverImage := ""
-		if post.CoverImage != "" {
-			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
-		}
-		author := blogService.userService.GetUserCredential(post.AuthorID)
-		response[i] = blogdto.PostResponse{
-			ID:         post.ID,
-			Title:      post.Title,
-			Status:     uint(post.Status),
-			Content:    post.Content,
-			Author:     author.FirstName + " " + author.LastName,
-			CoverImage: coverImage,
-			CreatedAt:  post.CreatedAt,
-		}
-	}
-	return response
-}
-
-func (blogService *BlogService) GetPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse {
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-
-	posts := blogService.blogRepository.GetPostsByStatus(blogService.db, request.Statuses, paginationModifier, sortingModifier)
-
-	response := make([]blogdto.PostResponse, len(posts))
-	for i, post := range posts {
-		author := blogService.userService.GetUserCredential(post.AuthorID)
-		response[i] = blogdto.PostResponse{
-			ID:          post.ID,
-			Title:       post.Title,
-			Description: post.Description,
-			Status:      uint(post.Status),
-			Content:     post.Content,
-			Author:      author.FirstName + " " + author.LastName,
-			CoverImage:  post.CoverImage,
-			CreatedAt:   post.CreatedAt,
-		}
-	}
-	return response
-}
-
-func (blogService *BlogService) GetPost(request blogdto.GetPostRequest) blogdto.PostResponse {
-	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		panic(notFoundError)
-	}
-
-	if request.UserType == enum.UserTypeCorporation {
-		ok := blogService.userService.IsUserActive(request.UserID)
-		if !ok {
-			forbiddenError := exception.ForbiddenError{
-				Message:  "",
-				Resource: blogService.constants.Field.Post,
-			}
-			panic(forbiddenError)
-		}
-	}
-
-	if request.UserType == enum.UserTypeGuest && post.Status == enum.PostStatusDraft {
+	ok := blogService.userService.IsUserActive(request.UserID)
+	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
 		panic(forbiddenError)
 	}
-	author := blogService.userService.GetUserCredential(post.AuthorID)
+
+	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+
+	posts := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
+
+	response := make([]blogdto.CorporationPostResponse, len(posts))
+	for i, post := range posts {
+		coverImage := ""
+		if post.CoverImage != "" {
+			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+		}
+
+		author := blogService.userService.GetUserCredential(post.AuthorID)
+
+		response[i] = blogdto.CorporationPostResponse{
+			ID:          post.ID,
+			Title:       post.Title,
+			Description: post.Description,
+			Status:      uint(post.Status),
+			Content:     post.Content,
+			Author:      author.FirstName + " " + author.LastName,
+			CoverImage:  coverImage,
+			CreatedAt:   post.CreatedAt,
+		}
+	}
+	return response
+}
+
+func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.GetPostsRequest) []blogdto.GeneralPostResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	blogService.corporationService.DoesCorporationExist(request.CorporationID)
+
+	posts := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
+
+	response := make([]blogdto.GeneralPostResponse, len(posts))
+	for i, post := range posts {
+		coverImage := ""
+		if post.CoverImage != "" {
+			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+		}
+
+		corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+
+		response[i] = blogdto.GeneralPostResponse{
+			ID:          post.ID,
+			Title:       post.Title,
+			Description: post.Description,
+			Status:      uint(post.Status),
+			Content:     post.Content,
+			Corporation: corporation,
+			CoverImage:  coverImage,
+			CreatedAt:   post.CreatedAt,
+		}
+	}
+	return response
+}
+func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPostsRequest) []blogdto.GeneralPostResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	posts := blogService.blogRepository.GetPostsByStatus(blogService.db, request.Statuses, paginationModifier, sortingModifier)
+
+	response := make([]blogdto.GeneralPostResponse, len(posts))
+	for i, post := range posts {
+		corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+		coverImage := ""
+		if post.CoverImage != "" {
+			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+		}
+		response[i] = blogdto.GeneralPostResponse{
+			ID:          post.ID,
+			Title:       post.Title,
+			Description: post.Description,
+			Status:      uint(post.Status),
+			Content:     post.Content,
+			Corporation: corporation,
+			CoverImage:  coverImage,
+			CreatedAt:   post.CreatedAt,
+		}
+	}
+	return response
+}
+
+func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostRequest) blogdto.CorporationPostResponse {
+	ok := blogService.userService.IsUserActive(request.UserID)
+	if !ok {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: blogService.constants.Field.Post,
+		}
+		panic(forbiddenError)
+	}
+
+	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+
+	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
+		panic(notFoundError)
+	}
+
 	coverImage := ""
 	if post.CoverImage != "" {
 		coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 	}
-	return blogdto.PostResponse{
+
+	author := blogService.userService.GetUserCredential(post.AuthorID)
+
+	return blogdto.CorporationPostResponse{
 		ID:          post.ID,
 		Title:       post.Title,
 		Description: post.Description,
 		Content:     post.Content,
 		Status:      uint(post.Status),
 		Author:      author.FirstName + " " + author.LastName,
+		CoverImage:  coverImage,
+		CreatedAt:   post.CreatedAt,
+	}
+}
+
+func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) blogdto.GeneralPostResponse {
+	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
+		panic(notFoundError)
+	}
+
+	if post.Status == enum.PostStatusDraft {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: blogService.constants.Field.Post,
+		}
+		panic(forbiddenError)
+	}
+
+	corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+
+	coverImage := ""
+	if post.CoverImage != "" {
+		coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+	}
+
+	return blogdto.GeneralPostResponse{
+		ID:          post.ID,
+		Title:       post.Title,
+		Description: post.Description,
+		Status:      uint(post.Status),
+		Content:     post.Content,
+		Corporation: corporation,
 		CoverImage:  coverImage,
 		CreatedAt:   post.CreatedAt,
 	}

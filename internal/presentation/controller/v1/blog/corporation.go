@@ -205,13 +205,16 @@ func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 
+	userID, _ := ctx.Get(blogController.constants.Context.ID)
+
 	getPostsRequest := blogdto.GetPostsRequest{
 		CorporationID: params.CorporationID,
 		Statuses:      params.Statuses,
 		Offset:        offset,
 		Limit:         limit,
+		UserID:        userID.(uint),
 	}
-	posts := blogController.blogService.GetPosts(getPostsRequest)
+	posts := blogController.blogService.GetCorporationPosts(getPostsRequest)
 
 	controller.Response(ctx, 200, "", posts)
 }
@@ -230,7 +233,7 @@ func (blogController *CorporationBlogController) GetPost(ctx *gin.Context) {
 		CorporationID: params.CorporationID,
 		UserType:      enum.UserTypeCorporation,
 	}
-	post := blogController.blogService.GetPost(getPostRequest)
+	post := blogController.blogService.GetCorporationPost(getPostRequest)
 
 	controller.Response(ctx, 200, "", post)
 }

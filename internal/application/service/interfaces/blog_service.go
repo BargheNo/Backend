@@ -5,9 +5,11 @@ import blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
 type BlogService interface {
 	CreatePost(request blogdto.CreatePostRequest)
 	EditPost(request blogdto.EditPostRequest)
-	GetPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse
-	GetCorporationPosts(request blogdto.GetPostsRequest) []blogdto.PostResponse
-	GetPost(request blogdto.GetPostRequest) blogdto.PostResponse
+	GetCorporationPosts(request blogdto.GetPostsRequest) []blogdto.CorporationPostResponse
+	GetCorporationPostsForGeneral(request blogdto.GetPostsRequest) []blogdto.GeneralPostResponse
+	GetGeneralPosts(request blogdto.GetPostsRequest) []blogdto.GeneralPostResponse
+	GetCorporationPost(request blogdto.GetPostRequest) blogdto.CorporationPostResponse
+	GetGeneralPost(request blogdto.GetPostRequest) blogdto.GeneralPostResponse
 	DeletePost(request blogdto.DeletePostRequest)
 	AddPostMedia(request blogdto.AddPostMediaRequest) uint
 	DeletePostMedia(request blogdto.AccessPostMediaRequest)
