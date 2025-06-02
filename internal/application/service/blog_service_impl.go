@@ -103,6 +103,7 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequ
 		if post.CoverImage != "" {
 			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 		}
+		likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
 
 		author := blogService.userService.GetUserCredential(post.AuthorID)
 
@@ -115,6 +116,7 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequ
 			Author:      author.FirstName + " " + author.LastName,
 			CoverImage:  coverImage,
 			CreatedAt:   post.CreatedAt,
+			LikeCount:   likeCount,
 		}
 	}
 	return response
@@ -137,6 +139,8 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 
 		corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
 
+		likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
+
 		response[i] = blogdto.GeneralPostResponse{
 			ID:          post.ID,
 			Title:       post.Title,
@@ -146,6 +150,7 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 			Corporation: corporation,
 			CoverImage:  coverImage,
 			CreatedAt:   post.CreatedAt,
+			LikeCount:   likeCount,
 		}
 	}
 	return response
@@ -163,6 +168,8 @@ func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPostsRequest)
 		if post.CoverImage != "" {
 			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 		}
+		likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
+
 		response[i] = blogdto.GeneralPostResponse{
 			ID:          post.ID,
 			Title:       post.Title,
@@ -172,6 +179,7 @@ func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPostsRequest)
 			Corporation: corporation,
 			CoverImage:  coverImage,
 			CreatedAt:   post.CreatedAt,
+			LikeCount:   likeCount,
 		}
 	}
 	return response
@@ -200,6 +208,8 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostReques
 		coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 	}
 
+	likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
+
 	author := blogService.userService.GetUserCredential(post.AuthorID)
 
 	return blogdto.CorporationPostResponse{
@@ -211,6 +221,7 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostReques
 		Author:      author.FirstName + " " + author.LastName,
 		CoverImage:  coverImage,
 		CreatedAt:   post.CreatedAt,
+		LikeCount:   likeCount,
 	}
 }
 
@@ -236,6 +247,8 @@ func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) b
 		coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 	}
 
+	likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
+
 	return blogdto.GeneralPostResponse{
 		ID:          post.ID,
 		Title:       post.Title,
@@ -245,6 +258,7 @@ func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) b
 		Corporation: corporation,
 		CoverImage:  coverImage,
 		CreatedAt:   post.CreatedAt,
+		LikeCount:   likeCount,
 	}
 }
 

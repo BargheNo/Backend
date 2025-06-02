@@ -15,6 +15,7 @@ type CorporationPostResponse struct {
 	Author      string    `json:"author"`
 	CoverImage  string    `json:"cover_image"`
 	CreatedAt   time.Time `json:"created_at"`
+	LikeCount   uint      `json:"like_count"`
 }
 
 type GeneralPostResponse struct {
@@ -26,4 +27,5 @@ type GeneralPostResponse struct {
 	Corporation corporationdto.CorporationCredentialResponse `json:"corporation"`
 	CoverImage  string                                       `json:"cover_image"`
 	CreatedAt   time.Time                                    `json:"created_at"`
+	LikeCount   uint                                         `json:"like_count"`
 }

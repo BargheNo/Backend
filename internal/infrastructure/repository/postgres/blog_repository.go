@@ -102,3 +102,9 @@ func (repo *BlogRepository) GetPostsByStatus(db database.Database, statuses []ui
 	}
 	return posts
 }
+
+func (repo *BlogRepository) GetLikeCountByOwner(db database.Database, ownerID uint, ownerType string) uint {
+	var count int64
+	db.GetDB().Model(&entity.Like{}).Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).Count(&count)
+	return uint(count)
+}
