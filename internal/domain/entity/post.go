@@ -10,6 +10,7 @@ type Post struct {
 	Title         string      `json:"title"`
 	CoverImage    string      `gorm:"type:varchar(255);default:null"`
 	Content       string      `json:"content_html"`
+	Description   string      `json:"description"`
 	AuthorID      uint        `gorm:"not null;index"`
 	Author        User        `gorm:"foreignKey:AuthorID"`
 	CorporationID uint        `gorm:"not null;index"`

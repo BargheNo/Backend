@@ -9,6 +9,7 @@ import (
 type CreatePostRequest struct {
 	Title         string
 	Content       string
+	Description   string
 	AuthorID      uint
 	CorporationID uint
 	CoverImage    *multipart.FileHeader
@@ -21,6 +22,7 @@ type EditPostRequest struct {
 	CorporationID uint
 	Title         *string
 	Content       *string
+	Description   *string
 	CoverImage    *multipart.FileHeader
 	Status        uint
 }

@@ -31,19 +31,21 @@ func NewAdminNewsController(
 
 func (newsController *AdminNewsController) CreateDraftNews(ctx *gin.Context) {
 	type createNewsParams struct {
-		Title      string                `json:"title" validate:"required"`
-		Content    string                `json:"content"`
-		CoverImage *multipart.FileHeader `form:"cover_image"`
+		Title       string                `json:"title" validate:"required"`
+		Content     string                `json:"content"`
+		Description string                `json:"description"`
+		CoverImage  *multipart.FileHeader `form:"cover_image"`
 	}
 	params := controller.Validated[createNewsParams](ctx)
 	authorID, _ := ctx.Get(newsController.constants.Context.ID)
 
 	draftNewsParams := newsdto.CreateNewsRequest{
-		Title:      params.Title,
-		Content:    params.Content,
-		AuthorID:   authorID.(uint),
-		Status:     enum.NewsStatusDraft,
-		CoverImage: params.CoverImage,
+		Title:       params.Title,
+		Content:     params.Content,
+		Description: params.Description,
+		AuthorID:    authorID.(uint),
+		Status:      enum.NewsStatusDraft,
+		CoverImage:  params.CoverImage,
 	}
 	news := newsController.newsService.CreateNews(draftNewsParams)
 
@@ -54,22 +56,24 @@ func (newsController *AdminNewsController) CreateDraftNews(ctx *gin.Context) {
 
 func (newsController *AdminNewsController) EditNews(ctx *gin.Context) {
 	type editNewsParams struct {
-		NewsID     uint                  `uri:"newsID" validate:"required"`
-		Title      *string               `json:"title"`
-		Content    *string               `json:"content"`
-		CoverImage *multipart.FileHeader `form:"cover_image"`
-		Status     uint                  `json:"status"`
+		NewsID      uint                  `uri:"newsID" validate:"required"`
+		Title       *string               `json:"title"`
+		Content     *string               `json:"content"`
+		Description *string               `json:"description"`
+		CoverImage  *multipart.FileHeader `form:"cover_image"`
+		Status      uint                  `json:"status"`
 	}
 	params := controller.Validated[editNewsParams](ctx)
 	authorID, _ := ctx.Get(newsController.constants.Context.ID)
 
 	finalizeNewsParams := newsdto.EditNewsRequest{
-		NewsID:     params.NewsID,
-		AuthorID:   authorID.(uint),
-		Title:      params.Title,
-		Content:    params.Content,
-		CoverImage: params.CoverImage,
-		Status:     params.Status,
+		NewsID:      params.NewsID,
+		AuthorID:    authorID.(uint),
+		Title:       params.Title,
+		Content:     params.Content,
+		Description: params.Description,
+		CoverImage:  params.CoverImage,
+		Status:      params.Status,
 	}
 	newsController.newsService.EditNews(finalizeNewsParams)
 

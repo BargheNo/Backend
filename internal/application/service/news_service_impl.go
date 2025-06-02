@@ -73,11 +73,12 @@ func (newsService *NewsService) GetNews(request newsdto.GetNewsRequest) newsdto.
 		coverImage = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, news.CoverImage, 8*time.Hour)
 	}
 	return newsdto.NewsResponse{
-		ID:         news.ID,
-		Title:      news.Title,
-		Content:    news.Content,
-		Status:     news.Status,
-		CoverImage: coverImage,
+		ID:          news.ID,
+		Title:       news.Title,
+		Content:     news.Content,
+		Description: news.Description,
+		Status:      news.Status,
+		CoverImage:  coverImage,
 	}
 }
 
@@ -92,11 +93,12 @@ func (newsService *NewsService) GetNewsList(request newsdto.GetNewsListRequest) 
 			coverImage = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, eachNews.CoverImage, 8*time.Hour)
 		}
 		newsResponse[i] = newsdto.NewsResponse{
-			ID:         eachNews.ID,
-			Title:      eachNews.Title,
-			Content:    eachNews.Content,
-			Status:     eachNews.Status,
-			CoverImage: coverImage,
+			ID:          eachNews.ID,
+			Title:       eachNews.Title,
+			Content:     eachNews.Content,
+			Description: eachNews.Description,
+			Status:      eachNews.Status,
+			CoverImage:  coverImage,
 		}
 	}
 	return newsResponse
@@ -118,10 +120,11 @@ func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) ne
 		panic(conflictErrors)
 	}
 	news := &entity.News{
-		Title:    request.Title,
-		Content:  request.Content,
-		AuthorID: request.AuthorID,
-		Status:   request.Status,
+		Title:       request.Title,
+		Content:     request.Content,
+		Description: request.Description,
+		AuthorID:    request.AuthorID,
+		Status:      request.Status,
 	}
 	if err := newsService.newsRepository.CreateNews(newsService.db, news); err != nil {
 		panic(err)
@@ -138,10 +141,11 @@ func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) ne
 	}
 
 	newsResponse := newsdto.NewsResponse{
-		ID:      news.ID,
-		Title:   news.Title,
-		Content: news.Content,
-		Status:  news.Status,
+		ID:          news.ID,
+		Title:       news.Title,
+		Content:     news.Content,
+		Description: news.Description,
+		Status:      news.Status,
 	}
 	return newsResponse
 }
@@ -166,6 +170,9 @@ func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) {
 	}
 	if request.Content != nil {
 		news.Content = *request.Content
+	}
+	if request.Description != nil {
+		news.Description = *request.Description
 	}
 	news.Status = enum.NewsStatus(request.Status)
 

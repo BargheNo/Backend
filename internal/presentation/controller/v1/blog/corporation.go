@@ -33,6 +33,7 @@ func (blogController *CorporationBlogController) CreateDraftPost(ctx *gin.Contex
 	type createPostParams struct {
 		Title         string                `json:"title" validate:"required"`
 		Content       string                `json:"content" validate:"required"`
+		Description   string                `json:"description" validate:"required"`
 		CorporationID uint                  `uri:"corporationID" validate:"required"`
 		CoverImage    *multipart.FileHeader `form:"cover_image"`
 	}
@@ -42,6 +43,7 @@ func (blogController *CorporationBlogController) CreateDraftPost(ctx *gin.Contex
 	request := blogdto.CreatePostRequest{
 		Title:         params.Title,
 		Content:       params.Content,
+		Description:   params.Description,
 		AuthorID:      authorID.(uint),
 		CorporationID: params.CorporationID,
 		CoverImage:    params.CoverImage,
@@ -60,6 +62,7 @@ func (blogController *CorporationBlogController) EditPost(ctx *gin.Context) {
 		PostID        uint                  `uri:"postID" validate:"required"`
 		Title         *string               `json:"title"`
 		Content       *string               `json:"content"`
+		Description   *string               `json:"description"`
 		CoverImage    *multipart.FileHeader `form:"cover_image"`
 		Status        uint                  `json:"status"`
 		CorporationID uint                  `uri:"corporationID" validate:"required"`
@@ -73,6 +76,7 @@ func (blogController *CorporationBlogController) EditPost(ctx *gin.Context) {
 		AuthorID:      authorID.(uint),
 		Title:         params.Title,
 		Content:       params.Content,
+		Description:   params.Description,
 		CoverImage:    params.CoverImage,
 		Status:        params.Status,
 		CorporationID: params.CorporationID,

@@ -5,6 +5,7 @@ import "time"
 type PostResponse struct {
 	ID          uint      `json:"id"`
 	Title       string    `json:"title"`
+	Description string    `json:"description"`
 	Status      uint      `json:"status"`
 	Corporation string    `json:"corporation"`
 	Content     string    `json:"content"`
