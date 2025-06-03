@@ -56,4 +56,18 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 			records.GET("/list/:panelID", app.Controllers.Corporation.MaintenanceController.GetCorporationMaintenanceRecordsByPanel)
 		}
 	}
+
+	blog := routerGroup.Group(":corporationID/blog")
+	{
+		blog.POST("/create", app.Controllers.Corporation.BlogController.CreateDraftPost)
+		blog.PUT("/:postID/edit", app.Controllers.Corporation.BlogController.EditPost)
+		blog.PUT("/:postID/publish", app.Controllers.Corporation.BlogController.PublishPost)
+		blog.PUT("/:postID/unpublish", app.Controllers.Corporation.BlogController.UnpublishPost)
+		blog.DELETE("/", app.Controllers.Corporation.BlogController.DeletePost)
+		blog.POST("/:postID/media", app.Controllers.Corporation.BlogController.AddPostMedia)
+		blog.DELETE("/:postID/media/:mediaID", app.Controllers.Corporation.BlogController.DeletePostMedia)
+		blog.GET("/list", app.Controllers.Corporation.BlogController.GetPosts)
+		blog.GET("/:postID", app.Controllers.Corporation.BlogController.GetPost)
+		blog.GET("/:postID/media/:mediaID", app.Controllers.Corporation.BlogController.GetPostMedia)
+	}
 }

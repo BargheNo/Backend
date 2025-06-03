@@ -68,11 +68,17 @@ func (newsService *NewsService) GetNews(request newsdto.GetNewsRequest) newsdto.
 		}
 		panic(forbiddenError)
 	}
+	coverImage := ""
+	if news.CoverImage != "" {
+		coverImage = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, news.CoverImage, 8*time.Hour)
+	}
 	return newsdto.NewsResponse{
-		ID:      news.ID,
-		Title:   news.Title,
-		Content: news.Content,
-		Status:  news.Status,
+		ID:          news.ID,
+		Title:       news.Title,
+		Content:     news.Content,
+		Description: news.Description,
+		Status:      news.Status,
+		CoverImage:  coverImage,
 	}
 }
 
@@ -82,11 +88,17 @@ func (newsService *NewsService) GetNewsList(request newsdto.GetNewsListRequest) 
 	news := newsService.newsRepository.FindNewsByStatus(newsService.db, request.Statuses, paginationModifier, sortingModifier)
 	newsResponse := make([]newsdto.NewsResponse, len(news))
 	for i, eachNews := range news {
+		coverImage := ""
+		if eachNews.CoverImage != "" {
+			coverImage = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, eachNews.CoverImage, 8*time.Hour)
+		}
 		newsResponse[i] = newsdto.NewsResponse{
-			ID:      eachNews.ID,
-			Title:   eachNews.Title,
-			Content: eachNews.Content,
-			Status:  eachNews.Status,
+			ID:          eachNews.ID,
+			Title:       eachNews.Title,
+			Content:     eachNews.Content,
+			Description: eachNews.Description,
+			Status:      eachNews.Status,
+			CoverImage:  coverImage,
 		}
 	}
 	return newsResponse
@@ -108,19 +120,32 @@ func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) ne
 		panic(conflictErrors)
 	}
 	news := &entity.News{
-		Title:    request.Title,
-		Content:  request.Content,
-		AuthorID: request.AuthorID,
-		Status:   request.Status,
+		Title:       request.Title,
+		Content:     request.Content,
+		Description: request.Description,
+		AuthorID:    request.AuthorID,
+		Status:      request.Status,
 	}
 	if err := newsService.newsRepository.CreateNews(newsService.db, news); err != nil {
 		panic(err)
 	}
+
+	if request.CoverImage != nil {
+		mediaPath := newsService.constants.S3BucketPath.GetNewsCoverImagePath(news.ID, request.CoverImage.Filename)
+		newsService.s3Storage.UploadObject(enum.NewsMedia, mediaPath, request.CoverImage)
+		news.CoverImage = mediaPath
+	}
+
+	if err := newsService.newsRepository.UpdateNews(newsService.db, news); err != nil {
+		panic(err)
+	}
+
 	newsResponse := newsdto.NewsResponse{
-		ID:      news.ID,
-		Title:   news.Title,
-		Content: news.Content,
-		Status:  news.Status,
+		ID:          news.ID,
+		Title:       news.Title,
+		Content:     news.Content,
+		Description: news.Description,
+		Status:      news.Status,
 	}
 	return newsResponse
 }
@@ -146,7 +171,16 @@ func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) {
 	if request.Content != nil {
 		news.Content = *request.Content
 	}
+	if request.Description != nil {
+		news.Description = *request.Description
+	}
 	news.Status = enum.NewsStatus(request.Status)
+
+	if request.CoverImage != nil {
+		mediaPath := newsService.constants.S3BucketPath.GetNewsCoverImagePath(news.ID, request.CoverImage.Filename)
+		newsService.s3Storage.UploadObject(enum.NewsMedia, mediaPath, request.CoverImage)
+		news.CoverImage = mediaPath
+	}
 
 	if err := newsService.newsRepository.UpdateNews(newsService.db, news); err != nil {
 		panic(err)
