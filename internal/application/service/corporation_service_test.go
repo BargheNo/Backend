@@ -1102,6 +1102,108 @@ func (s *CorporationServiceTestSuite) TestDeleteAddress() {
 	})
 }
 
+func (s *CorporationServiceTestSuite) TestChangeLogo() {
+	s.Run("success - Logo changed", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+			Logo:   "testLogo",
+		}
+		corporationStaff := &entity.CorporationStaff{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.s3Storage.On("UploadObject", enum.LogoPic, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.LogoPic, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("UpdateCorporation", s.db, mock.Anything).Return(nil).Once()
+
+		request := corporationdto.ChangeLogoRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+			Logo:          &multipart.FileHeader{Filename: "testLogo"},
+		}
+		s.corporationService.ChangeLogo(request)
+
+		s.s3Storage.AssertExpectations(s.T())
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not active", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(false).Once()
+
+		request := corporationdto.ChangeLogoRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+			Logo:          &multipart.FileHeader{Filename: "testLogo"},
+		}
+
+		s.Panics(func() {
+			s.corporationService.ChangeLogo(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - Delete object failed", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+			Logo:   "testLogo",
+		}
+		corporationStaff := &entity.CorporationStaff{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.s3Storage.On("UploadObject", enum.LogoPic, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.LogoPic, mock.Anything).Return(errors.New("delete object failed")).Once()
+
+		request := corporationdto.ChangeLogoRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+			Logo:          &multipart.FileHeader{Filename: "testLogo"},
+		}
+		s.Panics(func() {
+			s.corporationService.ChangeLogo(request)
+		})
+
+		s.s3Storage.AssertExpectations(s.T())
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - Update corporation failed", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+			Logo:   "testLogo",
+		}
+		corporationStaff := &entity.CorporationStaff{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.s3Storage.On("UploadObject", enum.LogoPic, mock.Anything, mock.Anything).Return(nil).Once()
+		s.s3Storage.On("DeleteObject", enum.LogoPic, mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("UpdateCorporation", s.db, mock.Anything).Return(errors.New("update corporation failed")).Once()
+
+		request := corporationdto.ChangeLogoRequest{
+			CorporationID: 1,
+			ApplicantID:   1,
+			Logo:          &multipart.FileHeader{Filename: "testLogo"},
+		}
+		s.Panics(func() {
+			s.corporationService.ChangeLogo(request)
+		})
+
+		s.s3Storage.AssertExpectations(s.T())
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+}
+
 func TestCorporationServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CorporationServiceTestSuite))
 }
