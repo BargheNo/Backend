@@ -857,6 +857,133 @@ func (s *CorporationServiceTestSuite) TestDeleteContactInfo() {
 	})
 }
 
+func (s *CorporationServiceTestSuite) TestGetCorporationDetails() {
+	s.Run("success - Corporation details fetched", func() {
+		corporation := &entity.Corporation{
+			Name:                   "testCorporation",
+			RegistrationNumber:     "testRegistrationNumber",
+			NationalID:             "testNationalID",
+			IBAN:                   "testIBAN",
+			Status:                 enum.CorpStatusApproved,
+			VATTaxpayerCertificate: "testVATTaxpayerCertificate",
+			OfficialNewspaperAD:    "testOfficialNewspaperAD",
+			Logo:                   "testLogo",
+		}
+		contactInformation := []*entity.ContactInformation{
+			{
+				TypeID: 1,
+				Value:  "testContactValue",
+			},
+			{
+				TypeID: 2,
+				Value:  "testContactValue2",
+			},
+		}
+		contactType := &entity.ContactType{
+			Name: "testContactType",
+		}
+		signatories := []*entity.Signatory{
+			{
+				Name: "testSignatory",
+			},
+		}
+		var nilContactType *entity.ContactType = nil
+		corporationStaff := &entity.CorporationStaff{}
+
+		s.userService.On("DoesUserExist", mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, mock.Anything, uint(1)).Return(corporationStaff, true).Once()
+		s.s3Storage.On("GetPresignedURL", enum.VATTaxpayerCertificate, "testVATTaxpayerCertificate", mock.Anything).Return("testVATTaxpayerCertificate").Once()
+		s.s3Storage.On("GetPresignedURL", enum.OfficialNewspaperAD, "testOfficialNewspaperAD", mock.Anything).Return("testOfficialNewspaperAD").Once()
+		s.s3Storage.On("GetPresignedURL", enum.LogoPic, "testLogo", mock.Anything).Return("testLogo").Once()
+		s.addressService.On("GetAddresses", mock.Anything).Return([]addressdto.AddressResponse{}).Once()
+		s.corporationRepository.On("FindContactInformation", s.db, mock.Anything).Return(contactInformation).Once()
+		s.corporationRepository.On("FindContactTypeByID", s.db, uint(1)).Return(contactType, true).Once()
+		s.corporationRepository.On("FindContactTypeByID", s.db, uint(2)).Return(nilContactType, false).Once()
+		s.corporationRepository.On("FindCorporationSignatories", s.db, mock.Anything).Return(signatories).Once()
+
+		request := corporationdto.CorporationDetailsRequest{
+			CorporationID: 1,
+			Status:        enum.CorpStatusApproved,
+		}
+		response := s.corporationService.GetCorporationDetails(request)
+
+		s.Equal(response.Name, corporation.Name)
+		s.Equal(response.Logo, corporation.Logo)
+		s.Equal(response.RegistrationNumber, corporation.RegistrationNumber)
+		s.Equal(response.NationalID, corporation.NationalID)
+		s.Equal(response.IBAN, corporation.IBAN)
+		s.Equal(response.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate)
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.s3Storage.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+}
+
+func (s *CorporationServiceTestSuite) TestGetContactInfo() {
+	s.Run("success - Contact info fetched", func() {
+		contactInformation := []*entity.ContactInformation{
+			{
+				TypeID: 1,
+				Value:  "testContactValue",
+			},
+			{
+				TypeID: 2,
+				Value:  "testContactValue2",
+			},
+		}
+		contactType := &entity.ContactType{
+			Name: "testContactType",
+		}
+		var nilContactType *entity.ContactType = nil
+
+		s.corporationRepository.On("FindContactInformation", s.db, mock.Anything).Return(contactInformation).Once()
+		s.corporationRepository.On("FindContactTypeByID", s.db, uint(1)).Return(contactType, true).Once()
+		s.corporationRepository.On("FindContactTypeByID", s.db, uint(2)).Return(nilContactType, false).Once()
+
+		response := s.corporationService.getContactInfo(1)
+
+		s.Equal(response[0].ContactType.Name, contactType.Name)
+		s.Equal(response[0].Value, contactInformation[0].Value)
+
+		s.corporationRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *CorporationServiceTestSuite) TestGetCorporationSignatories() {
+	s.Run("success - Corporation signatories fetched", func() {
+		signatories := []*entity.Signatory{
+			{
+				Name: "testSignatory",
+			},
+		}
+
+		s.corporationRepository.On("FindCorporationSignatories", s.db, mock.Anything).Return(signatories).Once()
+
+		response := s.corporationService.getCorporationSignatories(1)
+
+		s.Equal(response[0].Name, signatories[0].Name)
+	})
+}
+
+func (s *CorporationServiceTestSuite) TestGetContactTypes() {
+	s.Run("success - Contact types fetched", func() {
+		contactTypes := []*entity.ContactType{
+			{
+				Name: "testContactType",
+			},
+		}
+
+		s.corporationRepository.On("FindContactTypes", s.db).Return(contactTypes).Once()
+
+		response := s.corporationService.GetContactTypes()
+
+		s.Equal(response[0].Name, contactTypes[0].Name)
+	})
+}
+
 func TestCorporationServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CorporationServiceTestSuite))
 }
