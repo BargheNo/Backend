@@ -11,6 +11,7 @@ import (
 const (
 	MessageTypeChat         = "chat"
 	MessageTypeNotification = "notification"
+	MessageTypeMonitoring   = "monitoring"
 )
 
 type Message struct {

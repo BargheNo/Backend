@@ -147,6 +147,10 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	ticketService := serviceimpl.NewTicketService(constants, ticketRepository, userService, s3Storage, postgresDatabase)
 	customerTicketController := ticket.NewCustomerTicketController(constants, ticketService, pagination)
 	customerReportController := report.NewCustomerReportController(constants, reportService)
+	mqtt := ProvideMQTTConfig(container)
+	client := mqttimpl.NewClient(mqtt)
+	monitoringService := serviceimpl.NewMonitoringService(client, postgresDatabase, installationRepository, hub, installationService)
+	customerMonitoringController := monitoring.NewCustomerMonitoringController(constants, hub, jwtService, websocketSetting, monitoringService)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
@@ -158,6 +162,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		MaintenanceController:  customerMaintenanceController,
 		TicketController:       customerTicketController,
 		ReportController:       customerReportController,
+		MonitoringController:   customerMonitoringController,
 	}
 	corporationCorporationController := corporation.NewCorporationCorporationController(constants, pagination, corporationService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
@@ -175,9 +180,6 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	adminUserController := user.NewAdminUserController(constants, pagination, userService)
 	adminReportController := report.NewAdminReportController(constants, pagination, reportService)
 	adminNewsController := news.NewAdminNewsController(constants, pagination, newsService)
-	mqtt := ProvideMQTTConfig(container)
-	client := mqttimpl.NewClient(mqtt)
-	monitoringService := serviceimpl.NewMonitoringService(client, postgresDatabase, installationRepository)
 	adminMonitoringController := monitoring.NewAdminMonitoringController(monitoringService)
 	adminControllers := &AdminControllers{
 		TicketController:     adminTicketController,
@@ -256,7 +258,7 @@ var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, log
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, news.NewGeneralNewsController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, monitoring.NewCustomerMonitoringController, wire.Struct(new(CustomerControllers), "*"))
 
 var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, chat.NewCorporationChatController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, wire.Struct(new(CorporationControllers), "*"))
 
@@ -404,6 +406,7 @@ type CustomerControllers struct {
 	MaintenanceController  *maintenance.CustomerMaintenanceController
 	TicketController       *ticket.CustomerTicketController
 	ReportController       *report.CustomerReportController
+	MonitoringController   *monitoring.CustomerMonitoringController
 }
 
 type CorporationControllers struct {

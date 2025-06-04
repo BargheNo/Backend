@@ -104,6 +104,16 @@ func (hub *Hub) handleBroadcast(message *Message) {
 				}
 			}
 		}
+	case MessageTypeMonitoring:
+		if clients, ok := hub.clients[message.RoomID]; ok {
+			for client := range clients {
+				select {
+				case client.send <- message.Content:
+				default:
+					hub.unregister <- client
+				}
+			}
+		}
 	}
 }
 
