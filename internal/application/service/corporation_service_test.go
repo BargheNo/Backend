@@ -984,6 +984,124 @@ func (s *CorporationServiceTestSuite) TestGetContactTypes() {
 	})
 }
 
+func (s *CorporationServiceTestSuite) TestAddAddress() {
+	s.Run("success - Address added", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+		addressResponse := addressdto.AddressResponse{
+			ID:            1,
+			Province:      "testProvince",
+			City:          "testCity",
+			StreetAddress: "testStreetAddress",
+			PostalCode:    "testPostalCode",
+			HouseNumber:   "testHouseNumber",
+			Unit:          1,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.addressService.On("CreateAddress", mock.Anything).Return(addressResponse).Once()
+
+		request := corporationdto.AddCorporationAddressRequest{
+			CorporationID:     1,
+			ApplicantID:       1,
+			CorporationStatus: enum.CorpStatusApproved,
+			Addresses: []addressdto.CreateAddressRequest{
+				{
+					ProvinceID:    1,
+					CityID:        1,
+					StreetAddress: "testStreetAddress",
+					PostalCode:    "testPostalCode",
+					HouseNumber:   "testHouseNumber",
+					Unit:          1,
+					OwnerID:       1,
+				},
+			},
+		}
+
+		s.corporationService.AddAddress(request)
+		s.Equal(addressResponse.StreetAddress, request.Addresses[0].StreetAddress)
+		s.Equal(addressResponse.PostalCode, request.Addresses[0].PostalCode)
+		s.Equal(addressResponse.HouseNumber, request.Addresses[0].HouseNumber)
+		s.Equal(addressResponse.Unit, request.Addresses[0].Unit)
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not active", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(false).Once()
+
+		request := corporationdto.AddCorporationAddressRequest{
+			CorporationID:     1,
+			CorporationStatus: enum.CorpStatusApproved,
+			ApplicantID:       1,
+		}
+
+		s.Panics(func() {
+			s.corporationService.AddAddress(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+}
+
+func (s *CorporationServiceTestSuite) TestDeleteAddress() {
+	s.Run("success - Address deleted", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+		corporationStaff := &entity.CorporationStaff{}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(true).Once()
+		s.corporationRepository.On("FindCorporationStaff", s.db, uint(1), uint(1)).Return(corporationStaff, true).Once()
+		s.addressService.On("DeleteAddress", uint(1)).Return(nil).Once()
+
+		request := corporationdto.DeleteAddressRequest{
+			CorporationID:     1,
+			UserID:            1,
+			CorporationStatus: enum.CorpStatusApproved,
+			AddressID:         1,
+		}
+		s.corporationService.DeleteAddress(request)
+
+		s.addressService.AssertExpectations(s.T())
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+	s.Run("error - User not active", func() {
+		corporation := &entity.Corporation{
+			Status: enum.CorpStatusApproved,
+		}
+
+		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
+		s.userService.On("IsUserActive", uint(1)).Return(false).Once()
+
+		request := corporationdto.DeleteAddressRequest{
+			CorporationID:     1,
+			UserID:            1,
+			CorporationStatus: enum.CorpStatusApproved,
+			AddressID:         1,
+		}
+
+		s.Panics(func() {
+			s.corporationService.DeleteAddress(request)
+		})
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+	})
+}
+
 func TestCorporationServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CorporationServiceTestSuite))
 }
