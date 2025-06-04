@@ -960,7 +960,7 @@ func (s *CorporationServiceTestSuite) TestGetCorporationSignatories() {
 			},
 		}
 
-		s.corporationRepository.On("FindCorporationSignatories", s.db, mock.Anything).Return(signatories).Once()
+		s.corporationRepository.On("FindCorporationSignatories", s.db, mock.AnythingOfType("uint")).Return(signatories).Once()
 
 		response := s.corporationService.getCorporationSignatories(1)
 
@@ -1201,6 +1201,35 @@ func (s *CorporationServiceTestSuite) TestChangeLogo() {
 		s.s3Storage.AssertExpectations(s.T())
 		s.corporationRepository.AssertExpectations(s.T())
 		s.userService.AssertExpectations(s.T())
+	})
+}
+
+func (s *CorporationServiceTestSuite) TestGetCorporations() {
+	s.Run("success - Corporations fetched", func() {
+		corporations := []*entity.Corporation{
+			{
+				Status: enum.CorpStatusApproved,
+				Name:   "testCorporation",
+			},
+		}
+		contactInformation := []*entity.ContactInformation{}
+
+		s.userService.On("DoesUserExist", mock.Anything).Return(nil).Once()
+		s.corporationRepository.On("FindCorporationsByStatus", s.db, mock.Anything, mock.Anything, mock.Anything).Return(corporations).Once()
+		s.corporationRepository.On("FindCorporationByID", s.db, mock.Anything).Return(corporations[0], true).Once()
+		s.addressService.On("GetAddresses", mock.Anything).Return([]addressdto.AddressResponse{}).Once()
+		s.corporationRepository.On("FindContactInformation", s.db, mock.Anything).Return(contactInformation).Once()
+
+		request := corporationdto.CorporationListRequest{
+			UserID: 1,
+		}
+		response := s.corporationService.GetCorporations(request)
+
+		s.Equal(response[0].Name, corporations[0].Name)
+
+		s.corporationRepository.AssertExpectations(s.T())
+		s.userService.AssertExpectations(s.T())
+		s.addressService.AssertExpectations(s.T())
 	})
 }
 
