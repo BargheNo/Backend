@@ -8,17 +8,18 @@ const (
 	High
 )
 
-func (s UrgencyLevel) String() string {
-	switch s {
+func (level UrgencyLevel) String() string {
+	switch level {
 	case Low:
-		return "low"
+		return "عادی"
 	case Medium:
-		return "medium"
+		return "مهم"
 	case High:
-		return "high"
+		return "فوری"
 	}
-	return "unknown"
+	return "نامشخص"
 }
+
 func GetAllUrgencyLevels() []UrgencyLevel {
 	return []UrgencyLevel{
 		Low,

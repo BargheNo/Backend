@@ -18,7 +18,7 @@ type MaintenanceService struct {
 	userService           service.UserService
 	installationService   service.InstallationService
 	corporationService    service.CorporationService
-	addressService        service.AddressService
+	guaranteeService      service.GuaranteeService
 	maintenanceRepository repository.MaintenanceRepository
 	db                    database.Database
 }
@@ -28,7 +28,7 @@ func NewMaintenanceService(
 	userService service.UserService,
 	installationService service.InstallationService,
 	corporationService service.CorporationService,
-	addressService service.AddressService,
+	guaranteeService service.GuaranteeService,
 	maintenanceRepository repository.MaintenanceRepository,
 	db database.Database,
 ) *MaintenanceService {
@@ -37,50 +37,152 @@ func NewMaintenanceService(
 		userService:           userService,
 		installationService:   installationService,
 		corporationService:    corporationService,
-		addressService:        addressService,
+		guaranteeService:      guaranteeService,
 		maintenanceRepository: maintenanceRepository,
 		db:                    db,
 	}
 }
 
-func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestInfo maintenancedto.NewMaintenanceRequest) {
-	var conflictErrors exception.ConflictErrors
-	exist := maintenanceService.userService.IsUserActive(requestInfo.OwnerID)
+func (maintenanceService *MaintenanceService) ValidateCustomerRecord(recordID, userID uint) error {
+	maintenanceRecord, exist := maintenanceService.maintenanceRepository.FindRecordByID(maintenanceService.db, recordID)
 	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
+		return notFoundError
+	}
+
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceRecord.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		return notFoundError
+	}
+
+	if err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, userID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (maintenanceService *MaintenanceService) GetRequestByAdmin(recordID uint) (maintenancedto.AdminMaintenanceRequestResponse, error) {
+	var response maintenancedto.AdminMaintenanceRequestResponse
+	maintenanceRecord, exist := maintenanceService.maintenanceRepository.FindRecordByID(maintenanceService.db, recordID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
+		return response, notFoundError
+	}
+
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceRecord.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		return response, notFoundError
+	}
+
+	panel := maintenanceService.installationService.GetPanelByAdmin(maintenanceRequest.PanelID)
+
+	corporation := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
+
+	record, err := maintenanceService.getCorporationMaintenanceRecord(maintenanceRequest.ID, maintenanceRequest.PanelID)
+	if err != nil {
+		return response, err
+	}
+
+	response = maintenancedto.AdminMaintenanceRequestResponse{
+		ID:                   maintenanceRequest.ID,
+		CreatedAt:            maintenanceRequest.CreatedAt,
+		Panel:                panel,
+		Corporation:          corporation,
+		Subject:              maintenanceRequest.Subject,
+		Description:          maintenanceRequest.Description,
+		UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
+		Status:               maintenanceRequest.Status.String(),
+		IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
+		Record:               record,
+	}
+
+	return response, nil
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) mapStatusForRole(statusID uint, agent enum.AgentType) []enum.MaintenanceRequestStatus {
+	status := enum.MaintenanceRequestStatus(statusID)
+
+	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(agent)
+
+	for _, allowedStatus := range allowedStatuses {
+		if status == allowedStatus {
+			if status == enum.MaintenanceRequestStatusAll {
+				return allowedStatuses
+			}
+			return []enum.MaintenanceRequestStatus{status}
+		}
+	}
+	return allowedStatuses
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) GetMaintenanceUrgencyLevels() []maintenancedto.MaintenanceStatusesResponse {
+	levels := enum.GetAllUrgencyLevels()
+	response := make([]maintenancedto.MaintenanceStatusesResponse, len(levels))
+	for i, level := range levels {
+		response[i] = maintenancedto.MaintenanceStatusesResponse{
+			ID:   uint(level),
+			Name: level.String(),
+		}
+	}
+	return response
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) GetMaintenanceRequestStatuses(agent enum.AgentType) []maintenancedto.MaintenanceStatusesResponse {
+	statuses := enum.GetAllowedMaintenanceRequestStatuses(agent)
+	response := make([]maintenancedto.MaintenanceStatusesResponse, len(statuses))
+	for i, status := range statuses {
+		response[i] = maintenancedto.MaintenanceStatusesResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return response
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request maintenancedto.CreateMaintenanceRequest) {
+	if exist := maintenanceService.userService.IsUserActive(request.OwnerID); !exist {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: maintenanceService.constants.Field.MaintenanceRequest,
 		}
 		panic(forbiddenError)
 	}
-	maintenanceService.corporationService.DoesCorporationExist(requestInfo.CorporationID)
 
-	panel := maintenanceService.installationService.GetPanelByID(requestInfo.PanelID)
+	maintenanceService.corporationService.DoesCorporationExist(request.CorporationID)
 
-	if panel.Customer.ID != requestInfo.OwnerID {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: maintenanceService.constants.Field.Panel,
-		}
-		panic(forbiddenError)
+	if err := maintenanceService.installationService.ValidatePanelOwnership(request.PanelID, request.OwnerID); err != nil {
+		panic(err)
 	}
 
-	maintenanceRequests := maintenanceService.maintenanceRepository.FindRequestsByPanelID(maintenanceService.db, requestInfo.PanelID)
-	for _, request := range maintenanceRequests {
-		if request.Status == enum.MaintenanceRequestStatusPending {
-			conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.Pending)
-			panic(conflictErrors)
+	allowedStatus := []enum.MaintenanceRequestStatus{enum.MaintenanceRequestStatusPending}
+	currentActiveRequests := maintenanceService.maintenanceRepository.FindRequestsByPanelIDAndStatus(maintenanceService.db, request.PanelID, allowedStatus)
+	if len(currentActiveRequests) != 0 {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.Pending)
+		panic(conflictErrors)
+	}
+
+	if request.IsUsingGuarantee {
+		if err := maintenanceService.installationService.ValidatePanelGuarantee(request.PanelID); err != nil {
+			panic(err)
 		}
 	}
 
 	maintenanceRequest := &entity.MaintenanceRequest{
-		OwnerID:       requestInfo.OwnerID,
-		CorporationID: requestInfo.CorporationID,
-		PanelID:       requestInfo.PanelID,
-		Subject:       requestInfo.Subject,
-		Description:   requestInfo.Description,
-		Status:        enum.MaintenanceRequestStatusPending,
-		UrgencyLevel:  requestInfo.UrgencyLevel,
+		CorporationID:        request.CorporationID,
+		PanelID:              request.PanelID,
+		Subject:              request.Subject,
+		Description:          request.Description,
+		Status:               enum.MaintenanceRequestStatusPending,
+		UrgencyLevel:         request.UrgencyLevel,
+		IsGuaranteeRequested: request.IsUsingGuarantee,
 	}
 	err := maintenanceService.maintenanceRepository.CreateMaintenanceRequest(maintenanceService.db, maintenanceRequest)
 	if err != nil {
@@ -88,12 +190,16 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(requestIn
 	}
 }
 
-func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.MaintenanceListRequest) []maintenancedto.CustomerMaintenanceRequestResponse {
-	maintenanceService.userService.DoesUserExist(listInfo.OwnerID)
+// CHECKED
+func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) []maintenancedto.CustomerMaintenanceRequestResponse {
+	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
+
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByOwnerID(maintenanceService.db, listInfo.OwnerID, paginationModifier, sortingModifier)
+
+	maintenanceRequests := maintenanceService.maintenanceRepository.FindRequestsByCustomerID(maintenanceService.db, listInfo.OwnerID, allowedStatus, paginationModifier, sortingModifier)
 	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
+
 	for i, maintenanceRequest := range maintenanceRequests {
 		panelInfoRequest := installationdto.GetOwnerRequest{
 			OwnerID:        listInfo.OwnerID,
@@ -104,27 +210,233 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 		corporation := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
 
 		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
-			ID:           maintenanceRequest.ID,
-			Panel:        panel,
-			Corporation:  corporation,
-			OwnerID:      maintenanceRequest.OwnerID,
-			Subject:      maintenanceRequest.Subject,
-			Description:  maintenanceRequest.Description,
-			UrgencyLevel: maintenanceRequest.UrgencyLevel.String(),
-			Status:       maintenanceRequest.Status.String(),
-			CreatedAt:    maintenanceRequest.CreatedAt,
+			ID:                   maintenanceRequest.ID,
+			CreatedAt:            maintenanceRequest.CreatedAt,
+			Panel:                panel,
+			Corporation:          corporation,
+			Subject:              maintenanceRequest.Subject,
+			Description:          maintenanceRequest.Description,
+			UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
+			Status:               maintenanceRequest.Status.String(),
+			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
 		}
 	}
 	return response
 }
 
-func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) []maintenancedto.CorporationMaintenanceResponse {
-	maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
-	maintenanceService.corporationService.DoesCorporationExist(listInfo.CorporationID)
+// CHECKED
+func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequests(listInfo maintenancedto.CustomerPanelMaintenanceListRequest) []maintenancedto.CustomerMaintenanceRequestResponse {
+	if err := maintenanceService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID); err != nil {
+		panic(err)
+	}
+
+	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
+
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	maintenanceRequests := maintenanceService.maintenanceRepository.FindMaintenanceRequestsByCorporationID(maintenanceService.db, listInfo.CorporationID, paginationModifier, sortingModifier)
-	response := make([]maintenancedto.CorporationMaintenanceResponse, len(maintenanceRequests))
+
+	maintenanceRequests := maintenanceService.maintenanceRepository.FindRequestsByPanelIDAndStatus(maintenanceService.db, listInfo.PanelID, allowedStatus, paginationModifier, sortingModifier)
+	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
+
+	for i, maintenanceRequest := range maintenanceRequests {
+		panelInfoRequest := installationdto.GetOwnerRequest{
+			OwnerID:        listInfo.OwnerID,
+			InstallationID: maintenanceRequest.PanelID,
+		}
+		panel := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
+
+		corporation := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
+
+		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
+			ID:                   maintenanceRequest.ID,
+			CreatedAt:            maintenanceRequest.CreatedAt,
+			Panel:                panel,
+			Corporation:          corporation,
+			Subject:              maintenanceRequest.Subject,
+			Description:          maintenanceRequest.Description,
+			UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
+			Status:               maintenanceRequest.Status.String(),
+			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
+		}
+	}
+	return response
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) maintenancedto.CustomerMaintenanceRequestResponse {
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
+	}
+
+	panelInfoRequest := installationdto.GetOwnerRequest{
+		OwnerID:        maintenanceInfo.OwnerID,
+		InstallationID: maintenanceRequest.PanelID,
+	}
+	panel := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
+
+	corporation := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
+
+	record, _ := maintenanceService.getCustomerMaintenanceRecord(maintenanceInfo.RequestID, maintenanceRequest.PanelID)
+
+	return maintenancedto.CustomerMaintenanceRequestResponse{
+		ID:                   maintenanceRequest.ID,
+		CreatedAt:            maintenanceRequest.CreatedAt,
+		Panel:                panel,
+		Corporation:          corporation,
+		Subject:              maintenanceRequest.Subject,
+		Description:          maintenanceRequest.Description,
+		UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
+		Status:               maintenanceRequest.Status.String(),
+		IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
+		Record:               record,
+	}
+}
+
+func (maintenanceService *MaintenanceService) getCustomerMaintenanceRecord(requestID, panelID uint) (maintenancedto.CustomerMaintenanceRecordResponse, error) {
+	record, exist := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, requestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
+		return maintenancedto.CustomerMaintenanceRecordResponse{}, notFoundError
+	}
+
+	violation, _ := maintenanceService.guaranteeService.GetCustomerPanelGuaranteeViolation(panelID)
+
+	recordResponse := maintenancedto.CustomerMaintenanceRecordResponse{
+		ID:                 record.ID,
+		CreatedAt:          record.CreatedAt,
+		Title:              record.Title,
+		Details:            record.Details,
+		Date:               record.CreatedAt,
+		IsUserApproved:     record.IsUserApproved,
+		GuaranteeViolation: violation,
+	}
+	return recordResponse, nil
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) UpdateMaintenanceRequest(updateRequest maintenancedto.UpdateCustomerRequest) {
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, updateRequest.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
+	}
+
+	if err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, updateRequest.OwnerID); err != nil {
+		panic(err)
+	}
+
+	if maintenanceRequest.Status != enum.MaintenanceRequestStatusPending {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.NotActive)
+		panic(conflictErrors)
+
+	}
+
+	if updateRequest.Subject != nil {
+		maintenanceRequest.Subject = *updateRequest.Subject
+	}
+
+	if updateRequest.Description != nil {
+		maintenanceRequest.Description = *updateRequest.Description
+	}
+
+	if updateRequest.UrgencyLevel != nil {
+		maintenanceRequest.UrgencyLevel = enum.UrgencyLevel(*updateRequest.UrgencyLevel)
+	}
+
+	if updateRequest.IsUsingGuarantee != nil {
+		if *updateRequest.IsUsingGuarantee {
+			if err := maintenanceService.installationService.ValidatePanelGuarantee(maintenanceRequest.PanelID); err != nil {
+				panic(err)
+			}
+			maintenanceRequest.IsGuaranteeRequested = true
+		} else {
+			maintenanceRequest.IsGuaranteeRequested = false
+		}
+
+	}
+
+	err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) CancelMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) {
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
+	}
+
+	if err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID); err != nil {
+		panic(err)
+	}
+
+	var conflictErrors exception.ConflictErrors
+	if maintenanceRequest.Status == enum.MaintenanceRequestStatusCanceled {
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.AlreadyCanceled)
+		panic(conflictErrors)
+	} else if maintenanceRequest.Status != enum.MaintenanceRequestStatusPending {
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.NotActive)
+		panic(conflictErrors)
+	}
+
+	maintenanceRequest.Status = enum.MaintenanceRequestStatusCanceled
+
+	err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) {
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
+	}
+
+	if err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID); err != nil {
+		panic(err)
+	}
+
+	record, exist := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, maintenanceInfo.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
+		panic(notFoundError)
+	}
+
+	if record.IsUserApproved {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRecord, maintenanceService.constants.Tag.AlreadyAccepted)
+		panic(conflictErrors)
+	}
+
+	record.IsUserApproved = true
+
+	err := maintenanceService.maintenanceRepository.UpdateMaintenanceRecord(maintenanceService.db, record)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) []maintenancedto.CorporationMaintenanceListResponse {
+	maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
+
+	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCorporation)
+
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	maintenanceRequests := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatus(maintenanceService.db, listInfo.CorporationID, allowedStatus, paginationModifier, sortingModifier)
+	response := make([]maintenancedto.CorporationMaintenanceListResponse, len(maintenanceRequests))
+
 	for i, maintenanceRequest := range maintenanceRequests {
 		panelInfoRequest := installationdto.CorporationPanelRequest{
 			CorporationID:  listInfo.CorporationID,
@@ -132,196 +444,215 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 			InstallationID: maintenanceRequest.PanelID,
 		}
 		panel := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
-		response[i] = maintenancedto.CorporationMaintenanceResponse{
-			ID:           maintenanceRequest.ID,
-			Subject:      maintenanceRequest.Subject,
-			Description:  maintenanceRequest.Description,
-			UrgencyLevel: maintenanceRequest.UrgencyLevel.String(),
-			Status:       maintenanceRequest.Status.String(),
-			CreatedAt:    maintenanceRequest.CreatedAt,
-			OwnerPhone:   panel.Customer.Phone,
-			Panel:        panel,
+
+		response[i] = maintenancedto.CorporationMaintenanceListResponse{
+			ID:                   maintenanceRequest.ID,
+			CreatedAt:            maintenanceRequest.CreatedAt,
+			Panel:                panel,
+			Subject:              maintenanceRequest.Subject,
+			Description:          maintenanceRequest.Description,
+			UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
+			Status:               maintenanceRequest.Status.String(),
+			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
 		}
 	}
 	return response
 }
 
-func (maintenanceService *MaintenanceService) HandleRequest(handleRequestInfo maintenancedto.HandleRequest) {
-	maintenanceService.corporationService.CheckApplicantAccess(handleRequestInfo.CorporationID, handleRequestInfo.OperatorID)
-	request := maintenanceService.maintenanceRepository.FindMaintenanceRequestByID(maintenanceService.db, handleRequestInfo.RequestID)
-	if request == nil {
+// CHECKED
+func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) maintenancedto.CorporationMaintenanceResponse {
+	maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+
+	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
+	if !exist {
 		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
 		panic(notFoundError)
 	}
-	if request.Status != enum.MaintenanceRequestStatusPending {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: maintenanceService.constants.Field.MaintenanceRequest,
-		}
-		panic(forbiddenError)
+
+	panelInfoRequest := installationdto.CorporationPanelRequest{
+		CorporationID:  maintenanceInfo.CorporationID,
+		OperatorID:     maintenanceInfo.OperatorID,
+		InstallationID: maintenanceRequest.PanelID,
 	}
-	if handleRequestInfo.Accept {
-		request.Status = enum.MaintenanceRequestStatusAccepted
-	} else {
-		request.Status = enum.MaintenanceRequestStatusRejected
+	panel := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
+
+	record, _ := maintenanceService.getCorporationMaintenanceRecord(maintenanceInfo.RequestID, maintenanceRequest.PanelID)
+	return maintenancedto.CorporationMaintenanceResponse{
+		ID:                   maintenanceRequest.ID,
+		CreatedAt:            maintenanceRequest.CreatedAt,
+		Panel:                panel,
+		Subject:              maintenanceRequest.Subject,
+		Description:          maintenanceRequest.Description,
+		UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
+		Status:               maintenanceRequest.Status.String(),
+		IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
+		Record:               record,
 	}
-	err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, request)
-	if err != nil {
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) getCorporationMaintenanceRecord(requestID, panelID uint) (maintenancedto.CorporationMaintenanceRecordResponse, error) {
+	record, exist := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, requestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
+		return maintenancedto.CorporationMaintenanceRecordResponse{}, notFoundError
+	}
+
+	operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
+
+	violation, _ := maintenanceService.guaranteeService.GetCorporationPanelGuaranteeViolation(panelID)
+
+	recordResponse := maintenancedto.CorporationMaintenanceRecordResponse{
+		ID:                 record.ID,
+		CreatedAt:          record.CreatedAt,
+		Operator:           operator,
+		Title:              record.Title,
+		Details:            record.Details,
+		IsUserApproved:     record.IsUserApproved,
+		GuaranteeViolation: violation,
+	}
+	return recordResponse, nil
+}
+
+// TODO: CHECKED COULD BE BETTER add timer
+func (maintenanceService *MaintenanceService) AcceptMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) {
+	maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+
+	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
+	}
+
+	var conflictErrors exception.ConflictErrors
+	if maintenanceRequest.Status == enum.MaintenanceRequestStatusAccepted {
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.AlreadyAccepted)
+		panic(conflictErrors)
+	} else if maintenanceRequest.Status == enum.MaintenanceRequestStatusRejected {
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.AlreadyRejected)
+		panic(conflictErrors)
+	}
+
+	maintenanceRequest.Status = enum.MaintenanceRequestStatusAccepted
+
+	if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest); err != nil {
 		panic(err)
 	}
 }
 
-func (maintenanceService *MaintenanceService) AddMaintenanceRecord(requestInfo maintenancedto.AddMaintenanceRecordRequest) {
-	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.OperatorID)
-	panel := maintenanceService.installationService.GetPanelByID(requestInfo.PanelID)
+// TODO: CHECKED COULD BE BETTER add reason
+func (maintenanceService *MaintenanceService) RejectMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) {
+	maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+
+	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
+	}
+
+	var conflictErrors exception.ConflictErrors
+	if maintenanceRequest.Status == enum.MaintenanceRequestStatusRejected {
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.AlreadyRejected)
+		panic(conflictErrors)
+	} else if maintenanceRequest.Status == enum.MaintenanceRequestStatusAccepted {
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.AlreadyAccepted)
+		panic(conflictErrors)
+	}
+
+	maintenanceRequest.Status = enum.MaintenanceRequestStatusRejected
+
+	if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest); err != nil {
+		panic(err)
+	}
+}
+
+// CHECKED
+func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo maintenancedto.CreateMaintenanceRecordRequest) {
+	maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
+
+	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, recordInfo.RequestID, recordInfo.CorporationID, allowedStatuses)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
+	}
+
+	if _, exist = maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, recordInfo.RequestID); exist {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRecord, maintenanceService.constants.Tag.AlreadyExist)
+		panic(conflictErrors)
+	}
+
+	var guaranteeViolationID *uint = nil
+	if recordInfo.GuaranteeViolation != nil {
+		recordInfo.GuaranteeViolation.PanelID = maintenanceRequest.PanelID
+		request := installationdto.CreateViolatePanelGuaranteeRequest{
+			CorporationID:      recordInfo.CorporationID,
+			OperatorID:         recordInfo.OperatorID,
+			PanelID:            maintenanceRequest.PanelID,
+			GuaranteeViolation: *recordInfo.GuaranteeViolation,
+		}
+		temp := maintenanceService.installationService.ViolatePanelGuaranteeStatus(request)
+		guaranteeViolationID = &temp
+	}
 
 	record := &entity.MaintenanceRecord{
-		PanelID:       panel.ID,
-		CustomerID:    panel.Customer.ID,
-		CorporationID: requestInfo.CorporationID,
-		OperatorID:    requestInfo.OperatorID,
-		Title:         requestInfo.Title,
-		Details:       requestInfo.Details,
-		Date:          requestInfo.Date,
+		OperatorID:           recordInfo.OperatorID,
+		RequestID:            recordInfo.RequestID,
+		IsUserApproved:       false,
+		Title:                recordInfo.Title,
+		Details:              recordInfo.Details,
+		GuaranteeViolationID: guaranteeViolationID,
 	}
-	err := maintenanceService.maintenanceRepository.CreateMaintenanceRecord(maintenanceService.db, record)
-	if err != nil {
+	if err := maintenanceService.maintenanceRepository.CreateMaintenanceRecord(maintenanceService.db, record); err != nil {
+		panic(err)
+	}
+
+	maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
+	if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest); err != nil {
 		panic(err)
 	}
 }
 
-func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecords(requestInfo maintenancedto.CorporationMaintenanceListRequest) []maintenancedto.CorporationMaintenanceRecordResponse {
-	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.OperatorID)
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByCorporationID(maintenanceService.db, requestInfo.CorporationID, paginationModifier, sortingModifier)
-	response := make([]maintenancedto.CorporationMaintenanceRecordResponse, len(maintenanceRecords))
-	for i, record := range maintenanceRecords {
-		panelInfoRequest := installationdto.CorporationPanelRequest{
-			CorporationID:  requestInfo.CorporationID,
-			OperatorID:     requestInfo.OperatorID,
-			InstallationID: record.PanelID,
-		}
-		panel := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
+// CHECKED
+func (maintenanceService *MaintenanceService) UpdateMaintenanceRecord(recordInfo maintenancedto.UpdateMaintenanceRecordRequest) {
+	maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
 
-		operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
-
-		response[i] = maintenancedto.CorporationMaintenanceRecordResponse{
-			ID:       record.ID,
-			Panel:    panel,
-			Operator: operator,
-			Title:    record.Title,
-			Details:  record.Details,
-			Date:     record.Date,
-		}
+	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
+	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, recordInfo.RequestID, recordInfo.CorporationID, allowedStatuses)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		panic(notFoundError)
 	}
-	return response
-}
 
-func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRecordsByPanel(requestInfo maintenancedto.CorporationMaintenanceRecordByPanelRequest) []maintenancedto.CorporationMaintenanceRecordResponse {
-	maintenanceService.corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.OperatorID)
-	maintenanceService.installationService.GetPanelByID(requestInfo.PanelID)
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByPanelAndCorporationID(maintenanceService.db, requestInfo.PanelID, requestInfo.CorporationID, paginationModifier, sortingModifier)
-	response := make([]maintenancedto.CorporationMaintenanceRecordResponse, len(maintenanceRecords))
-	for i, record := range maintenanceRecords {
-		panelInfoRequest := installationdto.CorporationPanelRequest{
-			CorporationID:  requestInfo.CorporationID,
-			OperatorID:     requestInfo.OperatorID,
-			InstallationID: record.PanelID,
-		}
-		panel := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
-
-		operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
-		response[i] = maintenancedto.CorporationMaintenanceRecordResponse{
-			ID:       record.ID,
-			Panel:    panel,
-			Operator: operator,
-			Title:    record.Title,
-			Details:  record.Details,
-			Date:     record.Date,
-		}
-	}
-	return response
-}
-
-func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecords(requestInfo maintenancedto.MaintenanceListRequest) []maintenancedto.CustomerMaintenanceRecordResponse {
-	maintenanceService.userService.DoesUserExist(requestInfo.OwnerID)
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	maintenanceRecords := maintenanceService.maintenanceRepository.FindMaintenanceRecordsByCustomerID(maintenanceService.db, requestInfo.OwnerID, paginationModifier, sortingModifier)
-	response := make([]maintenancedto.CustomerMaintenanceRecordResponse, len(maintenanceRecords))
-	for i, record := range maintenanceRecords {
-		panelInfoRequest := installationdto.GetOwnerRequest{
-			OwnerID:        requestInfo.OwnerID,
-			InstallationID: record.PanelID,
-		}
-		panel := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
-
-		corporation := maintenanceService.corporationService.GetCorporationCredentials(record.CorporationID)
-		operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
-		response[i] = maintenancedto.CustomerMaintenanceRecordResponse{
-			ID:          record.ID,
-			Panel:       panel,
-			Corporation: corporation,
-			Operator:    operator,
-			Title:       record.Title,
-			Details:     record.Details,
-			Date:        record.Date,
-		}
-	}
-	return response
-}
-
-func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRecordsByPanel(requestInfo maintenancedto.CustomerMaintenanceRecordByPanelRequest) []maintenancedto.CustomerMaintenanceRecordResponse {
-	maintenanceService.userService.DoesUserExist(requestInfo.OwnerID)
-	maintenanceService.installationService.GetPanelByID(requestInfo.PanelID)
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	maintenanceRecords := maintenanceService.maintenanceRepository.FindCustomerMaintenanceRecordsByPanelID(maintenanceService.db, requestInfo.PanelID, requestInfo.OwnerID, paginationModifier, sortingModifier)
-	response := make([]maintenancedto.CustomerMaintenanceRecordResponse, len(maintenanceRecords))
-	for i, record := range maintenanceRecords {
-		panelInfoRequest := installationdto.GetOwnerRequest{
-			OwnerID:        requestInfo.OwnerID,
-			InstallationID: record.PanelID,
-		}
-		panel := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
-
-		corporation := maintenanceService.corporationService.GetCorporationCredentials(record.CorporationID)
-		operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
-		response[i] = maintenancedto.CustomerMaintenanceRecordResponse{
-			ID:          record.ID,
-			Panel:       panel,
-			Corporation: corporation,
-			Operator:    operator,
-			Title:       record.Title,
-			Details:     record.Details,
-			Date:        record.Date,
-		}
-	}
-	return response
-}
-
-func (maintenanceService *MaintenanceService) GetMaintenanceRecordByID(maintenanceRecordID uint) maintenancedto.MaintenanceRecordResponse {
-	record := maintenanceService.maintenanceRepository.FindMaintenanceRecordByID(maintenanceService.db, maintenanceRecordID)
-	if record == nil {
+	maintenanceRecord, exist := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, recordInfo.RequestID)
+	if !exist {
 		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
 		panic(notFoundError)
 	}
-	panel := maintenanceService.installationService.GetPanelByID(record.PanelID)
-	corporation := maintenanceService.corporationService.GetCorporationCredentials(record.CorporationID)
-	customer := maintenanceService.userService.GetUserCredential(record.CustomerID)
-	operator := maintenanceService.userService.GetUserCredential(record.OperatorID)
-	response := maintenancedto.MaintenanceRecordResponse{
-		ID:          record.ID,
-		Panel:       panel,
-		Corporation: corporation,
-		Customer:    customer,
-		Operator:    operator,
-		Title:       record.Title,
-		Details:     record.Details,
-		Date:        record.Date,
+
+	if maintenanceRecord.IsUserApproved {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRecord, maintenanceService.constants.Tag.NotActive)
+		panic(conflictErrors)
 	}
-	return response
+
+	if recordInfo.GuaranteeViolation != nil {
+		recordInfo.GuaranteeViolation.PanelID = maintenanceRequest.PanelID
+		maintenanceService.guaranteeService.UpdateGuaranteeViolation(*recordInfo.GuaranteeViolation)
+	}
+
+	if recordInfo.Title != nil {
+		maintenanceRecord.Title = *recordInfo.Title
+	}
+	if recordInfo.Details != nil {
+		maintenanceRecord.Details = *recordInfo.Details
+	}
+
+	if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRecord(maintenanceService.db, maintenanceRecord); err != nil {
+		panic(err)
+	}
 }

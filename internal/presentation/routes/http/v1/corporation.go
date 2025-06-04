@@ -6,6 +6,8 @@ import (
 )
 
 func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
+	const status string = "/status"
+
 	profile := routerGroup.Group("/:corporationID/profile")
 	{
 		profile.GET("", app.Controllers.Corporation.CorporationController.GetMyProfile)
@@ -24,7 +26,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		guaranteesSubGroup := guarantees.Group("/:guaranteeID")
 		{
 			guaranteesSubGroup.GET("", app.Controllers.Corporation.GuaranteeController.GetGuarantee)
-			guaranteesSubGroup.PUT("/status", app.Controllers.Corporation.GuaranteeController.UpdateGuarantee)
+			guaranteesSubGroup.PUT(status, app.Controllers.Corporation.GuaranteeController.UpdateGuarantee)
 		}
 	}
 
@@ -33,6 +35,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		requests := installations.Group("/request")
 		{
 			requests.GET("", app.Controllers.Corporation.InstallationController.GetInstallationRequests)
+			requests.GET(status, app.Controllers.Corporation.MaintenanceController.GetMaintenanceStatuses)
 			requestSubGroup := requests.Group("/:requestID")
 			{
 				requestSubGroup.GET("", app.Controllers.Corporation.InstallationController.GetInstallationRequest)
@@ -47,6 +50,33 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 			{
 				panelsSubGroup.GET("", app.Controllers.Corporation.InstallationController.GetCorporationPanel)
 				panelsSubGroup.PUT("/complete", app.Controllers.Corporation.InstallationController.CompleteInstallation)
+				guaranteeViolation := panelsSubGroup.Group("/guarantee/violation")
+				{
+					guaranteeViolation.POST("", app.Controllers.Corporation.InstallationController.ViolatePanelGuarantee)
+					guaranteeViolation.GET("", app.Controllers.Corporation.InstallationController.GetPanelGuaranteeViolation)
+					guaranteeViolation.DELETE("", app.Controllers.Corporation.InstallationController.ClearPanelGuaranteeViolation)
+					guaranteeViolation.PUT("", app.Controllers.Corporation.InstallationController.UpdatePanelGuaranteeViolation)
+				}
+			}
+		}
+	}
+
+	maintenances := routerGroup.Group("/:corporationID/maintenance")
+	{
+		requests := maintenances.Group("/request")
+		{
+			requests.GET(status, app.Controllers.Corporation.MaintenanceController.GetMaintenanceStatuses)
+			requests.GET("", app.Controllers.Corporation.MaintenanceController.GetAllMaintenanceRequests)
+			requestsSubGroup := requests.Group("/:requestID")
+			{
+				requestsSubGroup.GET("", app.Controllers.Corporation.MaintenanceController.GetMaintenanceRequest)
+				requestsSubGroup.PUT("/accept", app.Controllers.Corporation.MaintenanceController.AcceptMaintenanceRequest)
+				requestsSubGroup.PUT("/reject", app.Controllers.Corporation.MaintenanceController.RejectMaintenanceRequest)
+				records := requestsSubGroup.Group("/record")
+				{
+					records.POST("", app.Controllers.Corporation.MaintenanceController.CreateMaintenanceRecord)
+					records.PUT("", app.Controllers.Corporation.MaintenanceController.UpdateMaintenanceRecord)
+				}
 			}
 		}
 	}
@@ -68,20 +98,5 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		chat.GET("/rooms/:corporationID", app.Controllers.Corporation.ChatController.GetRooms)
 		chat.PUT("/room/:roomID/block", app.Controllers.Corporation.ChatController.BlockRoom)
 		chat.PUT("/room/:roomID/unblock", app.Controllers.Corporation.ChatController.UnBlockRoom)
-	}
-
-	maintenance := routerGroup.Group(":corporationID/maintenance")
-	{
-		requests := maintenance.Group("/request")
-		{
-			requests.GET("/list", app.Controllers.Corporation.MaintenanceController.GetMaintenanceRequests)
-			requests.POST("/handle", app.Controllers.Corporation.MaintenanceController.HandleMaintenanceRequest)
-		}
-		records := maintenance.Group("/record")
-		{
-			records.POST("/add", app.Controllers.Corporation.MaintenanceController.AddMaintenanceRecord)
-			records.GET("/list", app.Controllers.Corporation.MaintenanceController.GetCorporationMaintenanceRecords)
-			records.GET("/list/:panelID", app.Controllers.Corporation.MaintenanceController.GetCorporationMaintenanceRecordsByPanel)
-		}
 	}
 }

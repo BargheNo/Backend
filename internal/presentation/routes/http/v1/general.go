@@ -6,6 +6,8 @@ import (
 )
 
 func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
+	const status string = "/status"
+
 	auth := routerGroup.Group("/auth")
 	{
 		auth.POST("/register/basic", app.Controllers.General.UserController.BasicRegister)
@@ -36,13 +38,18 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		requests := installations.Group("/request")
 		{
-			requests.GET("/status", app.Controllers.General.InstallationController.GetRequestStatuses)
+			requests.GET(status, app.Controllers.General.InstallationController.GetRequestStatuses)
 			requests.GET("/building", app.Controllers.General.InstallationController.GetBuildingTypes)
 		}
 	}
 
 	guarantees := routerGroup.Group("/guarantee")
 	{
-		guarantees.GET("/status", app.Controllers.Corporation.GuaranteeController.GetGuaranteeStatuses)
+		guarantees.GET(status, app.Controllers.Corporation.GuaranteeController.GetGuaranteeStatuses)
+	}
+
+	maintenances := routerGroup.Group("/maintenance")
+	{
+		maintenances.GET(status, app.Controllers.Customer.MaintenanceController.GetMaintenanceStatuses)
 	}
 }

@@ -39,6 +39,7 @@ func main() {
 		&entity.CorporationStaff{},
 		&entity.GuaranteeTerm{},
 		&entity.Guarantee{},
+		&entity.GuaranteeViolation{},
 		&entity.User{},
 		&entity.Corporation{},
 		&entity.Signatory{},

@@ -1,6 +1,8 @@
 package serviceimpl
 
 import (
+	"time"
+
 	"github.com/BargheNo/Backend/bootstrap"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
@@ -286,7 +288,7 @@ func (installationService *InstallationService) GetPublicInstallationRequest(req
 func (installationService *InstallationService) CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest) {
 	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
 
-	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, request.PanelID)
+	panel, exist := installationService.installationRepository.FindCorporationPanel(installationService.db, request.PanelID, request.CorporationID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
 		panic(notFoundError)
@@ -299,6 +301,27 @@ func (installationService *InstallationService) CompleteInstallationRequest(requ
 	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {
 		panic(err)
 	}
+}
+
+func (installationService *InstallationService) ValidatePanelOwnership(panelID, userID uint) error {
+	_, exist := installationService.installationRepository.FindPanelByOwner(installationService.db, panelID, userID)
+	if !exist {
+		return exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+	}
+	return nil
+}
+
+func (installationService *InstallationService) ValidatePanelGuarantee(panelID uint) error {
+	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	if !exist {
+		return exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+	}
+	if panel.GuaranteeStatus != enum.PanelGuaranteeStatusActive {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(installationService.constants.Field.Guarantee, installationService.constants.Tag.NotActive)
+		return conflictErrors
+	}
+	return nil
 }
 
 // TODO: nor done remain for the bid/bidID/request && maybe remove:FindPanelByNameAndCustomerID
@@ -314,11 +337,18 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 
 	customer := installationService.userService.FindUserByPhone(panelInfo.CustomerPhone)
 
-	_, exist := installationService.installationRepository.FindPanelByNameAndCustomerID(installationService.db, panelInfo.Name, customer.ID)
-	if exist {
+	if _, exist := installationService.installationRepository.FindPanelByNameAndCustomerID(installationService.db, panelInfo.Name, customer.ID); exist {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(installationService.constants.Field.Name, installationService.constants.Tag.AlreadyExist)
 		panic(conflictErrors)
+	}
+
+	panelGuaranteeStatus := enum.PanelGuaranteeStatusEmpty
+	if panelInfo.GuaranteeID != nil {
+		if err := installationService.guaranteeService.ValidateActiveGuaranteeOwnerShip(*panelInfo.GuaranteeID, panelInfo.CorporationID); err != nil {
+			panic(err)
+		}
+		panelGuaranteeStatus = enum.PanelGuaranteeStatusActive
 	}
 
 	panel := &entity.Panel{
@@ -333,6 +363,7 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 		CorporationID:        panelInfo.CorporationID,
 		OperatorID:           panelInfo.OperatorID,
 		CustomerID:           customer.ID,
+		GuaranteeStatus:      panelGuaranteeStatus,
 		GuaranteeID:          panelInfo.GuaranteeID,
 		Address: entity.Address{
 			ProvinceID:    panelInfo.Address.ProvinceID,
@@ -356,7 +387,7 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 	installationService.chatService.CreateOrGetRoom(request)
 }
 
-func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelResponse {
+func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelListResponse {
 	installationService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
 
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
@@ -368,17 +399,14 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 	}
 
 	panels := installationService.installationRepository.FindCorporationPanels(installationService.db, listInfo.CorporationID, allowedStatus, paginationModifier, sortingModifier)
-	response := make([]installationdto.CorporationPanelResponse, len(panels))
+	response := make([]installationdto.CorporationPanelListResponse, len(panels))
 
 	for i, panel := range panels {
 		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
 		customer := installationService.userService.GetUserCredential(panel.CustomerID)
 		operator := installationService.userService.GetUserCredential(panel.OperatorID)
-		var guarantee guaranteedto.GuaranteeResponse
-		if panel.GuaranteeID != nil {
-			guarantee, _ = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
-		}
-		response[i] = installationdto.CorporationPanelResponse{
+
+		response[i] = installationdto.CorporationPanelListResponse{
 			ID:                   panel.ID,
 			Name:                 panel.Name,
 			Status:               panel.Status.String(),
@@ -388,10 +416,10 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 			Tilt:                 panel.Tilt,
 			Azimuth:              panel.Azimuth,
 			TotalNumberOfModules: panel.TotalNumberOfModules,
+			GuaranteeStatus:      panel.GuaranteeStatus.String(),
 			Operator:             operator,
 			Customer:             customer,
 			Address:              address,
-			Guarantee:            guarantee,
 		}
 	}
 	return response
@@ -429,6 +457,7 @@ func (installationService *InstallationService) GetCorporationPanel(request inst
 		Tilt:                 panel.Tilt,
 		Azimuth:              panel.Azimuth,
 		TotalNumberOfModules: panel.TotalNumberOfModules,
+		GuaranteeStatus:      panel.GuaranteeStatus.String(),
 		Operator:             operator,
 		Customer:             customer,
 		Address:              address,
@@ -436,7 +465,7 @@ func (installationService *InstallationService) GetCorporationPanel(request inst
 	}
 }
 
-func (installationService *InstallationService) GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelResponse {
+func (installationService *InstallationService) GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelListResponse {
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
@@ -446,18 +475,13 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 	}
 
 	panels := installationService.installationRepository.FindCustomerPanels(installationService.db, listInfo.OwnerID, allowedStatus, paginationModifier, sortingModifier)
-	response := make([]installationdto.CustomerPanelResponse, len(panels))
+	response := make([]installationdto.CustomerPanelListResponse, len(panels))
 
 	for i, panel := range panels {
 		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
 		corporation := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
 
-		var guarantee guaranteedto.GuaranteeResponse
-		if panel.Guarantee != nil {
-			guarantee, _ = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
-		}
-
-		response[i] = installationdto.CustomerPanelResponse{
+		response[i] = installationdto.CustomerPanelListResponse{
 			ID:                   panel.ID,
 			Name:                 panel.Name,
 			Status:               panel.Status.String(),
@@ -467,9 +491,9 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 			Tilt:                 panel.Tilt,
 			Azimuth:              panel.Azimuth,
 			TotalNumberOfModules: panel.TotalNumberOfModules,
+			GuaranteeStatus:      panel.GuaranteeStatus.String(),
 			Corporation:          corporation,
 			Address:              address,
-			Guarantee:            guarantee,
 		}
 	}
 	return response
@@ -504,13 +528,14 @@ func (installationService *InstallationService) GetCustomerPanel(panelInfo insta
 		Tilt:                 panel.Tilt,
 		Azimuth:              panel.Azimuth,
 		TotalNumberOfModules: panel.TotalNumberOfModules,
+		GuaranteeStatus:      panel.GuaranteeStatus.String(),
 		Corporation:          corporation,
 		Address:              address,
 		Guarantee:            guarantee,
 	}
 }
 
-func (installationService *InstallationService) GetPanelByID(panelID uint) installationdto.PanelResponse {
+func (installationService *InstallationService) GetPanelByAdmin(panelID uint) installationdto.AdminPanelResponse {
 	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
@@ -527,7 +552,7 @@ func (installationService *InstallationService) GetPanelByID(panelID uint) insta
 		guarantee, _ = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
 	}
 
-	return installationdto.PanelResponse{
+	return installationdto.AdminPanelResponse{
 		ID:                   panelID,
 		Name:                 panel.Name,
 		Status:               panel.Status.String(),
@@ -543,4 +568,150 @@ func (installationService *InstallationService) GetPanelByID(panelID uint) insta
 		Address:              address,
 		Guarantee:            guarantee,
 	}
+}
+
+func (installationService *InstallationService) ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) uint {
+	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+
+	panel, exist := installationService.installationRepository.FindCorporationPanel(installationService.db, request.PanelID, request.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+
+	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Guarantee}
+		panic(notFoundError)
+	}
+
+	if panel.GuaranteeStatus != enum.PanelGuaranteeStatusActive {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(installationService.constants.Field.Guarantee, installationService.constants.Tag.NotActive)
+		panic(conflictErrors)
+	}
+
+	violationID := installationService.guaranteeService.CreateGuaranteeViolation(request.GuaranteeViolation)
+	panel.GuaranteeStatus = enum.PanelGuaranteeStatusVoided
+
+	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {
+		panic(err)
+	}
+
+	return violationID
+}
+
+func (installationService *InstallationService) ClearPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) {
+	installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+
+	panel, exist := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+
+	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Guarantee}
+		panic(notFoundError)
+	}
+
+	if panel.GuaranteeStatus != enum.PanelGuaranteeStatusVoided {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.GuaranteeViolation}
+		panic(notFoundError)
+	}
+
+	installationService.guaranteeService.RemovePanelGuaranteeViolation(violationInfo.PanelID)
+
+	if panel.GuaranteeEndDate.Before(time.Now()) {
+		panel.GuaranteeStatus = enum.PanelGuaranteeStatusExpired
+	} else {
+		panel.GuaranteeStatus = enum.PanelGuaranteeStatusActive
+	}
+
+	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {
+		panic(err)
+	}
+}
+
+func (installationService *InstallationService) GetCorporationPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) (guaranteedto.CorporationGuaranteeViolationResponse, error) {
+	var violation guaranteedto.CorporationGuaranteeViolationResponse
+
+	installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+
+	panel, exist := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		return violation, notFoundError
+	}
+
+	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Guarantee}
+		return violation, notFoundError
+	}
+
+	if panel.GuaranteeStatus != enum.PanelGuaranteeStatusVoided {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.GuaranteeViolation}
+		return violation, notFoundError
+	}
+
+	violation, err := installationService.guaranteeService.GetCorporationPanelGuaranteeViolation(violationInfo.PanelID)
+	if err != nil {
+		panic(err)
+	}
+
+	return violation, nil
+}
+
+func (installationService *InstallationService) GetCustomerPanelGuaranteeViolation(violationInfo installationdto.GetCustomerGuaranteeViolationRequest) (guaranteedto.CustomerGuaranteeViolationResponse, error) {
+	var violation guaranteedto.CustomerGuaranteeViolationResponse
+
+	panel, exist := installationService.installationRepository.FindCustomerPanel(installationService.db, violationInfo.PanelID, violationInfo.OwnerID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		return violation, notFoundError
+	}
+
+	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Guarantee}
+		return violation, notFoundError
+	}
+
+	if panel.GuaranteeStatus != enum.PanelGuaranteeStatusVoided {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.GuaranteeViolation}
+		return violation, notFoundError
+	}
+
+	violation, err := installationService.guaranteeService.GetCustomerPanelGuaranteeViolation(violationInfo.PanelID)
+	if err != nil {
+		panic(err)
+	}
+
+	return violation, nil
+}
+
+func (installationService *InstallationService) UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest) {
+	installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+
+	panel, exist := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+
+	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Guarantee}
+		panic(notFoundError)
+	}
+
+	if panel.GuaranteeStatus != enum.PanelGuaranteeStatusVoided {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.GuaranteeViolation}
+		panic(notFoundError)
+	}
+
+	request := guaranteedto.UpdateGuaranteeViolationRequest{
+		PanelID:    violationInfo.PanelID,
+		OperatorID: violationInfo.OperatorID,
+		Reason:     violationInfo.Reason,
+		Details:    violationInfo.Details,
+	}
+	installationService.guaranteeService.UpdateGuaranteeViolation(request)
 }

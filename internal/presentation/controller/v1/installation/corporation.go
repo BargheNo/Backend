@@ -3,6 +3,7 @@ package installation
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/enum"
@@ -183,4 +184,98 @@ func (installationController *CorporationInstallationController) GetCorporationP
 	panel := installationController.installationService.GetCorporationPanel(panelInfo)
 
 	controller.Response(ctx, 200, "", panel)
+}
+
+func (installationController *CorporationInstallationController) ViolatePanelGuarantee(ctx *gin.Context) {
+	type panelGuaranteeViolationParams struct {
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		PanelID       uint   `uri:"panelID" validate:"required"`
+		Reason        string `json:"reason" validate:"required"`
+		Details       string `json:"details" validate:"required"`
+	}
+	params := controller.Validated[panelGuaranteeViolationParams](ctx)
+	userID, _ := ctx.Get(installationController.constants.Context.ID)
+
+	violationInfo := installationdto.CreateViolatePanelGuaranteeRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    userID.(uint),
+		PanelID:       params.PanelID,
+		GuaranteeViolation: guaranteedto.CreateGuaranteeViolationRequest{
+			PanelID:       params.PanelID,
+			CorporationID: params.CorporationID,
+			OperatorID:    userID.(uint),
+			Reason:        params.Reason,
+			Details:       params.Details,
+		},
+	}
+	installationController.installationService.ViolatePanelGuaranteeStatus(violationInfo)
+
+	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addGuaranteeViolation")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (installationController *CorporationInstallationController) ClearPanelGuaranteeViolation(ctx *gin.Context) {
+	type panelGuaranteeViolationParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+		PanelID       uint `uri:"panelID" validate:"required"`
+	}
+	params := controller.Validated[panelGuaranteeViolationParams](ctx)
+	userID, _ := ctx.Get(installationController.constants.Context.ID)
+
+	violationInfo := installationdto.GetCorporationGuaranteeViolationRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    userID.(uint),
+		PanelID:       params.PanelID,
+	}
+	installationController.installationService.ClearPanelGuaranteeViolation(violationInfo)
+
+	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.clearGuaranteeViolation")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (installationController *CorporationInstallationController) GetPanelGuaranteeViolation(ctx *gin.Context) {
+	type updateGuaranteeParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+		PanelID       uint `uri:"panelID" validate:"required"`
+	}
+	params := controller.Validated[updateGuaranteeParams](ctx)
+	userID, _ := ctx.Get(installationController.constants.Context.ID)
+
+	request := installationdto.GetCorporationGuaranteeViolationRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    userID.(uint),
+		PanelID:       params.PanelID,
+	}
+	violation, err := installationController.installationService.GetCorporationPanelGuaranteeViolation(request)
+	if err != nil {
+		panic(err)
+	}
+
+	controller.Response(ctx, 200, "", violation)
+}
+
+func (installationController *CorporationInstallationController) UpdatePanelGuaranteeViolation(ctx *gin.Context) {
+	type updateGuaranteeParams struct {
+		CorporationID uint    `uri:"corporationID" validate:"required"`
+		PanelID       uint    `uri:"panelID" validate:"required"`
+		Reason        *string `json:"reason"`
+		Details       *string `json:"details"`
+	}
+	params := controller.Validated[updateGuaranteeParams](ctx)
+	userID, _ := ctx.Get(installationController.constants.Context.ID)
+
+	request := installationdto.UpdateGuaranteeViolationRequest{
+		CorporationID: params.CorporationID,
+		PanelID:       params.PanelID,
+		OperatorID:    userID.(uint),
+		Reason:        params.Reason,
+		Details:       params.Details,
+	}
+	installationController.installationService.UpdatePanelGuaranteeViolation(request)
+
+	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateGuaranteeViolation")
+	controller.Response(ctx, 200, message, nil)
 }

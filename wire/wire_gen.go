@@ -97,7 +97,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationService := serviceimpl.NewCorporationService(constants, userService, addressService, s3Storage, corporationRepository, postgresDatabase)
 	generalCorporationController := corporation.NewGeneralCorporationController(constants, corporationService)
 	guaranteeRepository := repositoryimpl.NewGuaranteeRepository()
-	guaranteeService := serviceimpl.NewGuaranteeService(constants, corporationService, guaranteeRepository, postgresDatabase)
+	guaranteeService := serviceimpl.NewGuaranteeService(constants, corporationService, userService, guaranteeRepository, postgresDatabase)
 	chatRepository := repositoryimpl.NewChatRepository()
 	chatService := serviceimpl.NewChatService(constants, userService, corporationService, chatRepository, postgresDatabase)
 	installationRepository := repositoryimpl.NewInstallationRepository()
@@ -128,7 +128,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	}
 	bidService := serviceimpl.NewBidService(bidServiceDeps)
 	maintenanceRepository := repositoryimpl.NewMaintenanceRepository()
-	maintenanceService := serviceimpl.NewMaintenanceService(constants, userService, installationService, corporationService, addressService, maintenanceRepository, postgresDatabase)
+	maintenanceService := serviceimpl.NewMaintenanceService(constants, userService, installationService, corporationService, guaranteeService, maintenanceRepository, postgresDatabase)
 	reportRepository := repositoryimpl.NewReportRepository()
 	reportService := serviceimpl.NewReportService(constants, userService, maintenanceService, installationService, rabbitmqRabbitMQ, reportRepository, postgresDatabase)
 	notificationRepository := repositoryimpl.NewNotificationRepository()

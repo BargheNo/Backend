@@ -75,6 +75,7 @@ type ErrorField struct {
 	ContactInformation  string
 	PaymentTerm         string
 	Guarantee           string
+	GuaranteeViolation  string
 }
 
 type ErrorTag struct {
@@ -105,6 +106,8 @@ type ErrorTag struct {
 	AlreadyArchived        string
 	StatusNotChange        string
 	AlreadyCanceled        string
+	AlreadyRejected        string
+	AlreadyAccepted        string
 }
 
 type SMSTemplates struct {
@@ -239,6 +242,7 @@ func NewConstants() *Constants {
 			NotificationSetting: "notificationSetting",
 			PaymentTerm:         "paymentTerm",
 			Guarantee:           "guarantee",
+			GuaranteeViolation:  "guaranteeViolation",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -268,6 +272,8 @@ func NewConstants() *Constants {
 			AlreadyArchived:        "alreadyArchived",
 			StatusNotChange:        "statusNotChange",
 			AlreadyCanceled:        "alreadyCanceled",
+			AlreadyRejected:        "alreadyRejected",
+			AlreadyAccepted:        "alreadyAccepted",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

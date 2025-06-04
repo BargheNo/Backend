@@ -1,25 +1,33 @@
 package service
 
 import (
+	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 )
 
 type InstallationService interface {
 	AddPanel(panelInfo installationdto.AddPanelRequest)
 	ChangeInstallationRequestStatus(request installationdto.ChangeRequestStatusRequest)
+	ClearPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest)
 	CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest)
 	CreateInstallationRequest(request installationdto.NewInstallationRequest)
 	GetAnonymousInstallationRequest(request installationdto.CorporationPanelRequest) installationdto.AnonymousRequestsResponse
 	GetAnonymousInstallationRequests(request installationdto.CorporationPanelListRequest) []installationdto.AnonymousRequestsResponse
 	GetBuildingTypes() []installationdto.EnumStatusResponse
 	GetCorporationPanel(request installationdto.CorporationPanelRequest) installationdto.CorporationPanelResponse
-	GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelResponse
+	GetCorporationPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) (guaranteedto.CorporationGuaranteeViolationResponse, error)
+	GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelListResponse
 	GetCustomerPanel(panelInfo installationdto.GetOwnerRequest) installationdto.CustomerPanelResponse
-	GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelResponse
+	GetCustomerPanelGuaranteeViolation(violationInfo installationdto.GetCustomerGuaranteeViolationRequest) (guaranteedto.CustomerGuaranteeViolationResponse, error)
+	GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelListResponse
 	GetOwnerInstallationRequest(request installationdto.GetOwnerRequest) installationdto.AnonymousRequestsResponse
 	GetOwnerInstallationRequests(request installationdto.RequestsListRequest) []installationdto.AnonymousRequestsResponse
-	GetPanelByID(panelID uint) installationdto.PanelResponse
-	GetRequestStatuses() []installationdto.EnumStatusResponse
-	ValidateRequestOwnership(requestID, ownerID uint) (installationdto.PublicRequestDetailsResponse, error)
+	GetPanelByAdmin(panelID uint) installationdto.AdminPanelResponse
 	GetPublicInstallationRequest(requestID uint) installationdto.PublicRequestDetailsResponse
+	GetRequestStatuses() []installationdto.EnumStatusResponse
+	UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest)
+	ValidatePanelGuarantee(panelID uint) error
+	ValidatePanelOwnership(panelID uint, userID uint) error
+	ValidateRequestOwnership(requestID uint, ownerID uint) (installationdto.PublicRequestDetailsResponse, error)
+	ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) uint
 }

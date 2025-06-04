@@ -1,7 +1,10 @@
 package installationdto
 
 import (
+	"time"
+
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 )
 
@@ -77,5 +80,32 @@ type AddPanelRequest struct {
 	Azimuth              uint
 	TotalNumberOfModules uint
 	GuaranteeID          *uint
+	GuaranteeStartDate   *time.Time
 	Address              addressdto.CreateAddressRequest
+}
+
+type CreateViolatePanelGuaranteeRequest struct {
+	CorporationID      uint
+	OperatorID         uint
+	PanelID            uint
+	GuaranteeViolation guaranteedto.CreateGuaranteeViolationRequest
+}
+
+type GetCorporationGuaranteeViolationRequest struct {
+	CorporationID uint
+	OperatorID    uint
+	PanelID       uint
+}
+
+type GetCustomerGuaranteeViolationRequest struct {
+	OwnerID       uint
+	PanelID       uint
+}
+
+type UpdateGuaranteeViolationRequest struct {
+	CorporationID uint
+	OperatorID    uint
+	PanelID       uint
+	Reason        *string
+	Details       *string
 }

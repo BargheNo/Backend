@@ -3,20 +3,11 @@ package biddto
 import (
 	"time"
 
-	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	paymentdto "github.com/BargheNo/Backend/internal/application/dto/payment"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
-
-type InstallationRequestDetails struct {
-	ID           uint                       `json:"id"`
-	Name         string                     `json:"name"`
-	CustomerName string                     `json:"customerName"`
-	Address      addressdto.AddressResponse `json:"address"`
-	PowerRequest uint                       `json:"powerRequest"`
-}
 
 type AnonymousBidResponse struct {
 	ID               uint                            `json:"id"`

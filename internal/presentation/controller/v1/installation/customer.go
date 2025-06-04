@@ -158,3 +158,22 @@ func (installationController *CustomerInstallationController) GetCustomerPanel(c
 
 	controller.Response(ctx, 200, "", panels)
 }
+
+func (installationController *CustomerInstallationController) GetPanelGuaranteeViolation(ctx *gin.Context) {
+	type getPanelParams struct {
+		PanelID uint `uri:"panelID" validate:"required"`
+	}
+	params := controller.Validated[getPanelParams](ctx)
+	ownerID, _ := ctx.Get(installationController.constants.Context.ID)
+
+	violationInfo := installationdto.GetCustomerGuaranteeViolationRequest{
+		OwnerID: ownerID.(uint),
+		PanelID: params.PanelID,
+	}
+	panels, err := installationController.installationService.GetCustomerPanelGuaranteeViolation(violationInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	controller.Response(ctx, 200, "", panels)
+}

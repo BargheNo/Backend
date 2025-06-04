@@ -50,7 +50,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 					bids.GET("", app.Controllers.Customer.BidController.GetBids)
 					bidsSubGroup := bids.Group("/:bidID")
 					{
-						bidsSubGroup.GET("", app.Controllers.Customer.BidController.AcceptBid)
+						bidsSubGroup.GET("", app.Controllers.Customer.BidController.GetBid)
 						bidsSubGroup.POST("/accept", app.Controllers.Customer.BidController.AcceptBid)
 						bidsSubGroup.POST("/reject", app.Controllers.Customer.BidController.RejectBid)
 					}
@@ -64,7 +64,29 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			panelsSubGroup := panels.Group("/:panelID")
 			{
 				panelsSubGroup.GET("", app.Controllers.Customer.InstallationController.GetCustomerPanel)
+				panelsSubGroup.GET("/guarantee/violation", app.Controllers.Customer.InstallationController.GetPanelGuaranteeViolation)
+				panelsSubGroup.GET("/maintenance", app.Controllers.Customer.MaintenanceController.GetPanelMaintenanceRequests)
 			}
+		}
+	}
+
+	maintenances := routerGroup.Group("/maintenance/request")
+	{
+		maintenances.GET("/level", app.Controllers.Customer.MaintenanceController.GetMaintenanceUrgencyLevels)
+		maintenances.POST("", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
+		maintenances.GET("", app.Controllers.Customer.MaintenanceController.GetAllMaintenanceRequests)
+		requestsSubGroup := maintenances.Group("/:requestID")
+		{
+			requestsSubGroup.GET("", app.Controllers.Customer.MaintenanceController.GetMaintenanceRequest)
+			requestsSubGroup.PUT("", app.Controllers.Customer.MaintenanceController.UpdateMaintenanceRequest)
+			requestsSubGroup.PUT("/cancel", app.Controllers.Customer.MaintenanceController.CancelMaintenanceRequest)
+			requestsSubGroup.PUT("record/approve", app.Controllers.Customer.MaintenanceController.ApproveMaintenanceRecord)
+			// records := requestsSubGroup.Group("/record")
+			// {
+			// 	// records.GET("") // i think we can ignore this for now :)
+			// 	// records.PUT("/:recordID/approve") // can ignore recordID part :)
+			// 	// records.PUT("/approve")
+			// }
 		}
 	}
 
@@ -91,32 +113,26 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		notification.PUT("/setting/:settingID", app.Controllers.Customer.NotificationController.UpdateSettings)
 	}
 
-	maintenance := routerGroup.Group("/maintenance")
+	tickets := routerGroup.Group("/ticket")
 	{
-		requests := maintenance.Group("/request")
+		tickets.POST("", app.Controllers.Customer.TicketController.CreateTicket)
+		tickets.GET("/list", app.Controllers.Customer.TicketController.GetTickets)
+		ticketSubGroup := tickets.Group("/:ticketID/comments")
 		{
-			requests.POST("", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
-			requests.GET("/list", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequests)
-		}
-
-		records := maintenance.Group("/record")
-		{
-			records.GET("/list", app.Controllers.Customer.MaintenanceController.GetMaintenanceRecords)
-			records.GET("/list/:panelID", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequestsByPanelID)
+			ticketSubGroup.GET("", app.Controllers.Customer.TicketController.GetComments)
+			ticketSubGroup.POST("", app.Controllers.Customer.TicketController.CreateComment)
 		}
 	}
 
-	ticket := routerGroup.Group("/ticket")
+	reports := routerGroup.Group("/report")
 	{
-		ticket.POST("", app.Controllers.Customer.TicketController.CreateTicket)
-		ticket.GET("/list", app.Controllers.Customer.TicketController.GetTickets)
-		ticket.GET("/:ticketID/comments", app.Controllers.Customer.TicketController.GetComments)
-		ticket.POST("/:ticketID/comments", app.Controllers.Customer.TicketController.CreateComment)
-	}
-
-	report := routerGroup.Group("/report")
-	{
-		report.POST("maintenance/:recordID", app.Controllers.Customer.ReportController.CreateMaintenanceReport)
-		report.POST("panel/:panelID", app.Controllers.Customer.ReportController.CreatePanelReport)
+		maintenanceReports := reports.Group("/maintenance")
+		{
+			maintenanceReports.POST("/:recordID", app.Controllers.Customer.ReportController.CreateMaintenanceReport)
+		}
+		panelReports := reports.Group("/panel")
+		{
+			panelReports.POST("/:panelID", app.Controllers.Customer.ReportController.CreatePanelReport)
+		}
 	}
 }

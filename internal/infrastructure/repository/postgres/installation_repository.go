@@ -162,6 +162,18 @@ func (repo *InstallationRepository) FindPanelByID(db database.Database, panelID 
 	return panel, true
 }
 
+func (repo *InstallationRepository) FindPanelByOwner(db database.Database, panelID, customerID uint) (*entity.Panel, bool) {
+	var panel *entity.Panel
+	result := db.GetDB().Where("id = ? AND customer_id = ?", panelID, customerID).First(&panel)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return panel, true
+}
+
 func (repo *InstallationRepository) CreatePanel(db database.Database, panel *entity.Panel) error {
 	return db.GetDB().Create(&panel).Error
 }

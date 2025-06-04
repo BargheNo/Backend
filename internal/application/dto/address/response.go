@@ -1,7 +1,7 @@
 package addressdto
 
 type AddressResponse struct {
-	ID            uint   `json:"ID"`
+	ID            uint   `json:"id"`
 	Province      string `json:"province"`
 	ProvinceID    uint   `json:"provinceID"`
 	CityID        uint   `json:"cityID"`

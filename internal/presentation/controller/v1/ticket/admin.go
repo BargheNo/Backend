@@ -41,7 +41,7 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 
 	tickets := ticketController.ticketService.GetAdminTickets(requestInfo)
 
-	controller.Response(ctx, 200, "success", tickets)
+	controller.Response(ctx, 200, "", tickets)
 }
 
 func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {
@@ -61,7 +61,7 @@ func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {
 
 	tickets := ticketController.ticketService.GetAdminTicketComments(requestInfo)
 
-	controller.Response(ctx, 200, "success", tickets)
+	controller.Response(ctx, 200, "", tickets)
 }
 
 func (ticketController *AdminTicketController) CreateComment(ctx *gin.Context) {

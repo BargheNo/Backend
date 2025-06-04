@@ -15,4 +15,8 @@ type GuaranteeRepository interface {
 	CreateGuarantee(db database.Database, guarantee *entity.Guarantee) error
 	CreateGuaranteeTerms(db database.Database, terms *entity.GuaranteeTerm) error
 	UpdateGuarantee(db database.Database, guarantee *entity.Guarantee) error
+	FindPanelGuaranteeViolation(db database.Database, panelID uint) (*entity.GuaranteeViolation, bool)
+	CreateGuaranteeViolation(db database.Database, violation *entity.GuaranteeViolation) error
+	UpdateGuaranteeViolation(db database.Database, violation *entity.GuaranteeViolation) error
+	DeleteGuaranteeViolation(db database.Database, violation *entity.GuaranteeViolation) error
 }

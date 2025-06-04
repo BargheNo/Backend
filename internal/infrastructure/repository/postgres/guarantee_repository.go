@@ -78,3 +78,27 @@ func (repo *GuaranteeRepository) CreateGuaranteeTerms(db database.Database, term
 func (repo *GuaranteeRepository) UpdateGuarantee(db database.Database, guarantee *entity.Guarantee) error {
 	return db.GetDB().Save(&guarantee).Error
 }
+
+func (repo *GuaranteeRepository) FindPanelGuaranteeViolation(db database.Database, panelID uint) (*entity.GuaranteeViolation, bool) {
+	var violation *entity.GuaranteeViolation
+	result := db.GetDB().Where("panel_id = ?", panelID).First(&violation)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		}
+		panic(result.Error)
+	}
+	return violation, true
+}
+
+func (repo *GuaranteeRepository) CreateGuaranteeViolation(db database.Database, violation *entity.GuaranteeViolation) error {
+	return db.GetDB().Create(violation).Error
+}
+
+func (repo *GuaranteeRepository) UpdateGuaranteeViolation(db database.Database, violation *entity.GuaranteeViolation) error {
+	return db.GetDB().Save(violation).Error
+}
+
+func (repo *GuaranteeRepository) DeleteGuaranteeViolation(db database.Database, violation *entity.GuaranteeViolation) error {
+	return db.GetDB().Unscoped().Delete(violation).Error
+}

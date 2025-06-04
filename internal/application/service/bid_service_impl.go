@@ -252,7 +252,7 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 	}
 
 	if bidInfo.GuaranteeID != nil {
-		if err := bidService.guaranteeService.ValidateGuaranteeOwnerShip(*bidInfo.GuaranteeID, bidInfo.CorporationID); err != nil {
+		if err := bidService.guaranteeService.ValidateActiveGuaranteeOwnerShip(*bidInfo.GuaranteeID, bidInfo.CorporationID); err != nil {
 			panic(err)
 		}
 	}

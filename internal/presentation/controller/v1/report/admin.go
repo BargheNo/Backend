@@ -37,7 +37,7 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 	}
 
 	reports := reportController.reportService.GetMaintenanceReports(requestInfo)
-	controller.Response(ctx, 200, "success", reports)
+	controller.Response(ctx, 200, "", reports)
 }
 
 func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context) {
@@ -51,7 +51,7 @@ func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context)
 	}
 
 	reports := reportController.reportService.GetPanelReports(requestInfo)
-	controller.Response(ctx, 200, "success", reports)
+	controller.Response(ctx, 200, "", reports)
 }
 
 func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {

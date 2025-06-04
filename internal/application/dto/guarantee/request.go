@@ -36,3 +36,18 @@ type ChangeStatusRequest struct {
 	GuaranteeID   uint
 	Status        uint
 }
+
+type CreateGuaranteeViolationRequest struct {
+	PanelID       uint
+	CorporationID uint
+	OperatorID    uint
+	Reason        string
+	Details       string
+}
+
+type UpdateGuaranteeViolationRequest struct {
+	PanelID    uint
+	OperatorID uint
+	Reason     *string
+	Details    *string
+}

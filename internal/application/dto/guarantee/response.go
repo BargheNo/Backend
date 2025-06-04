@@ -1,5 +1,7 @@
 package guaranteedto
 
+import userdto "github.com/BargheNo/Backend/internal/application/dto/user"
+
 type GuaranteeResponse struct {
 	ID             uint                    `json:"id"`
 	Name           string                  `json:"string"`
@@ -17,6 +19,17 @@ type GuaranteeTermResponse struct {
 }
 
 type GuaranteeTypesResponse struct {
-	ID   uint
-	Name string
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+type CorporationGuaranteeViolationResponse struct {
+	ViolatedBy userdto.CredentialResponse `json:"operator"`
+	Reason     string                     `json:"reason"`
+	Details    string                     `json:"details"`
+}
+
+type CustomerGuaranteeViolationResponse struct {
+	Reason  string `json:"reason"`
+	Details string `json:"details"`
 }
