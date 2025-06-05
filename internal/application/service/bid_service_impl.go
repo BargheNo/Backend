@@ -400,7 +400,14 @@ func (bidService *BidService) UpdateBid(request biddto.UpdateBidRequest) {
 		panic(notFoundError)
 	}
 
-	if bid.Status != enum.BidStatusPending {
+	var conflictErrors exception.ConflictErrors
+	if bid.Status == enum.BidStatusAccepted {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyAccepted)
+		panic(conflictErrors)
+	} else if bid.Status == enum.BidStatusCanceled {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyCanceled)
+		panic(conflictErrors)
+	} else if bid.Status != enum.BidStatusPending {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
 		panic(conflictErrors)
