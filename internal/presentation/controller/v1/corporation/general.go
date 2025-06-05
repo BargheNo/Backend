@@ -26,3 +26,8 @@ func (corporationController *GeneralCorporationController) GetContactTypes(ctx *
 	contactTypes := corporationController.corporationService.GetContactTypes()
 	controller.Response(ctx, 200, "", contactTypes)
 }
+
+func (corporationController *GeneralCorporationController) GetCorporations(ctx *gin.Context) {
+	corporations := corporationController.corporationService.GetAvailableCorporations()
+	controller.Response(ctx, 200, "", corporations)
+}

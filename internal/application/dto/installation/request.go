@@ -98,8 +98,8 @@ type GetCorporationGuaranteeViolationRequest struct {
 }
 
 type GetCustomerGuaranteeViolationRequest struct {
-	OwnerID       uint
-	PanelID       uint
+	OwnerID uint
+	PanelID uint
 }
 
 type UpdateGuaranteeViolationRequest struct {

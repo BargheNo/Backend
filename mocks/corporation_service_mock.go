@@ -74,7 +74,7 @@ func (m *CorporationServiceMock) ChangeLogo(changeLogoRequest corporationdto.Cha
 	m.Called(changeLogoRequest)
 }
 
-func (m *CorporationServiceMock) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationCredentialResponse {
-	args := m.Called(requestInfo)
+func (m *CorporationServiceMock) GetAvailableCorporations() []corporationdto.CorporationCredentialResponse {
+	args := m.Called()
 	return args.Get(0).([]corporationdto.CorporationCredentialResponse)
 }

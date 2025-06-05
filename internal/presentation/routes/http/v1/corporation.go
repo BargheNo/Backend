@@ -84,6 +84,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 	bids := routerGroup.Group(":corporationID/bid")
 	{
 		bids.GET("", app.Controllers.Corporation.BidController.GetBids)
+		bids.GET(status, app.Controllers.Corporation.BidController.GetBidStatuses)
 		bidsSubGroup := bids.Group("/:bidID")
 		{
 			bidsSubGroup.GET("", app.Controllers.Corporation.BidController.GetBid)

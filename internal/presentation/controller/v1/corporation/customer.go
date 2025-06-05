@@ -30,6 +30,13 @@ func NewCustomerCorporationController(
 	}
 }
 
+func (corporationController *CustomerCorporationController) GetUserCorporations(ctx *gin.Context) {
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+	corporationInfo := corporationController.corporationService.GetUserCorporations(userID.(uint))
+
+	controller.Response(ctx, 200, "", corporationInfo)
+}
+
 func (corporationController *CustomerCorporationController) Register(ctx *gin.Context) {
 	type signatory struct {
 		Name               string `json:"name" validate:"required"`
@@ -267,19 +274,4 @@ func (corporationController *CustomerCorporationController) SubmitCertificateFil
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addCorporationCertificate")
 	controller.Response(ctx, 200, message, nil)
-}
-
-func (corporationController *CustomerCorporationController) GetCorporations(ctx *gin.Context) {
-	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-
-	pagination := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
-	corporationRequest := corporationdto.CorporationListRequest{
-		UserID: userID.(uint),
-		Offset: offset,
-		Limit:  limit,
-	}
-
-	corporations := corporationController.corporationService.GetCorporations(corporationRequest)
-	controller.Response(ctx, 200, "", corporations)
 }

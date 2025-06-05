@@ -29,14 +29,12 @@ func NewCorporationMaintenanceController(
 	}
 }
 
-// CHECKED
 func (maintenanceController *CorporationMaintenanceController) GetMaintenanceStatuses(ctx *gin.Context) {
 	statuses := maintenanceController.maintenanceService.GetMaintenanceRequestStatuses(enum.AgentTypeCorporation)
 
 	controller.Response(ctx, 200, "", statuses)
 }
 
-// CHECKED
 func (maintenanceController *CorporationMaintenanceController) GetAllMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
@@ -60,7 +58,6 @@ func (maintenanceController *CorporationMaintenanceController) GetAllMaintenance
 	controller.Response(ctx, 200, "", requests)
 }
 
-// CHECKED
 func (maintenanceController *CorporationMaintenanceController) GetMaintenanceRequest(ctx *gin.Context) {
 	type maintenanceRequestParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
@@ -79,7 +76,6 @@ func (maintenanceController *CorporationMaintenanceController) GetMaintenanceReq
 	controller.Response(ctx, 200, "", requests)
 }
 
-// CHECKED
 func (maintenanceController *CorporationMaintenanceController) AcceptMaintenanceRequest(ctx *gin.Context) {
 	type maintenanceRequestParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
@@ -100,7 +96,6 @@ func (maintenanceController *CorporationMaintenanceController) AcceptMaintenance
 	controller.Response(ctx, 200, message, nil)
 }
 
-// CHECKED
 func (maintenanceController *CorporationMaintenanceController) RejectMaintenanceRequest(ctx *gin.Context) {
 	type maintenanceRequestParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
@@ -121,7 +116,6 @@ func (maintenanceController *CorporationMaintenanceController) RejectMaintenance
 	controller.Response(ctx, 200, message, nil)
 }
 
-// CHECKED
 func (maintenanceController *CorporationMaintenanceController) CreateMaintenanceRecord(ctx *gin.Context) {
 	type guaranteeViolation struct {
 		Reason  string `json:"reason" validate:"required"`
@@ -162,7 +156,6 @@ func (maintenanceController *CorporationMaintenanceController) CreateMaintenance
 	controller.Response(ctx, 200, message, nil)
 }
 
-// CHECKED
 func (maintenanceController *CorporationMaintenanceController) UpdateMaintenanceRecord(ctx *gin.Context) {
 	type guaranteeViolation struct {
 		Reason  *string `json:"reason"`

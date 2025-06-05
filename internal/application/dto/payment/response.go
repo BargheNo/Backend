@@ -15,3 +15,8 @@ type InstallmentPlanResponse struct {
 	// DownPaymentDate   string `json:"downPaymentDate"`
 	// DueDay            uint   `json:"dueDay"`
 }
+
+type PaymentMethodResponse struct {
+	ID     uint   `json:"id"`
+	Method string `json:"method"`
+}

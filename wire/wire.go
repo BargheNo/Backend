@@ -38,6 +38,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/news"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/payment"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/report"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/ticket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -152,6 +153,7 @@ var GeneralControllerProviderSet = wire.NewSet(
 	installation.NewGeneralInstallationController,
 	news.NewGeneralNewsController,
 	blog.NewGeneralBlogController,
+	payment.NewGeneralPaymentController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -339,6 +341,7 @@ type GeneralControllers struct {
 	InstallationController *installation.GeneralInstallationController
 	NewsController         *news.GeneralNewsController
 	BlogController         *blog.GeneralBlogController
+	PaymentController      *payment.GeneralPaymentController
 }
 
 type CustomerControllers struct {

@@ -57,6 +57,18 @@ func NewBidService(deps BidServiceDeps) *BidService {
 	}
 }
 
+func (bidService *BidService) GetBidStatuses() []biddto.GetBidStatusesResponse {
+	statuses := enum.GetAllBidStatuses()
+	response := make([]biddto.GetBidStatusesResponse, len(statuses))
+	for i, status := range statuses {
+		response[i] = biddto.GetBidStatusesResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return response
+}
+
 func (bidService *BidService) GetRequestAnonymousBids(requestInfo biddto.GetListRequestBidsRequest) []biddto.AnonymousBidResponse {
 	if _, err := bidService.installationService.ValidateRequestOwnership(requestInfo.RequestID, requestInfo.UserID); err != nil {
 		panic(err)
@@ -388,7 +400,14 @@ func (bidService *BidService) UpdateBid(request biddto.UpdateBidRequest) {
 		panic(notFoundError)
 	}
 
-	if bid.Status != enum.BidStatusPending {
+	var conflictErrors exception.ConflictErrors
+	if bid.Status == enum.BidStatusAccepted {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyAccepted)
+		panic(conflictErrors)
+	} else if bid.Status == enum.BidStatusCanceled {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyCanceled)
+		panic(conflictErrors)
+	} else if bid.Status != enum.BidStatusPending {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
 		panic(conflictErrors)
@@ -424,19 +443,13 @@ func (bidService *BidService) UpdateBid(request biddto.UpdateBidRequest) {
 			panic(err)
 		}
 	}
+
+	if err := bidService.bidRepository.UpdateBid(bidService.db, bid); err != nil {
+		panic(err)
+	}
 }
 
 func (bidService *BidService) CancelBid(bidInfo biddto.GetBidRequest) {
-	var conflictErrors exception.ConflictErrors
-	approved := bidService.corporationService.ISCorporationApproved(bidInfo.CorporationID)
-	if !approved {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: bidService.constants.Field.Bid,
-		}
-		panic(forbiddenError)
-	}
-
 	bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.UserID)
 
 	bid, exist := bidService.bidRepository.FindCorporationBid(bidService.db, bidInfo.BidID, bidInfo.CorporationID)
@@ -444,13 +457,19 @@ func (bidService *BidService) CancelBid(bidInfo biddto.GetBidRequest) {
 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
 		panic(notFoundError)
 	}
-	if bid.Status != enum.BidStatusPending {
+
+	var conflictErrors exception.ConflictErrors
+	if bid.Status == enum.BidStatusCanceled {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyCanceled)
+		panic(conflictErrors)
+	} else if bid.Status != enum.BidStatusPending {
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
 		panic(conflictErrors)
 	}
 
-	err := bidService.bidRepository.DeleteBidByID(bidService.db, bidInfo.BidID)
-	if err != nil {
+	bid.Status = enum.BidStatusCanceled
+
+	if err := bidService.bidRepository.UpdateBid(bidService.db, bid); err != nil {
 		panic(err)
 	}
 }

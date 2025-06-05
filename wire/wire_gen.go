@@ -41,6 +41,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/news"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/payment"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/report"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/ticket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -155,6 +156,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	blogRepository := repositoryimpl.NewBlogRepository()
 	blogService := serviceimpl.NewBlogService(userService, corporationService, blogRepository, constants, s3Storage, postgresDatabase)
 	generalBlogController := blog.NewGeneralBlogController(constants, blogService, pagination)
+	generalPaymentController := payment.NewGeneralPaymentController(constants, paymentService)
 	generalControllers := &GeneralControllers{
 		UserController:         generalUserController,
 		AddressController:      generalAddressController,
@@ -163,6 +165,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		InstallationController: generalInstallationController,
 		NewsController:         generalNewsController,
 		BlogController:         generalBlogController,
+		PaymentController:      generalPaymentController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
@@ -285,7 +288,7 @@ var ServiceProviderSet = wire.NewSet(wire.Struct(new(serviceimpl.UserServiceDeps
 
 var AdapterProviderSet = wire.NewSet(localizationimpl.NewTranslationService, loggerimpl.NewLogger, jwtimpl.NewJWTKeyManager, metricsimpl.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)), wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)))
 
-var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, installation.NewGeneralInstallationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, wire.Struct(new(GeneralControllers), "*"))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, installation.NewGeneralInstallationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, payment.NewGeneralPaymentController, wire.Struct(new(GeneralControllers), "*"))
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, blog.NewCustomerBlogController, wire.Struct(new(CustomerControllers), "*"))
 
@@ -419,6 +422,7 @@ type GeneralControllers struct {
 	InstallationController *installation.GeneralInstallationController
 	NewsController         *news.GeneralNewsController
 	BlogController         *blog.GeneralBlogController
+	PaymentController      *payment.GeneralPaymentController
 }
 
 type CustomerControllers struct {

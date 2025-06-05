@@ -13,7 +13,6 @@ import (
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type CorporationService struct {
@@ -532,12 +531,20 @@ func (corporationService *CorporationService) GetCorporationByIDAndStatus(corpor
 	return corporationService.getCorporationByIDAndStatus(corporationID, status)
 }
 
-func (corporationService *CorporationService) GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationCredentialResponse {
-	corporationService.userService.DoesUserExist(requestInfo.UserID)
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved, enum.CorpStatusAwaitingApproval}
-	corporations := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, paginationModifier, sortingModifier)
+func (corporationService *CorporationService) GetUserCorporations(userID uint) []corporationdto.CorporationCredentialResponse {
+	corporations := corporationService.corporationRepository.FindUserCorporations(corporationService.db, userID)
+
+	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
+	for i, corporation := range corporations {
+		response[i] = corporationService.GetCorporationCredentials(corporation.ID)
+	}
+	return response
+}
+
+func (corporationService *CorporationService) GetAvailableCorporations() []corporationdto.CorporationCredentialResponse {
+	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
+	corporations := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses)
+
 	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
 	for i, corporation := range corporations {
 		response[i] = corporationService.GetCorporationCredentials(corporation.ID)

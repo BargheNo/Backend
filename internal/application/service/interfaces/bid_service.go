@@ -5,6 +5,7 @@ import (
 )
 
 type BidService interface {
+	GetBidStatuses() []biddto.GetBidStatusesResponse
 	AcceptBid(request biddto.GetCustomerBidRequest)
 	CancelBid(bidInfo biddto.GetBidRequest)
 	GetCorporationBid(request biddto.GetBidRequest) biddto.CorporationBidResponse

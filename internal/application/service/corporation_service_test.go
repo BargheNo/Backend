@@ -1220,10 +1220,7 @@ func (s *CorporationServiceTestSuite) TestGetCorporations() {
 		s.addressService.On("GetAddresses", mock.Anything).Return([]addressdto.AddressResponse{}).Once()
 		s.corporationRepository.On("FindContactInformation", s.db, mock.Anything).Return(contactInformation).Once()
 
-		request := corporationdto.CorporationListRequest{
-			UserID: 1,
-		}
-		response := s.corporationService.GetCorporations(request)
+		response := s.corporationService.GetAvailableCorporations()
 
 		s.Equal(response[0].Name, corporations[0].Name)
 

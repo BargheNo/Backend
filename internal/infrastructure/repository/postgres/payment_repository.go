@@ -24,7 +24,7 @@ func (repo *PaymentRepository) FindPaymentTerms(db database.Database, payTermID 
 	return payTerm, true
 }
 
-func (repo *PaymentRepository) FindInstallmentPlan(db database.Database, payTermID uint) (*entity.InstallmentPlan, bool) {
+func (repo *PaymentRepository) FindPaymentTermInstallmentPlan(db database.Database, payTermID uint) (*entity.InstallmentPlan, bool) {
 	var plan *entity.InstallmentPlan
 	result := db.GetDB().Where("payment_terms_id = ?", payTermID).First(&plan)
 	if result.Error != nil {
