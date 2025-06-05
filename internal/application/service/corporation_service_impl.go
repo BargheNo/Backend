@@ -13,6 +13,7 @@ import (
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type CorporationService struct {
@@ -40,6 +41,22 @@ func NewCorporationService(
 		corporationRepository: corporationRepository,
 		db:                    db,
 	}
+}
+
+func (corporationService *CorporationService) mapStatusIDToAllowedStatuses(statusID uint) []enum.CorporationStatus {
+	status := enum.CorporationStatus(statusID)
+
+	allowedStatuses := enum.GetAllCorporationStatuses()
+
+	for _, allowedStatus := range allowedStatuses {
+		if status == allowedStatus {
+			if status == enum.CorpStatusAll {
+				return allowedStatuses
+			}
+			return []enum.CorporationStatus{status}
+		}
+	}
+	return allowedStatuses
 }
 
 func (corporationService *CorporationService) GetCorporationStatuses() []corporationdto.GetCorporationStatusesResponse {
@@ -556,6 +573,21 @@ func (corporationService *CorporationService) GetUserCorporations(userID uint) [
 func (corporationService *CorporationService) GetAvailableCorporations() []corporationdto.CorporationCredentialResponse {
 	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
 	corporations := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses)
+
+	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
+	for i, corporation := range corporations {
+		response[i] = corporationService.GetCorporationCredentials(corporation.ID)
+	}
+	return response
+}
+
+func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) []corporationdto.CorporationCredentialResponse {
+	allowedStatuses := corporationService.mapStatusIDToAllowedStatuses(listInfo.Status)
+
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	corporations := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, sortingModifier, paginationModifier)
 
 	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
 	for i, corporation := range corporations {

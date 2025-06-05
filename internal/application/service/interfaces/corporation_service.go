@@ -22,4 +22,5 @@ type CorporationService interface {
 	ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest)
 	GetUserCorporations(userID uint) []corporationdto.CorporationCredentialResponse
 	GetAvailableCorporations() []corporationdto.CorporationCredentialResponse
+	GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) []corporationdto.CorporationCredentialResponse
 }

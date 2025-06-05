@@ -2,6 +2,7 @@ package corporation
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -31,7 +32,23 @@ func (corporationController *AdminCorporationController) GetCorporationStatus(ct
 }
 
 func (corporationController *AdminCorporationController) GetCorporations(ctx *gin.Context) {
-	// some codes here ...
+	type getCorporationsParams struct {
+		Status uint `form:"status" validate:"required"`
+	}
+	params := controller.Validated[getCorporationsParams](ctx)
+
+	pagination := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	listInfo := corporationdto.GetCorporationsByAdminRequest{
+		Status: params.Status,
+		Limit:  limit,
+		Offset: offset,
+	}
+	corporations := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
+
+	controller.Response(ctx, 200, "", corporations)
+
 }
 
 func (corporationController *AdminCorporationController) GetCorporation(ctx *gin.Context) {
