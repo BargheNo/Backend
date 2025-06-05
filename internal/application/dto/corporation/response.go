@@ -43,3 +43,8 @@ type ContactTypeResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }
+
+type GetCorporationStatusesResponse struct {
+	ID     uint   `json:"id"`
+	Status string `json:"status"`
+}

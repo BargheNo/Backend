@@ -6,16 +6,19 @@ const (
 	CorpStatusApproved CorporationStatus = iota + 1
 	CorpStatusAwaitingApproval
 	CorpStatusRejected
+	CorpStatusAll
 )
 
 func (s CorporationStatus) String() string {
 	switch s {
 	case CorpStatusApproved:
-		return "approved"
+		return "تایید شده"
 	case CorpStatusAwaitingApproval:
-		return "awaiting_approval"
+		return "در انتظار تایید"
 	case CorpStatusRejected:
-		return "rejected"
+		return "رد شده"
+	case CorpStatusAll:
+		return "همه"
 	}
 	return "unknown"
 }
@@ -25,5 +28,6 @@ func GetAllCorporationStatuses() []CorporationStatus {
 		CorpStatusApproved,
 		CorpStatusAwaitingApproval,
 		CorpStatusRejected,
+		CorpStatusAll,
 	}
 }

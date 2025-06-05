@@ -42,6 +42,18 @@ func NewCorporationService(
 	}
 }
 
+func (corporationService *CorporationService) GetCorporationStatuses() []corporationdto.GetCorporationStatusesResponse {
+	statuses := enum.GetAllCorporationStatuses()
+	response := make([]corporationdto.GetCorporationStatusesResponse, len(statuses))
+	for i, status := range statuses {
+		response[i] = corporationdto.GetCorporationStatusesResponse{
+			ID:     uint(status),
+			Status: status.String(),
+		}
+	}
+	return response
+}
+
 func (corporationService *CorporationService) getCorporationByIDAndStatus(corporationID uint, status enum.CorporationStatus) *entity.Corporation {
 	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
 	if !exist {

@@ -3,6 +3,7 @@ package corporation
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,11 +25,12 @@ func NewAdminCorporationController(
 	}
 }
 
-func (corporationController *AdminCorporationController) GetCorporations(ctx *gin.Context) {
-	// some codes here ...
+func (corporationController *AdminCorporationController) GetCorporationStatus(ctx *gin.Context) {
+	statuses := corporationController.corporationService.GetCorporationStatuses()
+	controller.Response(ctx, 200, "", statuses)
 }
 
-func (corporationController *AdminCorporationController) GetCorporationStatus(ctx *gin.Context) {
+func (corporationController *AdminCorporationController) GetCorporations(ctx *gin.Context) {
 	// some codes here ...
 }
 
