@@ -1,0 +1,18 @@
+package service
+
+import (
+	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
+)
+
+type NewsService interface {
+	GetAllNewsStatuses() []newsdto.NewsStatusesResponse
+	GetNews(request newsdto.GetNewsRequest) newsdto.NewsResponse
+	GetNewsList(request newsdto.GetNewsListRequest) []newsdto.NewsResponse
+	CreateNews(request newsdto.CreateNewsRequest) newsdto.NewsResponse
+	EditNews(request newsdto.EditNewsRequest)
+	UpdateNewsStatus(request newsdto.EditNewsStatusRequest)
+	DeleteNewsStatus(request newsdto.DeleteNewsRequest)
+	AddNewsMedia(request newsdto.AddNewsMediaRequest) uint
+	DeleteNewsMedia(request newsdto.AccessMediaRequest)
+	GetNewsMedia(request newsdto.AccessMediaRequest) string
+}

@@ -55,6 +55,10 @@ func main() {
 		&entity.Ticket{},
 		&entity.TicketComment{},
 		&entity.Report{},
+		&entity.Media{},
+		&entity.News{},
+		&entity.Post{},
+		&entity.Like{},
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()

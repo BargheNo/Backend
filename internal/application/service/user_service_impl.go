@@ -667,6 +667,7 @@ func (userService *UserService) GetRoleOwners(roleID uint) []userdto.CredentialR
 			profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
 		}
 		userCreds[i] = userdto.CredentialResponse{
+			ID:         user.ID,
 			FirstName:  user.FirstName,
 			LastName:   user.LastName,
 			Phone:      user.Phone,

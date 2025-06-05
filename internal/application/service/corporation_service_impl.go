@@ -304,7 +304,7 @@ func (corporationService *CorporationService) AddCertificateFiles(requestInfo co
 		corporationService.s3Storage.UploadObject(enum.OfficialNewspaperAD, newspaperADPath, requestInfo.OfficialNewspaperAD)
 		corporation.OfficialNewspaperAD = newspaperADPath
 		if prevOfficialNewspaperPath != "" {
-			err := corporationService.s3Storage.DeleteObject(enum.VATTaxpayerCertificate, corporation.OfficialNewspaperAD)
+			err := corporationService.s3Storage.DeleteObject(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD)
 			if err != nil {
 				panic(err)
 			}

@@ -69,6 +69,8 @@ type BucketName struct {
 	ProfilePic             string
 	TicketImage            string
 	LogoPic                string
+	NewsMedia              string
+	BlogMedia              string
 }
 
 type OTP struct {
@@ -157,6 +159,8 @@ func NewEnvironments() *Env {
 				ProfilePic:             os.Getenv("PROFILE_PIC_BUCKET_NAME"),
 				TicketImage:            os.Getenv("TICKET_IMAGE_BUCKET_NAME"),
 				LogoPic:                os.Getenv("LOGO_PIC_BUCKET_NAME"),
+				NewsMedia:              os.Getenv("NEWS_MEDIA_BUCKET_NAME"),
+				BlogMedia:              os.Getenv("BLOG_MEDIA_BUCKET_NAME"),
 			},
 			Region:    os.Getenv("BUCKET_REGION"),
 			AccessKey: os.Getenv("BUCKET_ACCESS_key"),

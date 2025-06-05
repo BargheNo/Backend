@@ -24,10 +24,7 @@ func (s *UserServiceMock) DoesUserExist(userID uint) {
 
 func (s *UserServiceMock) IsUserActive(userID uint) bool {
 	args := s.Called(userID)
-	if args.Get(0) != nil {
-		panic(args.Get(0))
-	}
-	return args.Get(1).(bool)
+	return args.Get(0).(bool)
 }
 
 func (s *UserServiceMock) GetUserByID(userID uint) *entity.User {

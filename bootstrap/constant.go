@@ -76,6 +76,11 @@ type ErrorField struct {
 	PaymentTerm         string
 	Guarantee           string
 	GuaranteeViolation  string
+	News                string
+	Media               string
+	Blog                string
+	Post                string
+	Like                string
 }
 
 type ErrorTag struct {
@@ -108,6 +113,7 @@ type ErrorTag struct {
 	AlreadyCanceled        string
 	AlreadyRejected        string
 	AlreadyAccepted        string
+	AlreadyDraft           string
 }
 
 type SMSTemplates struct {
@@ -243,6 +249,11 @@ func NewConstants() *Constants {
 			PaymentTerm:         "paymentTerm",
 			Guarantee:           "guarantee",
 			GuaranteeViolation:  "guaranteeViolation",
+			News:                "news",
+			Media:               "media",
+			Blog:                "blog",
+			Post:                "post",
+			Like:                "like",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -274,6 +285,7 @@ func NewConstants() *Constants {
 			AlreadyCanceled:        "alreadyCanceled",
 			AlreadyRejected:        "alreadyRejected",
 			AlreadyAccepted:        "alreadyAccepted",
+			AlreadyDraft:           "alreadyDraft",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
@@ -367,4 +379,20 @@ func (path *BucketPath) GetTicketImagePath(ticketID uint, imageFilename string) 
 
 func (path *BucketPath) GetCorporationLogoPath(corporationID uint, logoFileName string) string {
 	return fmt.Sprintf("corporation/%d/logo/%s", corporationID, logoFileName)
+}
+
+func (path *BucketPath) GetNewsMediaPath(newsID uint, MediaFileName string) string {
+	return fmt.Sprintf("news/%d/media/%s", newsID, MediaFileName)
+}
+
+func (path *BucketPath) GetNewsCoverImagePath(newsID uint, mediaFileName string) string {
+	return fmt.Sprintf("news/%d/cover-image/%s", newsID, mediaFileName)
+}
+
+func (path *BucketPath) GetBlogMediaPath(corporationID uint, mediaFileName string) string {
+	return fmt.Sprintf("corporation/%d/blog/media/%s", corporationID, mediaFileName)
+}
+
+func (path *BucketPath) GetBlogCoverImagePath(corporationID uint, mediaFileName string) string {
+	return fmt.Sprintf("corporation/%d/blog/cover-image/%s", corporationID, mediaFileName)
 }

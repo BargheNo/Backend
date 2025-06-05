@@ -30,11 +30,13 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/blog"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/guarantee"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/news"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/report"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/ticket"
@@ -65,6 +67,8 @@ var RepositoryProviderSet = wire.NewSet(
 	repositoryimpl.NewReportRepository,
 	repositoryimpl.NewGuaranteeRepository,
 	repositoryimpl.NewPaymentRepository,
+	repositoryimpl.NewNewsRepository,
+	repositoryimpl.NewBlogRepository,
 	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
 	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
 	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
@@ -78,6 +82,8 @@ var RepositoryProviderSet = wire.NewSet(
 	wire.Bind(new(repository.ReportRepository), new(*repositoryimpl.ReportRepository)),
 	wire.Bind(new(repository.GuaranteeRepository), new(*repositoryimpl.GuaranteeRepository)),
 	wire.Bind(new(repository.PaymentRepository), new(*repositoryimpl.PaymentRepository)),
+	wire.Bind(new(repository.NewsRepository), new(*repositoryimpl.NewsRepository)),
+	wire.Bind(new(repository.BlogRepository), new(*repositoryimpl.BlogRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -102,6 +108,8 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewReportService,
 	serviceimpl.NewGuaranteeService,
 	serviceimpl.NewPaymentService,
+	serviceimpl.NewNewsService,
+	serviceimpl.NewBlogService,
 	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
 	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
 	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
@@ -119,6 +127,8 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.ReportService), new(*serviceimpl.ReportService)),
 	wire.Bind(new(service.GuaranteeService), new(*serviceimpl.GuaranteeService)),
 	wire.Bind(new(service.PaymentService), new(*serviceimpl.PaymentService)),
+	wire.Bind(new(service.NewsService), new(*serviceimpl.NewsService)),
+	wire.Bind(new(service.BlogService), new(*serviceimpl.BlogService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -140,6 +150,8 @@ var GeneralControllerProviderSet = wire.NewSet(
 	corporation.NewGeneralCorporationController,
 	notification.NewGeneralNotificationController,
 	installation.NewGeneralInstallationController,
+	news.NewGeneralNewsController,
+	blog.NewGeneralBlogController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -154,6 +166,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 	maintenance.NewCustomerMaintenanceController,
 	ticket.NewCustomerTicketController,
 	report.NewCustomerReportController,
+	blog.NewCustomerBlogController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -164,6 +177,7 @@ var CorporationControllerProviderSet = wire.NewSet(
 	bid.NewCorporationBidController,
 	maintenance.NewCorporationMaintenanceController,
 	guarantee.NewCorporationGuaranteeController,
+	blog.NewCorporationBlogController,
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
@@ -171,6 +185,7 @@ var AdminControllerProviderSet = wire.NewSet(
 	ticket.NewAdminTicketController,
 	user.NewAdminUserController,
 	report.NewAdminReportController,
+	news.NewAdminNewsController,
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -322,6 +337,8 @@ type GeneralControllers struct {
 	CorporationController  *corporation.GeneralCorporationController
 	NotificationController *notification.GeneralNotificationController
 	InstallationController *installation.GeneralInstallationController
+	NewsController         *news.GeneralNewsController
+	BlogController         *blog.GeneralBlogController
 }
 
 type CustomerControllers struct {
@@ -335,6 +352,7 @@ type CustomerControllers struct {
 	MaintenanceController  *maintenance.CustomerMaintenanceController
 	TicketController       *ticket.CustomerTicketController
 	ReportController       *report.CustomerReportController
+	BlogController         *blog.CustomerBlogController
 }
 
 type CorporationControllers struct {
@@ -344,12 +362,14 @@ type CorporationControllers struct {
 	BidController          *bid.CorporationBidController
 	MaintenanceController  *maintenance.CorporationMaintenanceController
 	GuaranteeController    *guarantee.CorporationGuaranteeController
+	BlogController         *blog.CorporationBlogController
 }
 
 type AdminControllers struct {
 	TicketController *ticket.AdminTicketController
 	UserController   *user.AdminUserController
 	ReportController *report.AdminReportController
+	NewsController   *news.AdminNewsController
 }
 
 type Controllers struct {
