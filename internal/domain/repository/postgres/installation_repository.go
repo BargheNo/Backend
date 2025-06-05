@@ -9,12 +9,18 @@ import (
 type InstallationRepository interface {
 	FindRequestByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...QueryModifier) []*entity.InstallationRequest
 	FindRequestByID(db database.Database, requestID uint) (*entity.InstallationRequest, bool)
+	FindRequestByOwner(db database.Database, requestID, ownerID uint) (*entity.InstallationRequest, bool)
 	FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, opts ...QueryModifier) []*entity.InstallationRequest
 	FindOwnerRequestByName(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, name string) (*entity.InstallationRequest, bool)
+	FindCorporationPanel(db database.Database, panelID, corporationID uint) (*entity.Panel, bool)
+	FindCorporationPanels(db database.Database, corporationID uint, allowedStatus []enum.PanelStatus, opts ...QueryModifier) []*entity.Panel
+	FindCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, opts ...QueryModifier) []*entity.Panel
+	FindCustomerPanel(db database.Database, panelID, customerID uint) (*entity.Panel, bool)
 	CreateRequest(db database.Database, request *entity.InstallationRequest) error
-	CreatePanel(db database.Database, panel *entity.Panel) error
-	FindCorporationPanels(db database.Database, corporationID uint, opts ...QueryModifier) []*entity.Panel
-	FindCustomerPanels(db database.Database, customerID uint, opts ...QueryModifier) []*entity.Panel
+	UpdateRequest(db database.Database, request *entity.InstallationRequest) error
 	FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool)
+	FindPanelByOwner(db database.Database, panelID, customerID uint) (*entity.Panel, bool)
 	FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool)
+	CreatePanel(db database.Database, panel *entity.Panel) error
+	UpdatePanel(db database.Database, panel *entity.Panel) error
 }

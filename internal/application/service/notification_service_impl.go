@@ -87,7 +87,9 @@ func (notificationService *NotificationService) enrichBidData(rawData []byte) (m
 	if err := json.Unmarshal(rawData, &bidData); err != nil {
 		return nil, err
 	}
-	bid := notificationService.bidService.GetBid(bidData.BidID)
+
+	requestInfo := biddto.GetCustomerBidRequest(bidData)
+	bid := notificationService.bidService.GetRequestAnonymousBid(requestInfo)
 
 	bidBytes, err := json.Marshal(bid)
 	if err != nil {

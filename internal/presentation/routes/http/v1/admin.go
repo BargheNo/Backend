@@ -15,6 +15,32 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		ticket.POST("/:ticketID/resolve", app.Controllers.Admin.TicketController.ResolveTicket)
 	}
 
+	installations := routerGroup.Group("/installation")
+	{
+		requests := installations.Group("/request")
+		{
+			requests.GET("")
+			requestSubGroup := requests.Group("/:requestID")
+			{
+				requestSubGroup.GET("")
+				requestSubGroup.DELETE("")
+				requestSubGroup.PUT("")
+				requestSubGroup.GET("/bid")
+			}
+		}
+	}
+
+	bids := routerGroup.Group("/bids")
+	{
+		bids.GET("")
+		bidsSubGroup := bids.Group("/:bidID")
+		{
+			bidsSubGroup.GET("")
+			bidsSubGroup.PUT("")
+			bidsSubGroup.DELETE("")
+		}
+	}
+
 	accessManagement := routerGroup.Group("")
 	// accessManagement.Use(app.Middlewares.Auth.RequirePermission([]enums.PermissionType{enums.ManageUsers, enums.ManageRoles}))
 	{

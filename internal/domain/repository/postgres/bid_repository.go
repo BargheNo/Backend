@@ -8,9 +8,12 @@ import (
 
 type BidRepository interface {
 	CreateBid(db database.Database, bid *entity.Bid) error
-	FindBidByID(db database.Database, id uint) (*entity.Bid, bool)
-	FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint, status []enum.BidStatus) (*entity.Bid, bool)
 	DeleteBidByID(db database.Database, id uint) error
-	FindCorporationBids(db database.Database, corporationID uint, offset int, pageSize int) []*entity.Bid
-	FindRequestBids(db database.Database, requestID uint) []*entity.Bid
+	FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint, status []enum.BidStatus) (*entity.Bid, bool)
+	FindBidByID(db database.Database, id uint) (*entity.Bid, bool)
+	FindCorporationBid(db database.Database, bidID uint, corporationID uint) (*entity.Bid, bool)
+	FindCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, opts ...QueryModifier) []*entity.Bid
+	FindRequestBid(db database.Database, bidID uint, requestID uint) (*entity.Bid, bool)
+	FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, opts ...QueryModifier) []*entity.Bid
+	UpdateBid(db database.Database, bid *entity.Bid) error
 }

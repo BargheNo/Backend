@@ -19,4 +19,5 @@ type Corporation struct {
 	ContactInformation     []ContactInformation   `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Addresses              []Address              `gorm:"polymorphic:Owner;polymorphicValue:corporations"`
 	Bids                   []Bid                  `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Guarantees             []Guarantee            `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

@@ -64,7 +64,6 @@ type ErrorField struct {
 	NotificationType    string
 	Notification        string
 	NotificationSetting string
-	PanelName           string
 	Panel               string
 	MaintenanceRequest  string
 	MaintenanceRecord   string
@@ -74,6 +73,9 @@ type ErrorField struct {
 	TicketComment       string
 	Report              string
 	ContactInformation  string
+	PaymentTerm         string
+	Guarantee           string
+	GuaranteeViolation  string
 	News                string
 	Media               string
 	Blog                string
@@ -92,6 +94,7 @@ type ErrorTag struct {
 	Invalid                string
 	NotRegistered          string
 	NotVerified            string
+	NotActive              string
 	InvalidAuthCredentials string
 	ExpiredAuthToken       string
 	InvalidAuthToken       string
@@ -105,6 +108,11 @@ type ErrorTag struct {
 	AlreadyBlocked         string
 	AlreadyActive          string
 	AlreadyResolved        string
+	AlreadyArchived        string
+	StatusNotChange        string
+	AlreadyCanceled        string
+	AlreadyRejected        string
+	AlreadyAccepted        string
 	AlreadyDraft           string
 }
 
@@ -228,7 +236,6 @@ func NewConstants() *Constants {
 			Room:                "room",
 			NotificationType:    "notificationType",
 			Notification:        "notification",
-			PanelName:           "panelName",
 			Panel:               "panel",
 			MaintenanceRequest:  "maintenanceRequest",
 			MaintenanceRecord:   "maintenanceRecord",
@@ -239,6 +246,9 @@ func NewConstants() *Constants {
 			Report:              "report",
 			ContactInformation:  "contactInformation",
 			NotificationSetting: "notificationSetting",
+			PaymentTerm:         "paymentTerm",
+			Guarantee:           "guarantee",
+			GuaranteeViolation:  "guaranteeViolation",
 			News:                "news",
 			Media:               "media",
 			Blog:                "blog",
@@ -256,6 +266,7 @@ func NewConstants() *Constants {
 			Invalid:                "invalid",
 			NotRegistered:          "notRegistered",
 			NotVerified:            "notVerified",
+			NotActive:              "notActive",
 			InvalidAuthCredentials: "invalidAuthCredentials",
 			ExpiredAuthToken:       "expiredAuthToken",
 			InvalidAuthToken:       "invalidAuthToken",
@@ -269,6 +280,11 @@ func NewConstants() *Constants {
 			AlreadyBlocked:         "alreadyBlocked",
 			AlreadyActive:          "alreadyActive",
 			AlreadyResolved:        "alreadyResolved",
+			AlreadyArchived:        "alreadyArchived",
+			StatusNotChange:        "statusNotChange",
+			AlreadyCanceled:        "alreadyCanceled",
+			AlreadyRejected:        "alreadyRejected",
+			AlreadyAccepted:        "alreadyAccepted",
 			AlreadyDraft:           "alreadyDraft",
 		},
 		SMSTemplates: SMSTemplates{

@@ -70,7 +70,7 @@ func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 
 	tickets := ticketController.ticketService.GetCustomerTickets(listInfo)
 
-	controller.Response(ctx, 200, "success", tickets)
+	controller.Response(ctx, 200, "", tickets)
 }
 
 func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) {

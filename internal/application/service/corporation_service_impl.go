@@ -97,6 +97,7 @@ func (corporationService *CorporationService) ISCorporationApproved(corporationI
 	return isApproved
 }
 
+// TODO: need to change check applicant access to only one function and if it was failed got 404 not found
 func (corporationService *CorporationService) CheckApplicantAccess(corporationID, applicantID uint) {
 	_, exist := corporationService.corporationRepository.FindCorporationStaff(corporationService.db, applicantID, corporationID)
 	if !exist {

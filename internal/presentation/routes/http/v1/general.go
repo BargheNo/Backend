@@ -6,6 +6,8 @@ import (
 )
 
 func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
+	const status string = "/status"
+
 	auth := routerGroup.Group("/auth")
 	{
 		auth.POST("/register/basic", app.Controllers.General.UserController.BasicRegister)
@@ -32,18 +34,37 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		notifications.GET("/type", app.Controllers.General.NotificationController.GetContactTypes)
 	}
 
-	news := routerGroup.Group("/news")
+	installations := routerGroup.Group("/installation")
 	{
-		news.GET("", app.Controllers.General.NewsController.GetNewsList)
-		news.GET("/:newsID", app.Controllers.General.NewsController.GetNews)
-		news.GET("/:newsID/media/:mediaID", app.Controllers.General.NewsController.GetNewsMedia)
+		requests := installations.Group("/request")
+		{
+			requests.GET(status, app.Controllers.General.InstallationController.GetRequestStatuses)
+			requests.GET("/building", app.Controllers.General.InstallationController.GetBuildingTypes)
+		}
 	}
 
-	blog := routerGroup.Group("/blog")
+	guarantees := routerGroup.Group("/guarantee")
 	{
-		blog.GET("", app.Controllers.General.BlogController.GetPosts)
-		blog.GET("/corporation/:corporationID", app.Controllers.General.BlogController.GetCorporationPosts)
-		blog.GET("/:postID", app.Controllers.General.BlogController.GetPost)
-		blog.GET("/:postID/media/:mediaID", app.Controllers.General.BlogController.GetPostMedia)
+		guarantees.GET(status, app.Controllers.Corporation.GuaranteeController.GetGuaranteeStatuses)
+	}
+
+	maintenances := routerGroup.Group("/maintenance")
+	{
+		maintenances.GET(status, app.Controllers.Customer.MaintenanceController.GetMaintenanceStatuses)
+
+		news := routerGroup.Group("/news")
+		{
+			news.GET("", app.Controllers.General.NewsController.GetNewsList)
+			news.GET("/:newsID", app.Controllers.General.NewsController.GetNews)
+			news.GET("/:newsID/media/:mediaID", app.Controllers.General.NewsController.GetNewsMedia)
+		}
+
+		blog := routerGroup.Group("/blog")
+		{
+			blog.GET("", app.Controllers.General.BlogController.GetPosts)
+			blog.GET("/corporation/:corporationID", app.Controllers.General.BlogController.GetCorporationPosts)
+			blog.GET("/:postID", app.Controllers.General.BlogController.GetPost)
+			blog.GET("/:postID/media/:mediaID", app.Controllers.General.BlogController.GetPostMedia)
+		}
 	}
 }

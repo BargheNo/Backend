@@ -11,7 +11,7 @@ type InstallationRequest struct {
 	Status       enum.InstallationRequestStatus `gorm:"not null"`
 	PowerRequest uint                           `gorm:"not null"`
 	Description  string                         `gorm:"type:text"`
-	BuildingType string                         `gorm:"type:varchar(50);not null"`
+	BuildingType enum.BuildingType              `gorm:"not null"`
 	OwnerID      uint                           `gorm:"index"`
 	Owner        User                           `gorm:"foreignKey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Address      Address                        `gorm:"polymorphic:Owner;polymorphicValue:installation_requests"`

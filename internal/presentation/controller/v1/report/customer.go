@@ -30,6 +30,7 @@ func (reportController *CustomerReportController) CreateMaintenanceReport(ctx *g
 	}
 	params := controller.Validated[createMaintenanceReportRequest](ctx)
 	userID, _ := ctx.Get(reportController.constants.Context.ID)
+
 	requestInfo := reportdto.CreateReportRequest{
 		ObjectID:       params.RecordID,
 		ObjectType:     reportController.constants.ReportObjectTypes.Maintenance,
@@ -37,13 +38,11 @@ func (reportController *CustomerReportController) CreateMaintenanceReport(ctx *g
 		ReportedByType: reportController.constants.ReportOwners.User,
 		Description:    params.Description,
 	}
-
 	reportController.reportService.CreateMaintenanceReport(requestInfo)
 
 	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createReport")
 	controller.Response(ctx, 200, message, nil)
-
 }
 
 func (reportController *CustomerReportController) CreatePanelReport(ctx *gin.Context) {
@@ -53,6 +52,7 @@ func (reportController *CustomerReportController) CreatePanelReport(ctx *gin.Con
 	}
 	params := controller.Validated[createPanelReportRequest](ctx)
 	userID, _ := ctx.Get(reportController.constants.Context.ID)
+
 	requestInfo := reportdto.CreateReportRequest{
 		ObjectID:       params.PanelID,
 		ObjectType:     reportController.constants.ReportObjectTypes.Panel,
@@ -60,7 +60,6 @@ func (reportController *CustomerReportController) CreatePanelReport(ctx *gin.Con
 		ReportedByType: reportController.constants.ReportOwners.User,
 		Description:    params.Description,
 	}
-
 	reportController.reportService.CreatePanelReport(requestInfo)
 
 	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
