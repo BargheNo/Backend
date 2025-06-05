@@ -23,4 +23,5 @@ type CorporationService interface {
 	GetUserCorporations(userID uint) []corporationdto.CorporationCredentialResponse
 	GetAvailableCorporations() []corporationdto.CorporationCredentialResponse
 	GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) []corporationdto.CorporationCredentialResponse
+	GetCorporationByAdmin(corporationID uint) corporationdto.CorporationPrivateInfoResponse
 }
