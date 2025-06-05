@@ -156,3 +156,8 @@ func (m *CorporationRepositoryMock) DeleteContactInfo(db database.Database, cont
 	args := m.Called(db, contact)
 	return args.Error(0)
 }
+
+func (m *CorporationRepositoryMock) CreateReview(db database.Database, review *entity.CorporationReview) error {
+	args := m.Called(db, review)
+	return args.Error(0)
+}

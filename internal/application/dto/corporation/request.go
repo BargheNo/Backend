@@ -89,3 +89,11 @@ type GetCorporationsByAdminRequest struct {
 	Limit  int
 	Offset int
 }
+
+type HandleCorporationActionRequest struct {
+	CorporationID uint
+	ReviewerID    uint
+	ActionID      uint
+	Reason        *string
+	Notes         *string
+}

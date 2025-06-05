@@ -285,3 +285,7 @@ func (repo *CorporationRepository) FindCorporationReviews(db database.Database, 
 	}
 	return reviews
 }
+
+func (repo *CorporationRepository) CreateReview(db database.Database, review *entity.CorporationReview) error {
+	return db.GetDB().Create(review).Error
+}

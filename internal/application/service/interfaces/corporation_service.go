@@ -26,4 +26,6 @@ type CorporationService interface {
 	GetCorporationByAdmin(corporationID uint) corporationdto.CorporationPrivateInfoResponse
 	GetReviewActions() []corporationdto.GetStatusesResponse
 	GetCorporationReviewsByAdmin(corporationID uint) []corporationdto.GetAdminCorporationReview
+	ApproveCorporationRegistration(request corporationdto.HandleCorporationActionRequest)
+	RejectCorporationRegistration(request corporationdto.HandleCorporationActionRequest)
 }

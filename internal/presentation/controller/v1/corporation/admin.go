@@ -4,6 +4,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -78,9 +79,48 @@ func (corporationController *AdminCorporationController) GetCorporationReviews(c
 }
 
 func (corporationController *AdminCorporationController) ApproveCorporationRequest(ctx *gin.Context) {
-	// some codes here ...
+	type approveCorporationParams struct {
+		CorporationID uint    `uri:"corporationID" validate:"required"`
+		Reason        *string `json:"reason"`
+		Notes         *string `json:"notes"`
+	}
+	params := controller.Validated[approveCorporationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	request := corporationdto.HandleCorporationActionRequest{
+		CorporationID: params.CorporationID,
+		ReviewerID:    userID.(uint),
+		ActionID:      uint(enum.ReviewActionApproved),
+		Reason:        params.Reason,
+		Notes:         params.Notes,
+	}
+	corporationController.corporationService.ApproveCorporationRegistration(request)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.approveCorporation")
+	controller.Response(ctx, 200, message, nil)
 }
 
 func (corporationController *AdminCorporationController) RejectCorporationRequest(ctx *gin.Context) {
-	// some codes here ...
+	type approveCorporationParams struct {
+		CorporationID uint    `uri:"corporationID" validate:"required"`
+		ActionID      uint    `json:"action" validate:"required"`
+		Reason        *string `json:"reason"`
+		Notes         *string `json:"notes"`
+	}
+	params := controller.Validated[approveCorporationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	request := corporationdto.HandleCorporationActionRequest{
+		CorporationID: params.CorporationID,
+		ReviewerID:    userID.(uint),
+		ActionID:      params.ActionID,
+		Reason:        params.Reason,
+		Notes:         params.Notes,
+	}
+	corporationController.corporationService.RejectCorporationRegistration(request)
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.rejectCorporation")
+	controller.Response(ctx, 200, message, nil)
 }

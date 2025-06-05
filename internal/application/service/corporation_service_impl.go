@@ -637,3 +637,90 @@ func (corporationService *CorporationService) GetCorporationReviewsByAdmin(corpo
 	}
 	return response
 }
+
+func (corporationService *CorporationService) ApproveCorporationRegistration(request corporationdto.HandleCorporationActionRequest) {
+	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, request.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+
+	var conflictErrors exception.ConflictErrors
+	if corporation.Status == enum.CorpStatusApproved {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyAccepted)
+		panic(conflictErrors)
+	} else if corporation.Status == enum.CorpStatusRejected {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyRejected)
+		panic(conflictErrors)
+	} else if corporation.Status != enum.CorpStatusAwaitingApproval {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.ForbiddenStatus)
+		panic(conflictErrors)
+	}
+
+	review := &entity.CorporationReview{
+		CorporationID: request.CorporationID,
+		ReviewerID:    request.ReviewerID,
+		Action:        enum.ReviewActionApproved,
+		Reason:        request.Reason,
+		Notes:         request.Notes,
+	}
+	if err := corporationService.corporationRepository.CreateReview(corporationService.db, review); err != nil {
+		panic(err)
+	}
+
+	corporation.Status = enum.CorpStatusApproved
+	if err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation); err != nil {
+		panic(err)
+	}
+}
+
+func (corporationService *CorporationService) RejectCorporationRegistration(request corporationdto.HandleCorporationActionRequest) {
+	corporation, exist := corporationService.corporationRepository.FindCorporationByID(corporationService.db, request.CorporationID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		panic(notFoundError)
+	}
+
+	if enum.ReviewAction(request.ActionID) == enum.ReviewActionApproved {
+		forbiddenError := exception.ForbiddenError{
+			Message:  "",
+			Resource: corporationService.constants.Field.CorporationReview,
+		}
+		panic(forbiddenError)
+	}
+
+	var conflictErrors exception.ConflictErrors
+	if corporation.Status == enum.CorpStatusApproved {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyAccepted)
+		panic(conflictErrors)
+	} else if corporation.Status == enum.CorpStatusRejected {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyRejected)
+		panic(conflictErrors)
+	} else if corporation.Status != enum.CorpStatusAwaitingApproval {
+		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.ForbiddenStatus)
+		panic(conflictErrors)
+	}
+
+	review := &entity.CorporationReview{
+		CorporationID: request.CorporationID,
+		ReviewerID:    request.ReviewerID,
+		Action:        enum.ReviewAction(request.ActionID),
+		Reason:        request.Reason,
+		Notes:         request.Notes,
+	}
+	if err := corporationService.corporationRepository.CreateReview(corporationService.db, review); err != nil {
+		panic(err)
+	}
+
+	var corpStatus enum.CorporationStatus
+	if enum.ReviewAction(request.ActionID) == enum.ReviewActionSuspended {
+		corpStatus = enum.CorpStatusSuspend
+	} else {
+		corpStatus = enum.CorpStatusRejected
+	}
+
+	corporation.Status = corpStatus
+	if err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation); err != nil {
+		panic(err)
+	}
+}

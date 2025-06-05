@@ -45,6 +45,7 @@ var Persian = map[string]interface{}{
 	"post":                "پست",
 	"like":                "لایک",
 	"unlike":              "حذف لایک",
+	"corporationReview":   "بازبینی شرکت",
 	"errors": map[string]interface{}{
 		"generic":                "خطایی رخ داده است، لطفا دوباره تلاش کنید.",
 		"numeric":                "`{0}` باید عدد باشد.",
@@ -164,6 +165,8 @@ var Persian = map[string]interface{}{
 		"unpublishPost":             "پست با موفقیت به حالت پیش نویس تغییر کرد.",
 		"likePost":                  "پست با موفقیت لایک شد.",
 		"unlikePost":                "لایک پست با موفقیت حذف شد.",
+		"approveCorporation":        "درخواست ثبت نام شرکت در سایت با موفقیت مورد قبول واقع شد.",
+		"rejectCorporation":         "درخواست ثبت نام شرکت در سایت رد شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",
