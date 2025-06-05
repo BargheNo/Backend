@@ -51,20 +51,25 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	maintenances := routerGroup.Group("/maintenance")
 	{
 		maintenances.GET(status, app.Controllers.Customer.MaintenanceController.GetMaintenanceStatuses)
+	}
 
-		news := routerGroup.Group("/news")
-		{
-			news.GET("", app.Controllers.General.NewsController.GetNewsList)
-			news.GET("/:newsID", app.Controllers.General.NewsController.GetNews)
-			news.GET("/:newsID/media/:mediaID", app.Controllers.General.NewsController.GetNewsMedia)
-		}
+	payments := routerGroup.Group("/payment")
+	{
+		payments.GET("method", app.Controllers.General.PaymentController.GetPaymentMethods)
+	}
 
-		blog := routerGroup.Group("/blog")
-		{
-			blog.GET("", app.Controllers.General.BlogController.GetPosts)
-			blog.GET("/corporation/:corporationID", app.Controllers.General.BlogController.GetCorporationPosts)
-			blog.GET("/:postID", app.Controllers.General.BlogController.GetPost)
-			blog.GET("/:postID/media/:mediaID", app.Controllers.General.BlogController.GetPostMedia)
-		}
+	news := routerGroup.Group("/news")
+	{
+		news.GET("", app.Controllers.General.NewsController.GetNewsList)
+		news.GET("/:newsID", app.Controllers.General.NewsController.GetNews)
+		news.GET("/:newsID/media/:mediaID", app.Controllers.General.NewsController.GetNewsMedia)
+	}
+
+	blogs := routerGroup.Group("/blog")
+	{
+		blogs.GET("", app.Controllers.General.BlogController.GetPosts)
+		blogs.GET("/corporation/:corporationID", app.Controllers.General.BlogController.GetCorporationPosts)
+		blogs.GET("/:postID", app.Controllers.General.BlogController.GetPost)
+		blogs.GET("/:postID/media/:mediaID", app.Controllers.General.BlogController.GetPostMedia)
 	}
 }

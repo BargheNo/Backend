@@ -145,7 +145,7 @@ func (bidController *CorporationBidController) UpdateBid(ctx *gin.Context) {
 
 	type updateBidParams struct {
 		CorporationID    uint          `uri:"corporationID" validate:"required"`
-		BidID            uint          `uri:"nidID" validate:"required"`
+		BidID            uint          `uri:"bidID" validate:"required"`
 		Cost             *uint         `json:"cost"`
 		Area             *uint         `json:"area"`
 		Power            *uint         `json:"power"`
@@ -188,7 +188,7 @@ func (bidController *CorporationBidController) UpdateBid(ctx *gin.Context) {
 func (bidController *CorporationBidController) CancelBid(ctx *gin.Context) {
 	type cancelBidParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		BidID         uint `json:"bidId" validate:"required"`
+		BidID         uint `uri:"bidID" validate:"required"`
 	}
 	params := controller.Validated[cancelBidParams](ctx)
 	userID, _ := ctx.Get(bidController.constants.Context.ID)

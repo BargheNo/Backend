@@ -511,7 +511,7 @@ func (installationService *InstallationService) GetCustomerPanel(panelInfo insta
 
 	var guarantee guaranteedto.GuaranteeResponse
 	var err error
-	if panel.Guarantee != nil {
+	if panel.GuaranteeID != nil {
 		guarantee, err = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
 		if err != nil {
 			panic(err)

@@ -28,6 +28,18 @@ func NewPaymentService(
 	}
 }
 
+func (paymentService *PaymentService) GetPaymentMethods() []paymentdto.PaymentMethodResponse {
+	methods := enum.GetAllPaymentMethods()
+	response := make([]paymentdto.PaymentMethodResponse, len(methods))
+	for i, method := range methods {
+		response[i] = paymentdto.PaymentMethodResponse{
+			ID:     uint(method),
+			Method: method.String(),
+		}
+	}
+	return response
+}
+
 func (paymentService *PaymentService) GetPaymentTerms(payTermID uint) (paymentdto.PaymentTermsResponse, error) {
 	paymentTerms, exist := paymentService.paymentRepository.FindPaymentTerms(paymentService.db, payTermID)
 	if !exist {

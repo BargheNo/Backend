@@ -32,5 +32,6 @@ func GetAllInstallationRequestStatuses() []InstallationRequestStatus {
 		InstallationRequestStatusExpired,
 		InstallationRequestStatusCancelled,
 		InstallationRequestStatusDone,
+		InstallationRequestStatusAll,
 	}
 }
