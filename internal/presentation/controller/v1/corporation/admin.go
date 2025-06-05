@@ -61,8 +61,20 @@ func (corporationController *AdminCorporationController) GetCorporation(ctx *gin
 	controller.Response(ctx, 200, "", corporation)
 }
 
-func (corporationController *AdminCorporationController) GetCorporationReview(ctx *gin.Context) {
-	// some codes here ...
+func (corporationController *AdminCorporationController) GetReviewActions(ctx *gin.Context) {
+	actions := corporationController.corporationService.GetReviewActions()
+	controller.Response(ctx, 200, "", actions)
+}
+
+func (corporationController *AdminCorporationController) GetCorporationReviews(ctx *gin.Context) {
+	type getCorporationsParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getCorporationsParams](ctx)
+
+	reviews := corporationController.corporationService.GetCorporationReviewsByAdmin(params.CorporationID)
+
+	controller.Response(ctx, 200, "", reviews)
 }
 
 func (corporationController *AdminCorporationController) ApproveCorporationRequest(ctx *gin.Context) {

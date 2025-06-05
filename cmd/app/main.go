@@ -41,6 +41,7 @@ func main() {
 		&entity.Guarantee{},
 		&entity.GuaranteeViolation{},
 		&entity.User{},
+		&entity.CorporationReview{},
 		&entity.Corporation{},
 		&entity.Signatory{},
 		&entity.ContactType{},

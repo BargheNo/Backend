@@ -83,9 +83,13 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		corporationSubGRoup := corporationManagement.Group("/:corporationID")
 		{
 			corporationSubGRoup.GET("", app.Controllers.Admin.CorporationController.GetCorporation)
-			corporationSubGRoup.GET("/review", app.Controllers.Admin.CorporationController.GetCorporationReview) // could ignore too just in case :)
 			corporationSubGRoup.POST("/approve", app.Controllers.Admin.CorporationController.ApproveCorporationRequest)
 			corporationSubGRoup.POST("/reject", app.Controllers.Admin.CorporationController.RejectCorporationRequest)
+			reviewSubGroup := corporationSubGRoup.Group("/review")
+			{
+				reviewSubGroup.GET("/action", app.Controllers.Admin.CorporationController.GetReviewActions)
+				reviewSubGroup.GET("", app.Controllers.Admin.CorporationController.GetCorporationReviews)
+			}
 		}
 	}
 

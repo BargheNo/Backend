@@ -6,7 +6,6 @@ const (
 	ReviewActionApproved ReviewAction = iota + 1
 	ReviewActionRejected
 	ReviewActionSuspended
-	ReviewActionAll
 )
 
 func (action ReviewAction) String() string {
@@ -17,8 +16,6 @@ func (action ReviewAction) String() string {
 		return "رد شده"
 	case ReviewActionSuspended:
 		return "معلق"
-	case ReviewActionAll:
-		return "همه"
 	}
 	return ""
 }
@@ -28,6 +25,5 @@ func GetAllReviewActions() []ReviewAction {
 		ReviewActionApproved,
 		ReviewActionRejected,
 		ReviewActionSuspended,
-		ReviewActionAll,
 	}
 }

@@ -59,11 +59,11 @@ func (corporationService *CorporationService) mapStatusIDToAllowedStatuses(statu
 	return allowedStatuses
 }
 
-func (corporationService *CorporationService) GetCorporationStatuses() []corporationdto.GetCorporationStatusesResponse {
+func (corporationService *CorporationService) GetCorporationStatuses() []corporationdto.GetStatusesResponse {
 	statuses := enum.GetAllCorporationStatuses()
-	response := make([]corporationdto.GetCorporationStatusesResponse, len(statuses))
+	response := make([]corporationdto.GetStatusesResponse, len(statuses))
 	for i, status := range statuses {
-		response[i] = corporationdto.GetCorporationStatusesResponse{
+		response[i] = corporationdto.GetStatusesResponse{
 			ID:     uint(status),
 			Status: status.String(),
 		}
@@ -607,4 +607,33 @@ func (corporationService *CorporationService) GetCorporationByAdmin(corporationI
 		panic(notFoundError)
 	}
 	return corporationService.getPrivateCorporationDetails(corporation)
+}
+
+func (corporationService *CorporationService) GetReviewActions() []corporationdto.GetStatusesResponse {
+	actions := enum.GetAllReviewActions()
+	response := make([]corporationdto.GetStatusesResponse, len(actions))
+	for i, action := range actions {
+		response[i] = corporationdto.GetStatusesResponse{
+			ID:     uint(action),
+			Status: action.String(),
+		}
+	}
+	return response
+}
+
+func (corporationService *CorporationService) GetCorporationReviewsByAdmin(corporationID uint) []corporationdto.GetAdminCorporationReview {
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	reviews := corporationService.corporationRepository.FindCorporationReviews(corporationService.db, corporationID, sortingModifier)
+
+	response := make([]corporationdto.GetAdminCorporationReview, len(reviews))
+	for i, review := range reviews {
+		operator := corporationService.userService.GetUserCredential(review.ReviewerID)
+		response[i] = corporationdto.GetAdminCorporationReview{
+			Reviewer: operator,
+			Action:   review.Action.String(),
+			Reason:   review.Reason,
+			Notes:    review.Notes,
+		}
+	}
+	return response
 }
