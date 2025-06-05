@@ -75,6 +75,20 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		userManagement.PUT("/:userID/unban", app.Controllers.Admin.UserController.UnbanUser)
 	}
 
+	corporationManagement := routerGroup.Group("/corporation")
+	// put some role here
+	{
+		corporationManagement.GET("", app.Controllers.Admin.CorporationController.GetCorporations)
+		corporationManagement.GET("/status", app.Controllers.Admin.CorporationController.GetCorporationStatus)
+		corporationSubGRoup := corporationManagement.Group("/:corporationID")
+		{
+			corporationSubGRoup.GET("", app.Controllers.Admin.CorporationController.GetCorporation)
+			corporationSubGRoup.GET("/review", app.Controllers.Admin.CorporationController.GetCorporationReview) // could ignore too just in case :)
+			corporationSubGRoup.POST("/approve", app.Controllers.Admin.CorporationController.ApproveCorporationRequest)
+			corporationSubGRoup.POST("/reject", app.Controllers.Admin.CorporationController.RejectCorporationRequest)
+		}
+	}
+
 	report := routerGroup.Group("/report")
 	{
 		report.GET("/maintenance", app.Controllers.Admin.ReportController.GetMaintenanceReports)
