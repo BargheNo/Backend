@@ -52,18 +52,19 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		maintenances.GET(status, app.Controllers.Customer.MaintenanceController.GetMaintenanceStatuses)
 
-	news := routerGroup.Group("/news")
-	{
-		news.GET("", app.Controllers.General.NewsController.GetNewsList)
-		news.GET("/:newsID", app.Controllers.General.NewsController.GetNews)
-		news.GET("/:newsID/media/:mediaID", app.Controllers.General.NewsController.GetNewsMedia)
-	}
+		news := routerGroup.Group("/news")
+		{
+			news.GET("", app.Controllers.General.NewsController.GetNewsList)
+			news.GET("/:newsID", app.Controllers.General.NewsController.GetNews)
+			news.GET("/:newsID/media/:mediaID", app.Controllers.General.NewsController.GetNewsMedia)
+		}
 
-	blog := routerGroup.Group("/blog")
-	{
-		blog.GET("", app.Controllers.General.BlogController.GetPosts)
-		blog.GET("/corporation/:corporationID", app.Controllers.General.BlogController.GetCorporationPosts)
-		blog.GET("/:postID", app.Controllers.General.BlogController.GetPost)
-		blog.GET("/:postID/media/:mediaID", app.Controllers.General.BlogController.GetPostMedia)
+		blog := routerGroup.Group("/blog")
+		{
+			blog.GET("", app.Controllers.General.BlogController.GetPosts)
+			blog.GET("/corporation/:corporationID", app.Controllers.General.BlogController.GetCorporationPosts)
+			blog.GET("/:postID", app.Controllers.General.BlogController.GetPost)
+			blog.GET("/:postID/media/:mediaID", app.Controllers.General.BlogController.GetPostMedia)
+		}
 	}
 }
