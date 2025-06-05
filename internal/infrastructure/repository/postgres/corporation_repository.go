@@ -270,3 +270,22 @@ func (repo *CorporationRepository) DeleteCorporationSignatories(db database.Data
 func (repo *CorporationRepository) DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error {
 	return db.GetDB().Delete(contact).Error
 }
+
+func (repo *CorporationRepository) FindCorporationReviews(db database.Database, corporationID uint, opts ...repository.QueryModifier) []*entity.CorporationReview {
+	var reviews []*entity.CorporationReview
+	query := db.GetDB().Where("corporation_id = ?", corporationID)
+
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+
+	result := query.Find(&reviews)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return reviews
+}
+
+func (repo *CorporationRepository) CreateReview(db database.Database, review *entity.CorporationReview) error {
+	return db.GetDB().Create(review).Error
+}

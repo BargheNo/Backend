@@ -31,10 +31,10 @@ func NewCorporationCorporationController(
 }
 
 func (corporationController *CorporationCorporationController) GetMyProfile(ctx *gin.Context) {
-	type GetCorporationParamsParams struct {
+	type getCorporationParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
-	params := controller.Validated[GetCorporationParamsParams](ctx)
+	params := controller.Validated[getCorporationParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
 	corporationRequest := corporationdto.CorporationDetailsRequest{
 		UserID:        userID.(uint),

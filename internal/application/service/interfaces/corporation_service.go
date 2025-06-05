@@ -5,6 +5,7 @@ import (
 )
 
 type CorporationService interface {
+	GetCorporationStatuses() []corporationdto.GetStatusesResponse
 	DoesCorporationExist(corporationID uint)
 	ISCorporationApproved(corporationID uint) bool
 	GetCorporationCredentials(corporationID uint) corporationdto.CorporationCredentialResponse
@@ -21,4 +22,10 @@ type CorporationService interface {
 	ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest)
 	GetUserCorporations(userID uint) []corporationdto.CorporationCredentialResponse
 	GetAvailableCorporations() []corporationdto.CorporationCredentialResponse
+	GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) []corporationdto.CorporationCredentialResponse
+	GetCorporationByAdmin(corporationID uint) corporationdto.CorporationPrivateInfoResponse
+	GetReviewActions() []corporationdto.GetStatusesResponse
+	GetCorporationReviewsByAdmin(corporationID uint) []corporationdto.GetAdminCorporationReview
+	ApproveCorporationRegistration(request corporationdto.HandleCorporationActionRequest)
+	RejectCorporationRegistration(request corporationdto.HandleCorporationActionRequest)
 }

@@ -31,7 +31,9 @@ type CorporationRepository interface {
 	FindUserCorporations(db database.Database, userID uint) []*entity.Corporation
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
 	FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) []*entity.Corporation
+	FindCorporationReviews(db database.Database, corporationID uint, opts ...QueryModifier) []*entity.CorporationReview
 	FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation
 	DeleteCorporationSignatories(db database.Database, corporationID uint) error
 	DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error
+	CreateReview(db database.Database, review *entity.CorporationReview) error
 }

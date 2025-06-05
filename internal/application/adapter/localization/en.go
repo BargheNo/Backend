@@ -45,6 +45,7 @@ var English = map[string]interface{}{
 	"post":                "post",
 	"like":                "like",
 	"unlike":              "unlike",
+	"corporationReview":   "corporation review",
 	"errors": map[string]interface{}{
 		"generic":                "an error occurred, please try again.",
 		"numeric":                "The {0} should be a numeric value.",
@@ -164,6 +165,8 @@ var English = map[string]interface{}{
 		"unpublishPost":              "Post has been successfully drafted.",
 		"likePost":                   "Post has been liked successfully.",
 		"unlikePost":                 "Post has been unliked successfully.",
+		"approveCorporation":         "The corporation register request has been approved successfully",
+		"rejectCorporation":          "The corporation register request has been rejected successfully",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

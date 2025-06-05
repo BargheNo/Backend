@@ -94,7 +94,9 @@ func (addressService *AddressService) GetAddresses(ownerAddressInfo addressdto.G
 		addresses[i] = addressdto.AddressResponse{
 			ID:            address.ID,
 			Province:      province.Name,
+			ProvinceID:    province.ID,
 			City:          city.Name,
+			CityID:        city.ID,
 			StreetAddress: address.StreetAddress,
 			PostalCode:    address.PostalCode,
 			HouseNumber:   address.HouseNumber,

@@ -137,6 +137,11 @@ func (m *CorporationRepositoryMock) FindCorporationsByStatus(db database.Databas
 	return args.Get(0).([]*entity.Corporation)
 }
 
+func (m *CorporationRepositoryMock) FindCorporationReviews(db database.Database, corporationID uint, opts ...repository.QueryModifier) []*entity.CorporationReview {
+	args := m.Called(db, corporationID, opts)
+	return args.Get(0).([]*entity.CorporationReview)
+}
+
 func (m *CorporationRepositoryMock) FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation {
 	args := m.Called(db, corporationID)
 	return args.Get(0).([]*entity.ContactInformation)
@@ -149,5 +154,10 @@ func (m *CorporationRepositoryMock) DeleteCorporationSignatories(db database.Dat
 
 func (m *CorporationRepositoryMock) DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error {
 	args := m.Called(db, contact)
+	return args.Error(0)
+}
+
+func (m *CorporationRepositoryMock) CreateReview(db database.Database, review *entity.CorporationReview) error {
+	args := m.Called(db, review)
 	return args.Error(0)
 }

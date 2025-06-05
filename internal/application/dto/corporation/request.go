@@ -83,3 +83,17 @@ type ChangeLogoRequest struct {
 	CorporationID uint
 	Logo          *multipart.FileHeader
 }
+
+type GetCorporationsByAdminRequest struct {
+	Status uint
+	Limit  int
+	Offset int
+}
+
+type HandleCorporationActionRequest struct {
+	CorporationID uint
+	ReviewerID    uint
+	ActionID      uint
+	Reason        *string
+	Notes         *string
+}
