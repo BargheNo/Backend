@@ -30,3 +30,8 @@ type CorporationBidResponse struct {
 	PaymentTerms        paymentdto.PaymentTermsResponse           `json:"paymentTerms"`
 	Guarantee           guaranteedto.GuaranteeResponse            `json:"guarantee"`
 }
+
+type GetBidStatusesResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}

@@ -4,7 +4,7 @@ import userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 
 type GuaranteeResponse struct {
 	ID             uint                    `json:"id"`
-	Name           string                  `json:"string"`
+	Name           string                  `json:"name"`
 	Status         string                  `json:"status"`
 	GuaranteeType  string                  `json:"guaranteeType"`
 	DurationMonths uint                    `json:"durationMonths"`

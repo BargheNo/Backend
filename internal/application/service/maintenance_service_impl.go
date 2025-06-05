@@ -102,7 +102,6 @@ func (maintenanceService *MaintenanceService) GetRequestByAdmin(recordID uint) (
 	return response, nil
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) mapStatusForRole(statusID uint, agent enum.AgentType) []enum.MaintenanceRequestStatus {
 	status := enum.MaintenanceRequestStatus(statusID)
 
@@ -119,7 +118,6 @@ func (maintenanceService *MaintenanceService) mapStatusForRole(statusID uint, ag
 	return allowedStatuses
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) GetMaintenanceUrgencyLevels() []maintenancedto.MaintenanceStatusesResponse {
 	levels := enum.GetAllUrgencyLevels()
 	response := make([]maintenancedto.MaintenanceStatusesResponse, len(levels))
@@ -132,7 +130,6 @@ func (maintenanceService *MaintenanceService) GetMaintenanceUrgencyLevels() []ma
 	return response
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) GetMaintenanceRequestStatuses(agent enum.AgentType) []maintenancedto.MaintenanceStatusesResponse {
 	statuses := enum.GetAllowedMaintenanceRequestStatuses(agent)
 	response := make([]maintenancedto.MaintenanceStatusesResponse, len(statuses))
@@ -145,7 +142,6 @@ func (maintenanceService *MaintenanceService) GetMaintenanceRequestStatuses(agen
 	return response
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request maintenancedto.CreateMaintenanceRequest) {
 	if exist := maintenanceService.userService.IsUserActive(request.OwnerID); !exist {
 		forbiddenError := exception.ForbiddenError{
@@ -190,7 +186,6 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 	}
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) []maintenancedto.CustomerMaintenanceRequestResponse {
 	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
 
@@ -224,7 +219,6 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 	return response
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequests(listInfo maintenancedto.CustomerPanelMaintenanceListRequest) []maintenancedto.CustomerMaintenanceRequestResponse {
 	if err := maintenanceService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID); err != nil {
 		panic(err)
@@ -262,7 +256,6 @@ func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequest
 	return response
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) maintenancedto.CustomerMaintenanceRequestResponse {
 	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
 	if !exist {
@@ -315,7 +308,6 @@ func (maintenanceService *MaintenanceService) getCustomerMaintenanceRecord(reque
 	return recordResponse, nil
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) UpdateMaintenanceRequest(updateRequest maintenancedto.UpdateCustomerRequest) {
 	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, updateRequest.RequestID)
 	if !exist {
@@ -364,7 +356,6 @@ func (maintenanceService *MaintenanceService) UpdateMaintenanceRequest(updateReq
 	}
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) CancelMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) {
 	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
 	if !exist {
@@ -393,7 +384,6 @@ func (maintenanceService *MaintenanceService) CancelMaintenanceRequest(maintenan
 	}
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) {
 	maintenanceRequest, exist := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
 	if !exist {
@@ -425,7 +415,6 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 	}
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) []maintenancedto.CorporationMaintenanceListResponse {
 	maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
 
@@ -459,7 +448,6 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 	return response
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) maintenancedto.CorporationMaintenanceResponse {
 	maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
 
@@ -491,7 +479,6 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(m
 	}
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) getCorporationMaintenanceRecord(requestID, panelID uint) (maintenancedto.CorporationMaintenanceRecordResponse, error) {
 	record, exist := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, requestID)
 	if !exist {
@@ -569,7 +556,6 @@ func (maintenanceService *MaintenanceService) RejectMaintenanceRequest(maintenan
 	}
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo maintenancedto.CreateMaintenanceRecordRequest) {
 	maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
 
@@ -617,7 +603,6 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo
 	}
 }
 
-// CHECKED
 func (maintenanceService *MaintenanceService) UpdateMaintenanceRecord(recordInfo maintenancedto.UpdateMaintenanceRecordRequest) {
 	maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
 

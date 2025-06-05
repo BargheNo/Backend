@@ -27,7 +27,6 @@ func NewCustomerMaintenanceController(
 	}
 }
 
-// CHECKED
 func (maintenanceController *CustomerMaintenanceController) GetMaintenanceUrgencyLevels(ctx *gin.Context) {
 	levels := maintenanceController.maintenanceService.GetMaintenanceUrgencyLevels()
 
@@ -40,7 +39,6 @@ func (maintenanceController *CustomerMaintenanceController) GetMaintenanceStatus
 	controller.Response(ctx, 200, "", statuses)
 }
 
-// CHECKED
 func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceRequest(ctx *gin.Context) {
 	type maintenanceRequestParams struct {
 		PanelID          uint   `json:"panelID" validate:"required"`
@@ -69,7 +67,6 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 	controller.Response(ctx, 201, message, nil)
 }
 
-// CHECKED
 func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
 		Status uint `form:"status" validate:"required"`
@@ -91,7 +88,6 @@ func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceReq
 	controller.Response(ctx, 200, "", requests)
 }
 
-// CHECKED
 func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
 		PanelID uint `uri:"panelID" validate:"required"`
@@ -115,7 +111,6 @@ func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceR
 	controller.Response(ctx, 200, "", requests)
 }
 
-// CHECKED
 func (maintenanceController *CustomerMaintenanceController) GetMaintenanceRequest(ctx *gin.Context) {
 	type maintenanceRequestParams struct {
 		RequestID uint `uri:"requestID" validate:"required"`
@@ -132,7 +127,6 @@ func (maintenanceController *CustomerMaintenanceController) GetMaintenanceReques
 	controller.Response(ctx, 200, "", request)
 }
 
-// CHECKED
 func (maintenanceController *CustomerMaintenanceController) UpdateMaintenanceRequest(ctx *gin.Context) {
 	type updateMaintenanceRequestParams struct {
 		RequestID        uint    `uri:"requestID" validate:"required"`
@@ -159,7 +153,6 @@ func (maintenanceController *CustomerMaintenanceController) UpdateMaintenanceReq
 	controller.Response(ctx, 201, message, nil)
 }
 
-// CHECKED
 func (maintenanceController *CustomerMaintenanceController) CancelMaintenanceRequest(ctx *gin.Context) {
 	type cancelMaintenanceRequestParams struct {
 		RequestID uint `uri:"requestID" validate:"required"`
@@ -178,7 +171,6 @@ func (maintenanceController *CustomerMaintenanceController) CancelMaintenanceReq
 	controller.Response(ctx, 201, message, nil)
 }
 
-// CHECKED
 func (maintenanceController *CustomerMaintenanceController) ApproveMaintenanceRecord(ctx *gin.Context) {
 	type cancelMaintenanceRequestParams struct {
 		RequestID uint `uri:"requestID" validate:"required"`

@@ -53,7 +53,7 @@ func (paymentService *PaymentService) GetPaymentTerms(payTermID uint) (paymentdt
 	}
 
 	if paymentTerms.PaymentMethod == enum.PaymentMethodInstallment {
-		installmentPlan, exist := paymentService.paymentRepository.FindInstallmentPlan(paymentService.db, payTermID)
+		installmentPlan, exist := paymentService.paymentRepository.FindPaymentTermInstallmentPlan(paymentService.db, payTermID)
 		if !exist {
 			notFoundError := exception.NotFoundError{Item: paymentService.constants.Field.PaymentTerm}
 			return response, notFoundError
@@ -101,10 +101,13 @@ func (paymentService *PaymentService) UpdatePaymentTerms(updatePaymentRequest pa
 		notFoundError := exception.NotFoundError{Item: paymentService.constants.Field.PaymentTerm}
 		return notFoundError
 	}
+
 	if updatePaymentRequest.PaymentMethod != nil {
 		terms.PaymentMethod = enum.PaymentMethod(*updatePaymentRequest.PaymentMethod)
 	}
+
 	if updatePaymentRequest.InstallmentPlan != nil {
+		updatePaymentRequest.InstallmentPlan.PaymentTermsID = terms.ID
 		if err := paymentService.updateInstallmentPlan(*updatePaymentRequest.InstallmentPlan); err != nil {
 			return err
 		}
@@ -113,7 +116,7 @@ func (paymentService *PaymentService) UpdatePaymentTerms(updatePaymentRequest pa
 }
 
 func (paymentService *PaymentService) updateInstallmentPlan(updateInstallmentPlan paymentdto.UpdateInstallmentPlanRequest) error {
-	plan, exist := paymentService.paymentRepository.FindInstallmentPlan(paymentService.db, updateInstallmentPlan.PaymentTermsID)
+	plan, exist := paymentService.paymentRepository.FindPaymentTermInstallmentPlan(paymentService.db, updateInstallmentPlan.PaymentTermsID)
 	if !exist {
 		notFoundError := exception.NotFoundError{Item: paymentService.constants.Field.PaymentTerm}
 		return notFoundError

@@ -42,7 +42,7 @@ func (guaranteeService *GuaranteeService) ValidateActiveGuaranteeOwnerShip(guara
 		return notFoundError
 	}
 
-	if guarantee.Status == enum.GuaranteeStatusActive {
+	if guarantee.Status != enum.GuaranteeStatusActive {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(guaranteeService.constants.Field.Guarantee, guaranteeService.constants.Tag.NotActive)
 		return conflictErrors

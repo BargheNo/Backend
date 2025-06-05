@@ -7,7 +7,7 @@ import (
 
 type PaymentRepository interface {
 	FindPaymentTerms(db database.Database, payTermID uint) (*entity.PaymentTerm, bool)
-	FindInstallmentPlan(db database.Database, payTermID uint) (*entity.InstallmentPlan, bool)
+	FindPaymentTermInstallmentPlan(db database.Database, payTermID uint) (*entity.InstallmentPlan, bool)
 	CreatePaymentTerms(db database.Database, paymentTerms *entity.PaymentTerm) error
 	CreateInstallmentPlan(db database.Database, plan *entity.InstallmentPlan) error
 	UpdatePaymentTerms(db database.Database, paymentTerms *entity.PaymentTerm) error

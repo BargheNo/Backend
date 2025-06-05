@@ -30,6 +30,12 @@ func NewCorporationBidController(
 	}
 }
 
+func (bidController *CorporationBidController) GetBidStatuses(ctx *gin.Context) {
+	statuses := bidController.bidService.GetBidStatuses()
+
+	controller.Response(ctx, 200, "", statuses)
+}
+
 func (bidController *CorporationBidController) SetBid(ctx *gin.Context) {
 	type installmentPlan struct {
 		NumberOfMonths    uint   `json:"numberOfMonths" validate:"required"`
@@ -157,6 +163,24 @@ func (bidController *CorporationBidController) UpdateBid(ctx *gin.Context) {
 	params := controller.Validated[updateBidParams](ctx)
 	userID, _ := ctx.Get(bidController.constants.Context.ID)
 
+	var paymentTermsParams *paymentdto.UpdatePaymentTermsRequest = nil
+	if params.PaymentTerms != nil {
+		var installmentPlanParams *paymentdto.UpdateInstallmentPlanRequest = nil
+		if params.PaymentTerms.InstallmentPlan != nil {
+			installmentPlanParams = &paymentdto.UpdateInstallmentPlanRequest{
+				NumberOfMonths:    params.PaymentTerms.InstallmentPlan.NumberOfMonths,
+				DownPaymentAmount: params.PaymentTerms.InstallmentPlan.DownPaymentAmount,
+				MonthlyAmount:     params.PaymentTerms.InstallmentPlan.MonthlyAmount,
+				Notes:             params.PaymentTerms.InstallmentPlan.Notes,
+			}
+		}
+
+		paymentTermsParams = &paymentdto.UpdatePaymentTermsRequest{
+			PaymentMethod:   params.PaymentTerms.PaymentMethod,
+			InstallmentPlan: installmentPlanParams,
+		}
+	}
+
 	updateBidInfo := biddto.UpdateBidRequest{
 		CorporationID:    params.CorporationID,
 		BidID:            params.BidID,
@@ -167,15 +191,7 @@ func (bidController *CorporationBidController) UpdateBid(ctx *gin.Context) {
 		Description:      params.Description,
 		InstallationTime: params.InstallationTime,
 		GuaranteeID:      params.GuaranteeID,
-		PaymentTerms: &paymentdto.UpdatePaymentTermsRequest{
-			PaymentMethod: params.PaymentTerms.PaymentMethod,
-			InstallmentPlan: &paymentdto.UpdateInstallmentPlanRequest{
-				NumberOfMonths:    params.PaymentTerms.InstallmentPlan.NumberOfMonths,
-				DownPaymentAmount: params.PaymentTerms.InstallmentPlan.DownPaymentAmount,
-				MonthlyAmount:     params.PaymentTerms.InstallmentPlan.MonthlyAmount,
-				Notes:             params.PaymentTerms.InstallmentPlan.Notes,
-			},
-		},
+		PaymentTerms:     paymentTermsParams,
 	}
 	bidController.bidService.UpdateBid(updateBidInfo)
 
@@ -184,7 +200,6 @@ func (bidController *CorporationBidController) UpdateBid(ctx *gin.Context) {
 	controller.Response(ctx, 200, message, nil)
 }
 
-// CHECK THIS AGAIN LATER
 func (bidController *CorporationBidController) CancelBid(ctx *gin.Context) {
 	type cancelBidParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
