@@ -122,6 +122,11 @@ func (m *CorporationRepositoryMock) FindContactTypes(db database.Database) []*en
 	return args.Get(0).([]*entity.ContactType)
 }
 
+func (m *CorporationRepositoryMock) FindUserCorporations(db database.Database, userID uint) []*entity.Corporation {
+	args := m.Called(db, userID)
+	return args.Get(0).([]*entity.Corporation)
+}
+
 func (m *CorporationRepositoryMock) UpdateCorporation(db database.Database, corporation *entity.Corporation) error {
 	args := m.Called(db, corporation)
 	return args.Error(0)

@@ -241,6 +241,19 @@ func (repo *CorporationRepository) FindCorporationsByStatus(db database.Database
 	return corporations
 }
 
+func (repo *CorporationRepository) FindUserCorporations(db database.Database, userID uint) []*entity.Corporation {
+	var corporations []*entity.Corporation
+	result := db.GetDB().
+		Joins("JOIN corporation_staffs ON corporation_staffs.corporation_id = corporations.id").
+		Where("corporation_staffs.staff_id = ?", userID).
+		Find(&corporations)
+
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return corporations
+}
+
 func (repo *CorporationRepository) FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation {
 	var contactInfo []*entity.ContactInformation
 	result := db.GetDB().Where(queryByCorporationID, corporationID).Find(&contactInfo)

@@ -28,6 +28,7 @@ type CorporationRepository interface {
 	FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, bool)
 	FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool)
 	FindCorporationSignatories(db database.Database, corporationID uint) []*entity.Signatory
+	FindUserCorporations(db database.Database, userID uint) []*entity.Corporation
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
 	FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) []*entity.Corporation
 	FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation

@@ -30,6 +30,13 @@ func NewCustomerCorporationController(
 	}
 }
 
+func (corporationController *CustomerCorporationController) GetUserCorporations(ctx *gin.Context) {
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+	corporationInfo := corporationController.corporationService.GetUserCorporations(userID.(uint))
+
+	controller.Response(ctx, 200, "", corporationInfo)
+}
+
 func (corporationController *CustomerCorporationController) Register(ctx *gin.Context) {
 	type signatory struct {
 		Name               string `json:"name" validate:"required"`

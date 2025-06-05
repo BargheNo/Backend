@@ -531,6 +531,16 @@ func (corporationService *CorporationService) GetCorporationByIDAndStatus(corpor
 	return corporationService.getCorporationByIDAndStatus(corporationID, status)
 }
 
+func (corporationService *CorporationService) GetUserCorporations(userID uint) []corporationdto.CorporationCredentialResponse {
+	corporations := corporationService.corporationRepository.FindUserCorporations(corporationService.db, userID)
+
+	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
+	for i, corporation := range corporations {
+		response[i] = corporationService.GetCorporationCredentials(corporation.ID)
+	}
+	return response
+}
+
 func (corporationService *CorporationService) GetAvailableCorporations() []corporationdto.CorporationCredentialResponse {
 	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
 	corporations := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses)

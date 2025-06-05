@@ -17,6 +17,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	corps := routerGroup.Group("/corps")
 	{
+		corps.GET("", app.Controllers.Customer.CorporationController.GetUserCorporations)
 		registration := corps.Group("/registration")
 		{
 			registration.POST("/basic", app.Controllers.Customer.CorporationController.Register)
@@ -80,12 +81,6 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			requestsSubGroup.PUT("", app.Controllers.Customer.MaintenanceController.UpdateMaintenanceRequest)
 			requestsSubGroup.PUT("/cancel", app.Controllers.Customer.MaintenanceController.CancelMaintenanceRequest)
 			requestsSubGroup.PUT("record/approve", app.Controllers.Customer.MaintenanceController.ApproveMaintenanceRecord)
-			// records := requestsSubGroup.Group("/record")
-			// {
-			// 	// records.GET("") // i think we can ignore this for now :)
-			// 	// records.PUT("/:recordID/approve") // can ignore recordID part :)
-			// 	// records.PUT("/approve")
-			// }
 		}
 	}
 
