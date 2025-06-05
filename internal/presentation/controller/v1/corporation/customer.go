@@ -268,18 +268,3 @@ func (corporationController *CustomerCorporationController) SubmitCertificateFil
 	message, _ := trans.Translate("successMessage.addCorporationCertificate")
 	controller.Response(ctx, 200, message, nil)
 }
-
-func (corporationController *CustomerCorporationController) GetCorporations(ctx *gin.Context) {
-	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-
-	pagination := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
-	corporationRequest := corporationdto.CorporationListRequest{
-		UserID: userID.(uint),
-		Offset: offset,
-		Limit:  limit,
-	}
-
-	corporations := corporationController.corporationService.GetCorporations(corporationRequest)
-	controller.Response(ctx, 200, "", corporations)
-}

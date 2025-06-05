@@ -17,7 +17,6 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	corps := routerGroup.Group("/corps")
 	{
-		corps.GET("/list", app.Controllers.Customer.CorporationController.GetCorporations)
 		registration := corps.Group("/registration")
 		{
 			registration.POST("/basic", app.Controllers.Customer.CorporationController.Register)

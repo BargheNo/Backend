@@ -19,5 +19,5 @@ type CorporationService interface {
 	GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) corporationdto.CorporationPrivateInfoResponse
 	GetContactTypes() []corporationdto.ContactTypeResponse
 	ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest)
-	GetCorporations(requestInfo corporationdto.CorporationListRequest) []corporationdto.CorporationCredentialResponse
+	GetAvailableCorporations() []corporationdto.CorporationCredentialResponse
 }
