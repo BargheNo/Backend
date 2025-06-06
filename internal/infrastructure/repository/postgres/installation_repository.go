@@ -88,6 +88,10 @@ func (repo *InstallationRepository) UpdateRequest(db database.Database, request 
 	return db.GetDB().Save(&request).Error
 }
 
+func (repo *InstallationRepository) DeleteRequest(db database.Database, request *entity.InstallationRequest) error {
+	return db.GetDB().Delete(&request).Error
+}
+
 func (repo *InstallationRepository) FindCorporationPanel(db database.Database, panelID, corporationID uint) (*entity.Panel, bool) {
 	var panel *entity.Panel
 	result := db.GetDB().Where("id = ? and corporation_id = ?", panelID, corporationID).First(&panel)

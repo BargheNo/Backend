@@ -18,6 +18,7 @@ type InstallationRepository interface {
 	FindCustomerPanel(db database.Database, panelID, customerID uint) (*entity.Panel, bool)
 	CreateRequest(db database.Database, request *entity.InstallationRequest) error
 	UpdateRequest(db database.Database, request *entity.InstallationRequest) error
+	DeleteRequest(db database.Database, request *entity.InstallationRequest) error
 	FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool)
 	FindPanelByOwner(db database.Database, panelID, customerID uint) (*entity.Panel, bool)
 	FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool)

@@ -370,6 +370,18 @@ func (installationService *InstallationService) UpdateInstallationRequestByAdmin
 	}
 }
 
+func (installationService *InstallationService) DeleteInstallationRequest(requestID uint) {
+	installationRequest, exist := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+		panic(notFoundError)
+	}
+
+	if err := installationService.installationRepository.DeleteRequest(installationService.db, installationRequest); err != nil {
+		panic(err)
+	}
+}
+
 func (installationService *InstallationService) ValidatePanelOwnership(panelID, userID uint) error {
 	_, exist := installationService.installationRepository.FindPanelByOwner(installationService.db, panelID, userID)
 	if !exist {

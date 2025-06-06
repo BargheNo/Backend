@@ -85,3 +85,16 @@ func (installationController *AdminInstallationController) UpdateInstallationReq
 	message, _ := trans.Translate("successMessage.updateInstallationRequest")
 	controller.Response(ctx, 201, message, nil)
 }
+
+func (installationController *AdminInstallationController) DeleteInstallationRequest(ctx *gin.Context) {
+	type installationRequestParams struct {
+		RequestID uint `uri:"requestID" validate:"required"`
+	}
+	params := controller.Validated[installationRequestParams](ctx)
+
+	installationController.installationService.DeleteInstallationRequest(params.RequestID)
+
+	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deleteInstallationRequest")
+	controller.Response(ctx, 200, message, nil)
+}
