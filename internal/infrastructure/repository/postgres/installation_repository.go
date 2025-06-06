@@ -38,7 +38,7 @@ func (repo *InstallationRepository) FindRequestByOwner(db database.Database, req
 	return request, true
 }
 
-func (repo *InstallationRepository) FindRequestByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) []*entity.InstallationRequest {
+func (repo *InstallationRepository) FindRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) []*entity.InstallationRequest {
 	var requests []*entity.InstallationRequest
 	query := db.GetDB().Where("status IN ?", status)
 

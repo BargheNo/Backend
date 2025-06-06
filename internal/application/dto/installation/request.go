@@ -19,8 +19,14 @@ type NewInstallationRequest struct {
 	Address      addressdto.CreateAddressRequest
 }
 
-type RequestsListRequest struct {
+type CustomerRequestsListRequest struct {
 	OwnerID uint
+	Status  uint
+	Offset  int
+	Limit   int
+}
+
+type AdminRequestsListRequest struct {
 	Status  uint
 	Offset  int
 	Limit   int

@@ -21,9 +21,10 @@ type InstallationService interface {
 	GetCustomerPanelGuaranteeViolation(violationInfo installationdto.GetCustomerGuaranteeViolationRequest) (guaranteedto.CustomerGuaranteeViolationResponse, error)
 	GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelListResponse
 	GetOwnerInstallationRequest(request installationdto.GetOwnerRequest) installationdto.AnonymousRequestsResponse
-	GetOwnerInstallationRequests(request installationdto.RequestsListRequest) []installationdto.AnonymousRequestsResponse
+	GetOwnerInstallationRequests(request installationdto.CustomerRequestsListRequest) []installationdto.AnonymousRequestsResponse
 	GetPanelByAdmin(panelID uint) installationdto.AdminPanelResponse
 	GetPublicInstallationRequest(requestID uint) installationdto.PublicRequestDetailsResponse
+	GetInstallationRequestsByAdmin(request installationdto.AdminRequestsListRequest) []installationdto.PublicRequestDetailsResponse
 	GetRequestStatuses() []installationdto.EnumStatusResponse
 	UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest)
 	ValidatePanelGuarantee(panelID uint) error

@@ -16,7 +16,7 @@ func NewInstallationRepositoryMock() *InstallationRepositoryMock {
 	return &InstallationRepositoryMock{}
 }
 
-func (repo *InstallationRepositoryMock) FindRequestByStatus(db database.Database, status []enum.InstallationRequestStatus, modifiers ...repository.QueryModifier) []*entity.InstallationRequest {
+func (repo *InstallationRepositoryMock) FindRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus, modifiers ...repository.QueryModifier) []*entity.InstallationRequest {
 	args := repo.Called(db, status)
 	return args.Get(0).([]*entity.InstallationRequest)
 }

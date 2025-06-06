@@ -145,7 +145,7 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 	}
 }
 
-func (installationService *InstallationService) GetOwnerInstallationRequests(request installationdto.RequestsListRequest) []installationdto.AnonymousRequestsResponse {
+func (installationService *InstallationService) GetOwnerInstallationRequests(request installationdto.CustomerRequestsListRequest) []installationdto.AnonymousRequestsResponse {
 	status := enum.InstallationRequestStatus(request.Status)
 	allowedStatus := []enum.InstallationRequestStatus{status}
 	if status == enum.InstallationRequestStatusAll {
@@ -222,7 +222,7 @@ func (installationService *InstallationService) GetAnonymousInstallationRequests
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
-	installationRequests := installationService.installationRepository.FindRequestByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)
+	installationRequests := installationService.installationRepository.FindRequestsByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)
 	response := make([]installationdto.AnonymousRequestsResponse, len(installationRequests))
 
 	for i, installationRequest := range installationRequests {
@@ -283,6 +283,39 @@ func (installationService *InstallationService) GetPublicInstallationRequest(req
 		Customer:     customer,
 		Address:      address,
 	}
+}
+
+func (installationService *InstallationService) GetInstallationRequestsByAdmin(request installationdto.AdminRequestsListRequest) []installationdto.PublicRequestDetailsResponse {
+	allowedStatuses := []enum.InstallationRequestStatus{enum.InstallationRequestStatus(request.Status)}
+	if enum.InstallationRequestStatus(request.Status) == enum.InstallationRequestStatusAll {
+		allowedStatuses = enum.GetAllInstallationRequestStatuses()
+	}
+
+	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	installationRequests := installationService.installationRepository.FindRequestsByStatus(installationService.db, allowedStatuses, sortingModifier, paginationModifier)
+	response := make([]installationdto.PublicRequestDetailsResponse, len(installationRequests))
+
+	for i, installationRequest := range installationRequests {
+		customer := installationService.userService.GetUserCredential(installationRequest.OwnerID)
+		address := installationService.addressService.GetAddress(installationRequest.ID, installationService.constants.AddressOwners.InstallationRequest)
+
+		response[i] = installationdto.PublicRequestDetailsResponse{
+			ID:           installationRequest.ID,
+			Name:         installationRequest.Name,
+			Status:       installationRequest.Status.String(),
+			PowerRequest: installationRequest.PowerRequest,
+			Description:  installationRequest.Description,
+			BuildingType: installationRequest.BuildingType.String(),
+			Area:         installationRequest.Area,
+			MaxCost:      installationRequest.MaxCost,
+			Customer:     customer,
+			Address:      address,
+		}
+	}
+
+	return response
 }
 
 func (installationService *InstallationService) CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest) {

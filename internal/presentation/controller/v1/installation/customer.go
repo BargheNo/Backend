@@ -78,7 +78,7 @@ func (installationController *CustomerInstallationController) GetInstallationReq
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(installationController.constants.Context.ID)
 
-	listInfo := installationdto.RequestsListRequest{
+	listInfo := installationdto.CustomerRequestsListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
 		Offset:  offset,
