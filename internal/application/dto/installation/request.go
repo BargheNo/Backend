@@ -37,7 +37,7 @@ type CustomerRequestsListRequest struct {
 	Limit   int
 }
 
-type AdminRequestsListRequest struct {
+type AdminInstallationListRequest struct {
 	Status uint
 	Offset int
 	Limit  int
@@ -125,4 +125,16 @@ type UpdateGuaranteeViolationRequest struct {
 	PanelID       uint
 	Reason        *string
 	Details       *string
+}
+
+type UpdatePanelRequest struct {
+	PanelID              uint
+	Name                 *string
+	Status               *uint
+	BuildingType         *uint
+	Area                 *uint
+	Power                *uint
+	Tilt                 *uint
+	Azimuth              *uint
+	TotalNumberOfModules *uint
 }

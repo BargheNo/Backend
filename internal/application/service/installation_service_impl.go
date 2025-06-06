@@ -285,7 +285,7 @@ func (installationService *InstallationService) GetPublicInstallationRequest(req
 	}
 }
 
-func (installationService *InstallationService) GetInstallationRequestsByAdmin(request installationdto.AdminRequestsListRequest) []installationdto.PublicRequestDetailsResponse {
+func (installationService *InstallationService) GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) []installationdto.PublicRequestDetailsResponse {
 	allowedStatuses := []enum.InstallationRequestStatus{enum.InstallationRequestStatus(request.Status)}
 	if enum.InstallationRequestStatus(request.Status) == enum.InstallationRequestStatusAll {
 		allowedStatuses = enum.GetAllInstallationRequestStatuses()
@@ -646,6 +646,99 @@ func (installationService *InstallationService) GetPanelByAdmin(panelID uint) in
 		Corporation:          corporation,
 		Address:              address,
 		Guarantee:            guarantee,
+	}
+}
+
+func (installationService *InstallationService) GetPanelsByAdmin(listInfo installationdto.AdminInstallationListRequest) []installationdto.AdminPanelResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	allowedStatus := []enum.PanelStatus{enum.PanelStatus(listInfo.Status)}
+	if enum.PanelStatus(listInfo.Status) == enum.PanelStatusAll {
+		allowedStatus = enum.GetAllPanelStatuses()
+	}
+
+	panels := installationService.installationRepository.FindPanelsByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)
+	response := make([]installationdto.AdminPanelResponse, len(panels))
+
+	for i, panel := range panels {
+		customer := installationService.userService.GetUserCredential(panel.CustomerID)
+		operator := installationService.userService.GetUserCredential(panel.OperatorID)
+		corporation := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
+		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+
+		var guarantee guaranteedto.GuaranteeResponse
+		if panel.Guarantee != nil {
+			guarantee, _ = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
+		}
+
+		response[i] = installationdto.AdminPanelResponse{
+			ID:                   panel.ID,
+			Name:                 panel.Name,
+			Status:               panel.Status.String(),
+			BuildingType:         panel.BuildingType.String(),
+			Area:                 panel.Area,
+			Power:                panel.Power,
+			Tilt:                 panel.Tilt,
+			Azimuth:              panel.Azimuth,
+			TotalNumberOfModules: panel.TotalNumberOfModules,
+			Operator:             operator,
+			Customer:             customer,
+			Corporation:          corporation,
+			Address:              address,
+			Guarantee:            guarantee,
+		}
+	}
+
+	return response
+}
+
+func (installationService *InstallationService) UpdatePanel(request installationdto.UpdatePanelRequest) {
+	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, request.PanelID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+
+	if request.Name != nil {
+		panel.Name = *request.Name
+	}
+	if request.Status != nil {
+		panel.Status = enum.PanelStatus(*request.Status)
+	}
+	if request.BuildingType != nil {
+		panel.BuildingType = enum.BuildingType(*request.BuildingType)
+	}
+	if request.Area != nil {
+		panel.Area = *request.Area
+	}
+	if request.Power != nil {
+		panel.Power = *request.Power
+	}
+	if request.Tilt != nil {
+		panel.Tilt = *request.Tilt
+	}
+	if request.Azimuth != nil {
+		panel.Azimuth = *request.Azimuth
+	}
+	if request.TotalNumberOfModules != nil {
+		panel.TotalNumberOfModules = *request.TotalNumberOfModules
+	}
+
+	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {
+		panic(err)
+	}
+}
+
+func (installationService *InstallationService) DeletePanel(panelID uint) {
+	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+
+	if err := installationService.installationRepository.DeletePanel(installationService.db, panel); err != nil {
+		panic(err)
 	}
 }
 

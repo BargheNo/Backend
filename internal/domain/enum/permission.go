@@ -104,7 +104,7 @@ var permissionNames = map[PermissionType]string{
 	PanelViewUsageData:         "panel.view_usage_data",
 	ChatViewAll:                "chat.view_all",
 	ChatSendMessage:            "chat.send_message",
-	SystemSettingsUpdate:       "systemsettings.update",
+	SystemSettingsUpdate:       "systemSettings.update",
 	RepairViewAll:              "repair.view_all",
 	RepairAssignExpert:         "repair.assign_expert",
 	RepairAcceptRequest:        "repair.accept_request",

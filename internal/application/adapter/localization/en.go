@@ -169,6 +169,7 @@ var English = map[string]interface{}{
 		"rejectCorporation":          "The corporation register request has been rejected successfully.",
 		"updateInstallationRequest":  "The installation request has been updated successfully.",
 		"deleteInstallationRequest":  "The installation request has been deleted successfully.",
+		"updatePanel":                "The panel has been updated.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

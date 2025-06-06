@@ -169,6 +169,7 @@ var Persian = map[string]interface{}{
 		"rejectCorporation":         "درخواست ثبت نام شرکت در سایت رد شد.",
 		"updateInstallationRequest": "درخواست نصب با موفقیت به روز رسانی شد.",
 		"deleteInstallationRequest": "درخواست نصب با موفقیت حذف شد.",
+		"updatePanel":               "پنل مورد نظر با موفقیت به روزرسانی شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

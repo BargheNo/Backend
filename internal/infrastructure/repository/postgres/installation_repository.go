@@ -129,6 +129,19 @@ func (repo *InstallationRepository) FindCorporationPanels(db database.Database, 
 	return panels
 }
 
+func (repo *InstallationRepository) FindPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus, opts ...repository.QueryModifier) []*entity.Panel {
+	var panels []*entity.Panel
+	query := db.GetDB().Where("status IN ?", allowedStatus)
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+	result := query.Find(&panels)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return panels
+}
+
 func (repo *InstallationRepository) FindCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, opts ...repository.QueryModifier) []*entity.Panel {
 	var panels []*entity.Panel
 	query := db.GetDB().Where("customer_id = ? AND status = ?", customerID, allowedStatus)
@@ -184,4 +197,8 @@ func (repo *InstallationRepository) CreatePanel(db database.Database, panel *ent
 
 func (repo *InstallationRepository) UpdatePanel(db database.Database, panel *entity.Panel) error {
 	return db.GetDB().Save(&panel).Error
+}
+
+func (repo *InstallationRepository) DeletePanel(db database.Database, panel *entity.Panel) error {
+	return db.GetDB().Delete(&panel).Error
 }

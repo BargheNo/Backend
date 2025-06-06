@@ -28,6 +28,17 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 				requestSubGroup.GET("/bid", app.Controllers.Admin.BidController.GetBids)
 			}
 		}
+
+		panels := installations.Group("/panel")
+		{
+			panels.GET("", app.Controllers.Admin.InstallationController.GetPanels)
+			panelsSubGroup := panels.Group("/:panelID")
+			{
+				panelsSubGroup.GET("", app.Controllers.Admin.InstallationController.GetPanel)
+				panelsSubGroup.PUT("", app.Controllers.Admin.InstallationController.UpdatePanel)
+				panelsSubGroup.DELETE("", app.Controllers.Admin.InstallationController.DeletePanel)
+			}
+		}
 	}
 
 	bids := routerGroup.Group("/bids")
