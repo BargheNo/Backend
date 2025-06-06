@@ -693,6 +693,55 @@ func (installationService *InstallationService) GetPanelsByAdmin(listInfo instal
 	return response
 }
 
+func (installationService *InstallationService) UpdatePanel(request installationdto.UpdatePanelRequest) {
+	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, request.PanelID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+
+	if request.Name != nil {
+		panel.Name = *request.Name
+	}
+	if request.Status != nil {
+		panel.Status = enum.PanelStatus(*request.Status)
+	}
+	if request.BuildingType != nil {
+		panel.BuildingType = enum.BuildingType(*request.BuildingType)
+	}
+	if request.Area != nil {
+		panel.Area = *request.Area
+	}
+	if request.Power != nil {
+		panel.Power = *request.Power
+	}
+	if request.Tilt != nil {
+		panel.Tilt = *request.Tilt
+	}
+	if request.Azimuth != nil {
+		panel.Azimuth = *request.Azimuth
+	}
+	if request.TotalNumberOfModules != nil {
+		panel.TotalNumberOfModules = *request.TotalNumberOfModules
+	}
+
+	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {
+		panic(err)
+	}
+}
+
+func (installationService *InstallationService) DeletePanel(panelID uint) {
+	panel, exist := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		panic(notFoundError)
+	}
+
+	if err := installationService.installationRepository.DeletePanel(installationService.db, panel); err != nil {
+		panic(err)
+	}
+}
+
 func (installationService *InstallationService) ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) uint {
 	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
 

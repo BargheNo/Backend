@@ -35,8 +35,8 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			panelsSubGroup := panels.Group("/:panelID")
 			{
 				panelsSubGroup.GET("", app.Controllers.Admin.InstallationController.GetPanel)
-				panelsSubGroup.PUT("")
-				panelsSubGroup.DELETE("")
+				panelsSubGroup.PUT("", app.Controllers.Admin.InstallationController.UpdatePanel)
+				panelsSubGroup.DELETE("", app.Controllers.Admin.InstallationController.DeletePanel)
 			}
 		}
 	}

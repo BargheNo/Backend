@@ -25,4 +25,5 @@ type InstallationRepository interface {
 	FindPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus, opts ...QueryModifier) []*entity.Panel
 	CreatePanel(db database.Database, panel *entity.Panel) error
 	UpdatePanel(db database.Database, panel *entity.Panel) error
+	DeletePanel(db database.Database, panel *entity.Panel) error
 }

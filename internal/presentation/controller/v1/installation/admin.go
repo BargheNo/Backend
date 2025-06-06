@@ -129,46 +129,46 @@ func (installationController *AdminInstallationController) GetPanel(ctx *gin.Con
 }
 
 func (installationController *AdminInstallationController) UpdatePanel(ctx *gin.Context) {
-	// type installationRequestParams struct {
-	// 	PanelID              uint    `uri:"panelID" validate:"required"`
-	// 	Name                 *string `json:"name"`
-	// 	Status               *uint   `json:"status"`
-	// 	BuildingType         *uint   `json:"buildingType"`
-	// 	Area                 *uint   `json:"area"`
-	// 	Power                *uint   `json:"power"`
-	// 	Tilt                 *uint   `json:"tilt"`
-	// 	Azimuth              *uint   `json:"azimuth"`
-	// 	TotalNumberOfModules *uint   `json:"totalNumberOfModules"`
-	// }
-	// params := controller.Validated[installationRequestParams](ctx)
+	type installationRequestParams struct {
+		PanelID              uint    `uri:"panelID" validate:"required"`
+		Name                 *string `json:"name"`
+		Status               *uint   `json:"status"`
+		BuildingType         *uint   `json:"buildingType"`
+		Area                 *uint   `json:"area"`
+		Power                *uint   `json:"power"`
+		Tilt                 *uint   `json:"tilt"`
+		Azimuth              *uint   `json:"azimuth"`
+		TotalNumberOfModules *uint   `json:"totalNumberOfModules"`
+	}
+	params := controller.Validated[installationRequestParams](ctx)
 
-	// requestInfo := installationdto.UpdatePanelRequest{
-	// 	PanelID:              params.PanelID,
-	// 	Name:                 params.Name,
-	// 	Status:               params.Status,
-	// 	BuildingType:         params.BuildingType,
-	// 	Area:                 params.Area,
-	// 	Power:                params.Power,
-	// 	Tilt:                 params.Tilt,
-	// 	Azimuth:              params.Azimuth,
-	// 	TotalNumberOfModules: params.TotalNumberOfModules,
-	// }
-	// installationController.installationService.
+	requestInfo := installationdto.UpdatePanelRequest{
+		PanelID:              params.PanelID,
+		Name:                 params.Name,
+		Status:               params.Status,
+		BuildingType:         params.BuildingType,
+		Area:                 params.Area,
+		Power:                params.Power,
+		Tilt:                 params.Tilt,
+		Azimuth:              params.Azimuth,
+		TotalNumberOfModules: params.TotalNumberOfModules,
+	}
+	installationController.installationService.UpdatePanel(requestInfo)
 
-	// trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
-	// message, _ := trans.Translate("successMessage.updatePanel")
-	// controller.Response(ctx, 201, message, nil)
+	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updatePanel")
+	controller.Response(ctx, 201, message, nil)
 }
 
 func (installationController *AdminInstallationController) DeletePanel(ctx *gin.Context) {
-	// type installationRequestParams struct {
-	// 	PanelID uint `uri:"panelID" validate:"required"`
-	// }
-	// params := controller.Validated[installationRequestParams](ctx)
+	type installationRequestParams struct {
+		PanelID uint `uri:"panelID" validate:"required"`
+	}
+	params := controller.Validated[installationRequestParams](ctx)
 
-	// installationController.installationService.
+	installationController.installationService.DeletePanel(params.PanelID)
 
-	// trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
-	// message, _ := trans.Translate("successMessage.deletePanel")
-	// controller.Response(ctx, 200, message, nil)
+	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.deletePanel")
+	controller.Response(ctx, 200, message, nil)
 }
