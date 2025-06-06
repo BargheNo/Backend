@@ -118,14 +118,14 @@ func (installationController *AdminInstallationController) GetPanels(ctx *gin.Co
 }
 
 func (installationController *AdminInstallationController) GetPanel(ctx *gin.Context) {
-	// type installationRequestParams struct {
-	// 	PanelID uint `uri:"panelID" validate:"required"`
-	// }
-	// params := controller.Validated[installationRequestParams](ctx)
+	type installationRequestParams struct {
+		PanelID uint `uri:"panelID" validate:"required"`
+	}
+	params := controller.Validated[installationRequestParams](ctx)
 
-	// installationRequest := installationController.installationService.
+	installationRequest := installationController.installationService.GetPanelByAdmin(params.PanelID)
 
-	// controller.Response(ctx, 200, "", installationRequest)
+	controller.Response(ctx, 200, "", installationRequest)
 }
 
 func (installationController *AdminInstallationController) UpdatePanel(ctx *gin.Context) {
