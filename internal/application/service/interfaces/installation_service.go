@@ -24,6 +24,7 @@ type InstallationService interface {
 	GetOwnerInstallationRequests(request installationdto.CustomerRequestsListRequest) []installationdto.AnonymousRequestsResponse
 	DeleteInstallationRequest(requestID uint)
 	GetPanelByAdmin(panelID uint) installationdto.AdminPanelResponse
+	GetPanelsByAdmin(listInfo installationdto.AdminInstallationListRequest) []installationdto.AdminPanelResponse
 	GetPublicInstallationRequest(requestID uint) installationdto.PublicRequestDetailsResponse
 	GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) []installationdto.PublicRequestDetailsResponse
 	GetRequestStatuses() []installationdto.EnumStatusResponse

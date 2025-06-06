@@ -649,6 +649,50 @@ func (installationService *InstallationService) GetPanelByAdmin(panelID uint) in
 	}
 }
 
+func (installationService *InstallationService) GetPanelsByAdmin(listInfo installationdto.AdminInstallationListRequest) []installationdto.AdminPanelResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	allowedStatus := []enum.PanelStatus{enum.PanelStatus(listInfo.Status)}
+	if enum.PanelStatus(listInfo.Status) == enum.PanelStatusAll {
+		allowedStatus = enum.GetAllPanelStatuses()
+	}
+
+	panels := installationService.installationRepository.FindPanelsByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)
+	response := make([]installationdto.AdminPanelResponse, len(panels))
+
+	for i, panel := range panels {
+		customer := installationService.userService.GetUserCredential(panel.CustomerID)
+		operator := installationService.userService.GetUserCredential(panel.OperatorID)
+		corporation := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
+		address := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+
+		var guarantee guaranteedto.GuaranteeResponse
+		if panel.Guarantee != nil {
+			guarantee, _ = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
+		}
+
+		response[i] = installationdto.AdminPanelResponse{
+			ID:                   panel.ID,
+			Name:                 panel.Name,
+			Status:               panel.Status.String(),
+			BuildingType:         panel.BuildingType.String(),
+			Area:                 panel.Area,
+			Power:                panel.Power,
+			Tilt:                 panel.Tilt,
+			Azimuth:              panel.Azimuth,
+			TotalNumberOfModules: panel.TotalNumberOfModules,
+			Operator:             operator,
+			Customer:             customer,
+			Corporation:          corporation,
+			Address:              address,
+			Guarantee:            guarantee,
+		}
+	}
+
+	return response
+}
+
 func (installationService *InstallationService) ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) uint {
 	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
 

@@ -22,6 +22,7 @@ type InstallationRepository interface {
 	FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool)
 	FindPanelByOwner(db database.Database, panelID, customerID uint) (*entity.Panel, bool)
 	FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool)
+	FindPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus, opts ...QueryModifier) []*entity.Panel
 	CreatePanel(db database.Database, panel *entity.Panel) error
 	UpdatePanel(db database.Database, panel *entity.Panel) error
 }

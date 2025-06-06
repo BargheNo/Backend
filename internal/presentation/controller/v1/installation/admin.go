@@ -100,21 +100,21 @@ func (installationController *AdminInstallationController) DeleteInstallationReq
 }
 
 func (installationController *AdminInstallationController) GetPanels(ctx *gin.Context) {
-	// type getPanelsParams struct {
-	// 	Status uint `form:"status" validate:"required"`
-	// }
-	// params := controller.Validated[getPanelsParams](ctx)
+	type getPanelsParams struct {
+		Status uint `form:"status" validate:"required"`
+	}
+	params := controller.Validated[getPanelsParams](ctx)
 
-	// pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
-	// offset, limit := pagination.GetOffsetLimit()
+	pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
 
-	// listInfo := installationdto.AdminInstallationListRequest{
-	// 	Status: params.Status,
-	// 	Offset: offset,
-	// 	Limit:  limit,
-	// }
-	// requests := installationController.installationService.
-	// controller.Response(ctx, 200, "", requests)
+	listInfo := installationdto.AdminInstallationListRequest{
+		Status: params.Status,
+		Offset: offset,
+		Limit:  limit,
+	}
+	requests := installationController.installationService.GetPanelsByAdmin(listInfo)
+	controller.Response(ctx, 200, "", requests)
 }
 
 func (installationController *AdminInstallationController) GetPanel(ctx *gin.Context) {
