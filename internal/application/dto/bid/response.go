@@ -3,6 +3,7 @@ package biddto
 import (
 	"time"
 
+	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	paymentdto "github.com/BargheNo/Backend/internal/application/dto/payment"
@@ -29,6 +30,18 @@ type CorporationBidResponse struct {
 	Status              string                                    `json:"status"`
 	PaymentTerms        paymentdto.PaymentTermsResponse           `json:"paymentTerms"`
 	Guarantee           guaranteedto.GuaranteeResponse            `json:"guarantee"`
+}
+
+type AdminBidResponse struct {
+	ID               uint                                         `json:"id"`
+	Corporation      corporationdto.CorporationCredentialResponse `json:"corporation"`
+	Bidder           userdto.CredentialResponse                   `json:"bidder"`
+	Description      string                                       `json:"description"`
+	Cost             uint                                         `json:"cost"`
+	InstallationTime time.Time                                    `json:"installationTime"`
+	Status           string                                       `json:"status"`
+	PaymentTerms     paymentdto.PaymentTermsResponse              `json:"paymentTerms"`
+	Guarantee        guaranteedto.GuaranteeResponse               `json:"guarantee"`
 }
 
 type GetBidStatusesResponse struct {

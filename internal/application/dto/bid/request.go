@@ -55,6 +55,12 @@ type GetListRequestBidsRequest struct {
 	Limit     int
 }
 
+type GetListRequestBidsRequestByAdmin struct {
+	RequestID uint
+	Offset    int
+	Limit     int
+}
+
 type GetCustomerBidRequest struct {
 	RequestID uint
 	BidID     uint

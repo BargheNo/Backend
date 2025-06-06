@@ -190,6 +190,7 @@ var AdminControllerProviderSet = wire.NewSet(
 	news.NewAdminNewsController,
 	corporation.NewAdminCorporationController,
 	installation.NewAdminInstallationController,
+	bid.NewAdminBidController,
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -377,6 +378,7 @@ type AdminControllers struct {
 	NewsController         *news.AdminNewsController
 	CorporationController  *corporation.AdminCorporationController
 	InstallationController *installation.AdminInstallationController
+	BidController          *bid.AdminBidController
 }
 
 type Controllers struct {

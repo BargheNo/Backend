@@ -12,6 +12,7 @@ type BidService interface {
 	GetCorporationBids(request biddto.GetCorporationBidsRequest) []biddto.CorporationBidResponse
 	GetRequestAnonymousBid(requestInfo biddto.GetCustomerBidRequest) biddto.AnonymousBidResponse
 	GetRequestAnonymousBids(requestInfo biddto.GetListRequestBidsRequest) []biddto.AnonymousBidResponse
+	GetRequestBidsByAdmin(requestInfo biddto.GetListRequestBidsRequestByAdmin) []biddto.AdminBidResponse
 	RejectBid(request biddto.GetCustomerBidRequest)
 	SetBid(bidInfo biddto.SetBidRequest)
 	UpdateBid(request biddto.UpdateBidRequest)
