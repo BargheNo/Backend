@@ -336,6 +336,40 @@ func (installationService *InstallationService) CompleteInstallationRequest(requ
 	}
 }
 
+func (installationService *InstallationService) UpdateInstallationRequestByAdmin(newRequest installationdto.UpdateInstallationRequest) {
+	installationRequest, exist := installationService.installationRepository.FindRequestByID(installationService.db, newRequest.RequestID)
+	if !exist {
+		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+		panic(notFoundError)
+	}
+
+	if newRequest.Name != nil {
+		installationRequest.Name = *newRequest.Name
+	}
+	if newRequest.Area != nil {
+		installationRequest.Area = *newRequest.Area
+	}
+	if newRequest.Power != nil {
+		installationRequest.PowerRequest = *newRequest.Power
+	}
+	if newRequest.MaxCost != nil {
+		installationRequest.MaxCost = *newRequest.MaxCost
+	}
+	if newRequest.BuildingType != nil {
+		installationRequest.BuildingType = enum.BuildingType(*newRequest.BuildingType)
+	}
+	if newRequest.Status != nil {
+		installationRequest.Status = enum.InstallationRequestStatus(*newRequest.Status)
+	}
+	if newRequest.Description != nil {
+		installationRequest.Description = *newRequest.Description
+	}
+
+	if err := installationService.installationRepository.UpdateRequest(installationService.db, installationRequest); err != nil {
+		panic(err)
+	}
+}
+
 func (installationService *InstallationService) ValidatePanelOwnership(panelID, userID uint) error {
 	_, exist := installationService.installationRepository.FindPanelByOwner(installationService.db, panelID, userID)
 	if !exist {

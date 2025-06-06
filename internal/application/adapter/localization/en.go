@@ -167,6 +167,7 @@ var English = map[string]interface{}{
 		"unlikePost":                 "Post has been unliked successfully.",
 		"approveCorporation":         "The corporation register request has been approved successfully",
 		"rejectCorporation":          "The corporation register request has been rejected successfully",
+		"updateInstallationRequest":  "The installation request has been updated successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

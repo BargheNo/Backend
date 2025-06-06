@@ -55,3 +55,33 @@ func (installationController *AdminInstallationController) GetInstallationReques
 
 	controller.Response(ctx, 200, "", installationRequest)
 }
+
+func (installationController *AdminInstallationController) UpdateInstallationRequest(ctx *gin.Context) {
+	type installationRequestParams struct {
+		RequestID    uint     `uri:"requestID" validate:"required"`
+		Name         *string  `json:"name"`
+		Area         *uint    `json:"area"`
+		Power        *uint    `json:"power"`
+		MaxCost      *float64 `json:"maxCost"`
+		BuildingType *uint    `json:"buildingType"`
+		Status       *uint    `json:"status"`
+		Description  *string  `json:"description"`
+	}
+	params := controller.Validated[installationRequestParams](ctx)
+
+	requestInfo := installationdto.UpdateInstallationRequest{
+		RequestID:    params.RequestID,
+		Name:         params.Name,
+		Area:         params.Area,
+		Power:        params.Power,
+		MaxCost:      params.MaxCost,
+		BuildingType: params.BuildingType,
+		Status:       params.Status,
+		Description:  params.Description,
+	}
+	installationController.installationService.UpdateInstallationRequestByAdmin(requestInfo)
+
+	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateInstallationRequest")
+	controller.Response(ctx, 201, message, nil)
+}
