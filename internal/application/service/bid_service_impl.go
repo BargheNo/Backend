@@ -110,6 +110,48 @@ func (bidService *BidService) GetRequestAnonymousBids(requestInfo biddto.GetList
 	return bidResponses
 }
 
+func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRequestBidsRequestByAdmin) []biddto.AdminBidResponse {
+	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
+	allowedStatus := enum.GetAllBidStatuses()
+
+	bids := bidService.bidRepository.FindRequestBids(bidService.db, requestInfo.RequestID, allowedStatus, paginationModifier, sortingModifier)
+	bidResponses := make([]biddto.AdminBidResponse, len(bids))
+
+	for i, bid := range bids {
+		paymentTerms, err := bidService.paymentService.GetPaymentTerms(bid.PaymentTermsID)
+		if err != nil {
+			panic(err)
+		}
+
+		var guarantee guaranteedto.GuaranteeResponse
+		if bid.GuaranteeID != nil {
+			guarantee, err = bidService.guaranteeService.GetGuarantee(*bid.GuaranteeID)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		bidder := bidService.userService.GetUserCredential(bid.BidderID)
+		corporation := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
+
+		bidResponses[i] = biddto.AdminBidResponse{
+			ID:               bid.ID,
+			Corporation:      corporation,
+			Bidder:           bidder,
+			Description:      bid.Description,
+			Cost:             bid.Cost,
+			InstallationTime: bid.InstallationTime,
+			Status:           bid.Status.String(),
+			PaymentTerms:     paymentTerms,
+			Guarantee:        guarantee,
+		}
+	}
+
+	return bidResponses
+}
+
 func (bidService *BidService) GetRequestAnonymousBid(requestInfo biddto.GetCustomerBidRequest) biddto.AnonymousBidResponse {
 	if _, err := bidService.installationService.ValidateRequestOwnership(requestInfo.RequestID, requestInfo.UserID); err != nil {
 		panic(err)

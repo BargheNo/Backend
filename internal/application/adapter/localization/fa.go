@@ -167,6 +167,8 @@ var Persian = map[string]interface{}{
 		"unlikePost":                "لایک پست با موفقیت حذف شد.",
 		"approveCorporation":        "درخواست ثبت نام شرکت در سایت با موفقیت مورد قبول واقع شد.",
 		"rejectCorporation":         "درخواست ثبت نام شرکت در سایت رد شد.",
+		"updateInstallationRequest": "درخواست نصب با موفقیت به روز رسانی شد.",
+		"deleteInstallationRequest": "درخواست نصب با موفقیت حذف شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

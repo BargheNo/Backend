@@ -38,7 +38,7 @@ func (repo *InstallationRepository) FindRequestByOwner(db database.Database, req
 	return request, true
 }
 
-func (repo *InstallationRepository) FindRequestByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) []*entity.InstallationRequest {
+func (repo *InstallationRepository) FindRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) []*entity.InstallationRequest {
 	var requests []*entity.InstallationRequest
 	query := db.GetDB().Where("status IN ?", status)
 
@@ -86,6 +86,10 @@ func (repo *InstallationRepository) CreateRequest(db database.Database, request 
 
 func (repo *InstallationRepository) UpdateRequest(db database.Database, request *entity.InstallationRequest) error {
 	return db.GetDB().Save(&request).Error
+}
+
+func (repo *InstallationRepository) DeleteRequest(db database.Database, request *entity.InstallationRequest) error {
+	return db.GetDB().Delete(&request).Error
 }
 
 func (repo *InstallationRepository) FindCorporationPanel(db database.Database, panelID, corporationID uint) (*entity.Panel, bool) {

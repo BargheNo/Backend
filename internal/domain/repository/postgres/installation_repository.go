@@ -7,7 +7,7 @@ import (
 )
 
 type InstallationRepository interface {
-	FindRequestByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...QueryModifier) []*entity.InstallationRequest
+	FindRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...QueryModifier) []*entity.InstallationRequest
 	FindRequestByID(db database.Database, requestID uint) (*entity.InstallationRequest, bool)
 	FindRequestByOwner(db database.Database, requestID, ownerID uint) (*entity.InstallationRequest, bool)
 	FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, opts ...QueryModifier) []*entity.InstallationRequest
@@ -18,6 +18,7 @@ type InstallationRepository interface {
 	FindCustomerPanel(db database.Database, panelID, customerID uint) (*entity.Panel, bool)
 	CreateRequest(db database.Database, request *entity.InstallationRequest) error
 	UpdateRequest(db database.Database, request *entity.InstallationRequest) error
+	DeleteRequest(db database.Database, request *entity.InstallationRequest) error
 	FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool)
 	FindPanelByOwner(db database.Database, panelID, customerID uint) (*entity.Panel, bool)
 	FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool)

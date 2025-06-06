@@ -19,13 +19,13 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		requests := installations.Group("/request")
 		{
-			requests.GET("")
+			requests.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequests)
 			requestSubGroup := requests.Group("/:requestID")
 			{
-				requestSubGroup.GET("")
-				requestSubGroup.DELETE("")
-				requestSubGroup.PUT("")
-				requestSubGroup.GET("/bid")
+				requestSubGroup.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequest)
+				requestSubGroup.DELETE("", app.Controllers.Admin.InstallationController.DeleteInstallationRequest)
+				requestSubGroup.PUT("", app.Controllers.Admin.InstallationController.UpdateInstallationRequest)
+				requestSubGroup.GET("/bid", app.Controllers.Admin.BidController.GetBids)
 			}
 		}
 	}
