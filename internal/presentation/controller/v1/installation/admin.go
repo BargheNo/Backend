@@ -35,7 +35,7 @@ func (installationController *AdminInstallationController) GetInstallationReques
 	pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 
-	listInfo := installationdto.AdminRequestsListRequest{
+	listInfo := installationdto.AdminInstallationListRequest{
 		Status: params.Status,
 		Offset: offset,
 		Limit:  limit,
@@ -97,4 +97,78 @@ func (installationController *AdminInstallationController) DeleteInstallationReq
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteInstallationRequest")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (installationController *AdminInstallationController) GetPanels(ctx *gin.Context) {
+	// type getPanelsParams struct {
+	// 	Status uint `form:"status" validate:"required"`
+	// }
+	// params := controller.Validated[getPanelsParams](ctx)
+
+	// pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
+	// offset, limit := pagination.GetOffsetLimit()
+
+	// listInfo := installationdto.AdminInstallationListRequest{
+	// 	Status: params.Status,
+	// 	Offset: offset,
+	// 	Limit:  limit,
+	// }
+	// requests := installationController.installationService.
+	// controller.Response(ctx, 200, "", requests)
+}
+
+func (installationController *AdminInstallationController) GetPanel(ctx *gin.Context) {
+	// type installationRequestParams struct {
+	// 	PanelID uint `uri:"panelID" validate:"required"`
+	// }
+	// params := controller.Validated[installationRequestParams](ctx)
+
+	// installationRequest := installationController.installationService.
+
+	// controller.Response(ctx, 200, "", installationRequest)
+}
+
+func (installationController *AdminInstallationController) UpdatePanel(ctx *gin.Context) {
+	// type installationRequestParams struct {
+	// 	PanelID              uint    `uri:"panelID" validate:"required"`
+	// 	Name                 *string `json:"name"`
+	// 	Status               *uint   `json:"status"`
+	// 	BuildingType         *uint   `json:"buildingType"`
+	// 	Area                 *uint   `json:"area"`
+	// 	Power                *uint   `json:"power"`
+	// 	Tilt                 *uint   `json:"tilt"`
+	// 	Azimuth              *uint   `json:"azimuth"`
+	// 	TotalNumberOfModules *uint   `json:"totalNumberOfModules"`
+	// }
+	// params := controller.Validated[installationRequestParams](ctx)
+
+	// requestInfo := installationdto.UpdatePanelRequest{
+	// 	PanelID:              params.PanelID,
+	// 	Name:                 params.Name,
+	// 	Status:               params.Status,
+	// 	BuildingType:         params.BuildingType,
+	// 	Area:                 params.Area,
+	// 	Power:                params.Power,
+	// 	Tilt:                 params.Tilt,
+	// 	Azimuth:              params.Azimuth,
+	// 	TotalNumberOfModules: params.TotalNumberOfModules,
+	// }
+	// installationController.installationService.
+
+	// trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	// message, _ := trans.Translate("successMessage.updatePanel")
+	// controller.Response(ctx, 201, message, nil)
+}
+
+func (installationController *AdminInstallationController) DeletePanel(ctx *gin.Context) {
+	// type installationRequestParams struct {
+	// 	PanelID uint `uri:"panelID" validate:"required"`
+	// }
+	// params := controller.Validated[installationRequestParams](ctx)
+
+	// installationController.installationService.
+
+	// trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
+	// message, _ := trans.Translate("successMessage.deletePanel")
+	// controller.Response(ctx, 200, message, nil)
 }

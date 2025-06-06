@@ -41,6 +41,17 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		}
 	}
 
+	panels := routerGroup.Group("/panel")
+	{
+		panels.GET("")
+		panelsSubGroup := panels.Group("/:panelID")
+		{
+			panelsSubGroup.GET("")
+			panelsSubGroup.PUT("")
+			panelsSubGroup.DELETE("")
+		}
+	}
+
 	accessManagement := routerGroup.Group("")
 	// accessManagement.Use(app.Middlewares.Auth.RequirePermission([]enums.PermissionType{enums.ManageUsers, enums.ManageRoles}))
 	{

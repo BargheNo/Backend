@@ -285,7 +285,7 @@ func (installationService *InstallationService) GetPublicInstallationRequest(req
 	}
 }
 
-func (installationService *InstallationService) GetInstallationRequestsByAdmin(request installationdto.AdminRequestsListRequest) []installationdto.PublicRequestDetailsResponse {
+func (installationService *InstallationService) GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) []installationdto.PublicRequestDetailsResponse {
 	allowedStatuses := []enum.InstallationRequestStatus{enum.InstallationRequestStatus(request.Status)}
 	if enum.InstallationRequestStatus(request.Status) == enum.InstallationRequestStatusAll {
 		allowedStatuses = enum.GetAllInstallationRequestStatuses()
