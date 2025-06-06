@@ -22,7 +22,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			requests.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequests)
 			requestSubGroup := requests.Group("/:requestID")
 			{
-				requestSubGroup.GET("")
+				requestSubGroup.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequest)
 				requestSubGroup.DELETE("")
 				requestSubGroup.PUT("")
 				requestSubGroup.GET("/bid")

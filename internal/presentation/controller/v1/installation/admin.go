@@ -44,3 +44,14 @@ func (installationController *AdminInstallationController) GetInstallationReques
 
 	controller.Response(ctx, 200, "", requests)
 }
+
+func (installationController *AdminInstallationController) GetInstallationRequest(ctx *gin.Context) {
+	type installationRequestParams struct {
+		RequestID uint `uri:"requestID" validate:"required"`
+	}
+	params := controller.Validated[installationRequestParams](ctx)
+
+	installationRequest := installationController.installationService.GetPublicInstallationRequest(params.RequestID)
+
+	controller.Response(ctx, 200, "", installationRequest)
+}

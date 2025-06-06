@@ -10,9 +10,9 @@ const (
 func (status UserStatus) String() string {
 	switch status {
 	case UserStatusActive:
-		return "active"
+		return "فعال"
 	case UserStatusBlock:
-		return "block"
+		return "لیست سیاه"
 	}
 	return ""
 }
