@@ -6,34 +6,34 @@ import (
 )
 
 type InstallationService interface {
-	AddPanel(panelInfo installationdto.AddPanelRequest)
-	ChangeInstallationRequestStatus(request installationdto.ChangeRequestStatusRequest)
-	ClearPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest)
-	CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest)
-	CreateInstallationRequest(request installationdto.NewInstallationRequest)
-	GetAnonymousInstallationRequest(request installationdto.CorporationPanelRequest) installationdto.AnonymousRequestsResponse
-	GetAnonymousInstallationRequests(request installationdto.CorporationPanelListRequest) []installationdto.AnonymousRequestsResponse
+	AddPanel(panelInfo installationdto.AddPanelRequest) error
+	ChangeInstallationRequestStatus(request installationdto.ChangeRequestStatusRequest) error
+	ClearPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) error
+	CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest) error
+	CreateInstallationRequest(request installationdto.NewInstallationRequest) error
+	GetAnonymousInstallationRequest(request installationdto.CorporationPanelRequest) (installationdto.AnonymousRequestsResponse, error)
+	GetAnonymousInstallationRequests(request installationdto.CorporationPanelListRequest) ([]installationdto.AnonymousRequestsResponse, error)
 	GetBuildingTypes() []installationdto.EnumStatusResponse
-	GetCorporationPanel(request installationdto.CorporationPanelRequest) installationdto.CorporationPanelResponse
+	GetCorporationPanel(request installationdto.CorporationPanelRequest) (installationdto.CorporationPanelResponse, error)
 	GetCorporationPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) (guaranteedto.CorporationGuaranteeViolationResponse, error)
-	GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) []installationdto.CorporationPanelListResponse
-	GetCustomerPanel(panelInfo installationdto.GetOwnerRequest) installationdto.CustomerPanelResponse
+	GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) ([]installationdto.CorporationPanelListResponse, error)
+	GetCustomerPanel(panelInfo installationdto.GetOwnerRequest) (installationdto.CustomerPanelResponse, error)
 	GetCustomerPanelGuaranteeViolation(violationInfo installationdto.GetCustomerGuaranteeViolationRequest) (guaranteedto.CustomerGuaranteeViolationResponse, error)
-	GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) []installationdto.CustomerPanelListResponse
-	GetOwnerInstallationRequest(request installationdto.GetOwnerRequest) installationdto.AnonymousRequestsResponse
-	GetOwnerInstallationRequests(request installationdto.CustomerRequestsListRequest) []installationdto.AnonymousRequestsResponse
-	DeleteInstallationRequest(requestID uint)
-	GetPanelByAdmin(panelID uint) installationdto.AdminPanelResponse
-	GetPanelsByAdmin(listInfo installationdto.AdminInstallationListRequest) []installationdto.AdminPanelResponse
-	GetPublicInstallationRequest(requestID uint) installationdto.PublicRequestDetailsResponse
-	GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) []installationdto.PublicRequestDetailsResponse
-	UpdatePanel(request installationdto.UpdatePanelRequest)
-	DeletePanel(panelID uint)
+	GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) ([]installationdto.CustomerPanelListResponse, error)
+	GetOwnerInstallationRequest(request installationdto.GetOwnerRequest) (installationdto.AnonymousRequestsResponse, error)
+	GetOwnerInstallationRequests(request installationdto.CustomerRequestsListRequest) ([]installationdto.AnonymousRequestsResponse, error)
+	DeleteInstallationRequest(requestID uint) error
+	GetPanelByAdmin(panelID uint) (installationdto.AdminPanelResponse, error)
+	GetPanelsByAdmin(listInfo installationdto.AdminInstallationListRequest) ([]installationdto.AdminPanelResponse, error)
+	GetPublicInstallationRequest(requestID uint) (installationdto.PublicRequestDetailsResponse, error)
+	GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) ([]installationdto.PublicRequestDetailsResponse, error)
+	UpdatePanel(request installationdto.UpdatePanelRequest) error
+	DeletePanel(panelID uint) error
 	GetRequestStatuses() []installationdto.EnumStatusResponse
-	UpdateInstallationRequestByAdmin(newRequest installationdto.UpdateInstallationRequest)
-	UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest)
+	UpdateInstallationRequestByAdmin(newRequest installationdto.UpdateInstallationRequest) error
+	UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest) error
 	ValidatePanelGuarantee(panelID uint) error
 	ValidatePanelOwnership(panelID uint, userID uint) error
 	ValidateRequestOwnership(requestID uint, ownerID uint) (installationdto.PublicRequestDetailsResponse, error)
-	ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) uint
+	ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) (uint, error)
 }
