@@ -9,11 +9,11 @@ import (
 type BidRepository interface {
 	CreateBid(db database.Database, bid *entity.Bid) error
 	DeleteBidByID(db database.Database, id uint) error
-	FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint, status []enum.BidStatus) (*entity.Bid, bool)
-	FindBidByID(db database.Database, id uint) (*entity.Bid, bool)
-	FindCorporationBid(db database.Database, bidID uint, corporationID uint) (*entity.Bid, bool)
-	FindCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, opts ...QueryModifier) []*entity.Bid
-	FindRequestBid(db database.Database, bidID uint, requestID uint) (*entity.Bid, bool)
-	FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, opts ...QueryModifier) []*entity.Bid
+	FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint, status []enum.BidStatus) (*entity.Bid, error)
+	FindBidByID(db database.Database, id uint) (*entity.Bid, error)
+	FindCorporationBid(db database.Database, bidID uint, corporationID uint) (*entity.Bid, error)
+	FindCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, opts ...QueryModifier) ([]*entity.Bid, error)
+	FindRequestBid(db database.Database, bidID uint, requestID uint) (*entity.Bid, error)
+	FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, opts ...QueryModifier) ([]*entity.Bid, error)
 	UpdateBid(db database.Database, bid *entity.Bid) error
 }
