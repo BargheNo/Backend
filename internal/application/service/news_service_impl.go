@@ -55,18 +55,21 @@ func (newsService *NewsService) GetAllNewsStatuses() []newsdto.NewsStatusesRespo
 	return statuses
 }
 
-func (newsService *NewsService) GetNews(request newsdto.GetNewsRequest) newsdto.NewsResponse {
-	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
-	if !exist {
+func (newsService *NewsService) GetNews(request newsdto.GetNewsRequest) (newsdto.NewsResponse, error) {
+	news, err := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if err != nil {
+		return newsdto.NewsResponse{}, err
+	}
+	if news == nil {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
-		panic(notFoundError)
+		return newsdto.NewsResponse{}, notFoundError
 	}
 	if request.UserType == enum.UserTypeGuest && news.Status == enum.NewsStatusDraft {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: newsService.constants.Field.News,
 		}
-		panic(forbiddenError)
+		return newsdto.NewsResponse{}, forbiddenError
 	}
 	coverImage := ""
 	if news.CoverImage != "" {
@@ -79,13 +82,16 @@ func (newsService *NewsService) GetNews(request newsdto.GetNewsRequest) newsdto.
 		Description: news.Description,
 		Status:      news.Status,
 		CoverImage:  coverImage,
-	}
+	}, nil
 }
 
-func (newsService *NewsService) GetNewsList(request newsdto.GetNewsListRequest) []newsdto.NewsResponse {
+func (newsService *NewsService) GetNewsList(request newsdto.GetNewsListRequest) ([]newsdto.NewsResponse, error) {
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	news := newsService.newsRepository.FindNewsByStatus(newsService.db, request.Statuses, paginationModifier, sortingModifier)
+	news, err := newsService.newsRepository.FindNewsByStatus(newsService.db, request.Statuses, paginationModifier, sortingModifier)
+	if err != nil {
+		return nil, err
+	}
 	newsResponse := make([]newsdto.NewsResponse, len(news))
 	for i, eachNews := range news {
 		coverImage := ""
@@ -101,25 +107,31 @@ func (newsService *NewsService) GetNewsList(request newsdto.GetNewsListRequest) 
 			CoverImage:  coverImage,
 		}
 	}
-	return newsResponse
+	return newsResponse, nil
 }
 
-func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) newsdto.NewsResponse {
-	ok := newsService.userService.IsUserActive(request.AuthorID)
+func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) (newsdto.NewsResponse, error) {
+	ok, err := newsService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return newsdto.NewsResponse{}, nil
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: newsService.constants.Field.News,
 		}
-		panic(forbiddenError)
+		return newsdto.NewsResponse{}, forbiddenError
 	}
-	_, exist := newsService.newsRepository.FindNewsByTittle(newsService.db, request.Title)
-	if exist {
+	news, err := newsService.newsRepository.FindNewsByTittle(newsService.db, request.Title)
+	if err != nil {
+		return newsdto.NewsResponse{}, err
+	}
+	if news != nil {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(newsService.constants.Field.Name, newsService.constants.Tag.AlreadyExist)
-		panic(conflictErrors)
+		return newsdto.NewsResponse{}, conflictErrors
 	}
-	news := &entity.News{
+	news = &entity.News{
 		Title:       request.Title,
 		Content:     request.Content,
 		Description: request.Description,
@@ -127,7 +139,7 @@ func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) ne
 		Status:      request.Status,
 	}
 	if err := newsService.newsRepository.CreateNews(newsService.db, news); err != nil {
-		panic(err)
+		return newsdto.NewsResponse{}, err
 	}
 
 	if request.CoverImage != nil {
@@ -137,7 +149,7 @@ func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) ne
 	}
 
 	if err := newsService.newsRepository.UpdateNews(newsService.db, news); err != nil {
-		panic(err)
+		return newsdto.NewsResponse{}, err
 	}
 
 	newsResponse := newsdto.NewsResponse{
@@ -147,22 +159,28 @@ func (newsService *NewsService) CreateNews(request newsdto.CreateNewsRequest) ne
 		Description: news.Description,
 		Status:      news.Status,
 	}
-	return newsResponse
+	return newsResponse, nil
 }
 
-func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) {
-	ok := newsService.userService.IsUserActive(request.AuthorID)
+func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) error {
+	ok, err := newsService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: newsService.constants.Field.News,
 		}
-		panic(forbiddenError)
+		return forbiddenError
 	}
-	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
-	if !exist {
+	news, err := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if err != nil {
+		return err
+	}
+	if news == nil {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
-		panic(notFoundError)
+		return notFoundError
 	}
 
 	if request.Title != nil {
@@ -183,75 +201,96 @@ func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) {
 	}
 
 	if err := newsService.newsRepository.UpdateNews(newsService.db, news); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (newsService *NewsService) UpdateNewsStatus(request newsdto.EditNewsStatusRequest) {
-	ok := newsService.userService.IsUserActive(request.AuthorID)
+func (newsService *NewsService) UpdateNewsStatus(request newsdto.EditNewsStatusRequest) error {
+	ok, err := newsService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: newsService.constants.Field.News,
 		}
-		panic(forbiddenError)
+		return forbiddenError
 	}
 
-	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
-	if !exist {
+	news, err := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if err != nil {
+		return err
+	}
+	if news == nil {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
-		panic(notFoundError)
+		return notFoundError
 	}
 
 	if enum.NewsStatus(request.Status) == enum.NewsStatusActive && news.Status == enum.NewsStatusActive {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(newsService.constants.Field.News, newsService.constants.Tag.AlreadyActive)
-		panic(conflictErrors)
+		return conflictErrors
 	}
 	if enum.NewsStatus(request.Status) == enum.NewsStatusDraft && news.Status == enum.NewsStatusDraft {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(newsService.constants.Field.News, newsService.constants.Tag.AlreadyDraft)
-		panic(conflictErrors)
+		return conflictErrors
 	}
 
 	news.Status = enum.NewsStatus(request.Status)
 	if err := newsService.newsRepository.UpdateNews(newsService.db, news); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (newsService *NewsService) DeleteNewsStatus(request newsdto.DeleteNewsRequest) {
-	ok := newsService.userService.IsUserActive(request.AuthorID)
+func (newsService *NewsService) DeleteNewsStatus(request newsdto.DeleteNewsRequest) error {
+	ok, err := newsService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: newsService.constants.Field.News,
 		}
-		panic(forbiddenError)
+		return forbiddenError
 	}
 
 	for _, newsID := range request.NewsIDs {
-		_, exist := newsService.newsRepository.FindNewsByID(newsService.db, newsID)
-		if !exist {
+		news, err := newsService.newsRepository.FindNewsByID(newsService.db, newsID)
+		if err != nil {
+			return err
+		}
+		if news == nil {
 			continue
 		}
 		newsService.newsRepository.DeleteNews(newsService.db, newsID)
 	}
+	return nil
 }
 
-func (newsService *NewsService) AddNewsMedia(request newsdto.AddNewsMediaRequest) uint {
-	ok := newsService.userService.IsUserActive(request.AuthorID)
+func (newsService *NewsService) AddNewsMedia(request newsdto.AddNewsMediaRequest) (uint, error) {
+	ok, err := newsService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return 0, err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: newsService.constants.Field.News,
 		}
-		panic(forbiddenError)
+		return 0, forbiddenError
 	}
-	_, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
-	if !exist {
+	news, err := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if err != nil {
+		return 0, err
+	}
+	if news == nil {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
-		panic(notFoundError)
+		return 0, notFoundError
 	}
 	mediaPath := newsService.constants.S3BucketPath.GetNewsMediaPath(request.NewsID, request.Media.Filename)
 	newsService.s3Storage.UploadObject(enum.NewsMedia, mediaPath, request.Media)
@@ -262,31 +301,40 @@ func (newsService *NewsService) AddNewsMedia(request newsdto.AddNewsMediaRequest
 		OwnerType: "news",
 	}
 	if err := newsService.newsRepository.AddMedia(newsService.db, media); err != nil {
-		panic(err)
+		return 0, err
 	}
-	return media.ID
+	return media.ID, nil
 }
 
-func (newsService *NewsService) DeleteNewsMedia(request newsdto.AccessMediaRequest) {
-	ok := newsService.userService.IsUserActive(request.AuthorID)
+func (newsService *NewsService) DeleteNewsMedia(request newsdto.AccessMediaRequest) error {
+	ok, err := newsService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: newsService.constants.Field.News,
 		}
-		panic(forbiddenError)
+		return forbiddenError
 	}
 
-	_, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
-	if !exist {
+	news, err := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if err != nil {
+		return err
+	}
+	if news == nil {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
-		panic(notFoundError)
+		return notFoundError
 	}
 
-	media, exist := newsService.newsRepository.GetMediaByID(newsService.db, request.MediaID)
-	if !exist {
+	media, err := newsService.newsRepository.GetMediaByID(newsService.db, request.MediaID)
+	if err != nil {
+		return err
+	}
+	if media == nil {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.Media}
-		panic(notFoundError)
+		return notFoundError
 	}
 
 	if media.OwnerID != request.NewsID {
@@ -294,35 +342,42 @@ func (newsService *NewsService) DeleteNewsMedia(request newsdto.AccessMediaReque
 			Message:  "",
 			Resource: newsService.constants.Field.Media,
 		}
-		panic(forbiddenError)
+		return forbiddenError
 	}
 
 	if err := newsService.s3Storage.DeleteObject(enum.NewsMedia, media.Path); err != nil {
-		panic(err)
+		return err
 	}
 	if err := newsService.newsRepository.DeleteMedia(newsService.db, request.MediaID); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (newsService *NewsService) GetNewsMedia(request newsdto.AccessMediaRequest) string {
-	news, exist := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
-	if !exist {
+func (newsService *NewsService) GetNewsMedia(request newsdto.AccessMediaRequest) (string, error) {
+	news, err := newsService.newsRepository.FindNewsByID(newsService.db, request.NewsID)
+	if err != nil {
+		return "", err
+	}
+	if news == nil {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.News}
-		panic(notFoundError)
+		return "", notFoundError
 	}
 	if request.UserType == enum.UserTypeGuest && news.Status == enum.NewsStatusDraft {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: newsService.constants.Field.News,
 		}
-		panic(forbiddenError)
+		return "", forbiddenError
 	}
 
-	media, exist := newsService.newsRepository.GetMediaByID(newsService.db, request.MediaID)
-	if !exist {
+	media, err := newsService.newsRepository.GetMediaByID(newsService.db, request.MediaID)
+	if err != nil {
+		return "", err
+	}
+	if media == nil {
 		notFoundError := exception.NotFoundError{Item: newsService.constants.Field.Media}
-		panic(notFoundError)
+		return "", notFoundError
 	}
 
 	if media.OwnerID != request.NewsID {
@@ -330,8 +385,8 @@ func (newsService *NewsService) GetNewsMedia(request newsdto.AccessMediaRequest)
 			Message:  "",
 			Resource: newsService.constants.Field.Media,
 		}
-		panic(forbiddenError)
+		return "", forbiddenError
 	}
 
-	return newsService.s3Storage.GetPresignedURL(enum.NewsMedia, media.Path, 8*time.Hour)
+	return newsService.s3Storage.GetPresignedURL(enum.NewsMedia, media.Path, 8*time.Hour), nil
 }

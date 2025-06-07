@@ -6,13 +6,13 @@ import (
 
 type NewsService interface {
 	GetAllNewsStatuses() []newsdto.NewsStatusesResponse
-	GetNews(request newsdto.GetNewsRequest) newsdto.NewsResponse
-	GetNewsList(request newsdto.GetNewsListRequest) []newsdto.NewsResponse
-	CreateNews(request newsdto.CreateNewsRequest) newsdto.NewsResponse
-	EditNews(request newsdto.EditNewsRequest)
-	UpdateNewsStatus(request newsdto.EditNewsStatusRequest)
-	DeleteNewsStatus(request newsdto.DeleteNewsRequest)
-	AddNewsMedia(request newsdto.AddNewsMediaRequest) uint
-	DeleteNewsMedia(request newsdto.AccessMediaRequest)
-	GetNewsMedia(request newsdto.AccessMediaRequest) string
+	GetNews(request newsdto.GetNewsRequest) (newsdto.NewsResponse, error)
+	GetNewsList(request newsdto.GetNewsListRequest) ([]newsdto.NewsResponse, error)
+	CreateNews(request newsdto.CreateNewsRequest) (newsdto.NewsResponse, error)
+	EditNews(request newsdto.EditNewsRequest) error
+	UpdateNewsStatus(request newsdto.EditNewsStatusRequest) error
+	DeleteNewsStatus(request newsdto.DeleteNewsRequest) error
+	AddNewsMedia(request newsdto.AddNewsMediaRequest) (uint, error)
+	DeleteNewsMedia(request newsdto.AccessMediaRequest) error
+	GetNewsMedia(request newsdto.AccessMediaRequest) (string, error)
 }
