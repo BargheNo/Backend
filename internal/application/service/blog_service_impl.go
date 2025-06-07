@@ -44,14 +44,17 @@ func NewBlogService(
 	}
 }
 
-func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
-	ok := blogService.userService.IsUserActive(request.AuthorID)
+func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) error {
+	ok, err := blogService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return forbiddenError
 	}
 	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
 
@@ -65,7 +68,7 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
 	}
 
 	if err := blogService.blogRepository.CreatePost(blogService.db, post); err != nil {
-		panic(err)
+		return err
 	}
 
 	if request.CoverImage != nil {
@@ -74,28 +77,35 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
 		post.CoverImage = coverImagePath
 	}
 
-	err := blogService.blogRepository.UpdatePost(blogService.db, post)
+	err = blogService.blogRepository.UpdatePost(blogService.db, post)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequest) []blogdto.CorporationPostResponse {
+func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequest) ([]blogdto.CorporationPostResponse, error) {
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
-	ok := blogService.userService.IsUserActive(request.UserID)
+	ok, err := blogService.userService.IsUserActive(request.UserID)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return nil, &forbiddenError
 	}
 
 	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
 
-	posts := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
+	posts, err := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
+	if err != nil {
+		return nil, err
+	}
 
 	response := make([]blogdto.CorporationPostResponse, len(posts))
 	for i, post := range posts {
@@ -105,7 +115,10 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequ
 		}
 		likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
 
-		author := blogService.userService.GetUserCredential(post.AuthorID)
+		author, err := blogService.userService.GetUserCredential(post.AuthorID)
+		if err != nil {
+			return nil, err
+		}
 
 		response[i] = blogdto.CorporationPostResponse{
 			ID:          post.ID,
@@ -119,16 +132,19 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequ
 			LikeCount:   likeCount,
 		}
 	}
-	return response
+	return response, nil
 }
 
-func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.GetPostsRequest) []blogdto.GeneralPostResponse {
+func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.GetPostsRequest) ([]blogdto.GeneralPostResponse, error) {
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
 	blogService.corporationService.DoesCorporationExist(request.CorporationID)
 
-	posts := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
+	posts, err := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
+	if err != nil {
+		return nil, err
+	}
 
 	response := make([]blogdto.GeneralPostResponse, len(posts))
 	for i, post := range posts {
@@ -153,13 +169,16 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 			LikeCount:   likeCount,
 		}
 	}
-	return response
+	return response, nil
 }
-func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPostsRequest) []blogdto.GeneralPostResponse {
+func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPostsRequest) ([]blogdto.GeneralPostResponse, error) {
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
-	posts := blogService.blogRepository.GetPostsByStatus(blogService.db, request.Statuses, paginationModifier, sortingModifier)
+	posts, err := blogService.blogRepository.GetPostsByStatus(blogService.db, request.Statuses, paginationModifier, sortingModifier)
+	if err != nil {
+		return nil, err
+	}
 
 	response := make([]blogdto.GeneralPostResponse, len(posts))
 	for i, post := range posts {
@@ -182,25 +201,31 @@ func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPostsRequest)
 			LikeCount:   likeCount,
 		}
 	}
-	return response
+	return response, nil
 }
 
-func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostRequest) blogdto.CorporationPostResponse {
-	ok := blogService.userService.IsUserActive(request.UserID)
+func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostRequest) (blogdto.CorporationPostResponse, error) {
+	ok, err := blogService.userService.IsUserActive(request.UserID)
+	if err != nil {
+		return blogdto.CorporationPostResponse{}, err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return blogdto.CorporationPostResponse{}, &forbiddenError
 	}
 
 	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
 
-	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
-	if !exist {
+	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if err != nil {
+		return blogdto.CorporationPostResponse{}, err
+	}
+	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		panic(notFoundError)
+		return blogdto.CorporationPostResponse{}, &notFoundError
 	}
 
 	coverImage := ""
@@ -210,7 +235,10 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostReques
 
 	likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
 
-	author := blogService.userService.GetUserCredential(post.AuthorID)
+	author, err := blogService.userService.GetUserCredential(post.AuthorID)
+	if err != nil {
+		return blogdto.CorporationPostResponse{}, err
+	}
 
 	return blogdto.CorporationPostResponse{
 		ID:          post.ID,
@@ -222,14 +250,17 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostReques
 		CoverImage:  coverImage,
 		CreatedAt:   post.CreatedAt,
 		LikeCount:   likeCount,
-	}
+	}, nil
 }
 
-func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) blogdto.GeneralPostResponse {
-	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
-	if !exist {
+func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) (blogdto.GeneralPostResponse, error) {
+	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if err != nil {
+		return blogdto.GeneralPostResponse{}, err
+	}
+	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		panic(notFoundError)
+		return blogdto.GeneralPostResponse{}, &notFoundError
 	}
 
 	if post.Status == enum.PostStatusDraft {
@@ -237,7 +268,7 @@ func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) b
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return blogdto.GeneralPostResponse{}, &forbiddenError
 	}
 
 	corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
@@ -259,25 +290,31 @@ func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) b
 		CoverImage:  coverImage,
 		CreatedAt:   post.CreatedAt,
 		LikeCount:   likeCount,
-	}
+	}, nil
 }
 
-func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) {
-	ok := blogService.userService.IsUserActive(request.AuthorID)
+func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error {
+	ok, err := blogService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return &forbiddenError
 	}
 
 	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
 
-	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
-	if !exist {
+	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if err != nil {
+		return err
+	}
+	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		panic(notFoundError)
+		return &notFoundError
 	}
 
 	if request.Title != nil {
@@ -300,49 +337,63 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) {
 	}
 	post.Status = enum.PostStatus(request.Status)
 
-	err := blogService.blogRepository.UpdatePost(blogService.db, post)
+	err = blogService.blogRepository.UpdatePost(blogService.db, post)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (blogService *BlogService) DeletePost(request blogdto.DeletePostRequest) {
-	ok := blogService.userService.IsUserActive(request.AuthorID)
+func (blogService *BlogService) DeletePost(request blogdto.DeletePostRequest) error {
+	ok, err := blogService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return &forbiddenError
 	}
 
 	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
 
 	for _, postID := range request.PostIDs {
-		_, exist := blogService.blogRepository.FindPostByID(blogService.db, postID)
-		if !exist {
+		post, err := blogService.blogRepository.FindPostByID(blogService.db, postID)
+		if err != nil {
+			return err
+		}
+		if post == nil {
 			continue
 		}
 		blogService.blogRepository.DeletePost(blogService.db, postID)
 	}
+	return nil
 }
 
-func (blogService *BlogService) AddPostMedia(request blogdto.AddPostMediaRequest) uint {
-	ok := blogService.userService.IsUserActive(request.AuthorID)
+func (blogService *BlogService) AddPostMedia(request blogdto.AddPostMediaRequest) (uint, error) {
+	ok, err := blogService.userService.IsUserActive(request.AuthorID)
+	if err != nil {
+		return 0, err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return 0, &forbiddenError
 	}
 
 	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
 
-	_, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
-	if !exist {
+	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if err != nil {
+		return 0, err
+	}
+	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		panic(notFoundError)
+		return 0, &notFoundError
 	}
 
 	mediaPath := blogService.constants.S3BucketPath.GetBlogMediaPath(request.PostID, request.Media.Filename)
@@ -354,33 +405,42 @@ func (blogService *BlogService) AddPostMedia(request blogdto.AddPostMediaRequest
 		OwnerType: "blog",
 	}
 	if err := blogService.blogRepository.AddMedia(blogService.db, media); err != nil {
-		panic(err)
+		return 0, err
 	}
-	return media.ID
+	return media.ID, nil
 }
 
-func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaRequest) {
-	ok := blogService.userService.IsUserActive(request.UserID)
+func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaRequest) error {
+	ok, err := blogService.userService.IsUserActive(request.UserID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return &forbiddenError
 	}
 
 	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
 
-	_, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
-	if !exist {
+	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if err != nil {
+		return err
+	}
+	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		panic(notFoundError)
+		return &notFoundError
 	}
 
-	media, exist := blogService.blogRepository.GetMediaByID(blogService.db, request.MediaID)
-	if !exist {
+	media, err := blogService.blogRepository.GetMediaByID(blogService.db, request.MediaID)
+	if err != nil {
+		return err
+	}
+	if media == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Media}
-		panic(notFoundError)
+		return &notFoundError
 	}
 
 	if media.OwnerID != request.PostID {
@@ -388,75 +448,91 @@ func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaR
 			Message:  "",
 			Resource: blogService.constants.Field.Media,
 		}
-		panic(forbiddenError)
+		return &forbiddenError
 	}
 
 	if err := blogService.s3Storage.DeleteObject(enum.BlogMedia, media.Path); err != nil {
-		panic(err)
+		return err
 	}
 	if err := blogService.blogRepository.DeleteMedia(blogService.db, request.MediaID); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (BlogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequest) string {
-	post, exist := BlogService.blogRepository.FindPostByID(BlogService.db, request.PostID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: BlogService.constants.Field.Post}
-		panic(notFoundError)
+func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequest) (string, error) {
+	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if err != nil {
+		return "", err
+	}
+	if post == nil {
+		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
+		return "", &notFoundError
 	}
 
 	if request.UserType == enum.UserTypeGuest && post.Status == enum.PostStatusDraft {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
-			Resource: BlogService.constants.Field.Post,
+			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return "", &forbiddenError
 	}
 
 	if request.UserType == enum.UserTypeCorporation {
-		ok := BlogService.userService.IsUserActive(request.UserID)
+		ok, err := blogService.userService.IsUserActive(request.UserID)
+		if err != nil {
+			return "", err
+		}
 		if !ok {
 			forbiddenError := exception.ForbiddenError{
 				Message:  "",
-				Resource: BlogService.constants.Field.Post,
+				Resource: blogService.constants.Field.Post,
 			}
-			panic(forbiddenError)
+			return "", &forbiddenError
 		}
-		BlogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+		blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
 	}
 
-	media, exist := BlogService.blogRepository.GetMediaByID(BlogService.db, request.MediaID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: BlogService.constants.Field.Media}
-		panic(notFoundError)
+	media, err := blogService.blogRepository.GetMediaByID(blogService.db, request.MediaID)
+	if err != nil {
+		return "", err
+	}
+	if media == nil {
+		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Media}
+		return "", &notFoundError
 	}
 
 	if media.OwnerID != request.PostID {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
-			Resource: BlogService.constants.Field.Media,
+			Resource: blogService.constants.Field.Media,
 		}
-		panic(forbiddenError)
+		return "", &forbiddenError
 	}
 
-	return BlogService.s3Storage.GetPresignedURL(enum.BlogMedia, media.Path, 8*time.Hour)
+	return blogService.s3Storage.GetPresignedURL(enum.BlogMedia, media.Path, 8*time.Hour), nil
 }
 
-func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) {
-	ok := blogService.userService.IsUserActive(request.UserID)
+func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) error {
+	ok, err := blogService.userService.IsUserActive(request.UserID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return &forbiddenError
 	}
 
-	post, exist := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
-	if !exist {
+	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
+	if err != nil {
+		return err
+	}
+	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		panic(notFoundError)
+		return &notFoundError
 	}
 
 	if post.Status == enum.PostStatusDraft {
@@ -464,43 +540,54 @@ func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) {
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return &forbiddenError
 	}
 
-	_, exist = blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
-	if exist {
+	like, err := blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
+	if err != nil {
+		return err
+	}
+	if like != nil {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(blogService.constants.Field.Like, blogService.constants.Tag.AlreadyExist)
-		panic(conflictErrors)
+		return &conflictErrors
 	}
 
-	like := &entity.Like{
+	like = &entity.Like{
 		UserID:    request.UserID,
 		OwnerID:   request.PostID,
 		OwnerType: "blog",
 	}
 	if err := blogService.blogRepository.CreateLike(blogService.db, like); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (blogService *BlogService) UnlikePost(request blogdto.LikePostRequest) {
-	ok := blogService.userService.IsUserActive(request.UserID)
+func (blogService *BlogService) UnlikePost(request blogdto.LikePostRequest) error {
+	ok, err := blogService.userService.IsUserActive(request.UserID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		panic(forbiddenError)
+		return &forbiddenError
 	}
 
-	like, exist := blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
-	if !exist {
+	like, err := blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
+	if err != nil {
+		return err
+	}
+	if like == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Like}
-		panic(notFoundError)
+		return &notFoundError
 	}
 
 	if err := blogService.blogRepository.DeleteLike(blogService.db, like.ID); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
