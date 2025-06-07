@@ -7,10 +7,10 @@ import (
 
 type TicketRepository interface {
 	CreateTicket(db database.Database, ticket *entity.Ticket) error
-	GetCustomerTickets(db database.Database, ownerID uint, opts ...QueryModifier) []*entity.Ticket
+	GetCustomerTickets(db database.Database, ownerID uint, opts ...QueryModifier) ([]*entity.Ticket, error)
 	UpdateTicket(db database.Database, ticket *entity.Ticket) error
-	GetTicketComments(db database.Database, ticketID uint, opts ...QueryModifier) []*entity.TicketComment
-	GetTicketByID(db database.Database, ticketID uint) (*entity.Ticket, bool)
+	GetTicketComments(db database.Database, ticketID uint, opts ...QueryModifier) ([]*entity.TicketComment, error)
+	GetTicketByID(db database.Database, ticketID uint) (*entity.Ticket, error)
 	CreateTicketComment(db database.Database, comment *entity.TicketComment) error
-	GetTickets(db database.Database, opts ...QueryModifier) []*entity.Ticket
+	GetTickets(db database.Database, opts ...QueryModifier) ([]*entity.Ticket, error)
 }
