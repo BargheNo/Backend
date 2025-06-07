@@ -151,7 +151,7 @@ func (reportService *ReportService) GetPanelReport(reportID uint) (reportdto.Pan
 		return reportdto.PanelReportResponse{}, exception.NotFoundError{Item: reportService.constants.Field.Report}
 	}
 
-	panel := reportService.installationService.GetPanelByAdmin(report.ObjectID)
+	panel, err := reportService.installationService.GetPanelByAdmin(report.ObjectID)
 	if err != nil {
 		return reportdto.PanelReportResponse{}, err
 	}
@@ -199,7 +199,10 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 	}
 	reportResponses := make([]reportdto.PanelReportResponse, len(reports))
 	for i, report := range reports {
-		panel := reportService.installationService.GetPanelByAdmin(report.ObjectID)
+		panel, err := reportService.installationService.GetPanelByAdmin(report.ObjectID)
+		if err != nil {
+			return nil, err
+		}
 		reportResponses[i] = reportdto.PanelReportResponse{
 			ID:          report.ID,
 			Panel:       panel,

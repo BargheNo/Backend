@@ -115,7 +115,10 @@ func (corporationService *CorporationService) GetCorporationCredentials(corporat
 		OwnerID:   corporation.ID,
 		OwnerType: corporationService.constants.AddressOwners.Corporation,
 	}
-	addresses := corporationService.addressService.GetAddresses(ownerInfo)
+	addresses, err := corporationService.addressService.GetAddresses(ownerInfo)
+	if err != nil {
+		return corporationdto.CorporationCredentialResponse{}, err
+	}
 	contactInfo, err := corporationService.getContactInfo(corporation.ID)
 	if err != nil {
 		return corporationdto.CorporationCredentialResponse{}, err
@@ -519,7 +522,10 @@ func (corporationService *CorporationService) getPrivateCorporationDetails(corpo
 		OwnerID:   corporation.ID,
 		OwnerType: corporationService.constants.AddressOwners.Corporation,
 	}
-	addresses := corporationService.addressService.GetAddresses(ownerInfo)
+	addresses, err := corporationService.addressService.GetAddresses(ownerInfo)
+	if err != nil {
+		return corporationdto.CorporationPrivateInfoResponse{}, err
+	}
 
 	contactInfo, err := corporationService.getContactInfo(corporation.ID)
 	if err != nil {

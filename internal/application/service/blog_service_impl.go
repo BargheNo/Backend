@@ -153,7 +153,10 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 		}
 
-		corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+		corporation, err := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+		if err != nil {
+			return nil, err
+		}
 
 		likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
 
@@ -182,7 +185,10 @@ func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPostsRequest)
 
 	response := make([]blogdto.GeneralPostResponse, len(posts))
 	for i, post := range posts {
-		corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+		corporation, err := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+		if err != nil {
+			return nil, err
+		}
 		coverImage := ""
 		if post.CoverImage != "" {
 			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
@@ -271,7 +277,10 @@ func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) (
 		return blogdto.GeneralPostResponse{}, &forbiddenError
 	}
 
-	corporation := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+	corporation, err := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
+	if err != nil {
+		return blogdto.GeneralPostResponse{}, err
+	}
 
 	coverImage := ""
 	if post.CoverImage != "" {

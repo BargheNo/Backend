@@ -931,7 +931,10 @@ func (installationService *InstallationService) ViolatePanelGuaranteeStatus(requ
 		return 0, conflictErrors
 	}
 
-	violationID := installationService.guaranteeService.CreateGuaranteeViolation(request.GuaranteeViolation)
+	violationID, err := installationService.guaranteeService.CreateGuaranteeViolation(request.GuaranteeViolation)
+	if err != nil {
+		return 0, err
+	}
 	panel.GuaranteeStatus = enum.PanelGuaranteeStatusVoided
 
 	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {

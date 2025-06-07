@@ -139,8 +139,14 @@ func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRe
 			}
 		}
 
-		bidder, _ := bidService.userService.GetUserCredential(bid.BidderID)
-		corporation := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
+		bidder, err := bidService.userService.GetUserCredential(bid.BidderID)
+		if err != nil {
+			return nil, err
+		}
+		corporation, err := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
+		if err != nil {
+			return nil, err
+		}
 
 		bidResponses[i] = biddto.AdminBidResponse{
 			ID:               bid.ID,
@@ -298,7 +304,11 @@ func (bidService *BidService) RejectBid(request biddto.GetCustomerBidRequest) er
 func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 	var conflictErrors exception.ConflictErrors
 
-	if !bidService.corporationService.ISCorporationApproved(bidInfo.CorporationID) {
+	approved, err := bidService.corporationService.ISCorporationApproved(bidInfo.CorporationID)
+	if err != nil {
+		return err
+	}
+	if !approved {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: bidService.constants.Field.Bid,
@@ -309,7 +319,10 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 	bidService.userService.IsUserActive(bidInfo.BidderID)
 	bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.BidderID)
 
-	installationRequest := bidService.installationService.GetPublicInstallationRequest(bidInfo.RequestID)
+	installationRequest, err := bidService.installationService.GetPublicInstallationRequest(bidInfo.RequestID)
+	if err != nil {
+		return err
+	}
 	if installationRequest.Status != enum.InstallationRequestStatusActive.String() {
 		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
 		return conflictErrors
@@ -397,7 +410,10 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 			OperatorID:     request.UserID,
 			InstallationID: bid.RequestID,
 		}
-		installationRequest := bidService.installationService.GetAnonymousInstallationRequest(request)
+		installationRequest, err := bidService.installationService.GetAnonymousInstallationRequest(request)
+		if err != nil {
+			return nil, err
+		}
 		bidder, err := bidService.userService.GetUserCredential(bid.BidderID)
 		if err != nil {
 			return nil, err
@@ -440,7 +456,10 @@ func (bidService *BidService) GetCorporationBid(request biddto.GetBidRequest) (b
 		OperatorID:     request.UserID,
 		InstallationID: bid.RequestID,
 	}
-	installationRequest := bidService.installationService.GetAnonymousInstallationRequest(getInstallationRequest)
+	installationRequest, err := bidService.installationService.GetAnonymousInstallationRequest(getInstallationRequest)
+	if err != nil {
+		return biddto.CorporationBidResponse{}, err
+	}
 
 	bidder, err := bidService.userService.GetUserCredential(bid.BidderID)
 	if err != nil {

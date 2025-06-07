@@ -89,7 +89,10 @@ func (notificationService *NotificationService) enrichBidData(rawData []byte) (m
 	}
 
 	requestInfo := biddto.GetCustomerBidRequest(bidData)
-	bid := notificationService.bidService.GetRequestAnonymousBid(requestInfo)
+	bid, err := notificationService.bidService.GetRequestAnonymousBid(requestInfo)
+	if err != nil {
+		return nil, err
+	}
 
 	bidBytes, err := json.Marshal(bid)
 	if err != nil {
@@ -108,7 +111,10 @@ func (notificationService *NotificationService) enrichMaintenanceReportData(rawD
 	if err := json.Unmarshal(rawData, &reportData); err != nil {
 		return nil, err
 	}
-	report := notificationService.reportService.GetMaintenanceReport(reportData.ReportID)
+	report, err := notificationService.reportService.GetMaintenanceReport(reportData.ReportID)
+	if err != nil {
+		return nil, err
+	}
 
 	reportBytes, err := json.Marshal(report)
 	if err != nil {
@@ -127,7 +133,10 @@ func (notificationService *NotificationService) enrichPanelReportData(rawData []
 	if err := json.Unmarshal(rawData, &reportData); err != nil {
 		return nil, err
 	}
-	report := notificationService.reportService.GetPanelReport(reportData.ReportID)
+	report, err := notificationService.reportService.GetPanelReport(reportData.ReportID)
+	if err != nil {
+		return nil, err
+	}
 
 	reportBytes, err := json.Marshal(report)
 	if err != nil {
@@ -191,7 +200,10 @@ func (notificationService *NotificationService) SendNotification(notification *e
 	}
 
 	if settings.IsEmailEnabled {
-		user := notificationService.userService.GetUserByID(notification.RecipientID)
+		user, err := notificationService.userService.GetUserByID(notification.RecipientID)
+		if err != nil {
+			return err
+		}
 		if !user.EmailVerified {
 			return nil
 		}
