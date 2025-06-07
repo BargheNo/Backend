@@ -6,13 +6,13 @@ import (
 )
 
 type ChatService interface {
-	CreateChatRoom(request chatdto.CreateOrGetUserRoomRequest) *entity.ChatRoom
-	CreateOrGetRoom(request chatdto.CreateOrGetUserRoomRequest) chatdto.ChatRoomDetailsResponse
-	GetCorporationRoom(request chatdto.GetCorporationRoomRequest) chatdto.ChatRoomDetailsResponse
-	GetUserRooms(userID uint) []chatdto.ChatRoomDetailsResponse
-	GetCorporationRooms(request chatdto.GetCorporationRoomsRequest) []chatdto.ChatRoomDetailsResponse
-	SaveMessage(roomID, senderID uint, content string) chatdto.RoomMessagesResponse
-	GetRoomMessages(request chatdto.GetRoomMessageRequest) []chatdto.RoomMessagesResponse
-	BlockChatRoom(request chatdto.BlockServiceChatRequest)
-	UnBlockChatRoom(request chatdto.BlockServiceChatRequest)
+	CreateChatRoom(request chatdto.CreateOrGetUserRoomRequest) (*entity.ChatRoom, error)
+	CreateOrGetRoom(request chatdto.CreateOrGetUserRoomRequest) (chatdto.ChatRoomDetailsResponse, error)
+	GetCorporationRoom(request chatdto.GetCorporationRoomRequest) (chatdto.ChatRoomDetailsResponse, error)
+	GetUserRooms(userID uint) ([]chatdto.ChatRoomDetailsResponse, error)
+	GetCorporationRooms(request chatdto.GetCorporationRoomsRequest) ([]chatdto.ChatRoomDetailsResponse, error)
+	SaveMessage(roomID, senderID uint, content string) (chatdto.RoomMessagesResponse, error)
+	GetRoomMessages(request chatdto.GetRoomMessageRequest) ([]chatdto.RoomMessagesResponse, error)
+	BlockChatRoom(request chatdto.BlockServiceChatRequest) error
+	UnBlockChatRoom(request chatdto.BlockServiceChatRequest) error
 }
