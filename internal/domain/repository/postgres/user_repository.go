@@ -7,7 +7,7 @@ import (
 )
 
 type UserRepository interface {
-	FindUsers(db database.Database) []*entity.User
+	FindUsers(db database.Database) ([]*entity.User, error)
 	FindUserByID(db database.Database, id uint) (*entity.User, bool)
 	FindUserByPhone(db database.Database, phone string) (*entity.User, bool)
 	FindUserByEmail(db database.Database, email string) (*entity.User, bool)

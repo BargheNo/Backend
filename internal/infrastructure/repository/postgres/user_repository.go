@@ -14,16 +14,16 @@ func NewUserRepository() *UserRepository {
 	return &UserRepository{}
 }
 
-func (repo *UserRepository) FindUsers(db database.Database) []*entity.User {
+func (repo *UserRepository) FindUsers(db database.Database) ([]*entity.User, error) {
 	var users []*entity.User
 	result := db.GetDB().Find(&users)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return users
+	return users, nil
 }
 
 func (repo *UserRepository) FindUserByID(db database.Database, id uint) (*entity.User, bool) {
