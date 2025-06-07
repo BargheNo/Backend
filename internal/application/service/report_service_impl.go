@@ -90,44 +90,48 @@ func (reportService *ReportService) createReport(requestInfo reportdto.CreateRep
 	return report, nil
 }
 
-func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest) {
+func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest) error {
 	if err := reportService.maintenanceService.ValidateCustomerRecord(requestInfo.ObjectID, requestInfo.ReportedByID); err != nil {
-		panic(err)
+		return err
 	}
 
 	report, err := reportService.createReport(requestInfo)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	acceptedPermissions := []enum.PermissionType{enum.ReportViewAll, enum.PermissionAll}
 	reportService.sendReportNotification(acceptedPermissions, report.ID, enum.MaintenanceReportCreated)
+	return nil
 }
 
-func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) {
+func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) error {
 	if err := reportService.installationService.ValidatePanelOwnership(requestInfo.ObjectID, requestInfo.ReportedByID); err != nil {
-		panic(err)
+		return err
 	}
 
 	report, err := reportService.createReport(requestInfo)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	acceptedPermissions := []enum.PermissionType{enum.ReportViewAll, enum.PermissionAll}
 	reportService.sendReportNotification(acceptedPermissions, report.ID, enum.PanelReportCreated)
+	return nil
 }
 
-func (reportService *ReportService) GetMaintenanceReport(reportID uint) reportdto.MaintenanceReportResponse {
-	report, exist := reportService.reportRepository.GetReportByID(reportService.db, reportID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
-		panic(notFoundError)
+func (reportService *ReportService) GetMaintenanceReport(reportID uint) (reportdto.MaintenanceReportResponse, error) {
+	report, err := reportService.reportRepository.GetReportByID(reportService.db, reportID)
+	if err != nil {
+		return reportdto.MaintenanceReportResponse{}, err
+	}
+	if report == nil {
+		return reportdto.MaintenanceReportResponse{}, exception.NotFoundError{Item: reportService.constants.Field.Report}
 	}
 
 	maintenanceRequest, err := reportService.maintenanceService.GetRequestByAdmin(report.ObjectID)
 	if err != nil {
-		panic(err)
+		return reportdto.MaintenanceReportResponse{}, err
 	}
 
 	return reportdto.MaintenanceReportResponse{
@@ -135,37 +139,45 @@ func (reportService *ReportService) GetMaintenanceReport(reportID uint) reportdt
 		Description:        report.Description,
 		MaintenanceRequest: maintenanceRequest,
 		Status:             report.Status.String(),
-	}
+	}, nil
 }
 
-func (reportService *ReportService) GetPanelReport(reportID uint) reportdto.PanelReportResponse {
-	report, exist := reportService.reportRepository.GetReportByID(reportService.db, reportID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
-		panic(notFoundError)
+func (reportService *ReportService) GetPanelReport(reportID uint) (reportdto.PanelReportResponse, error) {
+	report, err := reportService.reportRepository.GetReportByID(reportService.db, reportID)
+	if err != nil {
+		return reportdto.PanelReportResponse{}, err
+	}
+	if report == nil {
+		return reportdto.PanelReportResponse{}, exception.NotFoundError{Item: reportService.constants.Field.Report}
 	}
 
 	panel := reportService.installationService.GetPanelByAdmin(report.ObjectID)
+	if err != nil {
+		return reportdto.PanelReportResponse{}, err
+	}
 
 	return reportdto.PanelReportResponse{
 		ID:          report.ID,
 		Panel:       panel,
 		Description: report.Description,
 		Status:      report.Status.String(),
-	}
+	}, nil
 }
 
-func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) []reportdto.MaintenanceReportResponse {
+func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, error) {
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
-	reports := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, paginationModifier, sortingModifier)
+	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, paginationModifier, sortingModifier)
+	if err != nil {
+		return nil, err
+	}
 	reportResponses := make([]reportdto.MaintenanceReportResponse, len(reports))
 
 	for i, report := range reports {
 		maintenanceRequest, err := reportService.maintenanceService.GetRequestByAdmin(report.ObjectID)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		reportResponses[i] = reportdto.MaintenanceReportResponse{
 			ID:                 report.ID,
@@ -175,13 +187,16 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 		}
 	}
 
-	return reportResponses
+	return reportResponses, nil
 }
 
-func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) []reportdto.PanelReportResponse {
+func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, error) {
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	reports := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, paginationModifier, sortingModifier)
+	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, paginationModifier, sortingModifier)
+	if err != nil {
+		return nil, err
+	}
 	reportResponses := make([]reportdto.PanelReportResponse, len(reports))
 	for i, report := range reports {
 		panel := reportService.installationService.GetPanelByAdmin(report.ObjectID)
@@ -193,24 +208,27 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 		}
 	}
 
-	return reportResponses
+	return reportResponses, nil
 }
 
-func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveReportRequest) {
+func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveReportRequest) error {
 	reportService.userService.GetUserCredential(requestInfo.UserID)
-	report, exist := reportService.reportRepository.GetReportByID(reportService.db, requestInfo.ReportID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
-		panic(notFoundError)
+	report, err := reportService.reportRepository.GetReportByID(reportService.db, requestInfo.ReportID)
+	if err != nil {
+		return err
+	}
+	if report == nil {
+		return exception.NotFoundError{Item: reportService.constants.Field.Report}
 	}
 	if report.Status == enum.ReportStatusResolved {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(reportService.constants.Field.Report, reportService.constants.Tag.AlreadyResolved)
-		panic(conflictErrors)
+		return conflictErrors
 	}
 	report.Status = enum.ReportStatusResolved
-	err := reportService.reportRepository.UpdateReport(reportService.db, report)
+	err = reportService.reportRepository.UpdateReport(reportService.db, report)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
