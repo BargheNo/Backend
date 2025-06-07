@@ -361,12 +361,29 @@ func (rmq *RabbitMQ) handleRetry(d *amqp.Delivery, processingErr error) {
 		d.Headers = amqp.Table{}
 	}
 
-	retryCount, ok := d.Headers[rmq.constants.Headers.RetryCount].(int)
-	if !ok {
+	var retryCount int
+	if val, exists := d.Headers[rmq.constants.Headers.RetryCount]; exists {
+		switch v := val.(type) {
+		case int:
+			retryCount = v
+		case int32:
+			retryCount = int(v)
+		case int64:
+			retryCount = int(v)
+		case float64:
+			retryCount = int(v)
+		default:
+			retryCount = 0
+		}
+	} else {
 		retryCount = 0
 	}
+
+	log.Printf("before Retrying message, retry count: %d", retryCount)
 	retryCount++
-	d.Headers[rmq.constants.Headers.RetryCount] = retryCount
+	log.Printf("after Retrying message, retry count: %d", retryCount)
+
+	d.Headers[rmq.constants.Headers.RetryCount] = int32(retryCount)
 	d.Headers[rmq.constants.Headers.LastError] = processingErr.Error()
 
 	log.Printf("Retrying message, retry count: %d", retryCount)
