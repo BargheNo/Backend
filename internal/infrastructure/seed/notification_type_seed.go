@@ -45,8 +45,11 @@ func (seeder *NotificationTypeSeeder) SeedNotificationTypes() {
 	}
 }
 
-func (seeder *NotificationTypeSeeder) syncNewNotificationTypesForUsers(newType *entity.NotificationType) {
-	users := seeder.userRepository.FindUsers(seeder.db)
+func (seeder *NotificationTypeSeeder) syncNewNotificationTypesForUsers(newType *entity.NotificationType) error {
+	users, err := seeder.userRepository.FindUsers(seeder.db)
+	if err != nil {
+		return err
+	}
 	for _, user := range users {
 		setting := &entity.NotificationSetting{
 			UserID:         user.ID,
@@ -59,4 +62,5 @@ func (seeder *NotificationTypeSeeder) syncNewNotificationTypesForUsers(newType *
 			panic(err)
 		}
 	}
+	return nil
 }

@@ -133,7 +133,7 @@ func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRe
 			}
 		}
 
-		bidder := bidService.userService.GetUserCredential(bid.BidderID)
+		bidder, _ := bidService.userService.GetUserCredential(bid.BidderID)
 		corporation := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
 
 		bidResponses[i] = biddto.AdminBidResponse{
