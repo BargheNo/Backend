@@ -154,14 +154,13 @@ func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRe
 
 func (bidService *BidService) GetRequestAnonymousBid(requestInfo biddto.GetCustomerBidRequest) biddto.AnonymousBidResponse {
 	if _, err := bidService.installationService.ValidateRequestOwnership(requestInfo.RequestID, requestInfo.UserID); err != nil {
-		// panic(err)
-
+		panic(err)
 	}
 
 	bid, exist := bidService.bidRepository.FindRequestBid(bidService.db, requestInfo.BidID, requestInfo.RequestID)
 	if !exist || bid.Status == enum.BidStatusCanceled {
-		// notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
-		// panic(notFoundError)
+		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
+		panic(notFoundError)
 	}
 
 	paymentTerms, err := bidService.paymentService.GetPaymentTerms(bid.PaymentTermsID)
@@ -173,7 +172,7 @@ func (bidService *BidService) GetRequestAnonymousBid(requestInfo biddto.GetCusto
 	if bid.GuaranteeID != nil {
 		guarantee, err = bidService.guaranteeService.GetGuarantee(*bid.GuaranteeID)
 		if err != nil {
-			// panic(err)
+			panic(err)
 		}
 	}
 
@@ -350,8 +349,6 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) {
 		RecipientID: installationRequest.Customer.ID,
 		Data:        data,
 	}
-
-	log.Println("here is OK")
 
 	if err := bidService.rabbitMQ.PublishMessage(bidService.constants.RabbitMQ.Events.SendNotification, msg); err != nil {
 		log.Printf("error during send notification after bid: %v", err)
