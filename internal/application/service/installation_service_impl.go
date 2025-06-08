@@ -641,12 +641,25 @@ func (installationService *InstallationService) GetPanelByAdmin(panelID uint) in
 		Tilt:                 panel.Tilt,
 		Azimuth:              panel.Azimuth,
 		TotalNumberOfModules: panel.TotalNumberOfModules,
+		GuaranteeStatus:      panel.GuaranteeStatus.String(),
 		Operator:             operator,
 		Customer:             customer,
 		Corporation:          corporation,
 		Address:              address,
 		Guarantee:            guarantee,
 	}
+}
+
+func (installationService *InstallationService) GetPanelStatus() []installationdto.EnumStatusResponse {
+	types := enum.GetAllPanelGuaranteeStatuses()
+	response := make([]installationdto.EnumStatusResponse, len(types))
+	for i, status := range types {
+		response[i] = installationdto.EnumStatusResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return response
 }
 
 func (installationService *InstallationService) GetPanelsByAdmin(listInfo installationdto.AdminInstallationListRequest) []installationdto.AdminPanelResponse {
@@ -682,6 +695,7 @@ func (installationService *InstallationService) GetPanelsByAdmin(listInfo instal
 			Tilt:                 panel.Tilt,
 			Azimuth:              panel.Azimuth,
 			TotalNumberOfModules: panel.TotalNumberOfModules,
+			GuaranteeStatus:      panel.GuaranteeStatus.String(),
 			Operator:             operator,
 			Customer:             customer,
 			Corporation:          corporation,
