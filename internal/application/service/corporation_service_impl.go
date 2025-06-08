@@ -218,7 +218,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 
 	err = corporationService.corporationRepository.CreateCorporation(corporationService.db, corporation)
 	if err != nil {
-		panic(err)
+		return corporationdto.CorporationCredentialResponse{}, err
 	}
 
 	staff := &entity.CorporationStaff{
@@ -229,7 +229,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 
 	err = corporationService.corporationRepository.CreateCorporationStaff(corporationService.db, staff)
 	if err != nil {
-		panic(err)
+		return corporationdto.CorporationCredentialResponse{}, err
 	}
 
 	for _, signatory := range registerInfo.Signatories {
@@ -397,7 +397,7 @@ func (corporationService *CorporationService) AddCertificateFiles(requestInfo co
 		if prevVatTaxPayerPath != "" {
 			err := corporationService.s3Storage.DeleteObject(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 	}
@@ -409,7 +409,7 @@ func (corporationService *CorporationService) AddCertificateFiles(requestInfo co
 		if prevOfficialNewspaperPath != "" {
 			err := corporationService.s3Storage.DeleteObject(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 	}
@@ -704,13 +704,13 @@ func (corporationService *CorporationService) ChangeLogo(changeLogoRequest corpo
 		if prevLogoPath != "" {
 			err := corporationService.s3Storage.DeleteObject(enum.LogoPic, corporation.Logo)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 	}
 	err = corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	return nil
 }

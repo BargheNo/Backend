@@ -7,14 +7,14 @@ import (
 )
 
 type NotificationRepository interface {
-	GetNotificationByID(db database.Database, notificationID uint) (*entity.Notification, bool)
-	GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, opts ...QueryModifier) []*entity.Notification
-	GetNotificationSettingByID(db database.Database, settingID uint) (*entity.NotificationSetting, bool)
-	GetNotificationSettingByUserAndType(db database.Database, userID, typeID uint) (*entity.NotificationSetting, bool)
-	GetNotificationSettingByUserID(db database.Database, userID uint) []*entity.NotificationSetting
-	GetNotificationTypeByID(db database.Database, typeID uint) (*entity.NotificationType, bool)
-	GetNotificationTypes(db database.Database) []*entity.NotificationType
-	GetNotificationTypeByName(db database.Database, name enum.NotificationType) (*entity.NotificationType, bool)
+	GetNotificationByID(db database.Database, notificationID uint) (*entity.Notification, error)
+	GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, opts ...QueryModifier) ([]*entity.Notification, error)
+	GetNotificationSettingByID(db database.Database, settingID uint) (*entity.NotificationSetting, error)
+	GetNotificationSettingByUserAndType(db database.Database, userID, typeID uint) (*entity.NotificationSetting, error)
+	GetNotificationSettingByUserID(db database.Database, userID uint) ([]*entity.NotificationSetting, error)
+	GetNotificationTypeByID(db database.Database, typeID uint) (*entity.NotificationType, error)
+	GetNotificationTypes(db database.Database) ([]*entity.NotificationType, error)
+	GetNotificationTypeByName(db database.Database, name enum.NotificationType) (*entity.NotificationType, error)
 	CreateNotification(db database.Database, notification *entity.Notification) error
 	UpdateNotification(db database.Database, notification *entity.Notification) error
 	CreateNotificationSetting(db database.Database, setting *entity.NotificationSetting) error
