@@ -651,7 +651,7 @@ func (installationService *InstallationService) GetPanelByAdmin(panelID uint) in
 }
 
 func (installationService *InstallationService) GetPanelStatus() []installationdto.EnumStatusResponse {
-	types := enum.GetAllPanelGuaranteeStatuses()
+	types := enum.GetAllPanelStatuses()
 	response := make([]installationdto.EnumStatusResponse, len(types))
 	for i, status := range types {
 		response[i] = installationdto.EnumStatusResponse{
