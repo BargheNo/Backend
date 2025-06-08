@@ -91,8 +91,11 @@ func (userService *UserService) passwordValidation(password string) error {
 func (userService *UserService) validateDuplicateEmail(email string) error {
 	var conflictErrors exception.ConflictErrors
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(email)
-	_, exist := userService.userCacheRepository.Get(context.Background(), redisKey)
-	if exist {
+	data, err := userService.userCacheRepository.Get(context.Background(), redisKey)
+	if err != nil {
+		return err
+	}
+	if data != nil {
 		conflictErrors.Add(userService.constants.Field.Email, userService.constants.Tag.AlreadyRegistered)
 		return conflictErrors
 	}
@@ -112,8 +115,11 @@ func (userService *UserService) validateDuplicateEmail(email string) error {
 func (userService *UserService) validateDuplicatePhone(phone string) error {
 	var conflictErrors exception.ConflictErrors
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(phone)
-	_, exist := userService.userCacheRepository.Get(context.Background(), redisKey)
-	if exist {
+	data, err := userService.userCacheRepository.Get(context.Background(), redisKey)
+	if err != nil {
+		return err
+	}
+	if data != nil {
 		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.AlreadyRegistered)
 		return conflictErrors
 	}
@@ -136,7 +142,10 @@ func (userService *UserService) enterNewEmail(firstName, lastName, email, emailS
 		return err
 	}
 
-	otp, expiryMinute := userService.otpService.GenerateOTP()
+	otp, expiryMinute, err := userService.otpService.GenerateOTP()
+	if err != nil {
+		return err
+	}
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(email)
 	err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
 	if err != nil {
@@ -210,7 +219,10 @@ func (userService *UserService) GetUserCredential(userID uint) (userdto.Credenti
 	}
 	profilePic := ""
 	if user.ProfilePicPath != "" {
-		profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+		profilePic, err = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+		if err != nil {
+			return userdto.CredentialResponse{}, err
+		}
 	}
 	return userdto.CredentialResponse{
 		ID:         user.ID,
@@ -241,7 +253,10 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 	for i, user := range users {
 		profilePic := ""
 		if user.ProfilePicPath != "" {
-			profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+			profilePic, err = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+			if err != nil {
+				return nil, err
+			}
 		}
 		usersResponse[i] = userdto.CredentialResponse{
 			ID:         user.ID,
@@ -336,7 +351,10 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 		return err
 	}
 
-	otp, expiryMinute := userService.otpService.GenerateOTP()
+	otp, expiryMinute, err := userService.otpService.GenerateOTP()
+	if err != nil {
+		return err
+	}
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(registerInfo.Phone)
 	err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
 	if err != nil {
@@ -417,7 +435,10 @@ func (userService *UserService) Login(loginInfo userdto.LoginRequest) (userdto.U
 		authError := exception.NewInvalidCredentialsError("phone and password not match", nil)
 		return userdto.UserInfoResponse{}, authError
 	}
-	accessToken, refreshToken := userService.jwtService.GenerateToken(user.ID)
+	accessToken, refreshToken, err := userService.jwtService.GenerateToken(user.ID)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
 	permissions, err := userService.FindUserPermissions(user)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
@@ -445,7 +466,10 @@ func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.Forgot
 		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
 		return conflictErrors
 	}
-	otp, expiryMinute := userService.otpService.GenerateOTP()
+	otp, expiryMinute, err := userService.otpService.GenerateOTP()
+	if err != nil {
+		return err
+	}
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(forgotPasswordInfo.Phone)
 	err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
 	if err != nil {
@@ -475,7 +499,10 @@ func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest)
 		return userdto.UserInfoResponse{}, err
 	}
 
-	accessToken, refreshToken := userService.jwtService.GenerateToken(user.ID)
+	accessToken, refreshToken, err := userService.jwtService.GenerateToken(user.ID)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
 	permissions, err := userService.FindUserPermissions(user)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
@@ -768,7 +795,10 @@ func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.Credential
 	for i, user := range users {
 		profilePic := ""
 		if user.ProfilePicPath != "" {
-			profilePic = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+			profilePic, err = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
+			if err != nil {
+				return nil, err
+			}
 		}
 		userCreds[i] = userdto.CredentialResponse{
 			ID:         user.ID,

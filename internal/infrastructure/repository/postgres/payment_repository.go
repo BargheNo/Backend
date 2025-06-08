@@ -12,28 +12,28 @@ func NewPaymentRepository() *PaymentRepository {
 	return &PaymentRepository{}
 }
 
-func (repo *PaymentRepository) FindPaymentTerms(db database.Database, payTermID uint) (*entity.PaymentTerm, bool) {
+func (repo *PaymentRepository) FindPaymentTerms(db database.Database, payTermID uint) (*entity.PaymentTerm, error) {
 	var payTerm *entity.PaymentTerm
 	result := db.GetDB().First(&payTerm, payTermID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return payTerm, true
+	return payTerm, nil
 }
 
-func (repo *PaymentRepository) FindPaymentTermInstallmentPlan(db database.Database, payTermID uint) (*entity.InstallmentPlan, bool) {
+func (repo *PaymentRepository) FindPaymentTermInstallmentPlan(db database.Database, payTermID uint) (*entity.InstallmentPlan, error) {
 	var plan *entity.InstallmentPlan
 	result := db.GetDB().Where("payment_terms_id = ?", payTermID).First(&plan)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return plan, true
+	return plan, nil
 }
 
 func (repo *PaymentRepository) CreatePaymentTerms(db database.Database, paymentTerms *entity.PaymentTerm) error {

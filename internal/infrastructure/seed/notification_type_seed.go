@@ -27,8 +27,11 @@ func NewNotificationTypeSeeder(
 
 func (seeder *NotificationTypeSeeder) SeedNotificationTypes() {
 	for _, notification := range enum.GetAllNotificationTypes() {
-		_, exist := seeder.notificationRepository.GetNotificationTypeByName(seeder.db, notification)
-		if !exist {
+		notificationType, err := seeder.notificationRepository.GetNotificationTypeByName(seeder.db, notification)
+		if err != nil {
+			panic(err)
+		}
+		if notificationType == nil {
 			notificationType := &entity.NotificationType{
 				Name:              notification,
 				Description:       notification.Description(),

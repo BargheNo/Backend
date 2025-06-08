@@ -1,5 +1,5 @@
 package service
 
 type SMSService interface {
-	SendOTP(receptor, token string)
+	SendOTP(receptor, token string) error
 }

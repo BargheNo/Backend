@@ -111,7 +111,10 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequ
 	for i, post := range posts {
 		coverImage := ""
 		if post.CoverImage != "" {
-			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+			coverImage, err = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+			if err != nil {
+				return nil, err
+			}
 		}
 		likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
 
@@ -150,7 +153,10 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 	for i, post := range posts {
 		coverImage := ""
 		if post.CoverImage != "" {
-			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+			coverImage, err = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		corporation, err := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
@@ -191,7 +197,10 @@ func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPostsRequest)
 		}
 		coverImage := ""
 		if post.CoverImage != "" {
-			coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+			coverImage, err = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+			if err != nil {
+				return nil, err
+			}
 		}
 		likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
 
@@ -236,7 +245,10 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostReques
 
 	coverImage := ""
 	if post.CoverImage != "" {
-		coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+		coverImage, err = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+		if err != nil {
+			return blogdto.CorporationPostResponse{}, err
+		}
 	}
 
 	likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
@@ -284,7 +296,10 @@ func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) (
 
 	coverImage := ""
 	if post.CoverImage != "" {
-		coverImage = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+		coverImage, err = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
+		if err != nil {
+			return blogdto.GeneralPostResponse{}, err
+		}
 	}
 
 	likeCount := blogService.blogRepository.GetLikeCountByOwner(blogService.db, post.ID, "blog")
@@ -519,7 +534,11 @@ func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 		return "", &forbiddenError
 	}
 
-	return blogService.s3Storage.GetPresignedURL(enum.BlogMedia, media.Path, 8*time.Hour), nil
+	presignedURL, err := blogService.s3Storage.GetPresignedURL(enum.BlogMedia, media.Path, 8*time.Hour)
+	if err != nil {
+		return "", err
+	}
+	return presignedURL, nil
 }
 
 func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) error {

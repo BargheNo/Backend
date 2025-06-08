@@ -344,7 +344,10 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 		}
 	}
 
-	paymentTermsID := bidService.paymentService.CreatePaymentTerms(bidInfo.PaymentTerms)
+	paymentTermsID, err := bidService.paymentService.CreatePaymentTerms(bidInfo.PaymentTerms)
+	if err != nil {
+		return err
+	}
 
 	bid = &entity.Bid{
 		CorporationID:    bidInfo.CorporationID,

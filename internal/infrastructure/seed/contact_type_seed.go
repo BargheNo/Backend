@@ -35,11 +35,14 @@ var contactTypes = []string{
 
 func (seeder *ContactTypeSeeder) SeedContactTypes() {
 	for _, name := range contactTypes {
-		_, exist := seeder.corporationRepository.FindContactTypeByName(seeder.db, name)
-		if exist {
+		contactType, err := seeder.corporationRepository.FindContactTypeByName(seeder.db, name)
+		if err != nil {
+			panic(err)
+		}
+		if contactType != nil {
 			continue
 		}
-		contactType := &entity.ContactType{
+		contactType = &entity.ContactType{
 			Name: name,
 		}
 		if err := seeder.corporationRepository.CreateContactType(seeder.db, contactType); err != nil {

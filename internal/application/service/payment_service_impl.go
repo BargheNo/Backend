@@ -41,8 +41,11 @@ func (paymentService *PaymentService) GetPaymentMethods() []paymentdto.PaymentMe
 }
 
 func (paymentService *PaymentService) GetPaymentTerms(payTermID uint) (paymentdto.PaymentTermsResponse, error) {
-	paymentTerms, exist := paymentService.paymentRepository.FindPaymentTerms(paymentService.db, payTermID)
-	if !exist {
+	paymentTerms, err := paymentService.paymentRepository.FindPaymentTerms(paymentService.db, payTermID)
+	if err != nil {
+		return paymentdto.PaymentTermsResponse{}, err
+	}
+	if paymentTerms == nil {
 		notFoundError := exception.NotFoundError{Item: paymentService.constants.Field.PaymentTerm}
 		return paymentdto.PaymentTermsResponse{}, notFoundError
 	}
@@ -53,8 +56,11 @@ func (paymentService *PaymentService) GetPaymentTerms(payTermID uint) (paymentdt
 	}
 
 	if paymentTerms.PaymentMethod == enum.PaymentMethodInstallment {
-		installmentPlan, exist := paymentService.paymentRepository.FindPaymentTermInstallmentPlan(paymentService.db, payTermID)
-		if !exist {
+		installmentPlan, err := paymentService.paymentRepository.FindPaymentTermInstallmentPlan(paymentService.db, payTermID)
+		if err != nil {
+			return paymentdto.PaymentTermsResponse{}, err
+		}
+		if installmentPlan == nil {
 			notFoundError := exception.NotFoundError{Item: paymentService.constants.Field.PaymentTerm}
 			return response, notFoundError
 		}
@@ -68,21 +74,21 @@ func (paymentService *PaymentService) GetPaymentTerms(payTermID uint) (paymentdt
 	return response, nil
 }
 
-func (paymentService *PaymentService) CreatePaymentTerms(paymentTermsRequest paymentdto.PaymentTermsRequest) uint {
+func (paymentService *PaymentService) CreatePaymentTerms(paymentTermsRequest paymentdto.PaymentTermsRequest) (uint, error) {
 	terms := &entity.PaymentTerm{
 		PaymentMethod: enum.PaymentMethod(paymentTermsRequest.PaymentMethod),
 	}
 	if err := paymentService.paymentRepository.CreatePaymentTerms(paymentService.db, terms); err != nil {
-		panic(err)
+		return 0, err
 	}
 	if paymentTermsRequest.InstallmentPlan != nil {
 		paymentTermsRequest.InstallmentPlan.PaymentTermsID = terms.ID
 		paymentService.createInstallmentPlan(*paymentTermsRequest.InstallmentPlan)
 	}
-	return terms.ID
+	return terms.ID, nil
 }
 
-func (paymentService *PaymentService) createInstallmentPlan(installmentPlan paymentdto.InstallmentPlanRequest) {
+func (paymentService *PaymentService) createInstallmentPlan(installmentPlan paymentdto.InstallmentPlanRequest) error {
 	plan := &entity.InstallmentPlan{
 		PaymentTermsID:    installmentPlan.PaymentTermsID,
 		NumberOfMonths:    installmentPlan.NumberOfMonths,
@@ -91,13 +97,17 @@ func (paymentService *PaymentService) createInstallmentPlan(installmentPlan paym
 		Notes:             installmentPlan.Notes,
 	}
 	if err := paymentService.paymentRepository.CreateInstallmentPlan(paymentService.db, plan); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func (paymentService *PaymentService) UpdatePaymentTerms(updatePaymentRequest paymentdto.UpdatePaymentTermsRequest) error {
-	terms, exist := paymentService.paymentRepository.FindPaymentTerms(paymentService.db, updatePaymentRequest.ID)
-	if !exist {
+	terms, err := paymentService.paymentRepository.FindPaymentTerms(paymentService.db, updatePaymentRequest.ID)
+	if err != nil {
+		return err
+	}
+	if terms == nil {
 		notFoundError := exception.NotFoundError{Item: paymentService.constants.Field.PaymentTerm}
 		return notFoundError
 	}
@@ -116,8 +126,11 @@ func (paymentService *PaymentService) UpdatePaymentTerms(updatePaymentRequest pa
 }
 
 func (paymentService *PaymentService) updateInstallmentPlan(updateInstallmentPlan paymentdto.UpdateInstallmentPlanRequest) error {
-	plan, exist := paymentService.paymentRepository.FindPaymentTermInstallmentPlan(paymentService.db, updateInstallmentPlan.PaymentTermsID)
-	if !exist {
+	plan, err := paymentService.paymentRepository.FindPaymentTermInstallmentPlan(paymentService.db, updateInstallmentPlan.PaymentTermsID)
+	if err != nil {
+		return err
+	}
+	if plan == nil {
 		notFoundError := exception.NotFoundError{Item: paymentService.constants.Field.PaymentTerm}
 		return notFoundError
 	}

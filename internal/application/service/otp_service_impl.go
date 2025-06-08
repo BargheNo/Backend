@@ -30,23 +30,26 @@ func NewOTPService(
 
 var table = []byte("123456789")
 
-func (otpService *OTPService) GenerateOTP() (string, int) {
+func (otpService *OTPService) GenerateOTP() (string, int, error) {
 	otp := make([]byte, otpService.otpConfig.Length)
 	n, err := io.ReadAtLeast(rand.Reader, otp, otpService.otpConfig.Length)
 	if n != otpService.otpConfig.Length {
-		panic(err)
+		return "", 0, err
 	}
 	for i := 0; i < len(otp); i++ {
 		otp[i] = table[int(otp[i])%len(table)]
 	}
-	return string(otp), otpService.otpConfig.ExpiryMinute
+	return string(otp), otpService.otpConfig.ExpiryMinute, nil
 }
 
 func (otpService *OTPService) VerifyOTP(redisKey, otp string) error {
 	var validationErrors exception.ValidationErrors
-	redisValue, exist := otpService.userCacheRepository.Get(context.Background(), redisKey)
+	redisValue, err := otpService.userCacheRepository.Get(context.Background(), redisKey)
+	if err != nil {
+		return err
+	}
 
-	if !exist {
+	if redisValue == nil {
 		validationErrors.Add(otpService.constants.Field.OTP, otpService.constants.Tag.Expired)
 		return validationErrors
 	}

@@ -132,7 +132,10 @@ func (userController *GeneralUserController) RefreshToken(ctx *gin.Context) {
 	}
 
 	userID := uint(claims["sub"].(float64))
-	accessToken, _ := userController.jwtService.GenerateToken(userID)
+	accessToken, _, err := userController.jwtService.GenerateToken(userID)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.refreshToken")

@@ -95,7 +95,10 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 			CreatedAt:   ticket.CreatedAt,
 		}
 		if ticket.Image != "" {
-			image := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
+			image, err := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
+			if err != nil {
+				return nil, err
+			}
 			responses[i].Image = image
 		}
 	}
@@ -241,7 +244,10 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 			CreatedAt:   ticket.CreatedAt,
 		}
 		if ticket.Image != "" {
-			image := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
+			image, err := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
+			if err != nil {
+				return nil, err
+			}
 			responses[i].Image = image
 		}
 	}

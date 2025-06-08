@@ -73,7 +73,10 @@ func (newsService *NewsService) GetNews(request newsdto.GetNewsRequest) (newsdto
 	}
 	coverImage := ""
 	if news.CoverImage != "" {
-		coverImage = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, news.CoverImage, 8*time.Hour)
+		coverImage, err = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, news.CoverImage, 8*time.Hour)
+		if err != nil {
+			return newsdto.NewsResponse{}, err
+		}
 	}
 	return newsdto.NewsResponse{
 		ID:          news.ID,
@@ -96,7 +99,10 @@ func (newsService *NewsService) GetNewsList(request newsdto.GetNewsListRequest) 
 	for i, eachNews := range news {
 		coverImage := ""
 		if eachNews.CoverImage != "" {
-			coverImage = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, eachNews.CoverImage, 8*time.Hour)
+			coverImage, err = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, eachNews.CoverImage, 8*time.Hour)
+			if err != nil {
+				return nil, err
+			}
 		}
 		newsResponse[i] = newsdto.NewsResponse{
 			ID:          eachNews.ID,
@@ -388,5 +394,9 @@ func (newsService *NewsService) GetNewsMedia(request newsdto.AccessMediaRequest)
 		return "", forbiddenError
 	}
 
-	return newsService.s3Storage.GetPresignedURL(enum.NewsMedia, media.Path, 8*time.Hour), nil
+	presignedURL, err := newsService.s3Storage.GetPresignedURL(enum.NewsMedia, media.Path, 8*time.Hour)
+	if err != nil {
+		return "", err
+	}
+	return presignedURL, nil
 }

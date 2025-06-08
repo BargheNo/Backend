@@ -504,18 +504,28 @@ func (corporationService *CorporationService) DeleteContactInfo(contactInfo corp
 
 func (corporationService *CorporationService) getPrivateCorporationDetails(corporation *entity.Corporation) (corporationdto.CorporationPrivateInfoResponse, error) {
 	vatTaxPayer := ""
+	var err error
 	if corporation.VATTaxpayerCertificate != "" {
-		vatTaxPayer = corporationService.s3Storage.GetPresignedURL(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate, 8*time.Hour)
+		vatTaxPayer, err = corporationService.s3Storage.GetPresignedURL(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate, 8*time.Hour)
+		if err != nil {
+			return corporationdto.CorporationPrivateInfoResponse{}, err
+		}
 	}
 
 	officialNewspaperAD := ""
 	if corporation.OfficialNewspaperAD != "" {
-		officialNewspaperAD = corporationService.s3Storage.GetPresignedURL(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD, 8*time.Hour)
+		officialNewspaperAD, err = corporationService.s3Storage.GetPresignedURL(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD, 8*time.Hour)
+		if err != nil {
+			return corporationdto.CorporationPrivateInfoResponse{}, err
+		}
 	}
 
 	logo := ""
 	if corporation.Logo != "" {
-		logo = corporationService.s3Storage.GetPresignedURL(enum.LogoPic, corporation.Logo, 8*time.Hour)
+		logo, err = corporationService.s3Storage.GetPresignedURL(enum.LogoPic, corporation.Logo, 8*time.Hour)
+		if err != nil {
+			return corporationdto.CorporationPrivateInfoResponse{}, err
+		}
 	}
 
 	ownerInfo := addressdto.GetOwnerAddressesRequest{

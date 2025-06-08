@@ -20,11 +20,12 @@ func NewSMSService(
 	}
 }
 
-func (smsService *SMSService) SendOTP(receptor, token string) {
+func (smsService *SMSService) SendOTP(receptor, token string) error {
 	api := kavenegar.New(smsService.providerConfig.APIKey)
 	template := smsService.smsTemplates.OTP
 	params := &kavenegar.VerifyLookupParam{}
 	if _, err := api.Verify.Lookup(receptor, template, token, params); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
