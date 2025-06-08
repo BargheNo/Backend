@@ -117,6 +117,11 @@ func (installationController *AdminInstallationController) GetPanels(ctx *gin.Co
 	controller.Response(ctx, 200, "", requests)
 }
 
+func (installationController *AdminInstallationController) GetAllPanelStatuses(ctx *gin.Context) {
+	statuses := installationController.installationService.GetPanelStatus()
+	controller.Response(ctx, 200, "", statuses)
+}
+
 func (installationController *AdminInstallationController) GetPanel(ctx *gin.Context) {
 	type installationRequestParams struct {
 		PanelID uint `uri:"panelID" validate:"required"`

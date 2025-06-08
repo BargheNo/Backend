@@ -7,6 +7,8 @@ import (
 )
 
 func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
+	const status string = "/status"
+
 	ticket := routerGroup.Group("/ticket")
 	{
 		ticket.GET("", app.Controllers.Admin.TicketController.GetTickets)
@@ -32,6 +34,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		panels := installations.Group("/panel")
 		{
 			panels.GET("", app.Controllers.Admin.InstallationController.GetPanels)
+			panels.GET(status, app.Controllers.Admin.InstallationController.GetAllPanelStatuses)
 			panelsSubGroup := panels.Group("/:panelID")
 			{
 				panelsSubGroup.GET("", app.Controllers.Admin.InstallationController.GetPanel)
@@ -90,7 +93,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	// put some role here
 	{
 		corporationManagement.GET("", app.Controllers.Admin.CorporationController.GetCorporations)
-		corporationManagement.GET("/status", app.Controllers.Admin.CorporationController.GetCorporationStatus)
+		corporationManagement.GET(status, app.Controllers.Admin.CorporationController.GetCorporationStatus)
 		corporationSubGRoup := corporationManagement.Group("/:corporationID")
 		{
 			corporationSubGRoup.GET("", app.Controllers.Admin.CorporationController.GetCorporation)
@@ -115,7 +118,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		news.POST("/draft", app.Controllers.Admin.NewsController.CreateDraftNews)
 		news.GET("", app.Controllers.Admin.NewsController.GetNewsList)
-		news.GET("/status", app.Controllers.Admin.NewsController.GetAllNewsStatuses)
+		news.GET(status, app.Controllers.Admin.NewsController.GetAllNewsStatuses)
 		news.DELETE("", app.Controllers.Admin.NewsController.DeleteNews)
 		newsSubgroup := news.Group("/:newsID")
 		{
