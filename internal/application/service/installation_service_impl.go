@@ -245,7 +245,7 @@ func (installationService *InstallationService) GetAnonymousInstallationRequest(
 	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
 
 	installationRequest, exist := installationService.installationRepository.FindRequestByID(installationService.db, request.InstallationID)
-	if !exist || installationRequest.Status != enum.InstallationRequestStatusActive {
+	if !exist {
 		notFoundError := exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
 		panic(notFoundError)
 	}

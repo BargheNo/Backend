@@ -89,7 +89,7 @@ func (repo *InstallationRepository) UpdateRequest(db database.Database, request 
 }
 
 func (repo *InstallationRepository) DeleteRequest(db database.Database, request *entity.InstallationRequest) error {
-	return db.GetDB().Delete(&request).Error
+	return db.GetDB().Unscoped().Delete(&request).Error
 }
 
 func (repo *InstallationRepository) FindCorporationPanel(db database.Database, panelID, corporationID uint) (*entity.Panel, bool) {
