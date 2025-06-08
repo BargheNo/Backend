@@ -385,7 +385,7 @@ func (installationService *InstallationService) DeleteInstallationRequest(reques
 func (installationService *InstallationService) ValidatePanelOwnership(panelID, userID uint) error {
 	_, exist := installationService.installationRepository.FindPanelByOwner(installationService.db, panelID, userID)
 	if !exist {
-		return exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+		return exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 	return nil
 }

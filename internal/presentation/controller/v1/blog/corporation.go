@@ -31,10 +31,10 @@ func NewCorporationBlogController(
 
 func (blogController *CorporationBlogController) CreateDraftPost(ctx *gin.Context) {
 	type createPostParams struct {
-		Title         string                `json:"title" validate:"required"`
-		Content       string                `json:"content" validate:"required"`
-		Description   string                `json:"description" validate:"required"`
 		CorporationID uint                  `uri:"corporationID" validate:"required"`
+		Title         string                `form:"title" validate:"required"`
+		Content       string                `form:"content" validate:"required"`
+		Description   string                `form:"description" validate:"required"`
 		CoverImage    *multipart.FileHeader `form:"cover_image"`
 	}
 	params := controller.Validated[createPostParams](ctx)
@@ -59,13 +59,13 @@ func (blogController *CorporationBlogController) CreateDraftPost(ctx *gin.Contex
 
 func (blogController *CorporationBlogController) EditPost(ctx *gin.Context) {
 	type editPostParams struct {
-		PostID        uint                  `uri:"postID" validate:"required"`
-		Title         *string               `json:"title"`
-		Content       *string               `json:"content"`
-		Description   *string               `json:"description"`
-		CoverImage    *multipart.FileHeader `form:"cover_image"`
-		Status        uint                  `json:"status"`
 		CorporationID uint                  `uri:"corporationID" validate:"required"`
+		PostID        uint                  `uri:"postID" validate:"required"`
+		Status        uint                  `form:"status"`
+		Title         *string               `form:"title"`
+		Content       *string               `form:"content"`
+		Description   *string               `form:"description"`
+		CoverImage    *multipart.FileHeader `form:"cover_image"`
 	}
 
 	params := controller.Validated[editPostParams](ctx)
@@ -91,8 +91,8 @@ func (blogController *CorporationBlogController) EditPost(ctx *gin.Context) {
 
 func (blogController *CorporationBlogController) PublishPost(ctx *gin.Context) {
 	type publishPostParams struct {
-		PostID        uint `uri:"postID" validate:"required"`
 		CorporationID uint `uri:"corporationID" validate:"required"`
+		PostID        uint `uri:"postID" validate:"required"`
 	}
 	params := controller.Validated[publishPostParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
@@ -112,8 +112,8 @@ func (blogController *CorporationBlogController) PublishPost(ctx *gin.Context) {
 
 func (blogController *CorporationBlogController) UnpublishPost(ctx *gin.Context) {
 	type unpublishPostParams struct {
-		PostID        uint `uri:"postID" validate:"required"`
 		CorporationID uint `uri:"corporationID" validate:"required"`
+		PostID        uint `uri:"postID" validate:"required"`
 	}
 	params := controller.Validated[unpublishPostParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
@@ -133,18 +133,18 @@ func (blogController *CorporationBlogController) UnpublishPost(ctx *gin.Context)
 
 func (blogController *CorporationBlogController) DeletePost(ctx *gin.Context) {
 	type deletePostParams struct {
-		PostIDs       []uint `json:"postIDs" validate:"required"`
 		CorporationID uint   `uri:"corporationID" validate:"required"`
+		PostIDs       []uint `json:"postIDs" validate:"required"`
 	}
 	params := controller.Validated[deletePostParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
 
-	deletParams := blogdto.DeletePostRequest{
+	deleteParams := blogdto.DeletePostRequest{
 		PostIDs:       params.PostIDs,
 		AuthorID:      authorID.(uint),
 		CorporationID: params.CorporationID,
 	}
-	blogController.blogService.DeletePost(deletParams)
+	blogController.blogService.DeletePost(deleteParams)
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deletePost")
@@ -153,9 +153,9 @@ func (blogController *CorporationBlogController) DeletePost(ctx *gin.Context) {
 
 func (blogController *CorporationBlogController) AddPostMedia(ctx *gin.Context) {
 	type addPostMediaParams struct {
+		CorporationID uint                  `uri:"corporationID" validate:"required"`
 		PostID        uint                  `uri:"postID" validate:"required"`
 		Media         *multipart.FileHeader `form:"media" validate:"required"`
-		CorporationID uint                  `uri:"corporationID" validate:"required"`
 	}
 	params := controller.Validated[addPostMediaParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
@@ -176,9 +176,9 @@ func (blogController *CorporationBlogController) AddPostMedia(ctx *gin.Context) 
 
 func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Context) {
 	type deletePostMediaParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
 		PostID        uint `uri:"postID" validate:"required"`
 		MediaID       uint `uri:"mediaID" validate:"required"`
-		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
 	params := controller.Validated[deletePostMediaParams](ctx)
 	userID, _ := ctx.Get(blogController.constants.Context.ID)
@@ -198,8 +198,8 @@ func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Contex
 
 func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 	type getPostsParams struct {
-		Statuses      []uint `form:"statuses" validate:"required"`
 		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Statuses      []uint `form:"statuses" validate:"required"`
 	}
 	params := controller.Validated[getPostsParams](ctx)
 	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
@@ -221,8 +221,8 @@ func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 
 func (blogController *CorporationBlogController) GetPost(ctx *gin.Context) {
 	type getPostParams struct {
-		PostID        uint `uri:"postID" validate:"required"`
 		CorporationID uint `uri:"corporationID" validate:"required"`
+		PostID        uint `uri:"postID" validate:"required"`
 	}
 	params := controller.Validated[getPostParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
@@ -240,9 +240,9 @@ func (blogController *CorporationBlogController) GetPost(ctx *gin.Context) {
 
 func (blogController *CorporationBlogController) GetPostMedia(ctx *gin.Context) {
 	type getPostMediaParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
 		PostID        uint `uri:"postID" validate:"required"`
 		MediaID       uint `uri:"mediaID" validate:"required"`
-		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
 	params := controller.Validated[getPostMediaParams](ctx)
 	userID, _ := ctx.Get(blogController.constants.Context.ID)
