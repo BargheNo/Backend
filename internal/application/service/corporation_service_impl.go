@@ -299,7 +299,10 @@ func (corporationService *CorporationService) UpdateRegister(updateRegisterInfo 
 		}
 		return &forbiddenError
 	}
-	corporationService.CheckApplicantAccess(updateRegisterInfo.CorporationID, updateRegisterInfo.ApplicantID)
+	err = corporationService.CheckApplicantAccess(updateRegisterInfo.CorporationID, updateRegisterInfo.ApplicantID)
+	if err != nil {
+		return err
+	}
 
 	corporationService.checkCorporationConflicts(corporation, updateRegisterInfo.Name, updateRegisterInfo.NationalID, updateRegisterInfo.RegistrationNumber, updateRegisterInfo.IBAN)
 
@@ -385,7 +388,10 @@ func (corporationService *CorporationService) AddCertificateFiles(requestInfo co
 		}
 		return &forbiddenError
 	}
-	corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID)
+	err = corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID)
+	if err != nil {
+		return err
+	}
 
 	prevVatTaxPayerPath := corporation.VATTaxpayerCertificate
 	prevOfficialNewspaperPath := corporation.OfficialNewspaperAD
@@ -437,7 +443,10 @@ func (corporationService *CorporationService) AddContactInfo(contactInfo corpora
 		}
 		return &forbiddenError
 	}
-	corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
+	err = corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
+	if err != nil {
+		return err
+	}
 
 	for _, contact := range contactInfo.ContactInformation {
 		contactType, err := corporationService.corporationRepository.FindContactInformationTypeByID(corporationService.db, contact.ContactTypeID)
@@ -484,7 +493,10 @@ func (corporationService *CorporationService) DeleteContactInfo(contactInfo corp
 		}
 		return &forbiddenError
 	}
-	corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
+	err = corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
+	if err != nil {
+		return err
+	}
 
 	contact, err := corporationService.corporationRepository.FindContactInformationByID(corporationService.db, contactInfo.ContactID)
 	if err != nil {
@@ -575,6 +587,10 @@ func (corporationService *CorporationService) GetCorporationDetails(requestInfo 
 	if err != nil {
 		return corporationdto.CorporationPrivateInfoResponse{}, err
 	}
+	err = corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.UserID)
+	if err != nil {
+		return corporationdto.CorporationPrivateInfoResponse{}, err
+	}
 
 	details, err := corporationService.getPrivateCorporationDetails(corporation)
 	if err != nil {
@@ -655,7 +671,10 @@ func (corporationService *CorporationService) AddAddress(addressInfo corporation
 		}
 		return &forbiddenError
 	}
-	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID)
+	err = corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID)
+	if err != nil {
+		return err
+	}
 
 	for _, address := range addressInfo.Addresses {
 		corporationService.addressService.CreateAddress(address)
@@ -680,7 +699,10 @@ func (corporationService *CorporationService) DeleteAddress(addressInfo corporat
 		}
 		return &forbiddenError
 	}
-	corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID)
+	err = corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID)
+	if err != nil {
+		return err
+	}
 
 	corporationService.addressService.DeleteAddress(addressInfo.AddressID)
 	return nil
@@ -703,7 +725,10 @@ func (corporationService *CorporationService) ChangeLogo(changeLogoRequest corpo
 		}
 		return &forbiddenError
 	}
-	corporationService.CheckApplicantAccess(changeLogoRequest.CorporationID, changeLogoRequest.ApplicantID)
+	err = corporationService.CheckApplicantAccess(changeLogoRequest.CorporationID, changeLogoRequest.ApplicantID)
+	if err != nil {
+		return err
+	}
 
 	prevLogoPath := corporation.Logo
 
@@ -802,7 +827,7 @@ func (corporationService *CorporationService) GetCorporationByAdmin(corporationI
 	return details, nil
 }
 
-func (corporationService *CorporationService) GetReviewActions() ([]corporationdto.GetStatusesResponse, error) {
+func (corporationService *CorporationService) GetReviewActions() []corporationdto.GetStatusesResponse {
 	actions := enum.GetAllReviewActions()
 	response := make([]corporationdto.GetStatusesResponse, len(actions))
 	for i, action := range actions {
@@ -811,7 +836,7 @@ func (corporationService *CorporationService) GetReviewActions() ([]corporationd
 			Status: action.String(),
 		}
 	}
-	return response, nil
+	return response
 }
 
 func (corporationService *CorporationService) GetCorporationReviewsByAdmin(corporationID uint) ([]corporationdto.GetAdminCorporationReview, error) {

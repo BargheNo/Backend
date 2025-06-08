@@ -173,13 +173,9 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 		return forbiddenError
 	}
 
-	exist, err := maintenanceService.corporationService.DoesCorporationExist(request.CorporationID)
+	err := maintenanceService.corporationService.DoesCorporationExist(request.CorporationID)
 	if err != nil {
 		return err
-	}
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.Corporation}
-		return notFoundError
 	}
 
 	_, err = maintenanceService.installationService.ValidatePanelOwnership(request.PanelID, request.OwnerID)
@@ -505,7 +501,10 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 }
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) ([]maintenancedto.CorporationMaintenanceListResponse, error) {
-	maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
+	err := maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
+	if err != nil {
+		return nil, err
+	}
 
 	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCorporation)
 
@@ -544,7 +543,10 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 }
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) (maintenancedto.CorporationMaintenanceResponse, error) {
-	maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+	err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+	if err != nil {
+		return maintenancedto.CorporationMaintenanceResponse{}, err
+	}
 
 	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
 	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
@@ -618,7 +620,10 @@ func (maintenanceService *MaintenanceService) getCorporationMaintenanceRecord(re
 
 // TODO: CHECKED COULD BE BETTER add timer
 func (maintenanceService *MaintenanceService) AcceptMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) error {
-	maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+	err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+	if err != nil {
+		return err
+	}
 
 	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
 	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
@@ -649,7 +654,10 @@ func (maintenanceService *MaintenanceService) AcceptMaintenanceRequest(maintenan
 
 // TODO: CHECKED COULD BE BETTER add reason
 func (maintenanceService *MaintenanceService) RejectMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) error {
-	maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+	err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
+	if err != nil {
+		return err
+	}
 
 	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
 	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
@@ -679,7 +687,10 @@ func (maintenanceService *MaintenanceService) RejectMaintenanceRequest(maintenan
 }
 
 func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo maintenancedto.CreateMaintenanceRecordRequest) error {
-	maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
+	err := maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
+	if err != nil {
+		return err
+	}
 
 	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
 	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, recordInfo.RequestID, recordInfo.CorporationID, allowedStatuses)
@@ -737,7 +748,10 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo
 }
 
 func (maintenanceService *MaintenanceService) UpdateMaintenanceRecord(recordInfo maintenancedto.UpdateMaintenanceRecordRequest) error {
-	maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
+	err := maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
+	if err != nil {
+		return err
+	}
 
 	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
 	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, recordInfo.RequestID, recordInfo.CorporationID, allowedStatuses)

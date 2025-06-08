@@ -161,7 +161,10 @@ func (chatService *ChatService) GetCorporationRooms(request chatdto.GetCorporati
 		return nil, err
 	}
 	chatService.userService.DoesUserExist(request.ApplicantID)
-	chatService.corporationService.CheckApplicantAccess(request.CorporationID, request.ApplicantID)
+	err = chatService.corporationService.CheckApplicantAccess(request.CorporationID, request.ApplicantID)
+	if err != nil {
+		return nil, err
+	}
 	rooms, err := chatService.chatRepository.GetCorporationRooms(chatService.db, request.CorporationID)
 	if err != nil {
 		return nil, err
@@ -189,7 +192,10 @@ func (chatService *ChatService) GetCorporationRooms(request chatdto.GetCorporati
 
 func (chatService *ChatService) validateRoomParticipantAccess(senderID, memberID, corporationID uint) {
 	if senderID != memberID {
-		chatService.corporationService.CheckApplicantAccess(corporationID, senderID)
+		err := chatService.corporationService.CheckApplicantAccess(corporationID, senderID)
+		if err != nil {
+			return
+		}
 	}
 }
 

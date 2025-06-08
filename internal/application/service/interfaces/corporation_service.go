@@ -6,10 +6,10 @@ import (
 
 type CorporationService interface {
 	GetCorporationStatuses() []corporationdto.GetStatusesResponse
-	DoesCorporationExist(corporationID uint) (bool, error)
+	DoesCorporationExist(corporationID uint) error
 	ISCorporationApproved(corporationID uint) (bool, error)
 	GetCorporationCredentials(corporationID uint) (corporationdto.CorporationCredentialResponse, error)
-	CheckApplicantAccess(corporationID, applicantID uint) (bool, error)
+	CheckApplicantAccess(corporationID, applicantID uint) error
 	Register(registerInfo corporationdto.RegisterRequest) (corporationdto.CorporationCredentialResponse, error)
 	UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest) error
 	AddCertificateFiles(requestInfo corporationdto.AddCertificatesRequest) error
@@ -18,7 +18,7 @@ type CorporationService interface {
 	AddAddress(addressInfo corporationdto.AddCorporationAddressRequest) error
 	DeleteAddress(addressInfo corporationdto.DeleteAddressRequest) error
 	GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) (corporationdto.CorporationPrivateInfoResponse, error)
-	GetContactTypes() []corporationdto.ContactTypeResponse
+	GetContactTypes() ([]corporationdto.ContactTypeResponse, error)
 	ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest) error
 	GetUserCorporations(userID uint) ([]corporationdto.CorporationCredentialResponse, error)
 	GetAvailableCorporations() ([]corporationdto.CorporationCredentialResponse, error)

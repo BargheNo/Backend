@@ -11,7 +11,7 @@ type UserService interface {
 	IsUserActive(userID uint) (bool, error)
 	GetUserByID(userID uint) (*entity.User, error)
 	GetUserCredential(userID uint) (userdto.CredentialResponse, error)
-	GetUsersByPermission(permissionTypes []enum.PermissionType) []*entity.User
+	GetUsersByPermission(permissionTypes []enum.PermissionType) ([]*entity.User, error)
 	GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, error)
 	BanUser(userID uint) error
 	UnbanUser(userID uint) error
@@ -22,7 +22,7 @@ type UserService interface {
 	VerifyOTP(verifyInfo userdto.VerifyPhoneRequest) (userdto.UserInfoResponse, error)
 	CompleteRegister(completeRegisterInfo userdto.CompleteRegisterRequest) error
 	VerifyEmail(verifyOTPInfo userdto.VerifyEmailRequest) error
-	ResetPassword(resetPassInfo userdto.ResetPasswordRequest)
+	ResetPassword(resetPassInfo userdto.ResetPasswordRequest) error
 	FindUserByPhone(phone string) (userdto.UserResponse, error)
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest) error
 	GetAllPermissions() ([]userdto.PermissionResponse, error)

@@ -251,7 +251,10 @@ func (installationService *InstallationService) ChangeInstallationRequestStatus(
 }
 
 func (installationService *InstallationService) GetAnonymousInstallationRequests(request installationdto.CorporationPanelListRequest) ([]installationdto.AnonymousRequestsResponse, error) {
-	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return nil, err
+	}
 
 	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
 
@@ -284,7 +287,10 @@ func (installationService *InstallationService) GetAnonymousInstallationRequests
 }
 
 func (installationService *InstallationService) GetAnonymousInstallationRequest(request installationdto.CorporationPanelRequest) (installationdto.AnonymousRequestsResponse, error) {
-	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return installationdto.AnonymousRequestsResponse{}, err
+	}
 
 	installationRequest, err := installationService.installationRepository.FindRequestByID(installationService.db, request.InstallationID)
 	if err != nil {
@@ -385,7 +391,10 @@ func (installationService *InstallationService) GetInstallationRequestsByAdmin(r
 }
 
 func (installationService *InstallationService) CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest) error {
-	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return err
+	}
 
 	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, request.PanelID, request.CorporationID)
 	if err != nil {
@@ -526,7 +535,10 @@ func (installationService *InstallationService) ValidatePanelGuarantee(panelID u
 
 // TODO: nor done remain for the bid/bidID/request && maybe remove:FindPanelByNameAndCustomerID
 func (installationService *InstallationService) AddPanel(panelInfo installationdto.AddPanelRequest) error {
-	installationService.corporationService.CheckApplicantAccess(panelInfo.CorporationID, panelInfo.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(panelInfo.CorporationID, panelInfo.OperatorID)
+	if err != nil {
+		return err
+	}
 	ok, err := installationService.userService.IsUserActive(panelInfo.OperatorID)
 	if err != nil {
 		return err
@@ -600,7 +612,10 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 }
 
 func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) ([]installationdto.CorporationPanelListResponse, error) {
-	installationService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
+	if err != nil {
+		return nil, err
+	}
 
 	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
@@ -649,7 +664,10 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 }
 
 func (installationService *InstallationService) GetCorporationPanel(request installationdto.CorporationPanelRequest) (installationdto.CorporationPanelResponse, error) {
-	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return installationdto.CorporationPanelResponse{}, err
+	}
 
 	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, request.InstallationID, request.CorporationID)
 	if err != nil {
@@ -951,7 +969,10 @@ func (installationService *InstallationService) DeletePanel(panelID uint) error 
 }
 
 func (installationService *InstallationService) ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) (uint, error) {
-	installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return 0, err
+	}
 
 	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, request.PanelID, request.CorporationID)
 	if err != nil {
@@ -985,7 +1006,10 @@ func (installationService *InstallationService) ViolatePanelGuaranteeStatus(requ
 }
 
 func (installationService *InstallationService) ClearPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) error {
-	installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+	if err != nil {
+		return err
+	}
 
 	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
 	if err != nil {
@@ -1020,7 +1044,10 @@ func (installationService *InstallationService) ClearPanelGuaranteeViolation(vio
 func (installationService *InstallationService) GetCorporationPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) (guaranteedto.CorporationGuaranteeViolationResponse, error) {
 	var violation guaranteedto.CorporationGuaranteeViolationResponse
 
-	installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+	if err != nil {
+		return violation, err
+	}
 
 	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
 	if err != nil {
@@ -1074,7 +1101,10 @@ func (installationService *InstallationService) GetCustomerPanelGuaranteeViolati
 }
 
 func (installationService *InstallationService) UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest) error {
-	installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+	err := installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
+	if err != nil {
+		return err
+	}
 
 	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
 	if err != nil {

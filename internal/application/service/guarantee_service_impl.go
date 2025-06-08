@@ -122,7 +122,10 @@ func (guaranteeService *GuaranteeService) GetGuaranteeStatuses() []guaranteedto.
 }
 
 func (guaranteeService *GuaranteeService) GetCorporationGuarantee(request guaranteedto.GetGuaranteeRequest) (guaranteedto.GuaranteeResponse, error) {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return guaranteedto.GuaranteeResponse{}, err
+	}
 
 	guarantee, err := guaranteeService.GetGuarantee(request.GuaranteeID)
 	if err != nil {
@@ -132,7 +135,10 @@ func (guaranteeService *GuaranteeService) GetCorporationGuarantee(request guaran
 }
 
 func (guaranteeService *GuaranteeService) GetCorporationGuarantees(request guaranteedto.GetGuaranteesRequest) ([]guaranteedto.GuaranteeResponse, error) {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return nil, err
+	}
 
 	allowedStatus := []enum.GuaranteeStatus{enum.GuaranteeStatus(request.Status)}
 	if enum.GuaranteeStatus(request.Status) == enum.GuaranteeStatusAll {
@@ -155,7 +161,10 @@ func (guaranteeService *GuaranteeService) GetCorporationGuarantees(request guara
 }
 
 func (guaranteeService *GuaranteeService) AddGuarantee(request guaranteedto.CreateGuaranteeRequest) (uint, error) {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return 0, err
+	}
 
 	guarantee, err := guaranteeService.guaranteeRepository.FindCorporationGuaranteeByName(guaranteeService.db, request.CorporationID, request.Name)
 	if err != nil {
@@ -200,7 +209,10 @@ func (guaranteeService *GuaranteeService) addGuaranteeTerm(terms guaranteedto.Gu
 }
 
 func (guaranteeService *GuaranteeService) UpdateGuaranteeStatus(request guaranteedto.ChangeStatusRequest) error {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return err
+	}
 
 	guarantee, err := guaranteeService.guaranteeRepository.FindGuaranteeByID(guaranteeService.db, request.GuaranteeID)
 	if err != nil {
@@ -241,7 +253,10 @@ func (guaranteeService *GuaranteeService) UpdateGuaranteeStatus(request guarante
 }
 
 func (guaranteeService *GuaranteeService) CreateGuaranteeViolation(request guaranteedto.CreateGuaranteeViolationRequest) (uint, error) {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return 0, err
+	}
 
 	violation, err := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, request.PanelID)
 	if err != nil {

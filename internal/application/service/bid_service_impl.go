@@ -317,7 +317,10 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 	}
 
 	bidService.userService.IsUserActive(bidInfo.BidderID)
-	bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.BidderID)
+	err = bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.BidderID)
+	if err != nil {
+		return err
+	}
 
 	installationRequest, err := bidService.installationService.GetPublicInstallationRequest(bidInfo.RequestID)
 	if err != nil {
@@ -391,7 +394,10 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 }
 
 func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBidsRequest) ([]biddto.CorporationBidResponse, error) {
-	bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	if err != nil {
+		return nil, err
+	}
 
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("updated_at", true)
@@ -443,7 +449,10 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 }
 
 func (bidService *BidService) GetCorporationBid(request biddto.GetBidRequest) (biddto.CorporationBidResponse, error) {
-	bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	if err != nil {
+		return biddto.CorporationBidResponse{}, err
+	}
 
 	bid, err := bidService.bidRepository.FindCorporationBid(bidService.db, request.BidID, request.CorporationID)
 	if err != nil {
@@ -489,7 +498,10 @@ func (bidService *BidService) GetCorporationBid(request biddto.GetBidRequest) (b
 }
 
 func (bidService *BidService) UpdateBid(request biddto.UpdateBidRequest) error {
-	bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.BidderID)
+	err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.BidderID)
+	if err != nil {
+		return err
+	}
 
 	bid, err := bidService.bidRepository.FindCorporationBid(bidService.db, request.BidID, request.CorporationID)
 	if err != nil {
@@ -551,7 +563,10 @@ func (bidService *BidService) UpdateBid(request biddto.UpdateBidRequest) error {
 }
 
 func (bidService *BidService) CancelBid(bidInfo biddto.GetBidRequest) error {
-	bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.UserID)
+	err := bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.UserID)
+	if err != nil {
+		return err
+	}
 
 	bid, err := bidService.bidRepository.FindCorporationBid(bidService.db, bidInfo.BidID, bidInfo.CorporationID)
 	if err != nil {

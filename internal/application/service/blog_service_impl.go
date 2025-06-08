@@ -56,7 +56,10 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) er
 		}
 		return forbiddenError
 	}
-	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	if err != nil {
+		return err
+	}
 
 	post := &entity.Post{
 		Title:         request.Title,
@@ -100,7 +103,10 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequ
 		return nil, &forbiddenError
 	}
 
-	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	if err != nil {
+		return nil, err
+	}
 
 	posts, err := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
 	if err != nil {
@@ -142,7 +148,10 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
-	blogService.corporationService.DoesCorporationExist(request.CorporationID)
+	err := blogService.corporationService.DoesCorporationExist(request.CorporationID)
+	if err != nil {
+		return nil, err
+	}
 
 	posts, err := blogService.blogRepository.GetCorporationPostsByStatus(blogService.db, request.CorporationID, request.Statuses, paginationModifier, sortingModifier)
 	if err != nil {
@@ -232,7 +241,10 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostReques
 		return blogdto.CorporationPostResponse{}, &forbiddenError
 	}
 
-	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	if err != nil {
+		return blogdto.CorporationPostResponse{}, err
+	}
 
 	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
 	if err != nil {
@@ -330,7 +342,10 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error 
 		return &forbiddenError
 	}
 
-	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	if err != nil {
+		return err
+	}
 
 	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
 	if err != nil {
@@ -381,7 +396,10 @@ func (blogService *BlogService) DeletePost(request blogdto.DeletePostRequest) er
 		return &forbiddenError
 	}
 
-	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	if err != nil {
+		return err
+	}
 
 	for _, postID := range request.PostIDs {
 		post, err := blogService.blogRepository.FindPostByID(blogService.db, postID)
@@ -409,7 +427,10 @@ func (blogService *BlogService) AddPostMedia(request blogdto.AddPostMediaRequest
 		return 0, &forbiddenError
 	}
 
-	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
+	if err != nil {
+		return 0, err
+	}
 
 	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
 	if err != nil {
@@ -447,7 +468,10 @@ func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaR
 		return &forbiddenError
 	}
 
-	blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+	if err != nil {
+		return err
+	}
 
 	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
 	if err != nil {
@@ -514,7 +538,10 @@ func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 			}
 			return "", &forbiddenError
 		}
-		blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+		err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	media, err := blogService.blogRepository.GetMediaByID(blogService.db, request.MediaID)
