@@ -16,6 +16,8 @@ type AnonymousBidResponse struct {
 	Cost             uint                            `json:"cost"`
 	InstallationTime time.Time                       `json:"installationTime"`
 	Status           string                          `json:"status"`
+	Area             uint                            `json:"area"`
+	Power            uint                            `json:"power"`
 	PaymentTerms     paymentdto.PaymentTermsResponse `json:"paymentTerms"`
 	Guarantee        guaranteedto.GuaranteeResponse  `json:"guarantee"`
 }
@@ -26,6 +28,8 @@ type CorporationBidResponse struct {
 	InstallationRequest installationdto.AnonymousRequestsResponse `json:"request"`
 	Description         string                                    `json:"description"`
 	Cost                uint                                      `json:"cost"`
+	Area                uint                                      `json:"area"`
+	Power               uint                                      `json:"power"`
 	InstallationTime    time.Time                                 `json:"installationTime"`
 	Status              string                                    `json:"status"`
 	PaymentTerms        paymentdto.PaymentTermsResponse           `json:"paymentTerms"`
@@ -38,6 +42,8 @@ type AdminBidResponse struct {
 	Bidder           userdto.CredentialResponse                   `json:"bidder"`
 	Description      string                                       `json:"description"`
 	Cost             uint                                         `json:"cost"`
+	Area             uint                                         `json:"area"`
+	Power            uint                                         `json:"power"`
 	InstallationTime time.Time                                    `json:"installationTime"`
 	Status           string                                       `json:"status"`
 	PaymentTerms     paymentdto.PaymentTermsResponse              `json:"paymentTerms"`
