@@ -84,7 +84,10 @@ func (installationController *CustomerInstallationController) GetInstallationReq
 		Offset:  offset,
 		Limit:   limit,
 	}
-	requests := installationController.installationService.GetOwnerInstallationRequests(listInfo)
+	requests, err := installationController.installationService.GetOwnerInstallationRequests(listInfo)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", requests)
 }
 
@@ -99,7 +102,10 @@ func (installationController *CustomerInstallationController) GetInstallationReq
 		InstallationID: params.RequestID,
 		OwnerID:        ownerID.(uint),
 	}
-	installationRequest := installationController.installationService.GetOwnerInstallationRequest(requestInfo)
+	installationRequest, err := installationController.installationService.GetOwnerInstallationRequest(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", installationRequest)
 }
@@ -138,7 +144,10 @@ func (installationController *CustomerInstallationController) GetCustomerPanels(
 		Offset:  offset,
 		Limit:   limit,
 	}
-	panels := installationController.installationService.GetCustomerPanels(listInfo)
+	panels, err := installationController.installationService.GetCustomerPanels(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", panels)
 }
@@ -154,7 +163,10 @@ func (installationController *CustomerInstallationController) GetCustomerPanel(c
 		InstallationID: params.PanelID,
 		OwnerID:        ownerID.(uint),
 	}
-	panels := installationController.installationService.GetCustomerPanel(panelInfo)
+	panels, err := installationController.installationService.GetCustomerPanel(panelInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", panels)
 }

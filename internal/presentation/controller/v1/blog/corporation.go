@@ -167,7 +167,10 @@ func (blogController *CorporationBlogController) AddPostMedia(ctx *gin.Context) 
 		CorporationID: params.CorporationID,
 	}
 
-	mediaID := blogController.blogService.AddPostMedia(mediaParams)
+	mediaID, err := blogController.blogService.AddPostMedia(mediaParams)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addMedia")
@@ -214,7 +217,10 @@ func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 		Limit:         limit,
 		UserID:        userID.(uint),
 	}
-	posts := blogController.blogService.GetCorporationPosts(getPostsRequest)
+	posts, err := blogController.blogService.GetCorporationPosts(getPostsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", posts)
 }
@@ -233,7 +239,10 @@ func (blogController *CorporationBlogController) GetPost(ctx *gin.Context) {
 		CorporationID: params.CorporationID,
 		UserType:      enum.UserTypeCorporation,
 	}
-	post := blogController.blogService.GetCorporationPost(getPostRequest)
+	post, err := blogController.blogService.GetCorporationPost(getPostRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", post)
 }
@@ -254,7 +263,10 @@ func (blogController *CorporationBlogController) GetPostMedia(ctx *gin.Context) 
 		CorporationID: params.CorporationID,
 	}
 
-	media := blogController.blogService.GetPostMedia(mediaParams)
+	media, err := blogController.blogService.GetPostMedia(mediaParams)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", media)
 }

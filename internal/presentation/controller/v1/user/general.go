@@ -76,7 +76,10 @@ func (userController *GeneralUserController) Login(ctx *gin.Context) {
 		Phone:    params.Phone,
 		Password: params.Password,
 	}
-	userInfo := userController.userService.Login(loginInfo)
+	userInfo, err := userController.userService.Login(loginInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.login")
@@ -108,7 +111,10 @@ func (userController *GeneralUserController) ConfirmOTP(ctx *gin.Context) {
 		Phone: params.Phone,
 		OTP:   params.OTP,
 	}
-	userInfo := userController.userService.VerifyOTP(verifyPhoneInfo)
+	userInfo, err := userController.userService.VerifyOTP(verifyPhoneInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.phoneVerification")

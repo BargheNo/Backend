@@ -68,7 +68,10 @@ func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 		Limit:   limit,
 	}
 
-	tickets := ticketController.ticketService.GetCustomerTickets(listInfo)
+	tickets, err := ticketController.ticketService.GetCustomerTickets(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", tickets)
 }
@@ -87,7 +90,10 @@ func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) 
 		Offset:   offset,
 		Limit:    limit,
 	}
-	comments := ticketController.ticketService.GetCustomerTicketComments(listInfo)
+	comments, err := ticketController.ticketService.GetCustomerTicketComments(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", comments)
 }
@@ -107,7 +113,10 @@ func (ticketController *CustomerTicketController) CreateComment(ctx *gin.Context
 		Body:      params.Body,
 	}
 
-	ticketController.ticketService.CreateCustomerTicketComment(requestInfo)
+	err := ticketController.ticketService.CreateCustomerTicketComment(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicketComment")

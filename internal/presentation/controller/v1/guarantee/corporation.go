@@ -60,7 +60,10 @@ func (guaranteeController *CorporationGuaranteeController) CreateGuarantee(ctx *
 		Description:           params.Description,
 		GuaranteeTermsRequest: guaranteeTermsRequest,
 	}
-	guaranteeID := guaranteeController.guaranteeService.AddGuarantee(request)
+	guaranteeID, err := guaranteeController.guaranteeService.AddGuarantee(request)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, guaranteeController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createGuarantee")
@@ -90,7 +93,10 @@ func (guaranteeController *CorporationGuaranteeController) GetGuarantees(ctx *gi
 		OperatorID:    userID.(uint),
 		Status:        params.Status,
 	}
-	guarantees := guaranteeController.guaranteeService.GetCorporationGuarantees(request)
+	guarantees, err := guaranteeController.guaranteeService.GetCorporationGuarantees(request)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", guarantees)
 }
@@ -108,7 +114,10 @@ func (guaranteeController *CorporationGuaranteeController) GetGuarantee(ctx *gin
 		OperatorID:    userID.(uint),
 		GuaranteeID:   params.GuaranteeID,
 	}
-	guarantees := guaranteeController.guaranteeService.GetCorporationGuarantee(request)
+	guarantees, err := guaranteeController.guaranteeService.GetCorporationGuarantee(request)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", guarantees)
 }
@@ -128,7 +137,10 @@ func (guaranteeController *CorporationGuaranteeController) UpdateGuarantee(ctx *
 		GuaranteeID:   params.GuaranteeID,
 		Status:        params.Status,
 	}
-	guaranteeController.guaranteeService.UpdateGuaranteeStatus(request)
+	err := guaranteeController.guaranteeService.UpdateGuaranteeStatus(request)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, guaranteeController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateGuarantee")

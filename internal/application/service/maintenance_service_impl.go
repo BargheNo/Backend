@@ -62,7 +62,8 @@ func (maintenanceService *MaintenanceService) ValidateCustomerRecord(recordID, u
 		return notFoundError
 	}
 
-	if err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, userID); err != nil {
+	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, userID)
+	if err != nil {
 		return err
 	}
 
@@ -181,7 +182,8 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 		return notFoundError
 	}
 
-	if err := maintenanceService.installationService.ValidatePanelOwnership(request.PanelID, request.OwnerID); err != nil {
+	_, err = maintenanceService.installationService.ValidatePanelOwnership(request.PanelID, request.OwnerID)
+	if err != nil {
 		return err
 	}
 
@@ -261,7 +263,8 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequests(listInfo maintenancedto.CustomerPanelMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, error) {
-	if err := maintenanceService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID); err != nil {
+	_, err := maintenanceService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -387,7 +390,8 @@ func (maintenanceService *MaintenanceService) UpdateMaintenanceRequest(updateReq
 		return notFoundError
 	}
 
-	if err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, updateRequest.OwnerID); err != nil {
+	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, updateRequest.OwnerID)
+	if err != nil {
 		return err
 	}
 
@@ -438,7 +442,8 @@ func (maintenanceService *MaintenanceService) CancelMaintenanceRequest(maintenan
 		return notFoundError
 	}
 
-	if err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID); err != nil {
+	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID)
+	if err != nil {
 		return err
 	}
 
@@ -470,7 +475,8 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 		return notFoundError
 	}
 
-	if err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID); err != nil {
+	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID)
+	if err != nil {
 		return err
 	}
 

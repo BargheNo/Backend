@@ -27,7 +27,10 @@ func NewCustomerUserController(
 
 func (userController *CustomerUserController) GetMyProfile(ctx *gin.Context) {
 	userID, _ := ctx.Get(userController.constants.Context.ID)
-	profile := userController.userService.GetUserCredential(userID.(uint))
+	profile, err := userController.userService.GetUserCredential(userID.(uint))
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", profile)
 }
 

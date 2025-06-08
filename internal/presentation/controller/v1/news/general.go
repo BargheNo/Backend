@@ -36,7 +36,10 @@ func (newsController *GeneralNewsController) GetNewsList(ctx *gin.Context) {
 		Offset:   offset,
 		Limit:    limit,
 	}
-	news := newsController.newsService.GetNewsList(getNewsRequest)
+	news, err := newsController.newsService.GetNewsList(getNewsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", news)
 }
@@ -51,7 +54,10 @@ func (newsController *GeneralNewsController) GetNews(ctx *gin.Context) {
 		NewsID:   params.NewsID,
 		UserType: enum.UserTypeGuest,
 	}
-	news := newsController.newsService.GetNews(getNewsRequest)
+	news, err := newsController.newsService.GetNews(getNewsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", news)
 }
@@ -68,7 +74,10 @@ func (newsController *GeneralNewsController) GetNewsMedia(ctx *gin.Context) {
 		MediaID:  params.MediaID,
 		UserType: enum.UserTypeGuest,
 	}
-	media := newsController.newsService.GetNewsMedia(mediaParams)
+	media, err := newsController.newsService.GetNewsMedia(mediaParams)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", media)
 }

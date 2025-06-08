@@ -36,7 +36,10 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 		Limit:   limit,
 	}
 
-	reports := reportController.reportService.GetMaintenanceReports(requestInfo)
+	reports, err := reportController.reportService.GetMaintenanceReports(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", reports)
 }
 
@@ -50,7 +53,10 @@ func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context)
 		Limit:   limit,
 	}
 
-	reports := reportController.reportService.GetPanelReports(requestInfo)
+	reports, err := reportController.reportService.GetPanelReports(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", reports)
 }
 
@@ -64,7 +70,10 @@ func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {
 		ReportID: params.ReportID,
 		UserID:   userID.(uint),
 	}
-	reportController.reportService.ResolveReport(requestInfo)
+	err := reportController.reportService.ResolveReport(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.reportResolved")

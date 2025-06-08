@@ -53,7 +53,10 @@ func (maintenanceController *CorporationMaintenanceController) GetAllMaintenance
 		Offset:        offset,
 		Limit:         limit,
 	}
-	requests := maintenanceController.maintenanceService.GetCorporationMaintenanceRequests(listInfo)
+	requests, err := maintenanceController.maintenanceService.GetCorporationMaintenanceRequests(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", requests)
 }
@@ -71,7 +74,10 @@ func (maintenanceController *CorporationMaintenanceController) GetMaintenanceReq
 		OperatorID:    operatorID.(uint),
 		RequestID:     params.RequestID,
 	}
-	requests := maintenanceController.maintenanceService.GetCorporationMaintenanceRequest(listInfo)
+	requests, err := maintenanceController.maintenanceService.GetCorporationMaintenanceRequest(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", requests)
 }
@@ -89,7 +95,10 @@ func (maintenanceController *CorporationMaintenanceController) AcceptMaintenance
 		OperatorID:    operatorID.(uint),
 		RequestID:     params.RequestID,
 	}
-	maintenanceController.maintenanceService.AcceptMaintenanceRequest(requestInfo)
+	err := maintenanceController.maintenanceService.AcceptMaintenanceRequest(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.acceptMaintenanceRequest")
@@ -109,7 +118,10 @@ func (maintenanceController *CorporationMaintenanceController) RejectMaintenance
 		OperatorID:    operatorID.(uint),
 		RequestID:     params.RequestID,
 	}
-	maintenanceController.maintenanceService.RejectMaintenanceRequest(requestInfo)
+	err := maintenanceController.maintenanceService.RejectMaintenanceRequest(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.rejectMaintenanceRequest")
@@ -149,7 +161,10 @@ func (maintenanceController *CorporationMaintenanceController) CreateMaintenance
 		Details:            params.Details,
 		GuaranteeViolation: guaranteeViolationParams,
 	}
-	maintenanceController.maintenanceService.CreateMaintenanceRecord(recordInfo)
+	err := maintenanceController.maintenanceService.CreateMaintenanceRecord(recordInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addMaintenanceRecord")
@@ -188,7 +203,10 @@ func (maintenanceController *CorporationMaintenanceController) UpdateMaintenance
 		Details:            params.Details,
 		GuaranteeViolation: guaranteeViolationParams,
 	}
-	maintenanceController.maintenanceService.UpdateMaintenanceRecord(recordInfo)
+	err := maintenanceController.maintenanceService.UpdateMaintenanceRecord(recordInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateMaintenanceRecord")

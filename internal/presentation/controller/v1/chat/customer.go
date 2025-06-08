@@ -51,14 +51,20 @@ func (chatController *CustomerChatController) CreateOrGetRoom(ctx *gin.Context) 
 		CorporationID: params.CorporationID,
 		UserID:        userID.(uint),
 	}
-	roomsDetails := chatController.chatService.CreateOrGetRoom(roomInfo)
+	roomsDetails, err := chatController.chatService.CreateOrGetRoom(roomInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", roomsDetails)
 }
 
 func (chatController *CustomerChatController) GetUserRooms(ctx *gin.Context) {
 	userID, _ := ctx.Get(chatController.constants.Context.ID)
-	roomsDetails := chatController.chatService.GetUserRooms(userID.(uint))
+	roomsDetails, err := chatController.chatService.GetUserRooms(userID.(uint))
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", roomsDetails)
 }
 
@@ -77,7 +83,10 @@ func (chatController *CustomerChatController) GetMessages(ctx *gin.Context) {
 		Offset: offset,
 		Limit:  limit,
 	}
-	messages := chatController.chatService.GetRoomMessages(roomInfo)
+	messages, err := chatController.chatService.GetRoomMessages(roomInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", messages)
 }

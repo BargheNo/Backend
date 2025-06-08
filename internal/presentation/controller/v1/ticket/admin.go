@@ -39,7 +39,10 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 		Limit:   limit,
 	}
 
-	tickets := ticketController.ticketService.GetAdminTickets(requestInfo)
+	tickets, err := ticketController.ticketService.GetAdminTickets(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", tickets)
 }
@@ -59,7 +62,10 @@ func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {
 		Limit:    limit,
 	}
 
-	tickets := ticketController.ticketService.GetAdminTicketComments(requestInfo)
+	tickets, err := ticketController.ticketService.GetAdminTicketComments(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", tickets)
 }
@@ -77,7 +83,10 @@ func (ticketController *AdminTicketController) CreateComment(ctx *gin.Context) {
 		OwnerType: ticketController.constant.TicketCommentOwners.Admin,
 		Body:      params.Body,
 	}
-	ticketController.ticketService.CreateAdminTicketComment(requestInfo)
+	err := ticketController.ticketService.CreateAdminTicketComment(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constant.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicketComment")
@@ -94,7 +103,10 @@ func (ticketController *AdminTicketController) ResolveTicket(ctx *gin.Context) {
 		TicketID: params.TicketID,
 		OwnerID:  ownerID.(uint),
 	}
-	ticketController.ticketService.ResolveTicket(requestInfo)
+	err := ticketController.ticketService.ResolveTicket(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constant.Context.Translator)
 	message, _ := trans.Translate("successMessage.ticketResolved")

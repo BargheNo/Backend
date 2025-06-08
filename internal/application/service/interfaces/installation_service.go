@@ -33,7 +33,7 @@ type InstallationService interface {
 	UpdateInstallationRequestByAdmin(newRequest installationdto.UpdateInstallationRequest) error
 	UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest) error
 	ValidatePanelGuarantee(panelID uint) error
-	ValidatePanelOwnership(panelID uint, userID uint) error
+	ValidatePanelOwnership(panelID uint, userID uint) (installationdto.AdminPanelResponse, error)
 	ValidateRequestOwnership(requestID uint, ownerID uint) (installationdto.PublicRequestDetailsResponse, error)
 	ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) (uint, error)
 }

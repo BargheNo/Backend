@@ -40,7 +40,10 @@ func (bidController *AdminBidController) GetBids(ctx *gin.Context) {
 		Offset:    offset,
 		Limit:     limit,
 	}
-	bids := bidController.BidService.GetRequestBidsByAdmin(bidsRequest)
+	bids, err := bidController.BidService.GetRequestBidsByAdmin(bidsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", bids)
 }

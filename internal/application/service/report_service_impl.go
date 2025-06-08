@@ -106,7 +106,8 @@ func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdt
 }
 
 func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) error {
-	if err := reportService.installationService.ValidatePanelOwnership(requestInfo.ObjectID, requestInfo.ReportedByID); err != nil {
+	_, err := reportService.installationService.ValidatePanelOwnership(requestInfo.ObjectID, requestInfo.ReportedByID)
+	if err != nil {
 		return err
 	}
 

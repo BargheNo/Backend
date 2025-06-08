@@ -83,7 +83,10 @@ func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceReq
 		Offset:  offset,
 		Limit:   limit,
 	}
-	requests := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
+	requests, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", requests)
 }
@@ -106,7 +109,10 @@ func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceR
 		Offset:  offset,
 		Limit:   limit,
 	}
-	requests := maintenanceController.maintenanceService.GetCustomerPanelMaintenanceRequests(listInfo)
+	requests, err := maintenanceController.maintenanceService.GetCustomerPanelMaintenanceRequests(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", requests)
 }
@@ -122,7 +128,10 @@ func (maintenanceController *CustomerMaintenanceController) GetMaintenanceReques
 		OwnerID:   ownerID.(uint),
 		RequestID: params.RequestID,
 	}
-	request := maintenanceController.maintenanceService.GetCustomerMaintenanceRequest(maintenanceInfo)
+	request, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequest(maintenanceInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", request)
 }
@@ -146,7 +155,10 @@ func (maintenanceController *CustomerMaintenanceController) UpdateMaintenanceReq
 		UrgencyLevel:     params.UrgencyLevel,
 		IsUsingGuarantee: params.IsUsingGuarantee,
 	}
-	maintenanceController.maintenanceService.UpdateMaintenanceRequest(requestInfo)
+	err := maintenanceController.maintenanceService.UpdateMaintenanceRequest(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateMaintenanceRequest")
@@ -164,7 +176,10 @@ func (maintenanceController *CustomerMaintenanceController) CancelMaintenanceReq
 		OwnerID:   ownerID.(uint),
 		RequestID: params.RequestID,
 	}
-	maintenanceController.maintenanceService.CancelMaintenanceRequest(maintenanceInfo)
+	err := maintenanceController.maintenanceService.CancelMaintenanceRequest(maintenanceInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.cancelMaintenanceRequest")
@@ -182,7 +197,10 @@ func (maintenanceController *CustomerMaintenanceController) ApproveMaintenanceRe
 		OwnerID:   ownerID.(uint),
 		RequestID: params.RequestID,
 	}
-	maintenanceController.maintenanceService.ApproveMaintenanceRecord(maintenanceInfo)
+	err := maintenanceController.maintenanceService.ApproveMaintenanceRecord(maintenanceInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.approveMaintenanceRecord")

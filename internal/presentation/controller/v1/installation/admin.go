@@ -40,7 +40,10 @@ func (installationController *AdminInstallationController) GetInstallationReques
 		Offset: offset,
 		Limit:  limit,
 	}
-	requests := installationController.installationService.GetInstallationRequestsByAdmin(listInfo)
+	requests, err := installationController.installationService.GetInstallationRequestsByAdmin(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", requests)
 }
@@ -51,7 +54,10 @@ func (installationController *AdminInstallationController) GetInstallationReques
 	}
 	params := controller.Validated[installationRequestParams](ctx)
 
-	installationRequest := installationController.installationService.GetPublicInstallationRequest(params.RequestID)
+	installationRequest, err := installationController.installationService.GetPublicInstallationRequest(params.RequestID)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", installationRequest)
 }
@@ -79,7 +85,10 @@ func (installationController *AdminInstallationController) UpdateInstallationReq
 		Status:       params.Status,
 		Description:  params.Description,
 	}
-	installationController.installationService.UpdateInstallationRequestByAdmin(requestInfo)
+	err := installationController.installationService.UpdateInstallationRequestByAdmin(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateInstallationRequest")
@@ -92,7 +101,10 @@ func (installationController *AdminInstallationController) DeleteInstallationReq
 	}
 	params := controller.Validated[installationRequestParams](ctx)
 
-	installationController.installationService.DeleteInstallationRequest(params.RequestID)
+	err := installationController.installationService.DeleteInstallationRequest(params.RequestID)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteInstallationRequest")
@@ -113,7 +125,10 @@ func (installationController *AdminInstallationController) GetPanels(ctx *gin.Co
 		Offset: offset,
 		Limit:  limit,
 	}
-	requests := installationController.installationService.GetPanelsByAdmin(listInfo)
+	requests, err := installationController.installationService.GetPanelsByAdmin(listInfo)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", requests)
 }
 
@@ -123,7 +138,10 @@ func (installationController *AdminInstallationController) GetPanel(ctx *gin.Con
 	}
 	params := controller.Validated[installationRequestParams](ctx)
 
-	installationRequest := installationController.installationService.GetPanelByAdmin(params.PanelID)
+	installationRequest, err := installationController.installationService.GetPanelByAdmin(params.PanelID)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", installationRequest)
 }
@@ -153,7 +171,10 @@ func (installationController *AdminInstallationController) UpdatePanel(ctx *gin.
 		Azimuth:              params.Azimuth,
 		TotalNumberOfModules: params.TotalNumberOfModules,
 	}
-	installationController.installationService.UpdatePanel(requestInfo)
+	err := installationController.installationService.UpdatePanel(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updatePanel")
@@ -166,7 +187,10 @@ func (installationController *AdminInstallationController) DeletePanel(ctx *gin.
 	}
 	params := controller.Validated[installationRequestParams](ctx)
 
-	installationController.installationService.DeletePanel(params.PanelID)
+	err := installationController.installationService.DeletePanel(params.PanelID)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deletePanel")

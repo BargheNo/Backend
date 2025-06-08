@@ -37,7 +37,10 @@ func (chatController *CorporationChatController) GetRoom(ctx *gin.Context) {
 		ApplicantID:   userID.(uint),
 		UserPhone:     params.Phone,
 	}
-	roomsDetails := chatController.chatService.GetCorporationRoom(roomInfo)
+	roomsDetails, err := chatController.chatService.GetCorporationRoom(roomInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", roomsDetails)
 }
@@ -52,7 +55,10 @@ func (chatController *CorporationChatController) GetRooms(ctx *gin.Context) {
 		CorporationID: params.CorporationID,
 		ApplicantID:   userID.(uint),
 	}
-	roomsDetails := chatController.chatService.GetCorporationRooms(request)
+	roomsDetails, err := chatController.chatService.GetCorporationRooms(request)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", roomsDetails)
 }
 
@@ -69,7 +75,10 @@ func (chatController *CorporationChatController) BlockRoom(ctx *gin.Context) {
 		BlockedBy:  enum.BlockedByCorporation,
 		ChatStatus: enum.ChatStatusBlocked,
 	}
-	chatController.chatService.BlockChatRoom(blockRequest)
+	err := chatController.chatService.BlockChatRoom(blockRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, chatController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.blockChatRoom")
@@ -89,7 +98,10 @@ func (chatController *CorporationChatController) UnBlockRoom(ctx *gin.Context) {
 		BlockedBy:  enum.BlockedByCorporation,
 		ChatStatus: enum.ChatStatusActive,
 	}
-	chatController.chatService.UnBlockChatRoom(blockRequest)
+	err := chatController.chatService.UnBlockChatRoom(blockRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, chatController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.unblockChatRoom")

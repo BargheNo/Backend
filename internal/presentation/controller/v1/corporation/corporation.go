@@ -42,7 +42,10 @@ func (corporationController *CorporationCorporationController) GetMyProfile(ctx 
 		Status:        enum.CorpStatusApproved,
 	}
 
-	corporationDetails := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	corporationDetails, err := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", corporationDetails)
 }
 
@@ -83,7 +86,10 @@ func (corporationController *CorporationCorporationController) AddAddress(ctx *g
 		Addresses:         addresses,
 	}
 
-	corporationController.corporationService.AddAddress(addressInfo)
+	err := corporationController.corporationService.AddAddress(addressInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addAddress")
@@ -104,7 +110,10 @@ func (corporationController *CorporationCorporationController) DeleteAddress(ctx
 		CorporationStatus: enum.CorpStatusApproved,
 		AddressID:         params.AddressID,
 	}
-	corporationController.corporationService.DeleteAddress(addressInfo)
+	err := corporationController.corporationService.DeleteAddress(addressInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteAddress")
@@ -136,7 +145,10 @@ func (corporationController *CorporationCorporationController) AddContactInforma
 		CorporationStatus:  enum.CorpStatusApproved,
 		ContactInformation: contacts,
 	}
-	corporationController.corporationService.AddContactInfo(contactInfo)
+	err := corporationController.corporationService.AddContactInfo(contactInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateContactInfo")
@@ -158,7 +170,10 @@ func (corporationController *CorporationCorporationController) DeleteContactInfo
 		CorporationStatus: enum.CorpStatusApproved,
 	}
 
-	corporationController.corporationService.DeleteContactInfo(contactInfo)
+	err := corporationController.corporationService.DeleteContactInfo(contactInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteContactInfo")
@@ -178,7 +193,10 @@ func (corporationController *CorporationCorporationController) ChangeLogo(ctx *g
 		CorporationID: params.CorporationID,
 		Logo:          params.Logo,
 	}
-	corporationController.corporationService.ChangeLogo(changeLogoRequest)
+	err := corporationController.corporationService.ChangeLogo(changeLogoRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.changeLogo")

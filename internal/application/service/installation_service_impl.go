@@ -457,15 +457,55 @@ func (installationService *InstallationService) DeleteInstallationRequest(reques
 	return nil
 }
 
-func (installationService *InstallationService) ValidatePanelOwnership(panelID, userID uint) error {
+func (installationService *InstallationService) ValidatePanelOwnership(panelID, userID uint) (installationdto.AdminPanelResponse, error) {
 	panel, err := installationService.installationRepository.FindPanelByOwner(installationService.db, panelID, userID)
 	if err != nil {
-		return err
+		return installationdto.AdminPanelResponse{}, err
 	}
 	if panel == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.Panel}
+		return installationdto.AdminPanelResponse{}, exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
-	return nil
+	operator, err := installationService.userService.GetUserCredential(panel.OperatorID)
+	if err != nil {
+		return installationdto.AdminPanelResponse{}, err
+	}
+	customer, err := installationService.userService.GetUserCredential(panel.CustomerID)
+	if err != nil {
+		return installationdto.AdminPanelResponse{}, err
+	}
+	corporation, err := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
+	if err != nil {
+		return installationdto.AdminPanelResponse{}, err
+	}
+	address, err := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+	if err != nil {
+		return installationdto.AdminPanelResponse{}, err
+	}
+	var guarantee guaranteedto.GuaranteeResponse
+	if panel.GuaranteeID != nil {
+		guarantee, err = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
+		if err != nil {
+			return installationdto.AdminPanelResponse{}, err
+		}
+	}
+	response := installationdto.AdminPanelResponse{
+		ID:                   panel.ID,
+		Name:                 panel.Name,
+		Status:               panel.Status.String(),
+		BuildingType:         panel.BuildingType.String(),
+		Area:                 panel.Area,
+		Power:                panel.Power,
+		Tilt:                 panel.Tilt,
+		Azimuth:              panel.Azimuth,
+		TotalNumberOfModules: panel.TotalNumberOfModules,
+		GuaranteeStatus:      panel.GuaranteeStatus.String(),
+		Operator:             operator,
+		Customer:             customer,
+		Address:              address,
+		Guarantee:            guarantee,
+		Corporation:          corporation,
+	}
+	return response, nil
 }
 
 func (installationService *InstallationService) ValidatePanelGuarantee(panelID uint) error {
