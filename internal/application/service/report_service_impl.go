@@ -47,7 +47,10 @@ func NewReportService(
 }
 
 func (reportService *ReportService) sendReportNotification(acceptedPermissions []enum.PermissionType, reportID uint, notificationType enum.NotificationType) {
-	admins := reportService.userService.GetUsersByPermission(acceptedPermissions)
+	admins, err := reportService.userService.GetUsersByPermission(acceptedPermissions)
+	if err != nil {
+		log.Printf("error during send notification after bid: %v", err)
+	}
 	for _, admin := range admins {
 		additionalData := reportdto.ReportNotificationData{
 			ReportID: reportID,

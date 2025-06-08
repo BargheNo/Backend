@@ -70,13 +70,19 @@ func (notificationController *CustomerNotificationController) GetUserNotificatio
 		Offset: offset,
 		Limit:  limit,
 	}
-	notificationsDetails := notificationController.notificationService.GetUserNotifications(notificationsRequest)
+	notificationsDetails, err := notificationController.notificationService.GetUserNotifications(notificationsRequest)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", notificationsDetails)
 }
 
 func (notificationController *CustomerNotificationController) GetUserNotificationSettings(ctx *gin.Context) {
 	userID, _ := ctx.Get(notificationController.constants.Context.ID)
-	settingsDetails := notificationController.notificationService.GetUserNotificationSettings(userID.(uint))
+	settingsDetails, err := notificationController.notificationService.GetUserNotificationSettings(userID.(uint))
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", settingsDetails)
 }
 

@@ -23,7 +23,10 @@ func NewGeneralCorporationController(
 }
 
 func (corporationController *GeneralCorporationController) GetContactTypes(ctx *gin.Context) {
-	contactTypes := corporationController.corporationService.GetContactTypes()
+	contactTypes, err := corporationController.corporationService.GetContactTypes()
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", contactTypes)
 }
 
