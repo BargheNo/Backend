@@ -50,11 +50,11 @@ func (blogController *CorporationBlogController) CreateDraftPost(ctx *gin.Contex
 		Status:        enum.PostStatusDraft,
 	}
 
-	blogController.blogService.CreatePost(request)
+	blog := blogController.blogService.CreatePost(request)
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createPost")
-	controller.Response(ctx, 200, message, nil)
+	controller.Response(ctx, 200, message, blog)
 }
 
 func (blogController *CorporationBlogController) EditPost(ctx *gin.Context) {

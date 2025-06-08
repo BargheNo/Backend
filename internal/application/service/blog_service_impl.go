@@ -44,7 +44,7 @@ func NewBlogService(
 	}
 }
 
-func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
+func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) uint {
 	ok := blogService.userService.IsUserActive(request.AuthorID)
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
@@ -78,6 +78,8 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) {
 	if err != nil {
 		panic(err)
 	}
+
+	return post.ID
 }
 
 func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequest) []blogdto.CorporationPostResponse {
