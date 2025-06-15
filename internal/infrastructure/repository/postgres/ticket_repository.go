@@ -22,7 +22,7 @@ func (ticketRepo *TicketRepository) UpdateTicket(db database.Database, ticket *e
 	return db.GetDB().Save(ticket).Error
 }
 
-func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, ownerID uint, opts ...repository.QueryModifier) []*entity.Ticket {
+func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, ownerID uint, opts ...repository.QueryModifier) ([]*entity.Ticket, error) {
 	var tickets []*entity.Ticket
 	query := db.GetDB().Where("owner_id = ?", ownerID)
 
@@ -31,12 +31,12 @@ func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, own
 	}
 	result := query.Find(&tickets)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return tickets
+	return tickets, nil
 }
 
-func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, ticketID uint, opts ...repository.QueryModifier) []*entity.TicketComment {
+func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, ticketID uint, opts ...repository.QueryModifier) ([]*entity.TicketComment, error) {
 	var comments []*entity.TicketComment
 	query := db.GetDB().Where("ticket_id = ?", ticketID)
 
@@ -45,28 +45,28 @@ func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, tick
 	}
 	result := query.Find(&comments)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return comments
+	return comments, nil
 }
 
-func (ticketRepo *TicketRepository) GetTicketByID(db database.Database, ticketID uint) (*entity.Ticket, bool) {
+func (ticketRepo *TicketRepository) GetTicketByID(db database.Database, ticketID uint) (*entity.Ticket, error) {
 	var ticket entity.Ticket
 	result := db.GetDB().Where("id = ?", ticketID).First(&ticket)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &ticket, true
+	return &ticket, nil
 }
 
 func (ticketRepo *TicketRepository) CreateTicketComment(db database.Database, comment *entity.TicketComment) error {
 	return db.GetDB().Create(comment).Error
 }
 
-func (ticketRepo *TicketRepository) GetTickets(db database.Database, opts ...repository.QueryModifier) []*entity.Ticket {
+func (ticketRepo *TicketRepository) GetTickets(db database.Database, opts ...repository.QueryModifier) ([]*entity.Ticket, error) {
 	var tickets []*entity.Ticket
 	query := db.GetDB()
 
@@ -77,7 +77,7 @@ func (ticketRepo *TicketRepository) GetTickets(db database.Database, opts ...rep
 	result := query.Find(&tickets)
 
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return tickets
+	return tickets, nil
 }

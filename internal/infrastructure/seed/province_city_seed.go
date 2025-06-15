@@ -434,8 +434,11 @@ func NewAddressSeeder(
 
 func (seeder *AddressSeeder) SeedProvincesAndCities() {
 	for provinceName, cityNames := range provinceWithCities {
-		province, provinceExist := seeder.addressRepository.GetProvinceByName(seeder.db, provinceName)
-		if !provinceExist {
+		province, err := seeder.addressRepository.GetProvinceByName(seeder.db, provinceName)
+		if err != nil {
+			panic(err)
+		}
+		if province == nil {
 			province = &entity.Province{
 				Name: provinceName,
 			}
@@ -447,15 +450,18 @@ func (seeder *AddressSeeder) SeedProvincesAndCities() {
 		}
 
 		for _, cityName := range cityNames {
-			_, cityExist := seeder.addressRepository.GetCityByName(seeder.db, cityName)
-			if cityExist {
+			city, err := seeder.addressRepository.GetCityByName(seeder.db, cityName)
+			if err != nil {
+				panic(err)
+			}
+			if city != nil {
 				continue
 			}
-			city := &entity.City{
+			city = &entity.City{
 				Name:       cityName,
 				ProvinceID: province.ID,
 			}
-			err := seeder.addressRepository.CreateCity(seeder.db, city)
+			err = seeder.addressRepository.CreateCity(seeder.db, city)
 			if err != nil {
 				panic(fmt.Errorf("error creating city %s: %w", cityName, err))
 			}

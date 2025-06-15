@@ -27,7 +27,10 @@ func NewCustomerUserController(
 
 func (userController *CustomerUserController) GetMyProfile(ctx *gin.Context) {
 	userID, _ := ctx.Get(userController.constants.Context.ID)
-	profile := userController.userService.GetUserCredential(userID.(uint))
+	profile, err := userController.userService.GetUserCredential(userID.(uint))
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", profile)
 }
 
@@ -52,7 +55,9 @@ func (userController *CustomerUserController) CompleteRegister(ctx *gin.Context)
 		TemplateFile: "email_confirmation/" + templateFile,
 		EmailSubject: emailSubject,
 	}
-	userController.userService.CompleteRegister(completeRegisterInfo)
+	if err := userController.userService.CompleteRegister(completeRegisterInfo); err != nil {
+		panic(err)
+	}
 
 	message, _ := trans.Translate("successMessage.completeRegister")
 	controller.Response(ctx, 200, message, nil)
@@ -71,7 +76,9 @@ func (userController *CustomerUserController) VerifyEmail(ctx *gin.Context) {
 		Email:  params.Email,
 		OTP:    params.OTP,
 	}
-	userController.userService.VerifyEmail(verifyOTPInfo)
+	if err := userController.userService.VerifyEmail(verifyOTPInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.emailVerification")
@@ -89,7 +96,9 @@ func (userController *CustomerUserController) ResetPassword(ctx *gin.Context) {
 		ID:       userID.(uint),
 		Password: params.Password,
 	}
-	userController.userService.ResetPassword(resetPasswordInfo)
+	if err := userController.userService.ResetPassword(resetPasswordInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.resetPassword")
@@ -121,7 +130,9 @@ func (userController *CustomerUserController) UpdateProfile(ctx *gin.Context) {
 		TemplateFile: "email_confirmation/" + templateFile,
 		EmailSubject: emailSubject,
 	}
-	userController.userService.UpdateProfile(profileInfo)
+	if err := userController.userService.UpdateProfile(profileInfo); err != nil {
+		panic(err)
+	}
 
 	message, _ := trans.Translate("successMessage.updateProfile")
 	controller.Response(ctx, 200, message, nil)

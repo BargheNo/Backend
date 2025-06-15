@@ -37,7 +37,10 @@ func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
 		Offset:   offset,
 		Limit:    limit,
 	}
-	posts := blogController.blogService.GetGeneralPosts(request)
+	posts, err := blogController.blogService.GetGeneralPosts(request)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", posts)
 }
@@ -57,7 +60,10 @@ func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Contex
 		Offset:        offset,
 		Limit:         limit,
 	}
-	posts := blogController.blogService.GetCorporationPostsForGeneral(request)
+	posts, err := blogController.blogService.GetCorporationPostsForGeneral(request)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", posts)
 }
@@ -73,7 +79,10 @@ func (blogController *GeneralBlogController) GetPost(ctx *gin.Context) {
 		UserType: enum.UserTypeGuest,
 	}
 
-	post := blogController.blogService.GetGeneralPost(getPostRequest)
+	post, err := blogController.blogService.GetGeneralPost(getPostRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", post)
 }
@@ -90,7 +99,10 @@ func (blogController *GeneralBlogController) GetPostMedia(ctx *gin.Context) {
 		MediaID:  params.MediaID,
 		UserType: enum.UserTypeGuest,
 	}
-	media := blogController.blogService.GetPostMedia(mediaParams)
+	media, err := blogController.blogService.GetPostMedia(mediaParams)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", media)
 }

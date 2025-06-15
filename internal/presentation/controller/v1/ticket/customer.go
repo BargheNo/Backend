@@ -51,7 +51,9 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 		Image:       params.Image,
 	}
 
-	ticketController.ticketService.CreateCustomerTicket(requestInfo)
+	if err := ticketController.ticketService.CreateCustomerTicket(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicket")
@@ -68,7 +70,10 @@ func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 		Limit:   limit,
 	}
 
-	tickets := ticketController.ticketService.GetCustomerTickets(listInfo)
+	tickets, err := ticketController.ticketService.GetCustomerTickets(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", tickets)
 }
@@ -78,16 +83,22 @@ func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) 
 		TicketID uint `uri:"ticketID" binding:"required"`
 	}
 	params := controller.Validated[getCommentsParams](ctx)
+
 	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
+
 	ownerID, _ := ctx.Get(ticketController.constants.Context.ID)
+
 	listInfo := ticketdto.TicketCommentListRequest{
 		TicketID: params.TicketID,
 		OwnerID:  ownerID.(uint),
 		Offset:   offset,
 		Limit:    limit,
 	}
-	comments := ticketController.ticketService.GetCustomerTicketComments(listInfo)
+	comments, err := ticketController.ticketService.GetCustomerTicketComments(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", comments)
 }
@@ -97,17 +108,18 @@ func (ticketController *CustomerTicketController) CreateComment(ctx *gin.Context
 		TicketID uint   `uri:"ticketID" validate:"required"`
 		Body     string `json:"body" validate:"required"`
 	}
-
 	params := controller.Validated[createCommentParams](ctx)
 	userID, _ := ctx.Get(ticketController.constants.Context.ID)
+
 	requestInfo := ticketdto.CreateTicketCommentRequest{
 		TicketID:  params.TicketID,
 		OwnerID:   userID.(uint),
 		OwnerType: ticketController.constants.TicketCommentOwners.User,
 		Body:      params.Body,
 	}
-
-	ticketController.ticketService.CreateCustomerTicketComment(requestInfo)
+	if err := ticketController.ticketService.CreateCustomerTicketComment(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicketComment")

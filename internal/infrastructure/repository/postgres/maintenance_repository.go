@@ -14,21 +14,21 @@ func NewMaintenanceRepository() *MaintenanceRepository {
 	return &MaintenanceRepository{}
 }
 
-func (repo *MaintenanceRepository) FindRequestByID(db database.Database, requestID uint) (*entity.MaintenanceRequest, bool) {
+func (repo *MaintenanceRepository) FindRequestByID(db database.Database, requestID uint) (*entity.MaintenanceRequest, error) {
 	var request *entity.MaintenanceRequest
 	result := db.GetDB().First(&request, requestID)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
 
-	return request, true
+	return request, nil
 }
 
-func (repo *MaintenanceRepository) FindRequestsByPanelIDAndStatus(db database.Database, panelID uint, allowedStatus []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) []*entity.MaintenanceRequest {
+func (repo *MaintenanceRepository) FindRequestsByPanelIDAndStatus(db database.Database, panelID uint, allowedStatus []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 	query := db.GetDB().Where("panel_id = ? AND status IN ?", panelID, allowedStatus)
 
@@ -38,12 +38,12 @@ func (repo *MaintenanceRepository) FindRequestsByPanelIDAndStatus(db database.Da
 
 	result := query.Find(&requests)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return requests
+	return requests, nil
 }
 
-func (repo *MaintenanceRepository) FindRequestsByCustomerID(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) []*entity.MaintenanceRequest {
+func (repo *MaintenanceRepository) FindRequestsByCustomerID(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 	query := db.GetDB().
 		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
@@ -56,16 +56,16 @@ func (repo *MaintenanceRepository) FindRequestsByCustomerID(db database.Database
 
 	result := query.Find(&requests)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return requests
+	return requests, nil
 }
 
 func (repo *MaintenanceRepository) CreateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error {
 	return db.GetDB().Create(maintenanceRequest).Error
 }
 
-func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.Database, ownerID uint, opts ...repository.QueryModifier) []*entity.MaintenanceRequest {
+func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.Database, ownerID uint, opts ...repository.QueryModifier) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 	query := db.GetDB().Where("owner_id = ?", ownerID)
 
@@ -75,12 +75,12 @@ func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.
 
 	result := query.Find(&requests)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return requests
+	return requests, nil
 }
 
-func (repo *MaintenanceRepository) FindCorporationRequestsByStatus(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) []*entity.MaintenanceRequest {
+func (repo *MaintenanceRepository) FindCorporationRequestsByStatus(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 	query := db.GetDB().Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses)
 
@@ -90,50 +90,50 @@ func (repo *MaintenanceRepository) FindCorporationRequestsByStatus(db database.D
 
 	result := query.Find(&requests)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return requests
+	return requests, nil
 }
 
-func (repo *MaintenanceRepository) FindCorporationRequestByStatus(db database.Database, requestID, corporationID uint, allowedStatus []enum.MaintenanceRequestStatus) (*entity.MaintenanceRequest, bool) {
+func (repo *MaintenanceRepository) FindCorporationRequestByStatus(db database.Database, requestID, corporationID uint, allowedStatus []enum.MaintenanceRequestStatus) (*entity.MaintenanceRequest, error) {
 	var request *entity.MaintenanceRequest
 	result := db.GetDB().Where("id = ? AND corporation_id = ? AND status IN ?", requestID, corporationID, allowedStatus).First(&request)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return request, true
+	return request, nil
 }
 
-func (repo *MaintenanceRepository) FindRecordByRequestID(db database.Database, requestID uint) (*entity.MaintenanceRecord, bool) {
+func (repo *MaintenanceRepository) FindRecordByRequestID(db database.Database, requestID uint) (*entity.MaintenanceRecord, error) {
 	var record *entity.MaintenanceRecord
 	result := db.GetDB().Where("request_id = ?", requestID).First(&record)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
 
-	return record, true
+	return record, nil
 }
 
-func (repo *MaintenanceRepository) FindRecordByID(db database.Database, recordID uint) (*entity.MaintenanceRecord, bool) {
+func (repo *MaintenanceRepository) FindRecordByID(db database.Database, recordID uint) (*entity.MaintenanceRecord, error) {
 	var record *entity.MaintenanceRecord
 	result := db.GetDB().First(&record, recordID)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
 
-	return record, true
+	return record, nil
 }
 
 func (repo *MaintenanceRepository) UpdateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error {
@@ -148,7 +148,7 @@ func (repo *MaintenanceRepository) UpdateMaintenanceRecord(db database.Database,
 	return db.GetDB().Save(maintenanceRecord).Error
 }
 
-func (repo *MaintenanceRepository) FindMaintenanceRecordsByPanelAndCorporationID(db database.Database, panelID uint, corporationID uint, opts ...repository.QueryModifier) []*entity.MaintenanceRecord {
+func (repo *MaintenanceRepository) FindMaintenanceRecordsByPanelAndCorporationID(db database.Database, panelID uint, corporationID uint, opts ...repository.QueryModifier) ([]*entity.MaintenanceRecord, error) {
 	var records []*entity.MaintenanceRecord
 	query := db.GetDB().Where("panel_id = ? AND corporation_id = ?", panelID, corporationID)
 	for _, opt := range opts {
@@ -156,7 +156,7 @@ func (repo *MaintenanceRepository) FindMaintenanceRecordsByPanelAndCorporationID
 	}
 	result := query.Find(&records)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return records
+	return records, nil
 }

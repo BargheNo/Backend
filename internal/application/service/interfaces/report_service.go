@@ -5,11 +5,11 @@ import (
 )
 
 type ReportService interface {
-	CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest)
-	CreatePanelReport(requestInfo reportdto.CreateReportRequest)
-	GetMaintenanceReport(reportID uint) reportdto.MaintenanceReportResponse
-	GetPanelReport(reportID uint) reportdto.PanelReportResponse
-	GetMaintenanceReports(requestInfo reportdto.ReportListRequest) []reportdto.MaintenanceReportResponse
-	GetPanelReports(requestInfo reportdto.ReportListRequest) []reportdto.PanelReportResponse
-	ResolveReport(requestInfo reportdto.ResolveReportRequest)
+	CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest) error
+	CreatePanelReport(requestInfo reportdto.CreateReportRequest) error
+	GetMaintenanceReport(reportID uint) (reportdto.MaintenanceReportResponse, error)
+	GetPanelReport(reportID uint) (reportdto.PanelReportResponse, error)
+	GetMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, error)
+	GetPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, error)
+	ResolveReport(requestInfo reportdto.ResolveReportRequest) error
 }

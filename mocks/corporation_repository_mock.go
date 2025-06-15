@@ -17,69 +17,105 @@ func NewCorporationRepositoryMock() *CorporationRepositoryMock {
 }
 
 // CorporationRepository interface methods
-func (m *CorporationRepositoryMock) FindCorporationByName(db database.Database, name string, status []enum.CorporationStatus) (*entity.Corporation, bool) {
+func (m *CorporationRepositoryMock) FindCorporationByName(db database.Database, name string, status []enum.CorporationStatus) (*entity.Corporation, error) {
 	args := m.Called(db, name, status)
-	return args.Get(0).(*entity.Corporation), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Corporation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationByRegistrationNumber(db database.Database, registrationNumber string, status []enum.CorporationStatus) (*entity.Corporation, bool) {
+func (m *CorporationRepositoryMock) FindCorporationByRegistrationNumber(db database.Database, registrationNumber string, status []enum.CorporationStatus) (*entity.Corporation, error) {
 	args := m.Called(db, registrationNumber, status)
-	return args.Get(0).(*entity.Corporation), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Corporation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationByNationalID(db database.Database, nationalID string, status []enum.CorporationStatus) (*entity.Corporation, bool) {
+func (m *CorporationRepositoryMock) FindCorporationByNationalID(db database.Database, nationalID string, status []enum.CorporationStatus) (*entity.Corporation, error) {
 	args := m.Called(db, nationalID, status)
-	return args.Get(0).(*entity.Corporation), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Corporation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationByIBAN(db database.Database, iban string, status []enum.CorporationStatus) (*entity.Corporation, bool) {
+func (m *CorporationRepositoryMock) FindCorporationByIBAN(db database.Database, iban string, status []enum.CorporationStatus) (*entity.Corporation, error) {
 	args := m.Called(db, iban, status)
-	return args.Get(0).(*entity.Corporation), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Corporation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationByCIN(db database.Database, cin string) (*entity.Corporation, bool) {
+func (m *CorporationRepositoryMock) FindCorporationByCIN(db database.Database, cin string) (*entity.Corporation, error) {
 	args := m.Called(db, cin)
-	return args.Get(0).(*entity.Corporation), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Corporation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationByID(db database.Database, id uint) (*entity.Corporation, bool) {
+func (m *CorporationRepositoryMock) FindCorporationByID(db database.Database, id uint) (*entity.Corporation, error) {
 	args := m.Called(db, id)
-	return args.Get(0).(*entity.Corporation), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Corporation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationStaff(db database.Database, staffID, corporationID uint) (*entity.CorporationStaff, bool) {
+func (m *CorporationRepositoryMock) FindCorporationStaff(db database.Database, staffID, corporationID uint) (*entity.CorporationStaff, error) {
 	args := m.Called(db, staffID, corporationID)
-	return args.Get(0).(*entity.CorporationStaff), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.CorporationStaff), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindContactInformationTypeByID(db database.Database, typeID uint) (*entity.ContactType, bool) {
+func (m *CorporationRepositoryMock) FindContactInformationTypeByID(db database.Database, typeID uint) (*entity.ContactType, error) {
 	args := m.Called(db, typeID)
-	return args.Get(0).(*entity.ContactType), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.ContactType), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindContactInformationTypeValue(db database.Database, typeID uint, value string) (*entity.ContactInformation, bool) {
+func (m *CorporationRepositoryMock) FindContactInformationTypeValue(db database.Database, typeID uint, value string) (*entity.ContactInformation, error) {
 	args := m.Called(db, typeID, value)
-	return args.Get(0).(*entity.ContactInformation), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.ContactInformation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindContactInformationByID(db database.Database, contactID uint) (*entity.ContactInformation, bool) {
+func (m *CorporationRepositoryMock) FindContactInformationByID(db database.Database, contactID uint) (*entity.ContactInformation, error) {
 	args := m.Called(db, contactID)
-	return args.Get(0).(*entity.ContactInformation), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.ContactInformation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, bool) {
+func (m *CorporationRepositoryMock) FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, error) {
 	args := m.Called(db, signatoryID)
-	return args.Get(0).(*entity.Signatory), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Signatory), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool) {
+func (m *CorporationRepositoryMock) FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, error) {
 	args := m.Called(db, corporationID, nationalID, position)
-	return args.Get(0).(*entity.Signatory), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Signatory), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationSignatories(db database.Database, corporationID uint) []*entity.Signatory {
+func (m *CorporationRepositoryMock) FindCorporationSignatories(db database.Database, corporationID uint) ([]*entity.Signatory, error) {
 	args := m.Called(db, corporationID)
-	return args.Get(0).([]*entity.Signatory)
+	return args.Get(0).([]*entity.Signatory), args.Error(1)
 }
 
 func (m *CorporationRepositoryMock) CreateCorporation(db database.Database, corporation *entity.Corporation) error {
@@ -107,24 +143,30 @@ func (m *CorporationRepositoryMock) CreateContactType(db database.Database, cont
 	return args.Error(0)
 }
 
-func (m *CorporationRepositoryMock) FindContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool) {
+func (m *CorporationRepositoryMock) FindContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, error) {
 	args := m.Called(db, contactTypeID)
-	return args.Get(0).(*entity.ContactType), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.ContactType), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindContactTypeByName(db database.Database, name string) (*entity.ContactType, bool) {
+func (m *CorporationRepositoryMock) FindContactTypeByName(db database.Database, name string) (*entity.ContactType, error) {
 	args := m.Called(db, name)
-	return args.Get(0).(*entity.ContactType), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.ContactType), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindContactTypes(db database.Database) []*entity.ContactType {
+func (m *CorporationRepositoryMock) FindContactTypes(db database.Database) ([]*entity.ContactType, error) {
 	args := m.Called(db)
-	return args.Get(0).([]*entity.ContactType)
+	return args.Get(0).([]*entity.ContactType), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindUserCorporations(db database.Database, userID uint) []*entity.Corporation {
+func (m *CorporationRepositoryMock) FindUserCorporations(db database.Database, userID uint) ([]*entity.Corporation, error) {
 	args := m.Called(db, userID)
-	return args.Get(0).([]*entity.Corporation)
+	return args.Get(0).([]*entity.Corporation), args.Error(1)
 }
 
 func (m *CorporationRepositoryMock) UpdateCorporation(db database.Database, corporation *entity.Corporation) error {
@@ -132,19 +174,19 @@ func (m *CorporationRepositoryMock) UpdateCorporation(db database.Database, corp
 	return args.Error(0)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) []*entity.Corporation {
+func (m *CorporationRepositoryMock) FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) ([]*entity.Corporation, error) {
 	args := m.Called(db, status, opts)
-	return args.Get(0).([]*entity.Corporation)
+	return args.Get(0).([]*entity.Corporation), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindCorporationReviews(db database.Database, corporationID uint, opts ...repository.QueryModifier) []*entity.CorporationReview {
+func (m *CorporationRepositoryMock) FindCorporationReviews(db database.Database, corporationID uint, opts ...repository.QueryModifier) ([]*entity.CorporationReview, error) {
 	args := m.Called(db, corporationID, opts)
-	return args.Get(0).([]*entity.CorporationReview)
+	return args.Get(0).([]*entity.CorporationReview), args.Error(1)
 }
 
-func (m *CorporationRepositoryMock) FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation {
+func (m *CorporationRepositoryMock) FindContactInformation(db database.Database, corporationID uint) ([]*entity.ContactInformation, error) {
 	args := m.Called(db, corporationID)
-	return args.Get(0).([]*entity.ContactInformation)
+	return args.Get(0).([]*entity.ContactInformation), args.Error(1)
 }
 
 func (m *CorporationRepositoryMock) DeleteCorporationSignatories(db database.Database, corporationID uint) error {

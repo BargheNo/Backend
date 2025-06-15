@@ -27,12 +27,18 @@ func NewAdminUserController(
 }
 
 func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) {
-	permissions := userController.userService.GetAllPermissions()
+	permissions, err := userController.userService.GetAllPermissions()
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", permissions)
 }
 
 func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
-	roles := userController.userService.GetAllRoles()
+	roles, err := userController.userService.GetAllRoles()
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", roles)
 }
 
@@ -47,7 +53,9 @@ func (userController *AdminUserController) CreateRole(ctx *gin.Context) {
 		Name:          params.Name,
 		PermissionIDs: params.PermissionIDs,
 	}
-	userController.userService.CreateRole(newRoleRequest)
+	if err := userController.userService.CreateRole(newRoleRequest); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createRole")
@@ -60,7 +68,10 @@ func (userController *AdminUserController) GetRoleDetails(ctx *gin.Context) {
 	}
 	params := controller.Validated[getRoleParams](ctx)
 
-	role := userController.userService.GetRoomDetails(params.RoleID)
+	role, err := userController.userService.GetRoomDetails(params.RoleID)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", role)
 }
 
@@ -69,7 +80,10 @@ func (userController *AdminUserController) GetRoleOwners(ctx *gin.Context) {
 		RoleID uint `uri:"roleID" validate:"required"`
 	}
 	params := controller.Validated[getRoleParams](ctx)
-	roleOwners := userController.userService.GetRoleOwners(params.RoleID)
+	roleOwners, err := userController.userService.GetRoleOwners(params.RoleID)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", roleOwners)
 }
 
@@ -86,7 +100,9 @@ func (userController *AdminUserController) UpdateRole(ctx *gin.Context) {
 		Name:          params.Name,
 		PermissionIDs: params.PermissionIDs,
 	}
-	userController.userService.UpdateRole(newRoleRequest)
+	if err := userController.userService.UpdateRole(newRoleRequest); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateRole")
@@ -99,7 +115,9 @@ func (userController *AdminUserController) DeleteRole(ctx *gin.Context) {
 	}
 	params := controller.Validated[deleteRoleParams](ctx)
 
-	userController.userService.DeleteRole(params.RoleID)
+	if err := userController.userService.DeleteRole(params.RoleID); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteRole")
@@ -111,7 +129,10 @@ func (userController *AdminUserController) GetUserRoles(ctx *gin.Context) {
 		UserID uint `uri:"userID" validate:"required"`
 	}
 	params := controller.Validated[getRolesParams](ctx)
-	roles := userController.userService.GetUserRoles(params.UserID)
+	roles, err := userController.userService.GetUserRoles(params.UserID)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", roles)
 }
 
@@ -126,7 +147,9 @@ func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
 		UserID:  params.UserID,
 		RoleIDs: params.RoleIDs,
 	}
-	userController.userService.UpdateUserRoles(userRolesRequest)
+	if err := userController.userService.UpdateUserRoles(userRolesRequest); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateUserRoles")
@@ -145,7 +168,10 @@ func (userController *AdminUserController) GetUsers(ctx *gin.Context) {
 		Offset:   offset,
 		Limit:    limit,
 	}
-	users := userController.userService.GetUsersByStatus(request)
+	users, err := userController.userService.GetUsersByStatus(request)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", users)
 }
@@ -156,7 +182,9 @@ func (userController *AdminUserController) BanUser(ctx *gin.Context) {
 	}
 	params := controller.Validated[banParams](ctx)
 
-	userController.userService.BanUser(params.UserID)
+	if err := userController.userService.BanUser(params.UserID); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.banUser")
@@ -169,7 +197,9 @@ func (userController *AdminUserController) UnbanUser(ctx *gin.Context) {
 	}
 	params := controller.Validated[unbanParams](ctx)
 
-	userController.userService.UnbanUser(params.UserID)
+	if err := userController.userService.UnbanUser(params.UserID); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.unbanUser")

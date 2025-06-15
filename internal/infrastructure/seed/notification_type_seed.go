@@ -27,8 +27,11 @@ func NewNotificationTypeSeeder(
 
 func (seeder *NotificationTypeSeeder) SeedNotificationTypes() {
 	for _, notification := range enum.GetAllNotificationTypes() {
-		_, exist := seeder.notificationRepository.GetNotificationTypeByName(seeder.db, notification)
-		if !exist {
+		notificationType, err := seeder.notificationRepository.GetNotificationTypeByName(seeder.db, notification)
+		if err != nil {
+			panic(err)
+		}
+		if notificationType == nil {
 			notificationType := &entity.NotificationType{
 				Name:              notification,
 				Description:       notification.Description(),
@@ -45,8 +48,11 @@ func (seeder *NotificationTypeSeeder) SeedNotificationTypes() {
 	}
 }
 
-func (seeder *NotificationTypeSeeder) syncNewNotificationTypesForUsers(newType *entity.NotificationType) {
-	users := seeder.userRepository.FindUsers(seeder.db)
+func (seeder *NotificationTypeSeeder) syncNewNotificationTypesForUsers(newType *entity.NotificationType) error {
+	users, err := seeder.userRepository.FindUsers(seeder.db)
+	if err != nil {
+		return err
+	}
 	for _, user := range users {
 		setting := &entity.NotificationSetting{
 			UserID:         user.ID,
@@ -59,4 +65,5 @@ func (seeder *NotificationTypeSeeder) syncNewNotificationTypesForUsers(newType *
 			panic(err)
 		}
 	}
+	return nil
 }

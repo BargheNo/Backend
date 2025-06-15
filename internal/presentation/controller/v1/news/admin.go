@@ -47,7 +47,10 @@ func (newsController *AdminNewsController) CreateDraftNews(ctx *gin.Context) {
 		Status:      enum.NewsStatusDraft,
 		CoverImage:  params.CoverImage,
 	}
-	news := newsController.newsService.CreateNews(draftNewsParams)
+	news, err := newsController.newsService.CreateNews(draftNewsParams)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createDraftNews")
@@ -75,7 +78,9 @@ func (newsController *AdminNewsController) EditNews(ctx *gin.Context) {
 		CoverImage:  params.CoverImage,
 		Status:      params.Status,
 	}
-	newsController.newsService.EditNews(finalizeNewsParams)
+	if err := newsController.newsService.EditNews(finalizeNewsParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.editNews")
@@ -93,7 +98,9 @@ func (newsController *AdminNewsController) PublishNews(ctx *gin.Context) {
 		AuthorID: authorID.(uint),
 		Status:   uint(enum.NewsStatusActive),
 	}
-	newsController.newsService.UpdateNewsStatus(publishParams)
+	if err := newsController.newsService.UpdateNewsStatus(publishParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.publishNews")
@@ -112,7 +119,9 @@ func (newsController *AdminNewsController) UnpublishNews(ctx *gin.Context) {
 		AuthorID: authorID.(uint),
 		Status:   uint(enum.NewsStatusDraft),
 	}
-	newsController.newsService.UpdateNewsStatus(unpublishParams)
+	if err := newsController.newsService.UpdateNewsStatus(unpublishParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.unpublishNews")
@@ -137,7 +146,10 @@ func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 		Offset:   offset,
 		Limit:    limit,
 	}
-	news := newsController.newsService.GetNewsList(getNewsRequest)
+	news, err := newsController.newsService.GetNewsList(getNewsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", news)
 }
@@ -152,7 +164,10 @@ func (newsController *AdminNewsController) GetNews(ctx *gin.Context) {
 		NewsID:   params.NewsID,
 		UserType: enum.UserTypeAdmin,
 	}
-	news := newsController.newsService.GetNews(getNewsRequest)
+	news, err := newsController.newsService.GetNews(getNewsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", news)
 }
@@ -168,7 +183,9 @@ func (newsController *AdminNewsController) DeleteNews(ctx *gin.Context) {
 		NewsIDs:  params.NewsIDs,
 		AuthorID: userID.(uint),
 	}
-	newsController.newsService.DeleteNewsStatus(deleteParams)
+	if err := newsController.newsService.DeleteNewsStatus(deleteParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteNews")
@@ -188,7 +205,10 @@ func (newsController *AdminNewsController) AddNewsMedia(ctx *gin.Context) {
 		AuthorID: userID.(uint),
 		Media:    params.Media,
 	}
-	media := newsController.newsService.AddNewsMedia(mediaParams)
+	media, err := newsController.newsService.AddNewsMedia(mediaParams)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addMedia")
@@ -208,7 +228,9 @@ func (newsController *AdminNewsController) DeleteNewsMedia(ctx *gin.Context) {
 		AuthorID: userID.(uint),
 		MediaID:  params.MediaID,
 	}
-	newsController.newsService.DeleteNewsMedia(mediaParams)
+	if err := newsController.newsService.DeleteNewsMedia(mediaParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteMedia")
@@ -227,7 +249,10 @@ func (newsController *AdminNewsController) GetNewsMedia(ctx *gin.Context) {
 		MediaID:  params.MediaID,
 		UserType: enum.UserTypeAdmin,
 	}
-	media := newsController.newsService.GetNewsMedia(mediaParams)
+	media, err := newsController.newsService.GetNewsMedia(mediaParams)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", media)
 }

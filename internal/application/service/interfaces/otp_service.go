@@ -1,6 +1,6 @@
 package service
 
 type OTPService interface {
-	GenerateOTP() (string, int)
+	GenerateOTP() (string, int, error)
 	VerifyOTP(redisKey, otp string) error
 }

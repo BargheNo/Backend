@@ -21,7 +21,7 @@ func (repo *BlogRepository) UpdatePost(db database.Database, post *entity.Post) 
 	return db.GetDB().Save(post).Error
 }
 
-func (repo *BlogRepository) GetCorporationPostsByStatus(db database.Database, corporationID uint, statuses []uint, opts ...repository.QueryModifier) []entity.Post {
+func (repo *BlogRepository) GetCorporationPostsByStatus(db database.Database, corporationID uint, statuses []uint, opts ...repository.QueryModifier) ([]entity.Post, error) {
 	var posts []entity.Post
 	query := db.GetDB().Where("corporation_id = ?", corporationID).Where("status IN (?)", statuses)
 	for _, opt := range opts {
@@ -29,33 +29,33 @@ func (repo *BlogRepository) GetCorporationPostsByStatus(db database.Database, co
 	}
 	result := query.Find(&posts)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return posts
+	return posts, nil
 }
 
-func (repo *BlogRepository) FindPostByID(db database.Database, postID uint) (*entity.Post, bool) {
+func (repo *BlogRepository) FindPostByID(db database.Database, postID uint) (*entity.Post, error) {
 	var post entity.Post
 	result := db.GetDB().Where("id = ?", postID).First(&post)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &post, true
+	return &post, nil
 }
 
-func (repo *BlogRepository) GetMediaByID(db database.Database, mediaID uint) (*entity.Media, bool) {
+func (repo *BlogRepository) GetMediaByID(db database.Database, mediaID uint) (*entity.Media, error) {
 	var media entity.Media
 	result := db.GetDB().First(&media, mediaID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &media, true
+	return &media, nil
 }
 
 func (repo *BlogRepository) AddMedia(db database.Database, media *entity.Media) error {
@@ -74,23 +74,23 @@ func (repo *BlogRepository) CreateLike(db database.Database, like *entity.Like) 
 	return db.GetDB().Create(&like).Error
 }
 
-func (repo *BlogRepository) FindLikeByUserAndOwner(db database.Database, userID, ownerID uint, ownerType string) (*entity.Like, bool) {
+func (repo *BlogRepository) FindLikeByUserAndOwner(db database.Database, userID, ownerID uint, ownerType string) (*entity.Like, error) {
 	var like entity.Like
 	result := db.GetDB().Where("user_id = ? AND owner_id = ? AND owner_type = ?", userID, ownerID, ownerType).First(&like)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &like, true
+	return &like, nil
 }
 
 func (repo *BlogRepository) DeleteLike(db database.Database, likeID uint) error {
 	return db.GetDB().Delete(&entity.Like{}, likeID).Error
 }
 
-func (repo *BlogRepository) GetPostsByStatus(db database.Database, statuses []uint, opts ...repository.QueryModifier) []entity.Post {
+func (repo *BlogRepository) GetPostsByStatus(db database.Database, statuses []uint, opts ...repository.QueryModifier) ([]entity.Post, error) {
 	var posts []entity.Post
 	query := db.GetDB().Where("status IN (?)", statuses)
 	for _, opt := range opts {
@@ -98,9 +98,9 @@ func (repo *BlogRepository) GetPostsByStatus(db database.Database, statuses []ui
 	}
 	result := query.Find(&posts)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return posts
+	return posts, nil
 }
 
 func (repo *BlogRepository) GetLikeCountByOwner(db database.Database, ownerID uint, ownerType string) uint {

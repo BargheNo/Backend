@@ -36,8 +36,11 @@ func NewGuaranteeService(
 }
 
 func (guaranteeService *GuaranteeService) ValidateActiveGuaranteeOwnerShip(guaranteeID, corporationID uint) error {
-	guarantee, exist := guaranteeService.guaranteeRepository.FindCorporationGuarantee(guaranteeService.db, guaranteeID, corporationID)
-	if !exist {
+	guarantee, err := guaranteeService.guaranteeRepository.FindCorporationGuarantee(guaranteeService.db, guaranteeID, corporationID)
+	if err != nil {
+		return err
+	}
+	if guarantee == nil {
 		notFoundError := exception.NotFoundError{Item: guaranteeService.constants.Field.Guarantee}
 		return notFoundError
 	}
@@ -51,8 +54,11 @@ func (guaranteeService *GuaranteeService) ValidateActiveGuaranteeOwnerShip(guara
 	return nil
 }
 
-func (guaranteeService *GuaranteeService) mapGuaranteeToResponse(guarantee *entity.Guarantee) guaranteedto.GuaranteeResponse {
-	terms := guaranteeService.guaranteeRepository.FindGuaranteeTerms(guaranteeService.db, guarantee.ID)
+func (guaranteeService *GuaranteeService) mapGuaranteeToResponse(guarantee *entity.Guarantee) (guaranteedto.GuaranteeResponse, error) {
+	terms, err := guaranteeService.guaranteeRepository.FindGuaranteeTerms(guaranteeService.db, guarantee.ID)
+	if err != nil {
+		return guaranteedto.GuaranteeResponse{}, err
+	}
 	termsResponse := make([]guaranteedto.GuaranteeTermResponse, len(terms))
 	for i, term := range terms {
 		termsResponse[i] = guaranteedto.GuaranteeTermResponse{
@@ -70,17 +76,23 @@ func (guaranteeService *GuaranteeService) mapGuaranteeToResponse(guarantee *enti
 		DurationMonths: guarantee.DurationMonths,
 		Description:    guarantee.Description,
 		Terms:          termsResponse,
-	}
+	}, nil
 }
 
 func (guaranteeService *GuaranteeService) GetGuarantee(guaranteeID uint) (guaranteedto.GuaranteeResponse, error) {
-	guarantee, exist := guaranteeService.guaranteeRepository.FindGuaranteeByID(guaranteeService.db, guaranteeID)
-	if !exist {
+	guarantee, err := guaranteeService.guaranteeRepository.FindGuaranteeByID(guaranteeService.db, guaranteeID)
+	if err != nil {
+		return guaranteedto.GuaranteeResponse{}, err
+	}
+	if guarantee == nil {
 		notFoundError := exception.NotFoundError{Item: guaranteeService.constants.Field.Guarantee}
 		return guaranteedto.GuaranteeResponse{}, notFoundError
 	}
 
-	guaranteeDetails := guaranteeService.mapGuaranteeToResponse(guarantee)
+	guaranteeDetails, err := guaranteeService.mapGuaranteeToResponse(guarantee)
+	if err != nil {
+		return guaranteedto.GuaranteeResponse{}, err
+	}
 
 	return guaranteeDetails, nil
 }
@@ -109,44 +121,62 @@ func (guaranteeService *GuaranteeService) GetGuaranteeStatuses() []guaranteedto.
 	return response
 }
 
-func (guaranteeService *GuaranteeService) GetCorporationGuarantee(request guaranteedto.GetGuaranteeRequest) guaranteedto.GuaranteeResponse {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+func (guaranteeService *GuaranteeService) GetCorporationGuarantee(request guaranteedto.GetGuaranteeRequest) (guaranteedto.GuaranteeResponse, error) {
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return guaranteedto.GuaranteeResponse{}, err
+	}
 
 	guarantee, err := guaranteeService.GetGuarantee(request.GuaranteeID)
 	if err != nil {
-		panic(err)
+		return guaranteedto.GuaranteeResponse{}, err
 	}
-	return guarantee
+	return guarantee, nil
 }
 
-func (guaranteeService *GuaranteeService) GetCorporationGuarantees(request guaranteedto.GetGuaranteesRequest) []guaranteedto.GuaranteeResponse {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+func (guaranteeService *GuaranteeService) GetCorporationGuarantees(request guaranteedto.GetGuaranteesRequest) ([]guaranteedto.GuaranteeResponse, error) {
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return nil, err
+	}
 
 	allowedStatus := []enum.GuaranteeStatus{enum.GuaranteeStatus(request.Status)}
 	if enum.GuaranteeStatus(request.Status) == enum.GuaranteeStatusAll {
 		allowedStatus = enum.GetAllGuaranteeStatuses()
 	}
 
-	guarantees := guaranteeService.guaranteeRepository.FindCorporationGuarantees(guaranteeService.db, request.CorporationID, allowedStatus)
+	guarantees, err := guaranteeService.guaranteeRepository.FindCorporationGuarantees(guaranteeService.db, request.CorporationID, allowedStatus)
+	if err != nil {
+		return nil, err
+	}
 	response := make([]guaranteedto.GuaranteeResponse, len(guarantees))
 
 	for i, guarantee := range guarantees {
-		response[i] = guaranteeService.mapGuaranteeToResponse(guarantee)
+		response[i], err = guaranteeService.mapGuaranteeToResponse(guarantee)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return response
+	return response, nil
 }
 
-func (guaranteeService *GuaranteeService) AddGuarantee(request guaranteedto.CreateGuaranteeRequest) uint {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
-
-	_, exist := guaranteeService.guaranteeRepository.FindCorporationGuaranteeByName(guaranteeService.db, request.CorporationID, request.Name)
-	if exist {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(guaranteeService.constants.Field.Name, guaranteeService.constants.Tag.AlreadyExist)
-		panic(conflictErrors)
+func (guaranteeService *GuaranteeService) AddGuarantee(request guaranteedto.CreateGuaranteeRequest) (uint, error) {
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return 0, err
 	}
 
-	guarantee := &entity.Guarantee{
+	guarantee, err := guaranteeService.guaranteeRepository.FindCorporationGuaranteeByName(guaranteeService.db, request.CorporationID, request.Name)
+	if err != nil {
+		return 0, err
+	}
+	if guarantee != nil {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(guaranteeService.constants.Field.Name, guaranteeService.constants.Tag.AlreadyExist)
+		return 0, conflictErrors
+	}
+
+	guarantee = &entity.Guarantee{
 		CorporationID:  request.CorporationID,
 		Name:           request.Name,
 		Status:         request.Status,
@@ -155,14 +185,14 @@ func (guaranteeService *GuaranteeService) AddGuarantee(request guaranteedto.Crea
 		Description:    request.Description,
 	}
 	if err := guaranteeService.guaranteeRepository.CreateGuarantee(guaranteeService.db, guarantee); err != nil {
-		panic(err)
+		return 0, err
 	}
 	for _, terms := range request.GuaranteeTermsRequest {
 		if err := guaranteeService.addGuaranteeTerm(terms, guarantee.ID); err != nil {
-			panic(err)
+			return 0, err
 		}
 	}
-	return guarantee.ID
+	return guarantee.ID, nil
 }
 
 func (guaranteeService *GuaranteeService) addGuaranteeTerm(terms guaranteedto.GuaranteeTermsRequest, guaranteeID uint) error {
@@ -178,17 +208,25 @@ func (guaranteeService *GuaranteeService) addGuaranteeTerm(terms guaranteedto.Gu
 	return nil
 }
 
-func (guaranteeService *GuaranteeService) UpdateGuaranteeStatus(request guaranteedto.ChangeStatusRequest) {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+func (guaranteeService *GuaranteeService) UpdateGuaranteeStatus(request guaranteedto.ChangeStatusRequest) error {
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return err
+	}
 
-	guarantee, exist := guaranteeService.guaranteeRepository.FindGuaranteeByID(guaranteeService.db, request.GuaranteeID)
-	if !exist {
+	guarantee, err := guaranteeService.guaranteeRepository.FindGuaranteeByID(guaranteeService.db, request.GuaranteeID)
+	if err != nil {
+		return err
+	}
+	if guarantee == nil {
 		notFoundError := exception.NotFoundError{Item: guaranteeService.constants.Field.Guarantee}
-		panic(notFoundError)
+		return notFoundError
 	}
 
 	if !enum.GuaranteeStatus(request.Status).IsValid() {
-		return
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(guaranteeService.constants.Field.Guarantee, guaranteeService.constants.Tag.Invalid)
+		return conflictErrors
 	}
 
 	if guarantee.Status == enum.GuaranteeStatus(request.Status) {
@@ -196,56 +234,69 @@ func (guaranteeService *GuaranteeService) UpdateGuaranteeStatus(request guarante
 		switch guarantee.Status {
 		case enum.GuaranteeStatusActive:
 			conflictErrors.Add(guaranteeService.constants.Field.Guarantee, guaranteeService.constants.Tag.AlreadyActive)
-			panic(conflictErrors)
+			return conflictErrors
 		case enum.GuaranteeStatusArchive:
 			conflictErrors.Add(guaranteeService.constants.Field.Guarantee, guaranteeService.constants.Tag.AlreadyArchived)
-			panic(conflictErrors)
+			return conflictErrors
 		default:
 			conflictErrors.Add(guaranteeService.constants.Field.Guarantee, guaranteeService.constants.Tag.StatusNotChange)
-			panic(conflictErrors)
+			return conflictErrors
 		}
 	}
 
 	guarantee.Status = enum.GuaranteeStatus(request.Status)
 
 	if err := guaranteeService.guaranteeRepository.UpdateGuarantee(guaranteeService.db, guarantee); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (guaranteeService *GuaranteeService) CreateGuaranteeViolation(request guaranteedto.CreateGuaranteeViolationRequest) uint {
-	guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
-
-	_, exist := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, request.PanelID)
-	if exist {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(guaranteeService.constants.Field.GuaranteeViolation, guaranteeService.constants.Tag.AlreadyExist)
-		panic(conflictErrors)
+func (guaranteeService *GuaranteeService) CreateGuaranteeViolation(request guaranteedto.CreateGuaranteeViolationRequest) (uint, error) {
+	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
+	if err != nil {
+		return 0, err
 	}
 
-	violation := &entity.GuaranteeViolation{
+	violation, err := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, request.PanelID)
+	if err != nil {
+		return 0, err
+	}
+	if violation != nil {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(guaranteeService.constants.Field.GuaranteeViolation, guaranteeService.constants.Tag.AlreadyExist)
+		return 0, conflictErrors
+	}
+
+	violation = &entity.GuaranteeViolation{
 		PanelID:      request.PanelID,
 		ViolatedByID: request.OperatorID,
 		Reason:       request.Reason,
 		Details:      request.Details,
 	}
 	if err := guaranteeService.guaranteeRepository.CreateGuaranteeViolation(guaranteeService.db, violation); err != nil {
-		panic(err)
+		return 0, err
 	}
 
-	return violation.ID
+	return violation.ID, nil
 }
 
 func (guaranteeService *GuaranteeService) GetCorporationPanelGuaranteeViolation(panelID uint) (guaranteedto.CorporationGuaranteeViolationResponse, error) {
 	var response guaranteedto.CorporationGuaranteeViolationResponse
 
-	violation, exist := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, panelID)
-	if !exist {
+	violation, err := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, panelID)
+	if err != nil {
+		return guaranteedto.CorporationGuaranteeViolationResponse{}, err
+	}
+	if violation == nil {
 		notFoundError := exception.NotFoundError{Item: guaranteeService.constants.Field.GuaranteeViolation}
 		return response, notFoundError
 	}
 
-	operator := guaranteeService.userService.GetUserCredential(violation.ViolatedByID)
+	operator, err := guaranteeService.userService.GetUserCredential(violation.ViolatedByID)
+	if err != nil {
+		return guaranteedto.CorporationGuaranteeViolationResponse{}, err
+	}
 
 	response = guaranteedto.CorporationGuaranteeViolationResponse{
 		ViolatedBy: operator,
@@ -259,8 +310,11 @@ func (guaranteeService *GuaranteeService) GetCorporationPanelGuaranteeViolation(
 func (guaranteeService *GuaranteeService) GetCustomerPanelGuaranteeViolation(panelID uint) (guaranteedto.CustomerGuaranteeViolationResponse, error) {
 	var response guaranteedto.CustomerGuaranteeViolationResponse
 
-	violation, exist := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, panelID)
-	if !exist {
+	violation, err := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, panelID)
+	if err != nil {
+		return guaranteedto.CustomerGuaranteeViolationResponse{}, err
+	}
+	if violation == nil {
 		notFoundError := exception.NotFoundError{Item: guaranteeService.constants.Field.GuaranteeViolation}
 		return response, notFoundError
 	}
@@ -273,11 +327,14 @@ func (guaranteeService *GuaranteeService) GetCustomerPanelGuaranteeViolation(pan
 	return response, nil
 }
 
-func (guaranteeService *GuaranteeService) UpdateGuaranteeViolation(request guaranteedto.UpdateGuaranteeViolationRequest) {
-	violation, exist := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, request.PanelID)
-	if !exist {
+func (guaranteeService *GuaranteeService) UpdateGuaranteeViolation(request guaranteedto.UpdateGuaranteeViolationRequest) error {
+	violation, err := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, request.PanelID)
+	if err != nil {
+		return err
+	}
+	if violation == nil {
 		notFoundError := exception.NotFoundError{Item: guaranteeService.constants.Field.GuaranteeViolation}
-		panic(notFoundError)
+		return notFoundError
 	}
 
 	if request.Reason != nil {
@@ -291,18 +348,23 @@ func (guaranteeService *GuaranteeService) UpdateGuaranteeViolation(request guara
 	violation.ViolatedByID = request.OperatorID
 
 	if err := guaranteeService.guaranteeRepository.UpdateGuaranteeViolation(guaranteeService.db, violation); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (guaranteeService *GuaranteeService) RemovePanelGuaranteeViolation(panelID uint) {
-	violation, exist := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, panelID)
-	if !exist {
+func (guaranteeService *GuaranteeService) RemovePanelGuaranteeViolation(panelID uint) error {
+	violation, err := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, panelID)
+	if err != nil {
+		return err
+	}
+	if violation == nil {
 		notFoundError := exception.NotFoundError{Item: guaranteeService.constants.Field.GuaranteeViolation}
-		panic(notFoundError)
+		return notFoundError
 	}
 
 	if err := guaranteeService.guaranteeRepository.DeleteGuaranteeViolation(guaranteeService.db, violation); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }

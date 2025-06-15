@@ -113,7 +113,10 @@ func (bidController *CorporationBidController) GetBids(ctx *gin.Context) {
 		Offset:        offset,
 		Limit:         limit,
 	}
-	bids := bidController.bidService.GetCorporationBids(bidsRequest)
+	bids, err := bidController.bidService.GetCorporationBids(bidsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", bids)
 }
@@ -131,7 +134,10 @@ func (bidController *CorporationBidController) GetBid(ctx *gin.Context) {
 		UserID:        userID.(uint),
 		BidID:         params.BidID,
 	}
-	bid := bidController.bidService.GetCorporationBid(bidsRequest)
+	bid, err := bidController.bidService.GetCorporationBid(bidsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", bid)
 }

@@ -10,9 +10,7 @@ func NewSMSServiceMock() *SMSServiceMock {
 	return &SMSServiceMock{}
 }
 
-func (s *SMSServiceMock) SendOTP(receptor, token string) {
+func (s *SMSServiceMock) SendOTP(receptor, token string) error {
 	args := s.Called(receptor, token)
-	if args.Get(0) != nil {
-		panic(args.Get(0))
-	}
+	return args.Error(0)
 }

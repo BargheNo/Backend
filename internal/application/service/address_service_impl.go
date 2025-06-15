@@ -27,16 +27,22 @@ func NewAddressService(
 	}
 }
 
-func (addressService *AddressService) CreateAddress(addressInfo addressdto.CreateAddressRequest) addressdto.AddressResponse {
-	province, exist := addressService.addressRepository.GetProvinceByID(addressService.db, addressInfo.ProvinceID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Province}
-		panic(notFoundError)
+func (addressService *AddressService) CreateAddress(addressInfo addressdto.CreateAddressRequest) (addressdto.AddressResponse, error) {
+	province, err := addressService.addressRepository.GetProvinceByID(addressService.db, addressInfo.ProvinceID)
+	if err != nil {
+		return addressdto.AddressResponse{}, err
 	}
-	city, exist := addressService.addressRepository.GetCityByID(addressService.db, addressInfo.CityID)
-	if !exist {
+	if province == nil {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Province}
+		return addressdto.AddressResponse{}, notFoundError
+	}
+	city, err := addressService.addressRepository.GetCityByID(addressService.db, addressInfo.CityID)
+	if err != nil {
+		return addressdto.AddressResponse{}, err
+	}
+	if city == nil {
 		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.City}
-		panic(notFoundError)
+		return addressdto.AddressResponse{}, notFoundError
 	}
 	address := &entity.Address{
 		ProvinceID:    addressInfo.ProvinceID,
@@ -48,9 +54,9 @@ func (addressService *AddressService) CreateAddress(addressInfo addressdto.Creat
 		OwnerID:       addressInfo.OwnerID,
 		OwnerType:     addressInfo.OwnerType,
 	}
-	err := addressService.addressRepository.CreateAddress(addressService.db, address)
+	err = addressService.addressRepository.CreateAddress(addressService.db, address)
 	if err != nil {
-		panic(err)
+		return addressdto.AddressResponse{}, err
 	}
 	return addressdto.AddressResponse{
 		ID:            address.ID,
@@ -60,17 +66,37 @@ func (addressService *AddressService) CreateAddress(addressInfo addressdto.Creat
 		PostalCode:    address.PostalCode,
 		HouseNumber:   address.HouseNumber,
 		Unit:          address.Unit,
-	}
+	}, nil
 }
 
-func (addressService *AddressService) GetAddress(ownerID uint, ownerType string) addressdto.AddressResponse {
-	address, exist := addressService.addressRepository.GetOwnerAddress(addressService.db, ownerID, ownerType)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
-		panic(notFoundError)
+func (addressService *AddressService) GetAddress(ownerID uint, ownerType string) (addressdto.AddressResponse, error) {
+	address, err := addressService.addressRepository.GetOwnerAddress(addressService.db, ownerID, ownerType)
+	if err != nil {
+		return addressdto.AddressResponse{}, err
 	}
-	province, _ := addressService.addressRepository.GetProvinceByID(addressService.db, address.ProvinceID)
-	city, _ := addressService.addressRepository.GetCityByID(addressService.db, address.CityID)
+	if address == nil {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
+		return addressdto.AddressResponse{}, notFoundError
+	}
+
+	province, err := addressService.addressRepository.GetProvinceByID(addressService.db, address.ProvinceID)
+	if err != nil {
+		return addressdto.AddressResponse{}, err
+	}
+	if province == nil {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Province}
+		return addressdto.AddressResponse{}, notFoundError
+	}
+
+	city, err := addressService.addressRepository.GetCityByID(addressService.db, address.CityID)
+	if err != nil {
+		return addressdto.AddressResponse{}, err
+	}
+	if city == nil {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.City}
+		return addressdto.AddressResponse{}, notFoundError
+	}
+
 	response := addressdto.AddressResponse{
 		ID:            address.ID,
 		ProvinceID:    province.ID,
@@ -82,15 +108,24 @@ func (addressService *AddressService) GetAddress(ownerID uint, ownerType string)
 		HouseNumber:   address.HouseNumber,
 		Unit:          address.Unit,
 	}
-	return response
+	return response, nil
 }
 
-func (addressService *AddressService) GetAddresses(ownerAddressInfo addressdto.GetOwnerAddressesRequest) []addressdto.AddressResponse {
-	addressEntities := addressService.addressRepository.GetOwnerAddresses(addressService.db, ownerAddressInfo.OwnerID, ownerAddressInfo.OwnerType)
+func (addressService *AddressService) GetAddresses(ownerAddressInfo addressdto.GetOwnerAddressesRequest) ([]addressdto.AddressResponse, error) {
+	addressEntities, err := addressService.addressRepository.GetOwnerAddresses(addressService.db, ownerAddressInfo.OwnerID, ownerAddressInfo.OwnerType)
+	if err != nil {
+		return nil, err
+	}
 	addresses := make([]addressdto.AddressResponse, len(addressEntities))
 	for i, address := range addressEntities {
-		province, _ := addressService.addressRepository.GetProvinceByID(addressService.db, address.ProvinceID)
-		city, _ := addressService.addressRepository.GetCityByID(addressService.db, address.CityID)
+		province, err := addressService.addressRepository.GetProvinceByID(addressService.db, address.ProvinceID)
+		if err != nil {
+			return nil, err
+		}
+		city, err := addressService.addressRepository.GetCityByID(addressService.db, address.CityID)
+		if err != nil {
+			return nil, err
+		}
 		addresses[i] = addressdto.AddressResponse{
 			ID:            address.ID,
 			Province:      province.Name,
@@ -103,35 +138,46 @@ func (addressService *AddressService) GetAddresses(ownerAddressInfo addressdto.G
 			Unit:          address.Unit,
 		}
 	}
-	return addresses
+	return addresses, nil
 }
 
-func (addressService *AddressService) DeleteAddress(addressID uint) {
-	address, exist := addressService.addressRepository.GetAddressByID(addressService.db, addressID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
-		panic(notFoundError)
-	}
-	err := addressService.addressRepository.DeleteAddress(addressService.db, address)
+func (addressService *AddressService) DeleteAddress(addressID uint) error {
+	address, err := addressService.addressRepository.GetAddressByID(addressService.db, addressID)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	if address == nil {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
+		return notFoundError
+	}
+
+	err = addressService.addressRepository.DeleteAddress(addressService.db, address)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (addressService *AddressService) GetProvinceList() []addressdto.ProvinceResponse {
-	provinces := addressService.addressRepository.GetProvinceList(addressService.db)
-	provinceList := make([]addressdto.ProvinceResponse, len(provinces))
+func (addressService *AddressService) GetProvinceList() ([]addressdto.ProvinceResponse, error) {
+	provinces, err := addressService.addressRepository.GetProvinceList(addressService.db)
+	if err != nil {
+		return nil, err
+	}
+	provincesList := make([]addressdto.ProvinceResponse, len(provinces))
 	for i, province := range provinces {
-		provinceList[i] = addressdto.ProvinceResponse{
+		provincesList[i] = addressdto.ProvinceResponse{
 			ID:   province.ID,
 			Name: province.Name,
 		}
 	}
-	return provinceList
+	return provincesList, nil
 }
 
-func (addressService *AddressService) GetCityProvinceCities(province addressdto.GetProvinceCitiesRequest) []addressdto.CityResponse {
-	cities := addressService.addressRepository.GetProvinceCities(addressService.db, province.ProvinceID)
+func (addressService *AddressService) GetCityProvinceCities(province addressdto.GetProvinceCitiesRequest) ([]addressdto.CityResponse, error) {
+	cities, err := addressService.addressRepository.GetProvinceCities(addressService.db, province.ProvinceID)
+	if err != nil {
+		return nil, err
+	}
 	citiesList := make([]addressdto.CityResponse, len(cities))
 	for i, city := range cities {
 		citiesList[i] = addressdto.CityResponse{
@@ -139,5 +185,5 @@ func (addressService *AddressService) GetCityProvinceCities(province addressdto.
 			Name: city.Name,
 		}
 	}
-	return citiesList
+	return citiesList, nil
 }

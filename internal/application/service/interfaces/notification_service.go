@@ -8,11 +8,11 @@ import (
 
 type NotificationService interface {
 	CreateAndSendNotification(typeName enum.NotificationType, recipientID uint, data []byte) error
-	CreateNotificationSettings(userID uint)
-	GetNotificationsType() []notificationdto.NotificationTypeResponse
-	GetUserNotificationSettings(userID uint) []notificationdto.NotificationSettingResponse
-	GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) []notificationdto.NotificationListResponse
-	MarkAsRead(notificationInfo notificationdto.NotificationInfoRequest)
+	CreateNotificationSettings(userID uint) error
+	GetNotificationsType() ([]notificationdto.NotificationTypeResponse, error)
+	GetUserNotificationSettings(userID uint) ([]notificationdto.NotificationSettingResponse, error)
+	GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) ([]notificationdto.NotificationListResponse, error)
+	MarkAsRead(notificationInfo notificationdto.NotificationInfoRequest) error
 	SendNotification(notification *entity.Notification, notificationType *entity.NotificationType) error
-	UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest)
+	UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest) error
 }

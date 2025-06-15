@@ -38,7 +38,9 @@ func (reportController *CustomerReportController) CreateMaintenanceReport(ctx *g
 		ReportedByType: reportController.constants.ReportOwners.User,
 		Description:    params.Description,
 	}
-	reportController.reportService.CreateMaintenanceReport(requestInfo)
+	if err := reportController.reportService.CreateMaintenanceReport(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createReport")
@@ -60,7 +62,9 @@ func (reportController *CustomerReportController) CreatePanelReport(ctx *gin.Con
 		ReportedByType: reportController.constants.ReportOwners.User,
 		Description:    params.Description,
 	}
-	reportController.reportService.CreatePanelReport(requestInfo)
+	if err := reportController.reportService.CreatePanelReport(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createReport")

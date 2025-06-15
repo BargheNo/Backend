@@ -14,52 +14,52 @@ func NewBidRepository() *BidRepository {
 	return &BidRepository{}
 }
 
-func (repo *BidRepository) FindBidByID(db database.Database, id uint) (*entity.Bid, bool) {
+func (repo *BidRepository) FindBidByID(db database.Database, id uint) (*entity.Bid, error) {
 	var bid entity.Bid
 	result := db.GetDB().First(&bid, id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &bid, true
+	return &bid, nil
 }
 
-func (repo *BidRepository) FindRequestBid(db database.Database, bidID, requestID uint) (*entity.Bid, bool) {
+func (repo *BidRepository) FindRequestBid(db database.Database, bidID, requestID uint) (*entity.Bid, error) {
 	var bid entity.Bid
 	result := db.GetDB().Where("id = ? AND request_id = ?", bidID, requestID).First(&bid)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &bid, true
+	return &bid, nil
 }
 
-func (repo *BidRepository) FindCorporationBid(db database.Database, bidID, corporationID uint) (*entity.Bid, bool) {
+func (repo *BidRepository) FindCorporationBid(db database.Database, bidID, corporationID uint) (*entity.Bid, error) {
 	var bid entity.Bid
 	result := db.GetDB().Where("id = ? AND corporation_id = ?", bidID, corporationID).First(&bid)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &bid, true
+	return &bid, nil
 }
 
-func (repo *BidRepository) FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint, status []enum.BidStatus) (*entity.Bid, bool) {
+func (repo *BidRepository) FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint, status []enum.BidStatus) (*entity.Bid, error) {
 	var bid entity.Bid
 	result := db.GetDB().Where("request_id = ? AND corporation_id = ? AND status IN ?", requestID, corporationID, status).First(&bid)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &bid, true
+	return &bid, nil
 }
 
 func (repo *BidRepository) DeleteBidByID(db database.Database, id uint) error {
@@ -74,7 +74,7 @@ func (repo *BidRepository) UpdateBid(db database.Database, bid *entity.Bid) erro
 	return db.GetDB().Save(&bid).Error
 }
 
-func (repo *BidRepository) FindCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, opts ...repository.QueryModifier) []*entity.Bid {
+func (repo *BidRepository) FindCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, opts ...repository.QueryModifier) ([]*entity.Bid, error) {
 	var bids []*entity.Bid
 
 	query := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus)
@@ -84,12 +84,12 @@ func (repo *BidRepository) FindCorporationBids(db database.Database, corporation
 	result := query.Find(&bids)
 
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return bids
+	return bids, nil
 }
 
-func (repo *BidRepository) FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, opts ...repository.QueryModifier) []*entity.Bid {
+func (repo *BidRepository) FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, opts ...repository.QueryModifier) ([]*entity.Bid, error) {
 	var bids []*entity.Bid
 
 	query := db.GetDB().Where("request_id = ? AND status IN ?", requestID, allowedStatus)
@@ -99,7 +99,7 @@ func (repo *BidRepository) FindRequestBids(db database.Database, requestID uint,
 	result := query.Find(&bids)
 
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return bids
+	return bids, nil
 }

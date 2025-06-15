@@ -10,9 +10,9 @@ func NewOtpServiceMock() *OtpServiceMock {
 	return &OtpServiceMock{}
 }
 
-func (s *OtpServiceMock) GenerateOTP() (string, int) {
+func (s *OtpServiceMock) GenerateOTP() (string, int, error) {
 	args := s.Called()
-	return args.String(0), args.Int(1)
+	return args.String(0), args.Int(1), args.Error(2)
 }
 
 func (s *OtpServiceMock) VerifyOTP(redisKey, otp string) error {

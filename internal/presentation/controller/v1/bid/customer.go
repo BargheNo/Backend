@@ -41,7 +41,10 @@ func (bidController *CustomerBidController) GetBids(ctx *gin.Context) {
 		Offset:    offset,
 		Limit:     limit,
 	}
-	bids := bidController.BidService.GetRequestAnonymousBids(bidsRequest)
+	bids, err := bidController.BidService.GetRequestAnonymousBids(bidsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", bids)
 }
@@ -59,7 +62,10 @@ func (bidController *CustomerBidController) GetBid(ctx *gin.Context) {
 		RequestID: params.RequestID,
 		BidID:     params.BidID,
 	}
-	bids := bidController.BidService.GetRequestAnonymousBid(bidsRequest)
+	bids, err := bidController.BidService.GetRequestAnonymousBid(bidsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", bids)
 }
@@ -77,7 +83,10 @@ func (bidController *CustomerBidController) AcceptBid(ctx *gin.Context) {
 		BidID:     params.BidID,
 		UserID:    userID.(uint),
 	}
-	bidController.BidService.AcceptBid(bidsRequest)
+	err := bidController.BidService.AcceptBid(bidsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.acceptBid")
@@ -97,7 +106,10 @@ func (bidController *CustomerBidController) RejectBid(ctx *gin.Context) {
 		BidID:     params.BidID,
 		UserID:    userID.(uint),
 	}
-	bidController.BidService.RejectBid(bidsRequest)
+	err := bidController.BidService.RejectBid(bidsRequest)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.rejectBid")

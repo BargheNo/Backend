@@ -24,7 +24,10 @@ func NewGeneralAddressController(
 }
 
 func (addressController *GeneralAddressController) GetProvince(ctx *gin.Context) {
-	provinceList := addressController.addressService.GetProvinceList()
+	provinceList, err := addressController.addressService.GetProvinceList()
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", provinceList)
 }
@@ -37,7 +40,10 @@ func (addressController *GeneralAddressController) GetProvinceCities(ctx *gin.Co
 	provinceInfo := addressdto.GetProvinceCitiesRequest{
 		ProvinceID: params.ProvinceID,
 	}
-	citiesList := addressController.addressService.GetCityProvinceCities(provinceInfo)
+	citiesList, err := addressController.addressService.GetCityProvinceCities(provinceInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", citiesList)
 }

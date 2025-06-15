@@ -5,10 +5,10 @@ import (
 )
 
 type AddressService interface {
-	CreateAddress(addressInfo addressdto.CreateAddressRequest) addressdto.AddressResponse
-	GetAddress(ownerID uint, ownerType string) addressdto.AddressResponse
-	GetAddresses(addressInfo addressdto.GetOwnerAddressesRequest) []addressdto.AddressResponse
-	GetProvinceList() []addressdto.ProvinceResponse
-	GetCityProvinceCities(province addressdto.GetProvinceCitiesRequest) []addressdto.CityResponse
-	DeleteAddress(addressID uint)
+	CreateAddress(addressInfo addressdto.CreateAddressRequest) (addressdto.AddressResponse, error)
+	GetAddress(ownerID uint, ownerType string) (addressdto.AddressResponse, error)
+	GetAddresses(addressInfo addressdto.GetOwnerAddressesRequest) ([]addressdto.AddressResponse, error)
+	GetProvinceList() ([]addressdto.ProvinceResponse, error)
+	GetCityProvinceCities(province addressdto.GetProvinceCitiesRequest) ([]addressdto.CityResponse, error)
+	DeleteAddress(addressID uint) error
 }

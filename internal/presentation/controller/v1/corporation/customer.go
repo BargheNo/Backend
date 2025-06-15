@@ -32,7 +32,10 @@ func NewCustomerCorporationController(
 
 func (corporationController *CustomerCorporationController) GetUserCorporations(ctx *gin.Context) {
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-	corporationInfo := corporationController.corporationService.GetUserCorporations(userID.(uint))
+	corporationInfo, err := corporationController.corporationService.GetUserCorporations(userID.(uint))
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", corporationInfo)
 }
@@ -69,7 +72,10 @@ func (corporationController *CustomerCorporationController) Register(ctx *gin.Co
 		Signatories:        signatories,
 	}
 
-	corporationInfo := corporationController.corporationService.Register(registerInfo)
+	corporationInfo, err := corporationController.corporationService.Register(registerInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.corporationRegister")
@@ -112,7 +118,9 @@ func (corporationController *CustomerCorporationController) UpdateRegister(ctx *
 		Signatories:        signatories,
 	}
 
-	corporationController.corporationService.UpdateRegister(updateRegisterInfo)
+	if err := corporationController.corporationService.UpdateRegister(updateRegisterInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateCorporation")
@@ -131,7 +139,10 @@ func (corporationController *CustomerCorporationController) GetCorporationPrivat
 		Status:        enum.CorpStatusAwaitingApproval,
 	}
 
-	corporationDetails := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	corporationDetails, err := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", corporationDetails)
 }
 
@@ -171,8 +182,9 @@ func (corporationController *CustomerCorporationController) AddAddress(ctx *gin.
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 		Addresses:         addresses,
 	}
-
-	corporationController.corporationService.AddAddress(addressInfo)
+	if err := corporationController.corporationService.AddAddress(addressInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addAddress")
@@ -193,7 +205,9 @@ func (corporationController *CustomerCorporationController) DeleteAddress(ctx *g
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 		AddressID:         params.AddressID,
 	}
-	corporationController.corporationService.DeleteAddress(addressInfo)
+	if err := corporationController.corporationService.DeleteAddress(addressInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteAddress")
@@ -225,7 +239,9 @@ func (corporationController *CustomerCorporationController) AddContactInformatio
 		CorporationStatus:  enum.CorpStatusAwaitingApproval,
 		ContactInformation: contacts,
 	}
-	corporationController.corporationService.AddContactInfo(contactInfo)
+	if err := corporationController.corporationService.AddContactInfo(contactInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateContactInfo")
@@ -246,8 +262,9 @@ func (corporationController *CustomerCorporationController) DeleteContactInforma
 		CorporationID:     params.CorporationID,
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 	}
-
-	corporationController.corporationService.DeleteContactInfo(contactInfo)
+	if err := corporationController.corporationService.DeleteContactInfo(contactInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteContactInfo")
@@ -269,7 +286,9 @@ func (corporationController *CustomerCorporationController) SubmitCertificateFil
 		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
 		OfficialNewspaperAD:    params.OfficialNewspaperAD,
 	}
-	corporationController.corporationService.AddCertificateFiles(requestInfo)
+	if err := corporationController.corporationService.AddCertificateFiles(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addCorporationCertificate")

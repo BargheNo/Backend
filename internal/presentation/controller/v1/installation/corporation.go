@@ -45,7 +45,10 @@ func (installationController *CorporationInstallationController) GetInstallation
 		Offset:        offset,
 		Limit:         limit,
 	}
-	installationRequest := installationController.installationService.GetAnonymousInstallationRequests(listInfo)
+	installationRequest, err := installationController.installationService.GetAnonymousInstallationRequests(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", installationRequest)
 }
@@ -63,7 +66,10 @@ func (installationController *CorporationInstallationController) GetInstallation
 		OperatorID:     operatorID.(uint),
 		InstallationID: params.RequestID,
 	}
-	installationRequest := installationController.installationService.GetAnonymousInstallationRequest(requestInfo)
+	installationRequest, err := installationController.installationService.GetAnonymousInstallationRequest(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", installationRequest)
 }
@@ -87,7 +93,9 @@ func (installationController *CorporationInstallationController) CompleteInstall
 		Azimuth:         params.Azimuth,
 		NumberOfModules: params.NumberOfModules,
 	}
-	installationController.installationService.CompleteInstallationRequest(panelInfo)
+	if err := installationController.installationService.CompleteInstallationRequest(panelInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.completeInstallation")
@@ -138,7 +146,9 @@ func (installationController *CorporationInstallationController) AddPanel(ctx *g
 			Unit:          params.Unit,
 		},
 	}
-	installationController.installationService.AddPanel(panelInfo)
+	if err := installationController.installationService.AddPanel(panelInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addPanel")
@@ -163,7 +173,10 @@ func (installationController *CorporationInstallationController) GetCorporationP
 		Offset:        offset,
 		Limit:         limit,
 	}
-	panels := installationController.installationService.GetCorporationPanels(listInfo)
+	panels, err := installationController.installationService.GetCorporationPanels(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", panels)
 }
@@ -181,7 +194,10 @@ func (installationController *CorporationInstallationController) GetCorporationP
 		OperatorID:     userID.(uint),
 		InstallationID: params.PanelID,
 	}
-	panel := installationController.installationService.GetCorporationPanel(panelInfo)
+	panel, err := installationController.installationService.GetCorporationPanel(panelInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", panel)
 }
@@ -208,7 +224,9 @@ func (installationController *CorporationInstallationController) ViolatePanelGua
 			Details:       params.Details,
 		},
 	}
-	installationController.installationService.ViolatePanelGuaranteeStatus(violationInfo)
+	if _, err := installationController.installationService.ViolatePanelGuaranteeStatus(violationInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addGuaranteeViolation")
@@ -228,7 +246,9 @@ func (installationController *CorporationInstallationController) ClearPanelGuara
 		OperatorID:    userID.(uint),
 		PanelID:       params.PanelID,
 	}
-	installationController.installationService.ClearPanelGuaranteeViolation(violationInfo)
+	if err := installationController.installationService.ClearPanelGuaranteeViolation(violationInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.clearGuaranteeViolation")
@@ -273,7 +293,9 @@ func (installationController *CorporationInstallationController) UpdatePanelGuar
 		Reason:        params.Reason,
 		Details:       params.Details,
 	}
-	installationController.installationService.UpdatePanelGuaranteeViolation(request)
+	if err := installationController.installationService.UpdatePanelGuaranteeViolation(request); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateGuaranteeViolation")

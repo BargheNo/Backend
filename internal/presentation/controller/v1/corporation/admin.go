@@ -46,7 +46,10 @@ func (corporationController *AdminCorporationController) GetCorporations(ctx *gi
 		Limit:  limit,
 		Offset: offset,
 	}
-	corporations := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
+	corporations, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", corporations)
 }
@@ -57,7 +60,10 @@ func (corporationController *AdminCorporationController) GetCorporation(ctx *gin
 	}
 	params := controller.Validated[getCorporationsParams](ctx)
 
-	corporation := corporationController.corporationService.GetCorporationByAdmin(params.CorporationID)
+	corporation, err := corporationController.corporationService.GetCorporationByAdmin(params.CorporationID)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", corporation)
 }
@@ -73,7 +79,10 @@ func (corporationController *AdminCorporationController) GetCorporationReviews(c
 	}
 	params := controller.Validated[getCorporationsParams](ctx)
 
-	reviews := corporationController.corporationService.GetCorporationReviewsByAdmin(params.CorporationID)
+	reviews, err := corporationController.corporationService.GetCorporationReviewsByAdmin(params.CorporationID)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", reviews)
 }
@@ -94,7 +103,9 @@ func (corporationController *AdminCorporationController) ApproveCorporationReque
 		Reason:        params.Reason,
 		Notes:         params.Notes,
 	}
-	corporationController.corporationService.ApproveCorporationRegistration(request)
+	if err := corporationController.corporationService.ApproveCorporationRegistration(request); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.approveCorporation")
@@ -118,7 +129,9 @@ func (corporationController *AdminCorporationController) RejectCorporationReques
 		Reason:        params.Reason,
 		Notes:         params.Notes,
 	}
-	corporationController.corporationService.RejectCorporationRegistration(request)
+	if err := corporationController.corporationService.RejectCorporationRegistration(request); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.rejectCorporation")

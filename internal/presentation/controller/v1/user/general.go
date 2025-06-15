@@ -42,7 +42,9 @@ func (userController *GeneralUserController) BasicRegister(ctx *gin.Context) {
 		Phone:     params.Phone,
 		Password:  params.Password,
 	}
-	userController.userService.Register(registerInfo)
+	if err := userController.userService.Register(registerInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.userRegister")
@@ -59,7 +61,9 @@ func (userController *GeneralUserController) VerifyPhone(ctx *gin.Context) {
 		Phone: params.Phone,
 		OTP:   params.OTP,
 	}
-	userController.userService.VerifyPhone(verifyOTPInfo)
+	if err := userController.userService.VerifyPhone(verifyOTPInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.phoneVerification")
@@ -76,7 +80,10 @@ func (userController *GeneralUserController) Login(ctx *gin.Context) {
 		Phone:    params.Phone,
 		Password: params.Password,
 	}
-	userInfo := userController.userService.Login(loginInfo)
+	userInfo, err := userController.userService.Login(loginInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.login")
@@ -91,7 +98,9 @@ func (userController *GeneralUserController) ForgotPassword(ctx *gin.Context) {
 	forgotPasswordInfo := userdto.ForgotPasswordRequest{
 		Phone: params.Phone,
 	}
-	userController.userService.ForgotPassword(forgotPasswordInfo)
+	if err := userController.userService.ForgotPassword(forgotPasswordInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.forgotPassword")
@@ -108,7 +117,10 @@ func (userController *GeneralUserController) ConfirmOTP(ctx *gin.Context) {
 		Phone: params.Phone,
 		OTP:   params.OTP,
 	}
-	userInfo := userController.userService.VerifyOTP(verifyPhoneInfo)
+	userInfo, err := userController.userService.VerifyOTP(verifyPhoneInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.phoneVerification")
@@ -126,7 +138,10 @@ func (userController *GeneralUserController) RefreshToken(ctx *gin.Context) {
 	}
 
 	userID := uint(claims["sub"].(float64))
-	accessToken, _ := userController.jwtService.GenerateToken(userID)
+	accessToken, _, err := userController.jwtService.GenerateToken(userID)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.refreshToken")

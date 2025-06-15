@@ -23,6 +23,9 @@ func NewGeneralNotificationController(
 }
 
 func (notificationController *GeneralNotificationController) GetContactTypes(ctx *gin.Context) {
-	notificationTypes := notificationController.notificationService.GetNotificationsType()
+	notificationTypes, err := notificationController.notificationService.GetNotificationsType()
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", notificationTypes)
 }

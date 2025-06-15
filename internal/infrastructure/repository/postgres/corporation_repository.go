@@ -18,157 +18,157 @@ func NewCorporationRepository() *CorporationRepository {
 	return &CorporationRepository{}
 }
 
-func (repo *CorporationRepository) FindCorporationByName(db database.Database, name string, status []enum.CorporationStatus) (*entity.Corporation, bool) {
+func (repo *CorporationRepository) FindCorporationByName(db database.Database, name string, status []enum.CorporationStatus) (*entity.Corporation, error) {
 	var corporation entity.Corporation
 	result := db.GetDB().Where("name = ? AND status IN ?", name, status).First(&corporation)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &corporation, true
+	return &corporation, nil
 }
 
-func (repo *CorporationRepository) FindCorporationByRegistrationNumber(db database.Database, registrationNumber string, status []enum.CorporationStatus) (*entity.Corporation, bool) {
+func (repo *CorporationRepository) FindCorporationByRegistrationNumber(db database.Database, registrationNumber string, status []enum.CorporationStatus) (*entity.Corporation, error) {
 	var corporation entity.Corporation
 	result := db.GetDB().Where("registration_number = ? AND status IN ?", registrationNumber, status).First(&corporation)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &corporation, true
+	return &corporation, nil
 }
 
-func (repo *CorporationRepository) FindCorporationByNationalID(db database.Database, nationalID string, status []enum.CorporationStatus) (*entity.Corporation, bool) {
+func (repo *CorporationRepository) FindCorporationByNationalID(db database.Database, nationalID string, status []enum.CorporationStatus) (*entity.Corporation, error) {
 	var corporation entity.Corporation
 	result := db.GetDB().Where("national_id = ? AND status IN ?", nationalID, status).First(&corporation)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &corporation, true
+	return &corporation, nil
 }
 
-func (repo *CorporationRepository) FindCorporationByIBAN(db database.Database, iban string, status []enum.CorporationStatus) (*entity.Corporation, bool) {
+func (repo *CorporationRepository) FindCorporationByIBAN(db database.Database, iban string, status []enum.CorporationStatus) (*entity.Corporation, error) {
 	var corporation entity.Corporation
 	result := db.GetDB().Where("iban = ? AND status IN ?", iban, status).First(&corporation)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &corporation, true
+	return &corporation, nil
 }
 
-func (repo *CorporationRepository) FindCorporationByCIN(db database.Database, cin string) (*entity.Corporation, bool) {
+func (repo *CorporationRepository) FindCorporationByCIN(db database.Database, cin string) (*entity.Corporation, error) {
 	var corporation entity.Corporation
 	result := db.GetDB().Where("cin = ?", cin).First(&corporation)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &corporation, true
+	return &corporation, nil
 }
 
-func (repo *CorporationRepository) FindCorporationByID(db database.Database, id uint) (*entity.Corporation, bool) {
+func (repo *CorporationRepository) FindCorporationByID(db database.Database, id uint) (*entity.Corporation, error) {
 	var corporation entity.Corporation
 	result := db.GetDB().First(&corporation, id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &corporation, true
+	return &corporation, nil
 }
 
-func (repo *CorporationRepository) FindCorporationStaff(db database.Database, staffID, corporationID uint) (*entity.CorporationStaff, bool) {
+func (repo *CorporationRepository) FindCorporationStaff(db database.Database, staffID, corporationID uint) (*entity.CorporationStaff, error) {
 	var staff entity.CorporationStaff
 	result := db.GetDB().Where("staff_id = ? AND corporation_ID = ?", staffID, corporationID).First(&staff)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &staff, true
+	return &staff, nil
 }
 
-func (repo *CorporationRepository) FindContactInformationTypeByID(db database.Database, typeID uint) (*entity.ContactType, bool) {
+func (repo *CorporationRepository) FindContactInformationTypeByID(db database.Database, typeID uint) (*entity.ContactType, error) {
 	var contactType entity.ContactType
 	result := db.GetDB().First(&contactType, typeID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &contactType, true
+	return &contactType, nil
 }
 
-func (repo *CorporationRepository) FindContactInformationTypeValue(db database.Database, typeID uint, value string) (*entity.ContactInformation, bool) {
+func (repo *CorporationRepository) FindContactInformationTypeValue(db database.Database, typeID uint, value string) (*entity.ContactInformation, error) {
 	var contact entity.ContactInformation
 	result := db.GetDB().Where("type_id = ? AND value = ?", typeID, value).First(&contact)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &contact, true
+	return &contact, nil
 }
 
-func (repo *CorporationRepository) FindContactInformationByID(db database.Database, contactID uint) (*entity.ContactInformation, bool) {
+func (repo *CorporationRepository) FindContactInformationByID(db database.Database, contactID uint) (*entity.ContactInformation, error) {
 	var contact entity.ContactInformation
 	result := db.GetDB().First(&contact, contactID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &contact, true
+	return &contact, nil
 }
 
-func (repo *CorporationRepository) FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, bool) {
+func (repo *CorporationRepository) FindSignatoryByID(db database.Database, signatoryID uint) (*entity.Signatory, error) {
 	var signatory entity.Signatory
 	result := db.GetDB().First(&signatory, signatoryID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &signatory, true
+	return &signatory, nil
 }
 
-func (repo *CorporationRepository) FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, bool) {
+func (repo *CorporationRepository) FindCorporationSignatoryByNationalID(db database.Database, corporationID uint, nationalID, position string) (*entity.Signatory, error) {
 	var signatory entity.Signatory
 	result := db.GetDB().Where("corporation_id = ? AND national_card_number = ? AND position = ?", corporationID, nationalID, position).First(&signatory)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &signatory, true
+	return &signatory, nil
 }
 
-func (repo *CorporationRepository) FindCorporationSignatories(db database.Database, corporationID uint) []*entity.Signatory {
+func (repo *CorporationRepository) FindCorporationSignatories(db database.Database, corporationID uint) ([]*entity.Signatory, error) {
 	var signatories []*entity.Signatory
 	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&signatories)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return signatories
+	return signatories, nil
 }
 
 func (repo *CorporationRepository) CreateCorporation(db database.Database, corporation *entity.Corporation) error {
@@ -191,44 +191,44 @@ func (repo *CorporationRepository) CreateContactType(db database.Database, conta
 	return db.GetDB().Create(&contactType).Error
 }
 
-func (repo *CorporationRepository) FindContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, bool) {
+func (repo *CorporationRepository) FindContactTypeByID(db database.Database, contactTypeID uint) (*entity.ContactType, error) {
 	var contactType entity.ContactType
 	result := db.GetDB().First(&contactType, contactTypeID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &contactType, true
+	return &contactType, nil
 }
 
-func (repo *CorporationRepository) FindContactTypeByName(db database.Database, name string) (*entity.ContactType, bool) {
+func (repo *CorporationRepository) FindContactTypeByName(db database.Database, name string) (*entity.ContactType, error) {
 	var contactType entity.ContactType
 	result := db.GetDB().Where("name = ?", name).First(&contactType)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &contactType, true
+	return &contactType, nil
 }
 
-func (repo *CorporationRepository) FindContactTypes(db database.Database) []*entity.ContactType {
+func (repo *CorporationRepository) FindContactTypes(db database.Database) ([]*entity.ContactType, error) {
 	var types []*entity.ContactType
 	err := db.GetDB().Find(&types).Error
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return types
+	return types, nil
 }
 
 func (repo *CorporationRepository) UpdateCorporation(db database.Database, corporation *entity.Corporation) error {
 	return db.GetDB().Save(&corporation).Error
 }
 
-func (repo *CorporationRepository) FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) []*entity.Corporation {
+func (repo *CorporationRepository) FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) ([]*entity.Corporation, error) {
 	var corporations []*entity.Corporation
 	query := db.GetDB().Where("status IN ?", status)
 	for _, opt := range opts {
@@ -236,12 +236,12 @@ func (repo *CorporationRepository) FindCorporationsByStatus(db database.Database
 	}
 	result := query.Find(&corporations)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return corporations
+	return corporations, nil
 }
 
-func (repo *CorporationRepository) FindUserCorporations(db database.Database, userID uint) []*entity.Corporation {
+func (repo *CorporationRepository) FindUserCorporations(db database.Database, userID uint) ([]*entity.Corporation, error) {
 	var corporations []*entity.Corporation
 	result := db.GetDB().
 		Joins("JOIN corporation_staffs ON corporation_staffs.corporation_id = corporations.id").
@@ -249,18 +249,18 @@ func (repo *CorporationRepository) FindUserCorporations(db database.Database, us
 		Find(&corporations)
 
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return corporations
+	return corporations, nil
 }
 
-func (repo *CorporationRepository) FindContactInformation(db database.Database, corporationID uint) []*entity.ContactInformation {
+func (repo *CorporationRepository) FindContactInformation(db database.Database, corporationID uint) ([]*entity.ContactInformation, error) {
 	var contactInfo []*entity.ContactInformation
 	result := db.GetDB().Where(queryByCorporationID, corporationID).Find(&contactInfo)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return contactInfo
+	return contactInfo, nil
 }
 
 func (repo *CorporationRepository) DeleteCorporationSignatories(db database.Database, corporationID uint) error {
@@ -271,7 +271,7 @@ func (repo *CorporationRepository) DeleteContactInfo(db database.Database, conta
 	return db.GetDB().Delete(contact).Error
 }
 
-func (repo *CorporationRepository) FindCorporationReviews(db database.Database, corporationID uint, opts ...repository.QueryModifier) []*entity.CorporationReview {
+func (repo *CorporationRepository) FindCorporationReviews(db database.Database, corporationID uint, opts ...repository.QueryModifier) ([]*entity.CorporationReview, error) {
 	var reviews []*entity.CorporationReview
 	query := db.GetDB().Where("corporation_id = ?", corporationID)
 
@@ -281,9 +281,9 @@ func (repo *CorporationRepository) FindCorporationReviews(db database.Database, 
 
 	result := query.Find(&reviews)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return reviews
+	return reviews, nil
 }
 
 func (repo *CorporationRepository) CreateReview(db database.Database, review *entity.CorporationReview) error {

@@ -30,13 +30,16 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
+
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
 		Offset:  offset,
 		Limit:   limit,
 	}
-
-	reports := reportController.reportService.GetMaintenanceReports(requestInfo)
+	reports, err := reportController.reportService.GetMaintenanceReports(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", reports)
 }
 
@@ -44,13 +47,16 @@ func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context)
 	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
+
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
 		Offset:  offset,
 		Limit:   limit,
 	}
-
-	reports := reportController.reportService.GetPanelReports(requestInfo)
+	reports, err := reportController.reportService.GetPanelReports(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", reports)
 }
 
@@ -60,11 +66,14 @@ func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {
 	}
 	params := controller.Validated[ResolveReportRequest](ctx)
 	userID, _ := ctx.Get(reportController.constants.Context.ID)
+
 	requestInfo := reportdto.ResolveReportRequest{
 		ReportID: params.ReportID,
 		UserID:   userID.(uint),
 	}
-	reportController.reportService.ResolveReport(requestInfo)
+	if err := reportController.reportService.ResolveReport(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.reportResolved")

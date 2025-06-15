@@ -7,13 +7,13 @@ type GuaranteeService interface {
 	GetGuarantee(guaranteeID uint) (guaranteedto.GuaranteeResponse, error)
 	GetGuaranteeTypes() []guaranteedto.GuaranteeTypesResponse
 	GetGuaranteeStatuses() []guaranteedto.GuaranteeTypesResponse
-	GetCorporationGuarantee(request guaranteedto.GetGuaranteeRequest) guaranteedto.GuaranteeResponse
-	GetCorporationGuarantees(request guaranteedto.GetGuaranteesRequest) []guaranteedto.GuaranteeResponse
-	AddGuarantee(request guaranteedto.CreateGuaranteeRequest) uint
-	UpdateGuaranteeStatus(request guaranteedto.ChangeStatusRequest)
-	CreateGuaranteeViolation(request guaranteedto.CreateGuaranteeViolationRequest) uint
+	GetCorporationGuarantee(request guaranteedto.GetGuaranteeRequest) (guaranteedto.GuaranteeResponse, error)
+	GetCorporationGuarantees(request guaranteedto.GetGuaranteesRequest) ([]guaranteedto.GuaranteeResponse, error)
+	AddGuarantee(request guaranteedto.CreateGuaranteeRequest) (uint, error)
+	UpdateGuaranteeStatus(request guaranteedto.ChangeStatusRequest) error
+	CreateGuaranteeViolation(request guaranteedto.CreateGuaranteeViolationRequest) (uint, error)
 	GetCorporationPanelGuaranteeViolation(panelID uint) (guaranteedto.CorporationGuaranteeViolationResponse, error)
 	GetCustomerPanelGuaranteeViolation(panelID uint) (guaranteedto.CustomerGuaranteeViolationResponse, error)
-	UpdateGuaranteeViolation(request guaranteedto.UpdateGuaranteeViolationRequest)
-	RemovePanelGuaranteeViolation(panelID uint)
+	UpdateGuaranteeViolation(request guaranteedto.UpdateGuaranteeViolationRequest) error
+	RemovePanelGuaranteeViolation(panelID uint) error
 }

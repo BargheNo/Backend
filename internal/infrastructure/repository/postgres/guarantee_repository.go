@@ -13,58 +13,58 @@ func NewGuaranteeRepository() *GuaranteeRepository {
 	return &GuaranteeRepository{}
 }
 
-func (repo *GuaranteeRepository) FindGuaranteeByID(db database.Database, guaranteeID uint) (*entity.Guarantee, bool) {
+func (repo *GuaranteeRepository) FindGuaranteeByID(db database.Database, guaranteeID uint) (*entity.Guarantee, error) {
 	var guarantee *entity.Guarantee
 	result := db.GetDB().First(&guarantee, guaranteeID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return guarantee, true
+	return guarantee, nil
 }
 
-func (repo *GuaranteeRepository) FindCorporationGuaranteeByName(db database.Database, corporationID uint, name string) (*entity.Guarantee, bool) {
+func (repo *GuaranteeRepository) FindCorporationGuaranteeByName(db database.Database, corporationID uint, name string) (*entity.Guarantee, error) {
 	var guarantee *entity.Guarantee
 	result := db.GetDB().Where("corporation_id = ? AND name = ?", corporationID, name).First(&guarantee)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return guarantee, true
+	return guarantee, nil
 }
 
-func (repo *GuaranteeRepository) FindCorporationGuarantee(db database.Database, guaranteeID, corporationID uint) (*entity.Guarantee, bool) {
+func (repo *GuaranteeRepository) FindCorporationGuarantee(db database.Database, guaranteeID, corporationID uint) (*entity.Guarantee, error) {
 	var guarantee *entity.Guarantee
 	result := db.GetDB().Where("id = ? AND corporation_id = ?", guaranteeID, corporationID).First(&guarantee)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return guarantee, true
+	return guarantee, nil
 }
 
-func (repo *GuaranteeRepository) FindCorporationGuarantees(db database.Database, corporationID uint, allowedStatus []enum.GuaranteeStatus) []*entity.Guarantee {
+func (repo *GuaranteeRepository) FindCorporationGuarantees(db database.Database, corporationID uint, allowedStatus []enum.GuaranteeStatus) ([]*entity.Guarantee, error) {
 	var guarantees []*entity.Guarantee
 	result := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus).Find(&guarantees)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return guarantees
+	return guarantees, nil
 }
 
-func (repo *GuaranteeRepository) FindGuaranteeTerms(db database.Database, guaranteeID uint) []*entity.GuaranteeTerm {
+func (repo *GuaranteeRepository) FindGuaranteeTerms(db database.Database, guaranteeID uint) ([]*entity.GuaranteeTerm, error) {
 	var terms []*entity.GuaranteeTerm
 	result := db.GetDB().Where("guarantee_id = ?", guaranteeID).Find(&terms)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return terms
+	return terms, nil
 }
 
 func (repo *GuaranteeRepository) CreateGuarantee(db database.Database, guarantee *entity.Guarantee) error {
@@ -79,16 +79,16 @@ func (repo *GuaranteeRepository) UpdateGuarantee(db database.Database, guarantee
 	return db.GetDB().Save(&guarantee).Error
 }
 
-func (repo *GuaranteeRepository) FindPanelGuaranteeViolation(db database.Database, panelID uint) (*entity.GuaranteeViolation, bool) {
+func (repo *GuaranteeRepository) FindPanelGuaranteeViolation(db database.Database, panelID uint) (*entity.GuaranteeViolation, error) {
 	var violation *entity.GuaranteeViolation
 	result := db.GetDB().Where("panel_id = ?", panelID).First(&violation)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return violation, true
+	return violation, nil
 }
 
 func (repo *GuaranteeRepository) CreateGuaranteeViolation(db database.Database, violation *entity.GuaranteeViolation) error {

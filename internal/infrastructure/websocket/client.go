@@ -141,7 +141,11 @@ func (client *Client) processAndSaveChatMessage(message *Message) {
 	if err := json.Unmarshal(message.Content, &content); err != nil {
 		return
 	}
-	savedMessage := client.chatService.SaveMessage(client.roomID, client.userID, content)
+	savedMessage, err := client.chatService.SaveMessage(client.roomID, client.userID, content)
+	if err != nil {
+		return
+	}
+
 	message.MessageID = savedMessage.ID
 	message.Sender = savedMessage.Sender
 }

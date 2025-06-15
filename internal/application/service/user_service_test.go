@@ -787,7 +787,7 @@ func (s *UserServiceTestSuite) TestLogin() {
 			Phone:    "1234567890",
 			Password: "Password@123",
 		}
-		response := s.userService.Login(request)
+		response, _ := s.userService.Login(request)
 
 		s.Equal(response.AccessToken, mockAccessToken)
 		s.Equal(response.RefreshToken, mockRefreshToken)
@@ -954,7 +954,7 @@ func (s *UserServiceTestSuite) TestVerifyOTP() {
 			Phone: "1234567890",
 			OTP:   otp,
 		}
-		response := s.userService.VerifyOTP(request)
+		response, _ := s.userService.VerifyOTP(request)
 
 		s.Equal(response.AccessToken, mockAccessToken)
 		s.Equal(response.RefreshToken, mockRefreshToken)
@@ -1524,7 +1524,7 @@ func (s *UserServiceTestSuite) TestGetAllPermissions() {
 			},
 		}
 		s.userRepository.On("FindAllPermissions", s.db).Return(permissions, nil).Once()
-		response := s.userService.GetAllPermissions()
+		response, _ := s.userService.GetAllPermissions()
 
 		s.Equal(response[0].Name, enum.PermissionGeneral.String())
 		s.Equal(response[1].Name, enum.PermissionAll.String())
@@ -1557,7 +1557,7 @@ func (s *UserServiceTestSuite) TestGetRolePermissions() {
 		}
 		s.userRepository.On("FindRolePermissions", s.db, role).Return(nil).Once()
 
-		response := s.userService.getRolePermissions(role)
+		response, _ := s.userService.getRolePermissions(role)
 
 		s.Equal(response[0].Name, enum.PermissionGeneral.String())
 		s.Equal(response[1].Name, enum.PermissionAll.String())
@@ -1608,7 +1608,7 @@ func (s *UserServiceTestSuite) TestGetAllRoles() {
 		s.userRepository.On("FindRolePermissions", s.db, roles[0]).Return(nil).Once()
 		s.userRepository.On("FindRolePermissions", s.db, roles[1]).Return(nil).Once()
 
-		response := s.userService.GetAllRoles()
+		response, _ := s.userService.GetAllRoles()
 
 		s.Equal(response[0].Name, "admin")
 		s.Equal(response[1].Name, "user")
@@ -1749,7 +1749,7 @@ func (s *UserServiceTestSuite) TestGetRoomDetails() {
 		}
 		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
 		s.userRepository.On("FindRolePermissions", s.db, role).Return(nil).Once()
-		response := s.userService.GetRoomDetails(1)
+		response, _ := s.userService.GetRoomDetails(1)
 
 		s.Equal(response.Name, "admin")
 		s.Equal(response.Permissions[0].Name, enum.PermissionGeneral.String())
@@ -1793,7 +1793,7 @@ func (s *UserServiceTestSuite) TestGetRoleOwners() {
 		s.userRepository.On("FindUsersByRoleID", s.db, mock.Anything).Return(users, nil).Once()
 		s.s3Storage.On("GetPresignedURL", enum.ProfilePic, mock.Anything, mock.Anything).Return("https://example.com/profile.jpg").Twice()
 
-		response := s.userService.GetRoleOwners(1)
+		response, _ := s.userService.GetRoleOwners(1)
 
 		s.Equal(response[0].Phone, "09123456789")
 		s.Equal(response[1].Phone, "09123456789")
@@ -1842,7 +1842,7 @@ func (s *UserServiceTestSuite) TestGetUserRoles() {
 		s.userRepository.On("FindRolePermissions", s.db, &user.Roles[0]).Return(nil).Once()
 		s.userRepository.On("FindRolePermissions", s.db, &user.Roles[1]).Return(nil).Once()
 
-		response := s.userService.GetUserRoles(1)
+		response, _ := s.userService.GetUserRoles(1)
 
 		s.Equal(response[0].Name, "admin")
 		s.Equal(response[1].Name, "user")
