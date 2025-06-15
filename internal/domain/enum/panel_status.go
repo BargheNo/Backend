@@ -17,6 +17,8 @@ func (s PanelStatus) String() string {
 		return "در انتظار نصب"
 	case PanelStatusDamaged:
 		return "خراب"
+	case PanelStatusAll:
+		return "همه"
 	}
 	return "unknown"
 }
@@ -26,5 +28,6 @@ func GetAllPanelStatuses() []PanelStatus {
 		PanelStatusActive,
 		PanelStatusPending,
 		PanelStatusDamaged,
+		PanelStatusAll,
 	}
 }

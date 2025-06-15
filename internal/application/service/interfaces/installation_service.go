@@ -32,6 +32,7 @@ type InstallationService interface {
 	GetRequestStatuses() []installationdto.EnumStatusResponse
 	UpdateInstallationRequestByAdmin(newRequest installationdto.UpdateInstallationRequest) error
 	UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest) error
+  GetPanelStatus() []installationdto.EnumStatusResponse
 	ValidatePanelGuarantee(panelID uint) error
 	ValidatePanelOwnership(panelID uint, userID uint) (installationdto.AdminPanelResponse, error)
 	ValidateRequestOwnership(requestID uint, ownerID uint) (installationdto.PublicRequestDetailsResponse, error)

@@ -102,6 +102,8 @@ func (bidService *BidService) GetRequestAnonymousBids(requestInfo biddto.GetList
 		bidResponses[i] = biddto.AnonymousBidResponse{
 			ID:               bid.ID,
 			Description:      bid.Description,
+			Area:             bid.Area,
+			Power:            bid.Power,
 			Cost:             bid.Cost,
 			InstallationTime: bid.InstallationTime,
 			Status:           bid.Status.String(),
@@ -154,6 +156,8 @@ func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRe
 			Bidder:           bidder,
 			Description:      bid.Description,
 			Cost:             bid.Cost,
+			Area:             bid.Area,
+			Power:            bid.Power,
 			InstallationTime: bid.InstallationTime,
 			Status:           bid.Status.String(),
 			PaymentTerms:     paymentTerms,
@@ -176,7 +180,6 @@ func (bidService *BidService) GetRequestAnonymousBid(requestInfo biddto.GetCusto
 	if bid == nil || bid.Status == enum.BidStatusCanceled {
 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
 		return biddto.AnonymousBidResponse{}, notFoundError
-
 	}
 
 	paymentTerms, err := bidService.paymentService.GetPaymentTerms(bid.PaymentTermsID)
@@ -189,7 +192,6 @@ func (bidService *BidService) GetRequestAnonymousBid(requestInfo biddto.GetCusto
 		guarantee, err = bidService.guaranteeService.GetGuarantee(*bid.GuaranteeID)
 		if err != nil {
 			return biddto.AnonymousBidResponse{}, err
-
 		}
 	}
 
@@ -197,6 +199,8 @@ func (bidService *BidService) GetRequestAnonymousBid(requestInfo biddto.GetCusto
 		ID:               bid.ID,
 		Description:      bid.Description,
 		Cost:             bid.Cost,
+		Area:             bid.Area,
+		Power:            bid.Power,
 		InstallationTime: bid.InstallationTime,
 		Status:           bid.Status.String(),
 		PaymentTerms:     paymentTerms,
@@ -391,8 +395,6 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 		Data:        data,
 	}
 
-	log.Println("here is OK")
-
 	if err := bidService.rabbitMQ.PublishMessage(bidService.constants.RabbitMQ.Events.SendNotification, msg); err != nil {
 		log.Printf("error during send notification after bid: %v", err)
 	}
@@ -444,6 +446,8 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 			InstallationRequest: installationRequest,
 			Description:         bid.Description,
 			Cost:                bid.Cost,
+			Area:                bid.Area,
+			Power:               bid.Power,
 			InstallationTime:    bid.InstallationTime,
 			Status:              bid.Status.String(),
 			PaymentTerms:        payment,
@@ -496,6 +500,8 @@ func (bidService *BidService) GetCorporationBid(request biddto.GetBidRequest) (b
 		InstallationRequest: installationRequest,
 		Description:         bid.Description,
 		Cost:                bid.Cost,
+		Area:                bid.Area,
+		Power:               bid.Power,
 		InstallationTime:    bid.InstallationTime,
 		Status:              bid.Status.String(),
 		PaymentTerms:        payment,
