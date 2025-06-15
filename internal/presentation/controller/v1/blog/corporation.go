@@ -49,7 +49,8 @@ func (blogController *CorporationBlogController) CreateDraftPost(ctx *gin.Contex
 		CoverImage:    params.CoverImage,
 		Status:        enum.PostStatusDraft,
 	}
-	if err := blogController.blogService.CreatePost(request); err != nil {
+	blog, err := blogController.blogService.CreatePost(request)
+	if err != nil {
 		panic(err)
 	}
 

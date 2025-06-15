@@ -44,21 +44,21 @@ func NewBlogService(
 	}
 }
 
-func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) error {
+func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) (uint, error) {
 	ok, err := blogService.userService.IsUserActive(request.AuthorID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if !ok {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return forbiddenError
+		return 0, forbiddenError
 	}
 	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	post := &entity.Post{
@@ -71,7 +71,7 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) er
 	}
 
 	if err := blogService.blogRepository.CreatePost(blogService.db, post); err != nil {
-		return err
+		return 0, err
 	}
 
 	if request.CoverImage != nil {
@@ -82,9 +82,9 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) er
 
 	err = blogService.blogRepository.UpdatePost(blogService.db, post)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return post.ID, nil
 }
 
 func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequest) ([]blogdto.CorporationPostResponse, error) {

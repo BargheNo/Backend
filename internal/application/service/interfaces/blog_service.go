@@ -3,7 +3,7 @@ package service
 import blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
 
 type BlogService interface {
-	CreatePost(request blogdto.CreatePostRequest) error
+	CreatePost(request blogdto.CreatePostRequest) (uint, error)
 	EditPost(request blogdto.EditPostRequest) error
 	GetCorporationPosts(request blogdto.GetPostsRequest) ([]blogdto.CorporationPostResponse, error)
 	GetCorporationPostsForGeneral(request blogdto.GetPostsRequest) ([]blogdto.GeneralPostResponse, error)
