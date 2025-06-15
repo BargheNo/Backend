@@ -100,7 +100,7 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetPostsRequ
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return nil, &forbiddenError
+		return nil, forbiddenError
 	}
 
 	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
@@ -238,7 +238,7 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostReques
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return blogdto.CorporationPostResponse{}, &forbiddenError
+		return blogdto.CorporationPostResponse{}, forbiddenError
 	}
 
 	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
@@ -252,7 +252,7 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetPostReques
 	}
 	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		return blogdto.CorporationPostResponse{}, &notFoundError
+		return blogdto.CorporationPostResponse{}, notFoundError
 	}
 
 	coverImage := ""
@@ -290,7 +290,7 @@ func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) (
 	}
 	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		return blogdto.GeneralPostResponse{}, &notFoundError
+		return blogdto.GeneralPostResponse{}, notFoundError
 	}
 
 	if post.Status == enum.PostStatusDraft {
@@ -298,7 +298,7 @@ func (blogService *BlogService) GetGeneralPost(request blogdto.GetPostRequest) (
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return blogdto.GeneralPostResponse{}, &forbiddenError
+		return blogdto.GeneralPostResponse{}, forbiddenError
 	}
 
 	corporation, err := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
@@ -339,7 +339,7 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error 
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return &forbiddenError
+		return forbiddenError
 	}
 
 	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
@@ -353,7 +353,7 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error 
 	}
 	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		return &notFoundError
+		return notFoundError
 	}
 
 	if request.Title != nil {
@@ -393,7 +393,7 @@ func (blogService *BlogService) DeletePost(request blogdto.DeletePostRequest) er
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return &forbiddenError
+		return forbiddenError
 	}
 
 	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
@@ -424,7 +424,7 @@ func (blogService *BlogService) AddPostMedia(request blogdto.AddPostMediaRequest
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return 0, &forbiddenError
+		return 0, forbiddenError
 	}
 
 	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.AuthorID)
@@ -438,7 +438,7 @@ func (blogService *BlogService) AddPostMedia(request blogdto.AddPostMediaRequest
 	}
 	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		return 0, &notFoundError
+		return 0, notFoundError
 	}
 
 	mediaPath := blogService.constants.S3BucketPath.GetBlogMediaPath(request.PostID, request.Media.Filename)
@@ -465,7 +465,7 @@ func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaR
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return &forbiddenError
+		return forbiddenError
 	}
 
 	err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
@@ -479,7 +479,7 @@ func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaR
 	}
 	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		return &notFoundError
+		return notFoundError
 	}
 
 	media, err := blogService.blogRepository.GetMediaByID(blogService.db, request.MediaID)
@@ -488,7 +488,7 @@ func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaR
 	}
 	if media == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Media}
-		return &notFoundError
+		return notFoundError
 	}
 
 	if media.OwnerID != request.PostID {
@@ -496,7 +496,7 @@ func (blogService *BlogService) DeletePostMedia(request blogdto.AccessPostMediaR
 			Message:  "",
 			Resource: blogService.constants.Field.Media,
 		}
-		return &forbiddenError
+		return forbiddenError
 	}
 
 	if err := blogService.s3Storage.DeleteObject(enum.BlogMedia, media.Path); err != nil {
@@ -515,7 +515,7 @@ func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 	}
 	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		return "", &notFoundError
+		return "", notFoundError
 	}
 
 	if request.UserType == enum.UserTypeGuest && post.Status == enum.PostStatusDraft {
@@ -523,7 +523,7 @@ func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return "", &forbiddenError
+		return "", forbiddenError
 	}
 
 	if request.UserType == enum.UserTypeCorporation {
@@ -536,7 +536,7 @@ func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 				Message:  "",
 				Resource: blogService.constants.Field.Post,
 			}
-			return "", &forbiddenError
+			return "", forbiddenError
 		}
 		err = blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
 		if err != nil {
@@ -550,7 +550,7 @@ func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 	}
 	if media == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Media}
-		return "", &notFoundError
+		return "", notFoundError
 	}
 
 	if media.OwnerID != request.PostID {
@@ -558,7 +558,7 @@ func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 			Message:  "",
 			Resource: blogService.constants.Field.Media,
 		}
-		return "", &forbiddenError
+		return "", forbiddenError
 	}
 
 	presignedURL, err := blogService.s3Storage.GetPresignedURL(enum.BlogMedia, media.Path, 8*time.Hour)
@@ -578,7 +578,7 @@ func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) error 
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return &forbiddenError
+		return forbiddenError
 	}
 
 	post, err := blogService.blogRepository.FindPostByID(blogService.db, request.PostID)
@@ -587,7 +587,7 @@ func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) error 
 	}
 	if post == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Post}
-		return &notFoundError
+		return notFoundError
 	}
 
 	if post.Status == enum.PostStatusDraft {
@@ -595,7 +595,7 @@ func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) error 
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return &forbiddenError
+		return forbiddenError
 	}
 
 	like, err := blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
@@ -629,7 +629,7 @@ func (blogService *BlogService) UnlikePost(request blogdto.LikePostRequest) erro
 			Message:  "",
 			Resource: blogService.constants.Field.Post,
 		}
-		return &forbiddenError
+		return forbiddenError
 	}
 
 	like, err := blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
@@ -638,7 +638,7 @@ func (blogService *BlogService) UnlikePost(request blogdto.LikePostRequest) erro
 	}
 	if like == nil {
 		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Like}
-		return &notFoundError
+		return notFoundError
 	}
 
 	if err := blogService.blogRepository.DeleteLike(blogService.db, like.ID); err != nil {

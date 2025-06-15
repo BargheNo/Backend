@@ -93,8 +93,7 @@ func (installationController *CorporationInstallationController) CompleteInstall
 		Azimuth:         params.Azimuth,
 		NumberOfModules: params.NumberOfModules,
 	}
-	err := installationController.installationService.CompleteInstallationRequest(panelInfo)
-	if err != nil {
+	if err := installationController.installationService.CompleteInstallationRequest(panelInfo); err != nil {
 		panic(err)
 	}
 
@@ -147,8 +146,7 @@ func (installationController *CorporationInstallationController) AddPanel(ctx *g
 			Unit:          params.Unit,
 		},
 	}
-	err := installationController.installationService.AddPanel(panelInfo)
-	if err != nil {
+	if err := installationController.installationService.AddPanel(panelInfo); err != nil {
 		panic(err)
 	}
 
@@ -226,8 +224,7 @@ func (installationController *CorporationInstallationController) ViolatePanelGua
 			Details:       params.Details,
 		},
 	}
-	_, err := installationController.installationService.ViolatePanelGuaranteeStatus(violationInfo)
-	if err != nil {
+	if _, err := installationController.installationService.ViolatePanelGuaranteeStatus(violationInfo); err != nil {
 		panic(err)
 	}
 
@@ -249,8 +246,7 @@ func (installationController *CorporationInstallationController) ClearPanelGuara
 		OperatorID:    userID.(uint),
 		PanelID:       params.PanelID,
 	}
-	err := installationController.installationService.ClearPanelGuaranteeViolation(violationInfo)
-	if err != nil {
+	if err := installationController.installationService.ClearPanelGuaranteeViolation(violationInfo); err != nil {
 		panic(err)
 	}
 
@@ -297,8 +293,7 @@ func (installationController *CorporationInstallationController) UpdatePanelGuar
 		Reason:        params.Reason,
 		Details:       params.Details,
 	}
-	err := installationController.installationService.UpdatePanelGuaranteeViolation(request)
-	if err != nil {
+	if err := installationController.installationService.UpdatePanelGuaranteeViolation(request); err != nil {
 		panic(err)
 	}
 

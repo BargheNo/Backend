@@ -95,8 +95,7 @@ func (maintenanceController *CorporationMaintenanceController) AcceptMaintenance
 		OperatorID:    operatorID.(uint),
 		RequestID:     params.RequestID,
 	}
-	err := maintenanceController.maintenanceService.AcceptMaintenanceRequest(requestInfo)
-	if err != nil {
+	if err := maintenanceController.maintenanceService.AcceptMaintenanceRequest(requestInfo); err != nil {
 		panic(err)
 	}
 
@@ -118,8 +117,7 @@ func (maintenanceController *CorporationMaintenanceController) RejectMaintenance
 		OperatorID:    operatorID.(uint),
 		RequestID:     params.RequestID,
 	}
-	err := maintenanceController.maintenanceService.RejectMaintenanceRequest(requestInfo)
-	if err != nil {
+	if err := maintenanceController.maintenanceService.RejectMaintenanceRequest(requestInfo); err != nil {
 		panic(err)
 	}
 
@@ -161,8 +159,7 @@ func (maintenanceController *CorporationMaintenanceController) CreateMaintenance
 		Details:            params.Details,
 		GuaranteeViolation: guaranteeViolationParams,
 	}
-	err := maintenanceController.maintenanceService.CreateMaintenanceRecord(recordInfo)
-	if err != nil {
+	if err := maintenanceController.maintenanceService.CreateMaintenanceRecord(recordInfo); err != nil {
 		panic(err)
 	}
 
@@ -203,8 +200,7 @@ func (maintenanceController *CorporationMaintenanceController) UpdateMaintenance
 		Details:            params.Details,
 		GuaranteeViolation: guaranteeViolationParams,
 	}
-	err := maintenanceController.maintenanceService.UpdateMaintenanceRecord(recordInfo)
-	if err != nil {
+	if err := maintenanceController.maintenanceService.UpdateMaintenanceRecord(recordInfo); err != nil {
 		panic(err)
 	}
 

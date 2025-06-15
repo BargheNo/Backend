@@ -137,8 +137,7 @@ func (guaranteeController *CorporationGuaranteeController) UpdateGuarantee(ctx *
 		GuaranteeID:   params.GuaranteeID,
 		Status:        params.Status,
 	}
-	err := guaranteeController.guaranteeService.UpdateGuaranteeStatus(request)
-	if err != nil {
+	if err := guaranteeController.guaranteeService.UpdateGuaranteeStatus(request); err != nil {
 		panic(err)
 	}
 

@@ -85,8 +85,7 @@ func (installationController *AdminInstallationController) UpdateInstallationReq
 		Status:       params.Status,
 		Description:  params.Description,
 	}
-	err := installationController.installationService.UpdateInstallationRequestByAdmin(requestInfo)
-	if err != nil {
+	if err := installationController.installationService.UpdateInstallationRequestByAdmin(requestInfo); err != nil {
 		panic(err)
 	}
 
@@ -101,8 +100,7 @@ func (installationController *AdminInstallationController) DeleteInstallationReq
 	}
 	params := controller.Validated[installationRequestParams](ctx)
 
-	err := installationController.installationService.DeleteInstallationRequest(params.RequestID)
-	if err != nil {
+	if err := installationController.installationService.DeleteInstallationRequest(params.RequestID); err != nil {
 		panic(err)
 	}
 
@@ -171,8 +169,7 @@ func (installationController *AdminInstallationController) UpdatePanel(ctx *gin.
 		Azimuth:              params.Azimuth,
 		TotalNumberOfModules: params.TotalNumberOfModules,
 	}
-	err := installationController.installationService.UpdatePanel(requestInfo)
-	if err != nil {
+	if err := installationController.installationService.UpdatePanel(requestInfo); err != nil {
 		panic(err)
 	}
 
@@ -187,8 +184,7 @@ func (installationController *AdminInstallationController) DeletePanel(ctx *gin.
 	}
 	params := controller.Validated[installationRequestParams](ctx)
 
-	err := installationController.installationService.DeletePanel(params.PanelID)
-	if err != nil {
+	if err := installationController.installationService.DeletePanel(params.PanelID); err != nil {
 		panic(err)
 	}
 

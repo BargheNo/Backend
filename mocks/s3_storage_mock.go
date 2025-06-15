@@ -18,20 +18,15 @@ func NewS3StorageMock() *S3StorageMock {
 
 func (s *S3StorageMock) DeleteObject(bucketType enum.BucketType, key string) error {
 	args := s.Called(bucketType, key)
-	if args.Get(0) != nil {
-		return args.Get(0).(error)
-	}
-	return nil
+	return args.Error(0)
 }
 
-func (s *S3StorageMock) GetPresignedURL(bucketType enum.BucketType, objectKey string, expiration time.Duration) string {
+func (s *S3StorageMock) GetPresignedURL(bucketType enum.BucketType, objectKey string, expiration time.Duration) (string, error) {
 	args := s.Called(bucketType, objectKey, expiration)
-	if args.Get(0) != nil {
-		return args.Get(0).(string)
-	}
-	return ""
+	return args.String(0), args.Error(1)
 }
 
-func (s *S3StorageMock) UploadObject(bucketType enum.BucketType, key string, file *multipart.FileHeader) {
-	s.Called(bucketType, key, file)
+func (s *S3StorageMock) UploadObject(bucketType enum.BucketType, key string, file *multipart.FileHeader) error {
+	args := s.Called(bucketType, key, file)
+	return args.Error(0)
 }

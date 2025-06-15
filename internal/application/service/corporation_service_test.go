@@ -52,7 +52,7 @@ func (s *CorporationServiceTestSuite) TestGetCorporationByIDAndStatus() {
 
 		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
 
-		response := s.corporationService.getCorporationByIDAndStatus(uint(1), enum.CorpStatusApproved)
+		response, _ := s.corporationService.getCorporationByIDAndStatus(uint(1), enum.CorpStatusApproved)
 
 		s.Equal(response.Status, enum.CorpStatusApproved)
 		s.corporationRepository.AssertExpectations(s.T())
@@ -136,7 +136,7 @@ func (s *CorporationServiceTestSuite) TestGetCorporationCredentials() {
 			},
 		}).Once()
 		s.corporationRepository.On("FindContactTypeByID", s.db, mock.Anything).Return(&entity.ContactType{}, true)
-		response := s.corporationService.GetCorporationCredentials(uint(1))
+		response, _ := s.corporationService.GetCorporationCredentials(uint(1))
 
 		s.Equal(response.ID, corporation.ID)
 		s.Equal(response.Name, corporation.Name)
@@ -167,7 +167,7 @@ func (s *CorporationServiceTestSuite) TestISCorporationApproved() {
 
 		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
 
-		response := s.corporationService.ISCorporationApproved(uint(1))
+		response, _ := s.corporationService.ISCorporationApproved(uint(1))
 
 		s.True(response)
 
@@ -232,7 +232,7 @@ func (s *CorporationServiceTestSuite) TestRegister() {
 			Signatories:        []corporationdto.Signatory{{}, {}},
 		}
 
-		response := s.corporationService.Register(request)
+		response, _ := s.corporationService.Register(request)
 
 		s.Equal(response.Name, request.Name)
 
@@ -906,7 +906,7 @@ func (s *CorporationServiceTestSuite) TestGetCorporationDetails() {
 			CorporationID: 1,
 			Status:        enum.CorpStatusApproved,
 		}
-		response := s.corporationService.GetCorporationDetails(request)
+		response, _ := s.corporationService.GetCorporationDetails(request)
 
 		s.Equal(response.Name, corporation.Name)
 		s.Equal(response.Logo, corporation.Logo)
@@ -943,7 +943,7 @@ func (s *CorporationServiceTestSuite) TestGetContactInfo() {
 		s.corporationRepository.On("FindContactTypeByID", s.db, uint(1)).Return(contactType, true).Once()
 		s.corporationRepository.On("FindContactTypeByID", s.db, uint(2)).Return(nilContactType, false).Once()
 
-		response := s.corporationService.getContactInfo(1)
+		response, _ := s.corporationService.getContactInfo(1)
 
 		s.Equal(response[0].ContactType.Name, contactType.Name)
 		s.Equal(response[0].Value, contactInformation[0].Value)
@@ -962,7 +962,7 @@ func (s *CorporationServiceTestSuite) TestGetCorporationSignatories() {
 
 		s.corporationRepository.On("FindCorporationSignatories", s.db, mock.AnythingOfType("uint")).Return(signatories).Once()
 
-		response := s.corporationService.getCorporationSignatories(1)
+		response, _ := s.corporationService.getCorporationSignatories(1)
 
 		s.Equal(response[0].Name, signatories[0].Name)
 	})
@@ -978,7 +978,7 @@ func (s *CorporationServiceTestSuite) TestGetContactTypes() {
 
 		s.corporationRepository.On("FindContactTypes", s.db).Return(contactTypes).Once()
 
-		response := s.corporationService.GetContactTypes()
+		response, _ := s.corporationService.GetContactTypes()
 
 		s.Equal(response[0].Name, contactTypes[0].Name)
 	})
@@ -1220,7 +1220,7 @@ func (s *CorporationServiceTestSuite) TestGetCorporations() {
 		s.addressService.On("GetAddresses", mock.Anything).Return([]addressdto.AddressResponse{}).Once()
 		s.corporationRepository.On("FindContactInformation", s.db, mock.Anything).Return(contactInformation).Once()
 
-		response := s.corporationService.GetAvailableCorporations()
+		response, _ := s.corporationService.GetAvailableCorporations()
 
 		s.Equal(response[0].Name, corporations[0].Name)
 

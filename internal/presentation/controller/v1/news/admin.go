@@ -78,8 +78,7 @@ func (newsController *AdminNewsController) EditNews(ctx *gin.Context) {
 		CoverImage:  params.CoverImage,
 		Status:      params.Status,
 	}
-	err := newsController.newsService.EditNews(finalizeNewsParams)
-	if err != nil {
+	if err := newsController.newsService.EditNews(finalizeNewsParams); err != nil {
 		panic(err)
 	}
 
@@ -99,8 +98,7 @@ func (newsController *AdminNewsController) PublishNews(ctx *gin.Context) {
 		AuthorID: authorID.(uint),
 		Status:   uint(enum.NewsStatusActive),
 	}
-	err := newsController.newsService.UpdateNewsStatus(publishParams)
-	if err != nil {
+	if err := newsController.newsService.UpdateNewsStatus(publishParams); err != nil {
 		panic(err)
 	}
 
@@ -121,8 +119,7 @@ func (newsController *AdminNewsController) UnpublishNews(ctx *gin.Context) {
 		AuthorID: authorID.(uint),
 		Status:   uint(enum.NewsStatusDraft),
 	}
-	err := newsController.newsService.UpdateNewsStatus(unpublishParams)
-	if err != nil {
+	if err := newsController.newsService.UpdateNewsStatus(unpublishParams); err != nil {
 		panic(err)
 	}
 
@@ -186,8 +183,7 @@ func (newsController *AdminNewsController) DeleteNews(ctx *gin.Context) {
 		NewsIDs:  params.NewsIDs,
 		AuthorID: userID.(uint),
 	}
-	err := newsController.newsService.DeleteNewsStatus(deleteParams)
-	if err != nil {
+	if err := newsController.newsService.DeleteNewsStatus(deleteParams); err != nil {
 		panic(err)
 	}
 
@@ -232,8 +228,7 @@ func (newsController *AdminNewsController) DeleteNewsMedia(ctx *gin.Context) {
 		AuthorID: userID.(uint),
 		MediaID:  params.MediaID,
 	}
-	err := newsController.newsService.DeleteNewsMedia(mediaParams)
-	if err != nil {
+	if err := newsController.newsService.DeleteNewsMedia(mediaParams); err != nil {
 		panic(err)
 	}
 

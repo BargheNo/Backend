@@ -49,8 +49,9 @@ func (blogController *CorporationBlogController) CreateDraftPost(ctx *gin.Contex
 		CoverImage:    params.CoverImage,
 		Status:        enum.PostStatusDraft,
 	}
-
-	blogController.blogService.CreatePost(request)
+	if err := blogController.blogService.CreatePost(request); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createPost")
@@ -81,8 +82,9 @@ func (blogController *CorporationBlogController) EditPost(ctx *gin.Context) {
 		Status:        params.Status,
 		CorporationID: params.CorporationID,
 	}
-
-	blogController.blogService.EditPost(request)
+	if err := blogController.blogService.EditPost(request); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.editPost")
@@ -103,7 +105,9 @@ func (blogController *CorporationBlogController) PublishPost(ctx *gin.Context) {
 		Status:        uint(enum.PostStatusPublished),
 		CorporationID: params.CorporationID,
 	}
-	blogController.blogService.EditPost(request)
+	if err := blogController.blogService.EditPost(request); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.publishPost")
@@ -124,7 +128,9 @@ func (blogController *CorporationBlogController) UnpublishPost(ctx *gin.Context)
 		Status:        uint(enum.PostStatusDraft),
 		CorporationID: params.CorporationID,
 	}
-	blogController.blogService.EditPost(request)
+	if err := blogController.blogService.EditPost(request); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.unpublishPost")
@@ -139,12 +145,14 @@ func (blogController *CorporationBlogController) DeletePost(ctx *gin.Context) {
 	params := controller.Validated[deletePostParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
 
-	deletParams := blogdto.DeletePostRequest{
+	deleteParams := blogdto.DeletePostRequest{
 		PostIDs:       params.PostIDs,
 		AuthorID:      authorID.(uint),
 		CorporationID: params.CorporationID,
 	}
-	blogController.blogService.DeletePost(deletParams)
+	if err := blogController.blogService.DeletePost(deleteParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deletePost")
@@ -192,7 +200,9 @@ func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Contex
 		MediaID:       params.MediaID,
 		CorporationID: params.CorporationID,
 	}
-	blogController.blogService.DeletePostMedia(mediaParams)
+	if err := blogController.blogService.DeletePostMedia(mediaParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, blogController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteMedia")

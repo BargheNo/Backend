@@ -75,8 +75,7 @@ func (chatController *CorporationChatController) BlockRoom(ctx *gin.Context) {
 		BlockedBy:  enum.BlockedByCorporation,
 		ChatStatus: enum.ChatStatusBlocked,
 	}
-	err := chatController.chatService.BlockChatRoom(blockRequest)
-	if err != nil {
+	if err := chatController.chatService.BlockChatRoom(blockRequest); err != nil {
 		panic(err)
 	}
 
@@ -98,8 +97,7 @@ func (chatController *CorporationChatController) UnBlockRoom(ctx *gin.Context) {
 		BlockedBy:  enum.BlockedByCorporation,
 		ChatStatus: enum.ChatStatusActive,
 	}
-	err := chatController.chatService.UnBlockChatRoom(blockRequest)
-	if err != nil {
+	if err := chatController.chatService.UnBlockChatRoom(blockRequest); err != nil {
 		panic(err)
 	}
 

@@ -62,7 +62,9 @@ func (installationController *CustomerInstallationController) CreateInstallation
 			Unit:          params.Unit,
 		},
 	}
-	installationController.installationService.CreateInstallationRequest(requestInfo)
+	if err := installationController.installationService.CreateInstallationRequest(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.installationRequest")
@@ -122,7 +124,9 @@ func (installationController *CustomerInstallationController) CancelInstallation
 		Status:    enum.InstallationRequestStatusCancelled,
 		OwnerID:   ownerID.(uint),
 	}
-	installationController.installationService.ChangeInstallationRequestStatus(requestInfo)
+	if err := installationController.installationService.ChangeInstallationRequestStatus(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.cancelInstallationRequest")

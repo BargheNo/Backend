@@ -53,8 +53,7 @@ func (userController *AdminUserController) CreateRole(ctx *gin.Context) {
 		Name:          params.Name,
 		PermissionIDs: params.PermissionIDs,
 	}
-	err := userController.userService.CreateRole(newRoleRequest)
-	if err != nil {
+	if err := userController.userService.CreateRole(newRoleRequest); err != nil {
 		panic(err)
 	}
 
@@ -101,8 +100,7 @@ func (userController *AdminUserController) UpdateRole(ctx *gin.Context) {
 		Name:          params.Name,
 		PermissionIDs: params.PermissionIDs,
 	}
-	err := userController.userService.UpdateRole(newRoleRequest)
-	if err != nil {
+	if err := userController.userService.UpdateRole(newRoleRequest); err != nil {
 		panic(err)
 	}
 
@@ -117,8 +115,7 @@ func (userController *AdminUserController) DeleteRole(ctx *gin.Context) {
 	}
 	params := controller.Validated[deleteRoleParams](ctx)
 
-	err := userController.userService.DeleteRole(params.RoleID)
-	if err != nil {
+	if err := userController.userService.DeleteRole(params.RoleID); err != nil {
 		panic(err)
 	}
 
@@ -150,8 +147,7 @@ func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
 		UserID:  params.UserID,
 		RoleIDs: params.RoleIDs,
 	}
-	err := userController.userService.UpdateUserRoles(userRolesRequest)
-	if err != nil {
+	if err := userController.userService.UpdateUserRoles(userRolesRequest); err != nil {
 		panic(err)
 	}
 
@@ -186,7 +182,9 @@ func (userController *AdminUserController) BanUser(ctx *gin.Context) {
 	}
 	params := controller.Validated[banParams](ctx)
 
-	userController.userService.BanUser(params.UserID)
+	if err := userController.userService.BanUser(params.UserID); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.banUser")
@@ -199,7 +197,9 @@ func (userController *AdminUserController) UnbanUser(ctx *gin.Context) {
 	}
 	params := controller.Validated[unbanParams](ctx)
 
-	userController.userService.UnbanUser(params.UserID)
+	if err := userController.userService.UnbanUser(params.UserID); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.unbanUser")

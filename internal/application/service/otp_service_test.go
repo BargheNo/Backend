@@ -33,7 +33,7 @@ func (s *OtpServiceTestSuite) SetupTest() {
 
 func (s *OtpServiceTestSuite) TestGenerateOTP() {
 	s.Run("success - OTP generated", func() {
-		otp, _ := s.otpService.GenerateOTP()
+		otp, _, _ := s.otpService.GenerateOTP()
 		s.Equal(len(otp), s.otpConfig.Length)
 	})
 }

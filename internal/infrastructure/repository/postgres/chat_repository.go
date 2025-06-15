@@ -30,9 +30,6 @@ func (repo *ChatRepository) GetUserRooms(db database.Database, userID uint) ([]*
 	result := db.GetDB().Where("customer_id = ?", userID).Find(&rooms)
 
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
 		return nil, result.Error
 	}
 	return rooms, nil
@@ -43,9 +40,6 @@ func (repo *ChatRepository) GetCorporationRooms(db database.Database, corporatio
 	result := db.GetDB().Where("corporation_id = ?", corporationID).Find(&rooms)
 
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
 		return nil, result.Error
 	}
 	return rooms, nil

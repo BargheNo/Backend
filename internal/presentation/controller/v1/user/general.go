@@ -42,7 +42,9 @@ func (userController *GeneralUserController) BasicRegister(ctx *gin.Context) {
 		Phone:     params.Phone,
 		Password:  params.Password,
 	}
-	userController.userService.Register(registerInfo)
+	if err := userController.userService.Register(registerInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.userRegister")
@@ -59,7 +61,9 @@ func (userController *GeneralUserController) VerifyPhone(ctx *gin.Context) {
 		Phone: params.Phone,
 		OTP:   params.OTP,
 	}
-	userController.userService.VerifyPhone(verifyOTPInfo)
+	if err := userController.userService.VerifyPhone(verifyOTPInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.phoneVerification")
@@ -94,7 +98,9 @@ func (userController *GeneralUserController) ForgotPassword(ctx *gin.Context) {
 	forgotPasswordInfo := userdto.ForgotPasswordRequest{
 		Phone: params.Phone,
 	}
-	userController.userService.ForgotPassword(forgotPasswordInfo)
+	if err := userController.userService.ForgotPassword(forgotPasswordInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.forgotPassword")

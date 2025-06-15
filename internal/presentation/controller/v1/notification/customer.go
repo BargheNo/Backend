@@ -50,7 +50,9 @@ func (notificationController *CustomerNotificationController) MarkAsRead(ctx *gi
 		NotificationID: params.NotificationID,
 		UserID:         userID.(uint),
 	}
-	notificationController.notificationService.MarkAsRead(notificationInfo)
+	if err := notificationController.notificationService.MarkAsRead(notificationInfo); err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "successMessage.readNotification", nil)
 }
@@ -101,7 +103,9 @@ func (notificationController *CustomerNotificationController) UpdateSettings(ctx
 		IsEmailEnabled: params.IsEmailEnabled,
 		IsPushEnabled:  params.IsPushEnabled,
 	}
-	notificationController.notificationService.UpdateNotificationSettings(settingInfo)
+	if err := notificationController.notificationService.UpdateNotificationSettings(settingInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, notificationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateNotificationSetting")

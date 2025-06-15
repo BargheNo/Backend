@@ -103,8 +103,7 @@ func (corporationController *AdminCorporationController) ApproveCorporationReque
 		Reason:        params.Reason,
 		Notes:         params.Notes,
 	}
-	err := corporationController.corporationService.ApproveCorporationRegistration(request)
-	if err != nil {
+	if err := corporationController.corporationService.ApproveCorporationRegistration(request); err != nil {
 		panic(err)
 	}
 
@@ -130,8 +129,7 @@ func (corporationController *AdminCorporationController) RejectCorporationReques
 		Reason:        params.Reason,
 		Notes:         params.Notes,
 	}
-	err := corporationController.corporationService.RejectCorporationRegistration(request)
-	if err != nil {
+	if err := corporationController.corporationService.RejectCorporationRegistration(request); err != nil {
 		panic(err)
 	}
 

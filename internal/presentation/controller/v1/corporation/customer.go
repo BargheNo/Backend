@@ -118,8 +118,7 @@ func (corporationController *CustomerCorporationController) UpdateRegister(ctx *
 		Signatories:        signatories,
 	}
 
-	err := corporationController.corporationService.UpdateRegister(updateRegisterInfo)
-	if err != nil {
+	if err := corporationController.corporationService.UpdateRegister(updateRegisterInfo); err != nil {
 		panic(err)
 	}
 
@@ -183,9 +182,7 @@ func (corporationController *CustomerCorporationController) AddAddress(ctx *gin.
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 		Addresses:         addresses,
 	}
-
-	err := corporationController.corporationService.AddAddress(addressInfo)
-	if err != nil {
+	if err := corporationController.corporationService.AddAddress(addressInfo); err != nil {
 		panic(err)
 	}
 
@@ -208,8 +205,7 @@ func (corporationController *CustomerCorporationController) DeleteAddress(ctx *g
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 		AddressID:         params.AddressID,
 	}
-	err := corporationController.corporationService.DeleteAddress(addressInfo)
-	if err != nil {
+	if err := corporationController.corporationService.DeleteAddress(addressInfo); err != nil {
 		panic(err)
 	}
 
@@ -243,8 +239,7 @@ func (corporationController *CustomerCorporationController) AddContactInformatio
 		CorporationStatus:  enum.CorpStatusAwaitingApproval,
 		ContactInformation: contacts,
 	}
-	err := corporationController.corporationService.AddContactInfo(contactInfo)
-	if err != nil {
+	if err := corporationController.corporationService.AddContactInfo(contactInfo); err != nil {
 		panic(err)
 	}
 
@@ -267,9 +262,7 @@ func (corporationController *CustomerCorporationController) DeleteContactInforma
 		CorporationID:     params.CorporationID,
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 	}
-
-	err := corporationController.corporationService.DeleteContactInfo(contactInfo)
-	if err != nil {
+	if err := corporationController.corporationService.DeleteContactInfo(contactInfo); err != nil {
 		panic(err)
 	}
 
@@ -293,8 +286,7 @@ func (corporationController *CustomerCorporationController) SubmitCertificateFil
 		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
 		OfficialNewspaperAD:    params.OfficialNewspaperAD,
 	}
-	err := corporationController.corporationService.AddCertificateFiles(requestInfo)
-	if err != nil {
+	if err := corporationController.corporationService.AddCertificateFiles(requestInfo); err != nil {
 		panic(err)
 	}
 

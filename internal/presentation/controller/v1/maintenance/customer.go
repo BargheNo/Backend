@@ -60,7 +60,9 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 		UrgencyLevel:     enum.UrgencyLevel(params.UrgencyLevel),
 		IsUsingGuarantee: params.IsUsingGuarantee,
 	}
-	maintenanceController.maintenanceService.CreateMaintenanceRequest(requestInfo)
+	if err := maintenanceController.maintenanceService.CreateMaintenanceRequest(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, maintenanceController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.maintenanceRequest")
@@ -155,8 +157,7 @@ func (maintenanceController *CustomerMaintenanceController) UpdateMaintenanceReq
 		UrgencyLevel:     params.UrgencyLevel,
 		IsUsingGuarantee: params.IsUsingGuarantee,
 	}
-	err := maintenanceController.maintenanceService.UpdateMaintenanceRequest(requestInfo)
-	if err != nil {
+	if err := maintenanceController.maintenanceService.UpdateMaintenanceRequest(requestInfo); err != nil {
 		panic(err)
 	}
 
@@ -176,8 +177,7 @@ func (maintenanceController *CustomerMaintenanceController) CancelMaintenanceReq
 		OwnerID:   ownerID.(uint),
 		RequestID: params.RequestID,
 	}
-	err := maintenanceController.maintenanceService.CancelMaintenanceRequest(maintenanceInfo)
-	if err != nil {
+	if err := maintenanceController.maintenanceService.CancelMaintenanceRequest(maintenanceInfo); err != nil {
 		panic(err)
 	}
 
@@ -197,8 +197,7 @@ func (maintenanceController *CustomerMaintenanceController) ApproveMaintenanceRe
 		OwnerID:   ownerID.(uint),
 		RequestID: params.RequestID,
 	}
-	err := maintenanceController.maintenanceService.ApproveMaintenanceRecord(maintenanceInfo)
-	if err != nil {
+	if err := maintenanceController.maintenanceService.ApproveMaintenanceRecord(maintenanceInfo); err != nil {
 		panic(err)
 	}
 

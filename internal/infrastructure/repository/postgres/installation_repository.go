@@ -31,7 +31,7 @@ func (repo *InstallationRepository) FindRequestByOwner(db database.Database, req
 	result := db.GetDB().Where("id = ? AND owner_id = ?", requestID, ownerID).First(&request)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, result.Error
+			return nil, nil
 		}
 		return nil, result.Error
 	}
@@ -97,7 +97,7 @@ func (repo *InstallationRepository) FindCorporationPanel(db database.Database, p
 	result := db.GetDB().Where("id = ? and corporation_id = ?", panelID, corporationID).First(&panel)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, result.Error
+			return nil, nil
 		}
 		return nil, result.Error
 	}
@@ -109,7 +109,7 @@ func (repo *InstallationRepository) FindCustomerPanel(db database.Database, pane
 	result := db.GetDB().Where("id = ? and customer_id = ?", panelID, customerID).First(&panel)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, result.Error
+			return nil, nil
 		}
 		return nil, result.Error
 	}
@@ -160,7 +160,7 @@ func (repo *InstallationRepository) FindPanelByNameAndCustomerID(db database.Dat
 	result := db.GetDB().Where("name = ? and customer_id = ?", panelName, customerID).First(&panel)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, result.Error
+			return nil, nil
 		}
 		return nil, result.Error
 	}
@@ -172,7 +172,7 @@ func (repo *InstallationRepository) FindPanelByID(db database.Database, panelID 
 	result := db.GetDB().First(&panel, panelID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, result.Error
+			return nil, nil
 		}
 		return nil, result.Error
 	}
@@ -184,7 +184,7 @@ func (repo *InstallationRepository) FindPanelByOwner(db database.Database, panel
 	result := db.GetDB().Where("id = ? AND customer_id = ?", panelID, customerID).First(&panel)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, result.Error
+			return nil, nil
 		}
 		return nil, result.Error
 	}

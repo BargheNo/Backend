@@ -83,8 +83,7 @@ func (ticketController *AdminTicketController) CreateComment(ctx *gin.Context) {
 		OwnerType: ticketController.constant.TicketCommentOwners.Admin,
 		Body:      params.Body,
 	}
-	err := ticketController.ticketService.CreateAdminTicketComment(requestInfo)
-	if err != nil {
+	if err := ticketController.ticketService.CreateAdminTicketComment(requestInfo); err != nil {
 		panic(err)
 	}
 
@@ -103,8 +102,7 @@ func (ticketController *AdminTicketController) ResolveTicket(ctx *gin.Context) {
 		TicketID: params.TicketID,
 		OwnerID:  ownerID.(uint),
 	}
-	err := ticketController.ticketService.ResolveTicket(requestInfo)
-	if err != nil {
+	if err := ticketController.ticketService.ResolveTicket(requestInfo); err != nil {
 		panic(err)
 	}
 

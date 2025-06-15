@@ -34,7 +34,7 @@ func (addressService *AddressService) CreateAddress(addressInfo addressdto.Creat
 	}
 	if province == nil {
 		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Province}
-		return addressdto.AddressResponse{}, &notFoundError
+		return addressdto.AddressResponse{}, notFoundError
 	}
 	city, err := addressService.addressRepository.GetCityByID(addressService.db, addressInfo.CityID)
 	if err != nil {
@@ -42,7 +42,7 @@ func (addressService *AddressService) CreateAddress(addressInfo addressdto.Creat
 	}
 	if city == nil {
 		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.City}
-		return addressdto.AddressResponse{}, &notFoundError
+		return addressdto.AddressResponse{}, notFoundError
 	}
 	address := &entity.Address{
 		ProvinceID:    addressInfo.ProvinceID,
@@ -76,16 +76,27 @@ func (addressService *AddressService) GetAddress(ownerID uint, ownerType string)
 	}
 	if address == nil {
 		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
-		return addressdto.AddressResponse{}, &notFoundError
+		return addressdto.AddressResponse{}, notFoundError
 	}
+
 	province, err := addressService.addressRepository.GetProvinceByID(addressService.db, address.ProvinceID)
 	if err != nil {
 		return addressdto.AddressResponse{}, err
 	}
+	if province == nil {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Province}
+		return addressdto.AddressResponse{}, notFoundError
+	}
+
 	city, err := addressService.addressRepository.GetCityByID(addressService.db, address.CityID)
 	if err != nil {
 		return addressdto.AddressResponse{}, err
 	}
+	if city == nil {
+		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.City}
+		return addressdto.AddressResponse{}, notFoundError
+	}
+
 	response := addressdto.AddressResponse{
 		ID:            address.ID,
 		ProvinceID:    province.ID,
@@ -137,8 +148,9 @@ func (addressService *AddressService) DeleteAddress(addressID uint) error {
 	}
 	if address == nil {
 		notFoundError := exception.NotFoundError{Item: addressService.constants.Field.Address}
-		return &notFoundError
+		return notFoundError
 	}
+
 	err = addressService.addressRepository.DeleteAddress(addressService.db, address)
 	if err != nil {
 		return err

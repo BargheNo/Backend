@@ -36,16 +36,17 @@ func (corporationController *CorporationCorporationController) GetMyProfile(ctx 
 	}
 	params := controller.Validated[getCorporationParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
 	corporationRequest := corporationdto.CorporationDetailsRequest{
 		UserID:        userID.(uint),
 		CorporationID: params.CorporationID,
 		Status:        enum.CorpStatusApproved,
 	}
-
 	corporationDetails, err := corporationController.corporationService.GetCorporationDetails(corporationRequest)
 	if err != nil {
 		panic(err)
 	}
+
 	controller.Response(ctx, 200, "", corporationDetails)
 }
 
@@ -86,8 +87,7 @@ func (corporationController *CorporationCorporationController) AddAddress(ctx *g
 		Addresses:         addresses,
 	}
 
-	err := corporationController.corporationService.AddAddress(addressInfo)
-	if err != nil {
+	if err := corporationController.corporationService.AddAddress(addressInfo); err != nil {
 		panic(err)
 	}
 
@@ -110,8 +110,7 @@ func (corporationController *CorporationCorporationController) DeleteAddress(ctx
 		CorporationStatus: enum.CorpStatusApproved,
 		AddressID:         params.AddressID,
 	}
-	err := corporationController.corporationService.DeleteAddress(addressInfo)
-	if err != nil {
+	if err := corporationController.corporationService.DeleteAddress(addressInfo); err != nil {
 		panic(err)
 	}
 
@@ -145,8 +144,7 @@ func (corporationController *CorporationCorporationController) AddContactInforma
 		CorporationStatus:  enum.CorpStatusApproved,
 		ContactInformation: contacts,
 	}
-	err := corporationController.corporationService.AddContactInfo(contactInfo)
-	if err != nil {
+	if err := corporationController.corporationService.AddContactInfo(contactInfo); err != nil {
 		panic(err)
 	}
 
@@ -169,9 +167,7 @@ func (corporationController *CorporationCorporationController) DeleteContactInfo
 		CorporationID:     params.CorporationID,
 		CorporationStatus: enum.CorpStatusApproved,
 	}
-
-	err := corporationController.corporationService.DeleteContactInfo(contactInfo)
-	if err != nil {
+	if err := corporationController.corporationService.DeleteContactInfo(contactInfo); err != nil {
 		panic(err)
 	}
 
@@ -193,8 +189,7 @@ func (corporationController *CorporationCorporationController) ChangeLogo(ctx *g
 		CorporationID: params.CorporationID,
 		Logo:          params.Logo,
 	}
-	err := corporationController.corporationService.ChangeLogo(changeLogoRequest)
-	if err != nil {
+	if err := corporationController.corporationService.ChangeLogo(changeLogoRequest); err != nil {
 		panic(err)
 	}
 

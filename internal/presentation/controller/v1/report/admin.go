@@ -30,12 +30,12 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
+
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
 		Offset:  offset,
 		Limit:   limit,
 	}
-
 	reports, err := reportController.reportService.GetMaintenanceReports(requestInfo)
 	if err != nil {
 		panic(err)
@@ -47,12 +47,12 @@ func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context)
 	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
+
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
 		Offset:  offset,
 		Limit:   limit,
 	}
-
 	reports, err := reportController.reportService.GetPanelReports(requestInfo)
 	if err != nil {
 		panic(err)
@@ -66,12 +66,12 @@ func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {
 	}
 	params := controller.Validated[ResolveReportRequest](ctx)
 	userID, _ := ctx.Get(reportController.constants.Context.ID)
+
 	requestInfo := reportdto.ResolveReportRequest{
 		ReportID: params.ReportID,
 		UserID:   userID.(uint),
 	}
-	err := reportController.reportService.ResolveReport(requestInfo)
-	if err != nil {
+	if err := reportController.reportService.ResolveReport(requestInfo); err != nil {
 		panic(err)
 	}
 

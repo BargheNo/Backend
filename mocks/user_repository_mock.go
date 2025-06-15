@@ -16,24 +16,33 @@ func NewUserRepositoryMock() *UserRepositoryMock {
 	return &UserRepositoryMock{}
 }
 
-func (u *UserRepositoryMock) FindUsers(db database.Database) []*entity.User {
+func (u *UserRepositoryMock) FindUsers(db database.Database) ([]*entity.User, error) {
 	args := u.Called(db)
-	return args.Get(0).([]*entity.User)
+	return args.Get(0).([]*entity.User), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindUserByID(db database.Database, id uint) (*entity.User, bool) {
+func (u *UserRepositoryMock) FindUserByID(db database.Database, id uint) (*entity.User, error) {
 	args := u.Called(db, id)
-	return args.Get(0).(*entity.User), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.User), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindUserByPhone(db database.Database, phone string) (*entity.User, bool) {
+func (u *UserRepositoryMock) FindUserByPhone(db database.Database, phone string) (*entity.User, error) {
 	args := u.Called(db, phone)
-	return args.Get(0).(*entity.User), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.User), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindUserByEmail(db database.Database, email string) (*entity.User, bool) {
+func (u *UserRepositoryMock) FindUserByEmail(db database.Database, email string) (*entity.User, error) {
 	args := u.Called(db, email)
-	return args.Get(0).(*entity.User), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.User), args.Error(1)
 }
 
 func (u *UserRepositoryMock) CreateUser(db database.Database, user *entity.User) error {
@@ -56,9 +65,12 @@ func (u *UserRepositoryMock) FindUserRoles(db database.Database, user *entity.Us
 	return args.Error(0)
 }
 
-func (u *UserRepositoryMock) FindRoleByName(db database.Database, name string) (*entity.Role, bool) {
+func (u *UserRepositoryMock) FindRoleByName(db database.Database, name string) (*entity.Role, error) {
 	args := u.Called(db, name)
-	return args.Get(0).(*entity.Role), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Role), args.Error(1)
 }
 
 func (u *UserRepositoryMock) FindRolePermissions(db database.Database, role *entity.Role) error {
@@ -66,9 +78,12 @@ func (u *UserRepositoryMock) FindRolePermissions(db database.Database, role *ent
 	return args.Error(0)
 }
 
-func (u *UserRepositoryMock) FindPermissionByType(db database.Database, permissionType enum.PermissionType) (*entity.Permission, bool) {
+func (u *UserRepositoryMock) FindPermissionByType(db database.Database, permissionType enum.PermissionType) (*entity.Permission, error) {
 	args := u.Called(db, permissionType)
-	return args.Get(0).(*entity.Permission), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Permission), args.Error(1)
 }
 
 func (u *UserRepositoryMock) RoleHasPermission(db database.Database, roleID uint, permissionID uint) bool {
@@ -101,39 +116,45 @@ func (u *UserRepositoryMock) AssignRoleToUser(db database.Database, user *entity
 	return args.Error(0)
 }
 
-func (u *UserRepositoryMock) FindAllPermissions(db database.Database) []*entity.Permission {
+func (u *UserRepositoryMock) FindAllPermissions(db database.Database) ([]*entity.Permission, error) {
 	args := u.Called(db)
-	return args.Get(0).([]*entity.Permission)
+	return args.Get(0).([]*entity.Permission), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindAllRoles(db database.Database) []*entity.Role {
+func (u *UserRepositoryMock) FindAllRoles(db database.Database) ([]*entity.Role, error) {
 	args := u.Called(db)
-	return args.Get(0).([]*entity.Role)
+	return args.Get(0).([]*entity.Role), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, bool) {
+func (u *UserRepositoryMock) FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, error) {
 	args := u.Called(db, permissionID)
-	return args.Get(0).(*entity.Permission), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Permission), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindRoleByID(db database.Database, roleID uint) (*entity.Role, bool) {
+func (u *UserRepositoryMock) FindRoleByID(db database.Database, roleID uint) (*entity.Role, error) {
 	args := u.Called(db, roleID)
-	return args.Get(0).(*entity.Role), args.Bool(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.Role), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindUsersByRoleID(db database.Database, roleID uint) []*entity.User {
+func (u *UserRepositoryMock) FindUsersByRoleID(db database.Database, roleID uint) ([]*entity.User, error) {
 	args := u.Called(db, roleID)
-	return args.Get(0).([]*entity.User)
+	return args.Get(0).([]*entity.User), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindUserByStatus(db database.Database, status []enum.UserStatus, opts ...repository.QueryModifier) []*entity.User {
+func (u *UserRepositoryMock) FindUserByStatus(db database.Database, status []enum.UserStatus, opts ...repository.QueryModifier) ([]*entity.User, error) {
 	args := u.Called(db, status, opts)
-	return args.Get(0).([]*entity.User)
+	return args.Get(0).([]*entity.User), args.Error(1)
 }
 
-func (u *UserRepositoryMock) FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) []*entity.User {
+func (u *UserRepositoryMock) FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) ([]*entity.User, error) {
 	args := u.Called(db, permissionTypes)
-	return args.Get(0).([]*entity.User)
+	return args.Get(0).([]*entity.User), args.Error(1)
 }
 
 func (u *UserRepositoryMock) DeleteRole(db database.Database, roleID uint) error {
