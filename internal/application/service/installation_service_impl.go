@@ -551,7 +551,7 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 		return forbiddenError
 	}
 
-	customer, err := installationService.userService.FindUserByPhone(panelInfo.CustomerPhone)
+	customer, err := installationService.userService.FindActiveUserByPhone(panelInfo.CustomerPhone)
 	if err != nil {
 		return err
 	}

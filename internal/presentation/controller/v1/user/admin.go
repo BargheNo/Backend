@@ -68,7 +68,7 @@ func (userController *AdminUserController) GetRoleDetails(ctx *gin.Context) {
 	}
 	params := controller.Validated[getRoleParams](ctx)
 
-	role, err := userController.userService.GetRoomDetails(params.RoleID)
+	role, err := userController.userService.GetRoleDetails(params.RoleID)
 	if err != nil {
 		panic(err)
 	}

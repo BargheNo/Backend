@@ -23,12 +23,12 @@ type UserService interface {
 	CompleteRegister(completeRegisterInfo userdto.CompleteRegisterRequest) error
 	VerifyEmail(verifyOTPInfo userdto.VerifyEmailRequest) error
 	ResetPassword(resetPassInfo userdto.ResetPasswordRequest) error
-	FindUserByPhone(phone string) (userdto.UserResponse, error)
+	FindActiveUserByPhone(phone string) (*entity.User, error)
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest) error
 	GetAllPermissions() ([]userdto.PermissionResponse, error)
 	GetAllRoles() ([]userdto.RoleResponse, error)
 	CreateRole(newRoleRequest userdto.NewRoleRequest) error
-	GetRoomDetails(roleID uint) (userdto.RoleResponse, error)
+	GetRoleDetails(roleID uint) (userdto.RoleResponse, error)
 	GetRoleOwners(roleID uint) ([]userdto.CredentialResponse, error)
 	GetUserRoles(userID uint) ([]userdto.RoleResponse, error)
 	DeleteRole(roleID uint) error

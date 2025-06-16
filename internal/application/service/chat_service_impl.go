@@ -86,7 +86,7 @@ func (chatService *ChatService) CreateOrGetRoom(request chatdto.CreateOrGetUserR
 }
 
 func (chatService *ChatService) GetCorporationRoom(request chatdto.GetCorporationRoomRequest) (chatdto.ChatRoomDetailsResponse, error) {
-	customerModel, err := chatService.userService.FindUserByPhone(request.UserPhone)
+	customerModel, err := chatService.userService.FindActiveUserByPhone(request.UserPhone)
 	if err != nil {
 		return chatdto.ChatRoomDetailsResponse{}, err
 	}

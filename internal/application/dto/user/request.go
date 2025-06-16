@@ -39,7 +39,7 @@ type CompleteRegisterRequest struct {
 }
 
 type ResetPasswordRequest struct {
-	ID       uint
+	UserID   uint
 	Password string
 }
 

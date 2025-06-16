@@ -566,10 +566,6 @@ func (corporationService *CorporationService) getPrivateCorporationDetails(corpo
 }
 
 func (corporationService *CorporationService) GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) (corporationdto.CorporationPrivateInfoResponse, error) {
-	err := corporationService.userService.DoesUserExist(requestInfo.UserID)
-	if err != nil {
-		return corporationdto.CorporationPrivateInfoResponse{}, err
-	}
 	corporation, err := corporationService.getCorporationByIDAndStatus(requestInfo.CorporationID, requestInfo.Status)
 	if err != nil {
 		return corporationdto.CorporationPrivateInfoResponse{}, err

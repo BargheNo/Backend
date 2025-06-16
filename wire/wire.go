@@ -19,7 +19,6 @@ import (
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
-	cinimpl "github.com/BargheNo/Backend/internal/infrastructure/cin"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
@@ -100,7 +99,6 @@ var ServiceProviderSet = wire.NewSet(
 	serviceimpl.NewInstallationService,
 	serviceimpl.NewAddressService,
 	serviceimpl.NewCorporationService,
-	cinimpl.NewCINService,
 	serviceimpl.NewBidService,
 	serviceimpl.NewChatService,
 	serviceimpl.NewNotificationService,
@@ -119,7 +117,6 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)),
 	wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)),
 	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
-	wire.Bind(new(service.CINService), new(*cinimpl.CINService)),
 	wire.Bind(new(service.BidService), new(*serviceimpl.BidService)),
 	wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)),
 	wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)),

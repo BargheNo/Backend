@@ -93,7 +93,7 @@ func (userController *CustomerUserController) ResetPassword(ctx *gin.Context) {
 	params := controller.Validated[completeProfileParams](ctx)
 	userID, _ := ctx.Get(userController.constants.Context.ID)
 	resetPasswordInfo := userdto.ResetPasswordRequest{
-		ID:       userID.(uint),
+		UserID:   userID.(uint),
 		Password: params.Password,
 	}
 	if err := userController.userService.ResetPassword(resetPasswordInfo); err != nil {
