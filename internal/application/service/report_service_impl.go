@@ -46,6 +46,17 @@ func NewReportService(
 	}
 }
 
+func (reportService *ReportService) getReport(reportID uint) (*entity.Report, error) {
+	report, err := reportService.reportRepository.FindReportByID(reportService.db, reportID)
+	if err != nil {
+		return nil, err
+	}
+	if report == nil {
+		return nil, exception.NotFoundError{Item: reportService.constants.Field.Report}
+	}
+	return report, nil
+}
+
 func (reportService *ReportService) sendReportNotification(acceptedPermissions []enum.PermissionType, reportID uint, notificationType enum.NotificationType) {
 	admins, err := reportService.userService.GetUsersByPermission(acceptedPermissions)
 	if err != nil {
@@ -109,8 +120,7 @@ func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdt
 }
 
 func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) error {
-	_, err := reportService.installationService.ValidatePanelOwnership(requestInfo.ObjectID, requestInfo.ReportedByID)
-	if err != nil {
+	if _, err := reportService.installationService.ValidatePanelOwnership(requestInfo.ObjectID, requestInfo.ReportedByID); err != nil {
 		return err
 	}
 
@@ -125,12 +135,9 @@ func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.Crea
 }
 
 func (reportService *ReportService) GetMaintenanceReport(reportID uint) (reportdto.MaintenanceReportResponse, error) {
-	report, err := reportService.reportRepository.GetReportByID(reportService.db, reportID)
+	report, err := reportService.getReport(reportID)
 	if err != nil {
 		return reportdto.MaintenanceReportResponse{}, err
-	}
-	if report == nil {
-		return reportdto.MaintenanceReportResponse{}, exception.NotFoundError{Item: reportService.constants.Field.Report}
 	}
 
 	maintenanceRequest, err := reportService.maintenanceService.GetRequestByAdmin(report.ObjectID)
@@ -147,12 +154,9 @@ func (reportService *ReportService) GetMaintenanceReport(reportID uint) (reportd
 }
 
 func (reportService *ReportService) GetPanelReport(reportID uint) (reportdto.PanelReportResponse, error) {
-	report, err := reportService.reportRepository.GetReportByID(reportService.db, reportID)
+	report, err := reportService.getReport(reportID)
 	if err != nil {
 		return reportdto.PanelReportResponse{}, err
-	}
-	if report == nil {
-		return reportdto.PanelReportResponse{}, exception.NotFoundError{Item: reportService.constants.Field.Report}
 	}
 
 	panel, err := reportService.installationService.GetPanelByAdmin(report.ObjectID)
@@ -183,6 +187,7 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 		if err != nil {
 			return nil, err
 		}
+
 		reportResponses[i] = reportdto.MaintenanceReportResponse{
 			ID:                 report.ID,
 			Description:        report.Description,
@@ -197,16 +202,19 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, error) {
 	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+
 	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, paginationModifier, sortingModifier)
 	if err != nil {
 		return nil, err
 	}
 	reportResponses := make([]reportdto.PanelReportResponse, len(reports))
+
 	for i, report := range reports {
 		panel, err := reportService.installationService.GetPanelByAdmin(report.ObjectID)
 		if err != nil {
 			return nil, err
 		}
+
 		reportResponses[i] = reportdto.PanelReportResponse{
 			ID:          report.ID,
 			Panel:       panel,
@@ -219,22 +227,19 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 }
 
 func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveReportRequest) error {
-	reportService.userService.GetUserCredential(requestInfo.UserID)
-	report, err := reportService.reportRepository.GetReportByID(reportService.db, requestInfo.ReportID)
+	report, err := reportService.getReport(requestInfo.ReportID)
 	if err != nil {
 		return err
 	}
-	if report == nil {
-		return exception.NotFoundError{Item: reportService.constants.Field.Report}
-	}
+
 	if report.Status == enum.ReportStatusResolved {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(reportService.constants.Field.Report, reportService.constants.Tag.AlreadyResolved)
 		return conflictErrors
 	}
+
 	report.Status = enum.ReportStatusResolved
-	err = reportService.reportRepository.UpdateReport(reportService.db, report)
-	if err != nil {
+	if err = reportService.reportRepository.UpdateReport(reportService.db, report); err != nil {
 		return err
 	}
 	return nil

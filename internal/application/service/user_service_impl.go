@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
-	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	"github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
@@ -171,29 +169,15 @@ func (userService *UserService) enterNewEmail(firstName, lastName, email, emailS
 	return nil
 }
 
-func (userService *UserService) DoesUserExist(userID uint) error {
-	user, err := userService.userRepository.FindUserByID(userService.db, userID)
+func (userService *UserService) IsUserActive(userID uint) error {
+	user, err := userService.GetUserByID(userID)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
+	if user.Status == enum.UserStatusBlock {
+		return exception.NewBannedUserForbiddenError()
 	}
 	return nil
-}
-
-func (userService *UserService) IsUserActive(userID uint) (bool, error) {
-	user, err := userService.userRepository.FindUserByID(userService.db, userID)
-	if err != nil {
-		return false, err
-	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return false, notFoundError
-	}
-	isActive := enum.UserStatusActive == user.Status
-	return isActive, nil
 }
 
 func (userService *UserService) GetUserByID(userID uint) (*entity.User, error) {
@@ -208,15 +192,30 @@ func (userService *UserService) GetUserByID(userID uint) (*entity.User, error) {
 	return user, nil
 }
 
-func (userService *UserService) GetUserCredential(userID uint) (userdto.CredentialResponse, error) {
-	user, err := userService.userRepository.FindUserByID(userService.db, userID)
+func (userService *UserService) FindActiveUserByPhone(phone string) (*entity.User, error) {
+	user, err := userService.userRepository.FindUserByPhone(userService.db, phone)
 	if err != nil {
-		return userdto.CredentialResponse{}, err
+		return nil, err
 	}
 	if user == nil {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return userdto.CredentialResponse{}, notFoundError
+		return nil, notFoundError
 	}
+	if !user.PhoneVerified {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
+		return nil, conflictErrors
+	}
+
+	return user, nil
+}
+
+func (userService *UserService) GetUserCredential(userID uint) (userdto.CredentialResponse, error) {
+	user, err := userService.GetUserByID(userID)
+	if err != nil {
+		return userdto.CredentialResponse{}, err
+	}
+
 	profilePic := ""
 	if user.ProfilePicPath != "" {
 		profilePic, err = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
@@ -273,14 +272,11 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 }
 
 func (userService *UserService) BanUser(userID uint) error {
-	user, err := userService.userRepository.FindUserByID(userService.db, userID)
+	user, err := userService.GetUserByID(userID)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
-	}
+
 	if user.Status == enum.UserStatusBlock {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(userService.constants.Field.User, userService.constants.Tag.AlreadyBlocked)
@@ -295,14 +291,11 @@ func (userService *UserService) BanUser(userID uint) error {
 }
 
 func (userService *UserService) UnbanUser(userID uint) error {
-	user, err := userService.userRepository.FindUserByID(userService.db, userID)
+	user, err := userService.GetUserByID(userID)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
-	}
+
 	if user.Status == enum.UserStatusActive {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(userService.constants.Field.User, userService.constants.Tag.AlreadyActive)
@@ -332,60 +325,55 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 		return err
 	}
 
-	err = userService.userRepository.DeleteUserByPhone(userService.db, registerInfo.Phone)
-	if err != nil {
-		return err
-	}
+	err = userService.db.WithTransaction(func(tx database.Database) error {
+		err = userService.userRepository.DeleteUserByPhone(tx, registerInfo.Phone)
+		if err != nil {
+			return err
+		}
 
-	user := &entity.User{
-		FirstName:     registerInfo.FirstName,
-		LastName:      registerInfo.LastName,
-		Phone:         registerInfo.Phone,
-		Password:      string(hashesPasswordBytes),
-		PhoneVerified: false,
-		EmailVerified: false,
-		Status:        enum.UserStatusActive,
-	}
-	err = userService.userRepository.CreateUser(userService.db, user)
-	if err != nil {
-		return err
-	}
+		user := &entity.User{
+			FirstName:     registerInfo.FirstName,
+			LastName:      registerInfo.LastName,
+			Phone:         registerInfo.Phone,
+			Password:      string(hashesPasswordBytes),
+			PhoneVerified: false,
+			EmailVerified: false,
+			Status:        enum.UserStatusActive,
+		}
+		err = userService.userRepository.CreateUser(tx, user)
+		if err != nil {
+			return err
+		}
 
-	otp, expiryMinute, err := userService.otpService.GenerateOTP()
-	if err != nil {
-		return err
-	}
-	redisKey := userService.constants.RedisKey.GenerateOTPKey(registerInfo.Phone)
-	err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
-	if err != nil {
-		return err
-	}
+		otp, expiryMinute, err := userService.otpService.GenerateOTP()
+		if err != nil {
+			return err
+		}
+		redisKey := userService.constants.RedisKey.GenerateOTPKey(registerInfo.Phone)
+		err = userService.userCacheRepository.Set(context.Background(), redisKey, otp, time.Duration(expiryMinute)*time.Minute)
+		if err != nil {
+			return err
+		}
 
-	msg := struct {
-		UserID uint `json:"userID"`
-	}{
-		UserID: user.ID,
-	}
-	if err = userService.rabbitMQ.PublishMessage(userService.constants.RabbitMQ.Events.UserRegistered, msg); err != nil {
-		return err
-	}
-	// userService.smsService.SendOTP(registerInfo.Phone, otp)
-	return nil
+		msg := struct {
+			UserID uint `json:"userID"`
+		}{
+			UserID: user.ID,
+		}
+		if err = userService.rabbitMQ.PublishMessage(userService.constants.RabbitMQ.Events.UserRegistered, msg); err != nil {
+			return err
+		}
+		// userService.smsService.SendOTP(registerInfo.Phone, otp)
+		return nil
+	})
+
+	return err
 }
 
 func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneRequest) error {
-	user, err := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
+	user, err := userService.FindActiveUserByPhone(verifyInfo.Phone)
 	if err != nil {
 		return err
-	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
-	}
-	if user.PhoneVerified {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.AlreadyRegistered)
-		return conflictErrors
 	}
 
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
@@ -417,19 +405,11 @@ func (userService *UserService) FindUserPermissions(user *entity.User) ([]userdt
 }
 
 func (userService *UserService) Login(loginInfo userdto.LoginRequest) (userdto.UserInfoResponse, error) {
-	user, err := userService.userRepository.FindUserByPhone(userService.db, loginInfo.Phone)
+	user, err := userService.FindActiveUserByPhone(loginInfo.Phone)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return userdto.UserInfoResponse{}, notFoundError
-	}
-	if !user.PhoneVerified {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
-		return userdto.UserInfoResponse{}, conflictErrors
-	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginInfo.Password))
 	if err != nil {
 		authError := exception.NewInvalidCredentialsError("phone and password not match", nil)
@@ -453,19 +433,11 @@ func (userService *UserService) Login(loginInfo userdto.LoginRequest) (userdto.U
 }
 
 func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.ForgotPasswordRequest) error {
-	user, err := userService.userRepository.FindUserByPhone(userService.db, forgotPasswordInfo.Phone)
+	_, err := userService.FindActiveUserByPhone(forgotPasswordInfo.Phone)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
-	}
-	if !user.PhoneVerified {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
-		return conflictErrors
-	}
+
 	otp, expiryMinute, err := userService.otpService.GenerateOTP()
 	if err != nil {
 		return err
@@ -480,19 +452,11 @@ func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.Forgot
 }
 
 func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest) (userdto.UserInfoResponse, error) {
-	user, err := userService.userRepository.FindUserByPhone(userService.db, verifyInfo.Phone)
+	user, err := userService.FindActiveUserByPhone(verifyInfo.Phone)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return userdto.UserInfoResponse{}, notFoundError
-	}
-	if !user.PhoneVerified {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
-		return userdto.UserInfoResponse{}, conflictErrors
-	}
+
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
 	err = userService.otpService.VerifyOTP(redisKey, verifyInfo.OTP)
 	if err != nil {
@@ -517,42 +481,40 @@ func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest)
 }
 
 func (userService *UserService) CompleteRegister(completeRegisterInfo userdto.CompleteRegisterRequest) error {
-	user, err := userService.userRepository.FindUserByID(userService.db, completeRegisterInfo.UserID)
+	user, err := userService.GetUserByID(completeRegisterInfo.UserID)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
-	}
+
 	if completeRegisterInfo.Email != "" {
 		userService.enterNewEmail(user.FirstName, user.LastName, completeRegisterInfo.Email, completeRegisterInfo.EmailSubject, completeRegisterInfo.TemplateFile)
 	}
 	user.Email = completeRegisterInfo.Email
 	user.EmailVerified = false
 	user.NationalCode = completeRegisterInfo.NationalCode
-	if completeRegisterInfo.ProfilePic != nil {
-		profilePicPath := userService.constants.S3BucketPath.GetUserProfilePath(completeRegisterInfo.UserID, completeRegisterInfo.ProfilePic.Filename)
-		userService.s3Storage.UploadObject(enum.ProfilePic, profilePicPath, completeRegisterInfo.ProfilePic)
-		user.ProfilePicPath = profilePicPath
-	}
-	err = userService.userRepository.UpdateUser(userService.db, user)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	err = userService.db.WithTransaction(func(tx database.Database) error {
+		if completeRegisterInfo.ProfilePic != nil {
+			profilePicPath := userService.constants.S3BucketPath.GetUserProfilePath(completeRegisterInfo.UserID, completeRegisterInfo.ProfilePic.Filename)
+			userService.s3Storage.UploadObject(enum.ProfilePic, profilePicPath, completeRegisterInfo.ProfilePic)
+			user.ProfilePicPath = profilePicPath
+		}
+		err = userService.userRepository.UpdateUser(tx, user)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
 }
 
 func (userService *UserService) VerifyEmail(verifyInfo userdto.VerifyEmailRequest) error {
 	var conflictErrors exception.ConflictErrors
-	user, err := userService.userRepository.FindUserByID(userService.db, verifyInfo.UserID)
+	user, err := userService.GetUserByID(verifyInfo.UserID)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
-	}
+
 	if !user.PhoneVerified {
 		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
 		return conflictErrors
@@ -576,14 +538,11 @@ func (userService *UserService) VerifyEmail(verifyInfo userdto.VerifyEmailReques
 }
 
 func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswordRequest) error {
-	user, err := userService.userRepository.FindUserByID(userService.db, resetPassInfo.ID)
+	user, err := userService.GetUserByID(resetPassInfo.UserID)
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
-	}
+
 	if !user.PhoneVerified {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
@@ -598,8 +557,8 @@ func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswor
 	if err != nil {
 		return err
 	}
-
 	user.Password = string(hashesPasswordBytes)
+
 	err = userService.userRepository.UpdateUser(userService.db, user)
 	if err != nil {
 		return err
@@ -607,63 +566,52 @@ func (userService *UserService) ResetPassword(resetPassInfo userdto.ResetPasswor
 	return nil
 }
 
-func (userService *UserService) FindUserByPhone(phone string) (userdto.UserResponse, error) {
-	user, err := userService.userRepository.FindUserByPhone(userService.db, phone)
-	if err != nil {
-		return userdto.UserResponse{}, err
-	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return userdto.UserResponse{}, notFoundError
-	}
-	if !user.PhoneVerified {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
-		return userdto.UserResponse{}, conflictErrors
-	}
-	return userdto.UserResponse{
-		ID: user.ID,
-	}, nil
-}
-
 func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileRequest) error {
-	user, err := userService.userRepository.FindUserByID(userService.db, profileInfo.UserID)
+	user, err := userService.GetUserByID(profileInfo.UserID)
 	if err != nil {
 		return err
-	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return notFoundError
 	}
 
 	if profileInfo.FirstName != nil {
 		user.FirstName = *profileInfo.FirstName
 	}
+
 	if profileInfo.LastName != nil {
 		user.LastName = *profileInfo.LastName
 	}
+
 	if profileInfo.Email != nil && user.Email != *profileInfo.Email {
 		userService.enterNewEmail(user.FirstName, user.LastName, *profileInfo.Email, profileInfo.EmailSubject, profileInfo.TemplateFile)
 		user.Email = *profileInfo.Email
 		user.EmailVerified = false
 	}
+
 	if profileInfo.NationalCode != nil {
 		user.NationalCode = *profileInfo.NationalCode
 	}
+
+	oldProfilePicPath := ""
 	if profileInfo.ProfilePic != nil {
 		profilePicPath := userService.constants.S3BucketPath.GetUserProfilePath(profileInfo.UserID, profileInfo.ProfilePic.Filename)
 		userService.s3Storage.UploadObject(enum.ProfilePic, profilePicPath, profileInfo.ProfilePic)
-		err := userService.s3Storage.DeleteObject(enum.ProfilePic, user.ProfilePicPath)
-		if err != nil {
-			loggerimpl.GetLogger().Error("unable to delete object", logger.Error("error:", err))
-		}
+		oldProfilePicPath = user.ProfilePicPath
 		user.ProfilePicPath = profilePicPath
 	}
-	err = userService.userRepository.UpdateUser(userService.db, user)
-	if err != nil {
-		return err
-	}
-	return nil
+	err = userService.db.WithTransaction(func(tx database.Database) error {
+		if err := userService.userRepository.UpdateUser(tx, user); err != nil {
+			return err
+		}
+
+		if oldProfilePicPath != "" {
+			if err = userService.s3Storage.DeleteObject(enum.ProfilePic, oldProfilePicPath); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (userService *UserService) GetAllPermissions() ([]userdto.PermissionResponse, error) {
@@ -719,6 +667,30 @@ func (userService *UserService) GetAllRoles() ([]userdto.RoleResponse, error) {
 	return rolesResponse, nil
 }
 
+func (userService *UserService) getPermission(permissionID uint) (*entity.Permission, error) {
+	permission, err := userService.userRepository.FindPermissionByID(userService.db, permissionID)
+	if err != nil {
+		return nil, err
+	}
+	if permission == nil {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
+		return nil, notFoundError
+	}
+	return permission, nil
+}
+
+func (userService *UserService) getRole(roleID uint) (*entity.Role, error) {
+	role, err := userService.userRepository.FindRoleByID(userService.db, roleID)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
+		return nil, notFoundError
+	}
+	return role, nil
+}
+
 func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest) error {
 	existingRole, err := userService.userRepository.FindRoleByName(userService.db, newRoleRequest.Name)
 	if err != nil {
@@ -729,48 +701,48 @@ func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest
 		conflictErrors.Add(userService.constants.Field.Role, userService.constants.Tag.AlreadyExist)
 		return conflictErrors
 	}
-	role := &entity.Role{
-		Name: newRoleRequest.Name,
-	}
-	err = userService.userRepository.CreateRole(userService.db, role)
-	if err != nil {
-		return err
-	}
-
-	existingPermissions := make(map[uint]bool)
-	for _, permissionID := range newRoleRequest.PermissionIDs {
-		if existingPermissions[permissionID] {
-			continue
+	err = userService.db.WithTransaction(func(tx database.Database) error {
+		role := &entity.Role{
+			Name: newRoleRequest.Name,
 		}
-		permission, err := userService.userRepository.FindPermissionByID(userService.db, permissionID)
+		err = userService.userRepository.CreateRole(tx, role)
 		if err != nil {
 			return err
 		}
-		if permission == nil {
-			notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
-			return notFoundError
+
+		existingPermissions := make(map[uint]bool)
+		for _, permissionID := range newRoleRequest.PermissionIDs {
+			if existingPermissions[permissionID] {
+				continue
+			}
+
+			permission, err := userService.getPermission(permissionID)
+			if err != nil {
+				return err
+			}
+
+			if err := userService.userRepository.AssignPermissionToRole(tx, role, permission); err != nil {
+				return err
+			}
+			existingPermissions[permissionID] = true
 		}
-		if err := userService.userRepository.AssignPermissionToRole(userService.db, role, permission); err != nil {
-			return err
-		}
-		existingPermissions[permissionID] = true
-	}
+
+		return nil
+	})
 	return nil
 }
 
-func (userService *UserService) GetRoomDetails(roleID uint) (userdto.RoleResponse, error) {
-	role, err := userService.userRepository.FindRoleByID(userService.db, roleID)
+func (userService *UserService) GetRoleDetails(roleID uint) (userdto.RoleResponse, error) {
+	role, err := userService.getRole(roleID)
 	if err != nil {
 		return userdto.RoleResponse{}, err
 	}
-	if role == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
-		return userdto.RoleResponse{}, notFoundError
-	}
+
 	permissions, err := userService.getRolePermissions(role)
 	if err != nil {
 		return userdto.RoleResponse{}, err
 	}
+
 	return userdto.RoleResponse{
 		ID:          role.ID,
 		Name:        role.Name,
@@ -779,18 +751,16 @@ func (userService *UserService) GetRoomDetails(roleID uint) (userdto.RoleRespons
 }
 
 func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.CredentialResponse, error) {
-	role, err := userService.userRepository.FindRoleByID(userService.db, roleID)
+	_, err := userService.getRole(roleID)
 	if err != nil {
 		return nil, err
 	}
-	if role == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
-		return nil, notFoundError
-	}
+
 	users, err := userService.userRepository.FindUsersByRoleID(userService.db, roleID)
 	if err != nil {
 		return nil, err
 	}
+
 	userCreds := make([]userdto.CredentialResponse, len(users))
 	for i, user := range users {
 		profilePic := ""
@@ -815,14 +785,11 @@ func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.Credential
 }
 
 func (userService *UserService) GetUserRoles(userID uint) ([]userdto.RoleResponse, error) {
-	user, err := userService.userRepository.FindUserByID(userService.db, userID)
+	user, err := userService.GetUserByID(userID)
 	if err != nil {
 		return nil, err
 	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
-		return nil, notFoundError
-	}
+
 	if err := userService.userRepository.FindUserRoles(userService.db, user); err != nil {
 		return nil, err
 	}
@@ -842,14 +809,11 @@ func (userService *UserService) GetUserRoles(userID uint) ([]userdto.RoleRespons
 }
 
 func (userService *UserService) DeleteRole(roleID uint) error {
-	role, err := userService.userRepository.FindRoleByID(userService.db, roleID)
+	_, err := userService.getRole(roleID)
 	if err != nil {
 		return err
 	}
-	if role == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
-		return notFoundError
-	}
+
 	if err := userService.userRepository.DeleteRole(userService.db, roleID); err != nil {
 		return err
 	}
@@ -857,20 +821,9 @@ func (userService *UserService) DeleteRole(roleID uint) error {
 }
 
 func (userService *UserService) UpdateRole(newRoleRequest userdto.UpdateRoleRequest) error {
-	role, err := userService.userRepository.FindRoleByID(userService.db, newRoleRequest.RoleID)
+	role, err := userService.getRole(newRoleRequest.RoleID)
 	if err != nil {
 		return err
-	}
-	if role == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
-		return notFoundError
-	}
-
-	if newRoleRequest.Name != nil {
-		role.Name = *newRoleRequest.Name
-		if err := userService.userRepository.UpdateRole(userService.db, role); err != nil {
-			return err
-		}
 	}
 
 	existingPermissions := make(map[uint]bool)
@@ -879,31 +832,38 @@ func (userService *UserService) UpdateRole(newRoleRequest userdto.UpdateRoleRequ
 		if existingPermissions[permissionID] {
 			continue
 		}
-		permission, err := userService.userRepository.FindPermissionByID(userService.db, permissionID)
+
+		permission, err := userService.getPermission(permissionID)
 		if err != nil {
 			return err
 		}
-		if permission == nil {
-			notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
-			return notFoundError
-		}
+
 		permissions = append(permissions, *permission)
 		existingPermissions[permissionID] = true
 	}
-	if err := userService.userRepository.ReplaceRolePermissions(userService.db, role, permissions); err != nil {
-		return err
-	}
-	return nil
+
+	err = userService.db.WithTransaction(func(tx database.Database) error {
+		if newRoleRequest.Name != nil {
+			role.Name = *newRoleRequest.Name
+			if err := userService.userRepository.UpdateRole(tx, role); err != nil {
+				return err
+			}
+		}
+
+		if err := userService.userRepository.ReplaceRolePermissions(tx, role, permissions); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (userService *UserService) UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) error {
-	user, err := userService.userRepository.FindUserByID(userService.db, userRolesRequest.UserID)
+	user, err := userService.GetUserByID(userRolesRequest.UserID)
 	if err != nil {
 		return err
-	}
-	if user == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
-		return notFoundError
 	}
 
 	existingRoles := make(map[uint]bool)
@@ -912,19 +872,19 @@ func (userService *UserService) UpdateUserRoles(userRolesRequest userdto.UpdateU
 		if existingRoles[roleID] {
 			continue
 		}
-		role, err := userService.userRepository.FindRoleByID(userService.db, roleID)
+
+		role, err := userService.getRole(roleID)
 		if err != nil {
 			return err
 		}
-		if role == nil {
-			notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
-			return notFoundError
-		}
+
 		roles = append(roles, *role)
 		existingRoles[roleID] = true
 	}
+
 	if err := userService.userRepository.ReplaceUserRoles(userService.db, user, roles); err != nil {
 		return err
 	}
+
 	return nil
 }

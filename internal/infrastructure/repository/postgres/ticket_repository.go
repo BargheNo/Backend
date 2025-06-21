@@ -50,7 +50,7 @@ func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, tick
 	return comments, nil
 }
 
-func (ticketRepo *TicketRepository) GetTicketByID(db database.Database, ticketID uint) (*entity.Ticket, error) {
+func (ticketRepo *TicketRepository) FindTicketByID(db database.Database, ticketID uint) (*entity.Ticket, error) {
 	var ticket entity.Ticket
 	result := db.GetDB().Where("id = ?", ticketID).First(&ticket)
 	if result.Error != nil {

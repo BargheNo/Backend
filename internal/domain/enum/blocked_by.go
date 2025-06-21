@@ -10,9 +10,9 @@ const (
 func (by BlockedBy) String() string {
 	switch by {
 	case BlockedByUser:
-		return "user"
+		return "کاربر"
 	case BlockedByCorporation:
-		return "corporation"
+		return "شرکت"
 	}
 	return "user"
 }

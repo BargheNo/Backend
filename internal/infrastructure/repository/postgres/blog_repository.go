@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
@@ -13,17 +14,45 @@ func NewBlogRepository() *BlogRepository {
 	return &BlogRepository{}
 }
 
-func (repo *BlogRepository) CreatePost(db database.Database, post *entity.Post) error {
-	return db.GetDB().Create(post).Error
+func (repo *BlogRepository) FindPostByID(db database.Database, postID uint) (*entity.Post, error) {
+	var post entity.Post
+	result := db.GetDB().First(&post, postID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &post, nil
 }
 
-func (repo *BlogRepository) UpdatePost(db database.Database, post *entity.Post) error {
-	return db.GetDB().Save(post).Error
+func (repo *BlogRepository) FindCorporationPost(db database.Database, postID, corporationID uint) (*entity.Post, error) {
+	var post entity.Post
+	result := db.GetDB().Where("id = ? AND corporation_id = ?", postID, corporationID).First(&post)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &post, nil
 }
 
-func (repo *BlogRepository) GetCorporationPostsByStatus(db database.Database, corporationID uint, statuses []uint, opts ...repository.QueryModifier) ([]entity.Post, error) {
+func (repo *BlogRepository) FindCorporationPostByTitle(db database.Database, corporationID uint, title string) (*entity.Post, error) {
+	var post entity.Post
+	result := db.GetDB().Where("corporation_id = ? AND title = ?", corporationID, title).First(&post)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &post, nil
+}
+
+func (repo *BlogRepository) FindCorporationPostsByStatus(db database.Database, corporationID uint, statuses []enum.PostStatus, opts ...repository.QueryModifier) ([]entity.Post, error) {
 	var posts []entity.Post
-	query := db.GetDB().Where("corporation_id = ?", corporationID).Where("status IN (?)", statuses)
+	query := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, statuses)
 	for _, opt := range opts {
 		query = opt.Apply(query).(*gorm.DB)
 	}
@@ -34,21 +63,21 @@ func (repo *BlogRepository) GetCorporationPostsByStatus(db database.Database, co
 	return posts, nil
 }
 
-func (repo *BlogRepository) FindPostByID(db database.Database, postID uint) (*entity.Post, error) {
-	var post entity.Post
-	result := db.GetDB().Where("id = ?", postID).First(&post)
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, result.Error
-	}
-	return &post, nil
+func (repo *BlogRepository) CreatePost(db database.Database, post *entity.Post) error {
+	return db.GetDB().Create(post).Error
 }
 
-func (repo *BlogRepository) GetMediaByID(db database.Database, mediaID uint) (*entity.Media, error) {
+func (repo *BlogRepository) UpdatePost(db database.Database, post *entity.Post) error {
+	return db.GetDB().Save(post).Error
+}
+
+func (repo *BlogRepository) DeletePost(db database.Database, postID uint) error {
+	return db.GetDB().Delete(&entity.Post{}, postID).Error
+}
+
+func (repo *BlogRepository) FindPostMediaByID(db database.Database, mediaID, postID uint, ownerType string) (*entity.Media, error) {
 	var media entity.Media
-	result := db.GetDB().First(&media, mediaID)
+	result := db.GetDB().Where("id = ? AND owner_id = ? AND owner_type = ?", mediaID, postID, ownerType).First(&media)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -58,20 +87,12 @@ func (repo *BlogRepository) GetMediaByID(db database.Database, mediaID uint) (*e
 	return &media, nil
 }
 
-func (repo *BlogRepository) AddMedia(db database.Database, media *entity.Media) error {
+func (repo *BlogRepository) CreateMedia(db database.Database, media *entity.Media) error {
 	return db.GetDB().Create(&media).Error
 }
 
 func (repo *BlogRepository) DeleteMedia(db database.Database, mediaID uint) error {
 	return db.GetDB().Delete(&entity.Media{}, mediaID).Error
-}
-
-func (repo *BlogRepository) DeletePost(db database.Database, postID uint) error {
-	return db.GetDB().Delete(&entity.Post{}, postID).Error
-}
-
-func (repo *BlogRepository) CreateLike(db database.Database, like *entity.Like) error {
-	return db.GetDB().Create(&like).Error
 }
 
 func (repo *BlogRepository) FindLikeByUserAndOwner(db database.Database, userID, ownerID uint, ownerType string) (*entity.Like, error) {
@@ -86,13 +107,9 @@ func (repo *BlogRepository) FindLikeByUserAndOwner(db database.Database, userID,
 	return &like, nil
 }
 
-func (repo *BlogRepository) DeleteLike(db database.Database, likeID uint) error {
-	return db.GetDB().Delete(&entity.Like{}, likeID).Error
-}
-
-func (repo *BlogRepository) GetPostsByStatus(db database.Database, statuses []uint, opts ...repository.QueryModifier) ([]entity.Post, error) {
+func (repo *BlogRepository) FindPostsByStatus(db database.Database, statuses []enum.PostStatus, opts ...repository.QueryModifier) ([]entity.Post, error) {
 	var posts []entity.Post
-	query := db.GetDB().Where("status IN (?)", statuses)
+	query := db.GetDB().Where("status IN ?", statuses)
 	for _, opt := range opts {
 		query = opt.Apply(query).(*gorm.DB)
 	}
@@ -103,8 +120,19 @@ func (repo *BlogRepository) GetPostsByStatus(db database.Database, statuses []ui
 	return posts, nil
 }
 
-func (repo *BlogRepository) GetLikeCountByOwner(db database.Database, ownerID uint, ownerType string) uint {
+func (repo *BlogRepository) FindLikeCountByOwner(db database.Database, ownerID uint, ownerType string) (uint, error) {
 	var count int64
-	db.GetDB().Model(&entity.Like{}).Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).Count(&count)
-	return uint(count)
+	result := db.GetDB().Model(&entity.Like{}).Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return uint(count), nil
+}
+
+func (repo *BlogRepository) CreateLike(db database.Database, like *entity.Like) error {
+	return db.GetDB().Create(&like).Error
+}
+
+func (repo *BlogRepository) DeleteLike(db database.Database, likeID uint) error {
+	return db.GetDB().Delete(&entity.Like{}, likeID).Error
 }

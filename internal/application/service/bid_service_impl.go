@@ -3,6 +3,7 @@ package serviceimpl
 import (
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
@@ -55,6 +56,43 @@ func NewBidService(deps BidServiceDeps) *BidService {
 		bidRepository:       deps.BidRepository,
 		db:                  deps.DB,
 	}
+}
+
+func (bidService *BidService) getRequestBid(bidID, requestID uint) (*entity.Bid, error) {
+	bid, err := bidService.bidRepository.FindRequestBid(bidService.db, bidID, requestID)
+	if err != nil {
+		return nil, err
+	}
+	if bid == nil {
+		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
+		return nil, notFoundError
+	}
+	return bid, nil
+}
+
+func (bidService *BidService) getCorporationRequestBid(corporationID, requestID uint, allowedStatus []enum.BidStatus) (*entity.Bid, error) {
+	bid, err := bidService.bidRepository.FindBidByCorporationAndRequestID(bidService.db, requestID, corporationID, allowedStatus)
+	if err != nil {
+		return nil, err
+	}
+	if bid != nil {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyExist)
+		return nil, conflictErrors
+	}
+	return bid, nil
+}
+
+func (bidService *BidService) getCorporationBid(bidID, corporationID uint) (*entity.Bid, error) {
+	bid, err := bidService.bidRepository.FindCorporationBid(bidService.db, bidID, corporationID)
+	if err != nil {
+		return nil, err
+	}
+	if bid == nil {
+		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
+		return nil, notFoundError
+	}
+	return bid, nil
 }
 
 func (bidService *BidService) GetBidStatuses() []biddto.GetBidStatusesResponse {
@@ -173,11 +211,12 @@ func (bidService *BidService) GetRequestAnonymousBid(requestInfo biddto.GetCusto
 		return biddto.AnonymousBidResponse{}, err
 	}
 
-	bid, err := bidService.bidRepository.FindRequestBid(bidService.db, requestInfo.BidID, requestInfo.RequestID)
+	bid, err := bidService.getRequestBid(requestInfo.BidID, requestInfo.RequestID)
 	if err != nil {
 		return biddto.AnonymousBidResponse{}, err
 	}
-	if bid == nil || bid.Status == enum.BidStatusCanceled {
+
+	if bid.Status == enum.BidStatusCanceled {
 		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
 		return biddto.AnonymousBidResponse{}, notFoundError
 	}
@@ -221,13 +260,9 @@ func (bidService *BidService) AcceptBid(request biddto.GetCustomerBidRequest) er
 		return conflictErrors
 	}
 
-	bid, err := bidService.bidRepository.FindRequestBid(bidService.db, request.BidID, request.RequestID)
+	bid, err := bidService.getRequestBid(request.BidID, request.RequestID)
 	if err != nil {
 		return err
-	}
-	if bid == nil {
-		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
-		return notFoundError
 	}
 
 	if bid.Status != enum.BidStatusPending {
@@ -241,36 +276,45 @@ func (bidService *BidService) AcceptBid(request biddto.GetCustomerBidRequest) er
 		Status:    enum.InstallationRequestStatusDone,
 		RequestID: request.RequestID,
 	}
-	bidService.installationService.ChangeInstallationRequestStatus(changeRequestStatus)
 
-	bid.Status = enum.BidStatusAccepted
-	if err := bidService.bidRepository.UpdateBid(bidService.db, bid); err != nil {
-		return err
-	}
+	err = bidService.db.WithTransaction(func(tx database.Database) error {
+		if err := bidService.installationService.ChangeInstallationRequestStatus(changeRequestStatus); err != nil {
+			return err
+		}
 
-	panelInfo := installationdto.AddPanelRequest{
-		Name:                 installationRequest.Name,
-		Status:               enum.PanelStatusPending,
-		CorporationID:        bid.CorporationID,
-		OperatorID:           bid.BidderID,
-		CustomerPhone:        installationRequest.Customer.Phone,
-		Power:                bid.Power,
-		Area:                 bid.Area,
-		BuildingType:         enum.PanelStatusPending,
-		Tilt:                 0,
-		Azimuth:              0,
-		TotalNumberOfModules: 0,
-		Address: addressdto.CreateAddressRequest{
-			ProvinceID:    installationRequest.Address.ProvinceID,
-			CityID:        installationRequest.Address.CityID,
-			StreetAddress: installationRequest.Address.StreetAddress,
-			PostalCode:    installationRequest.Address.PostalCode,
-			HouseNumber:   installationRequest.Address.HouseNumber,
-			Unit:          installationRequest.Address.Unit,
-		},
-	}
-	bidService.installationService.AddPanel(panelInfo)
-	return nil
+		bid.Status = enum.BidStatusAccepted
+		if err := bidService.bidRepository.UpdateBid(tx, bid); err != nil {
+			return err
+		}
+
+		panelInfo := installationdto.AddPanelRequest{
+			Name:                 installationRequest.Name,
+			Status:               enum.PanelStatusPending,
+			CorporationID:        bid.CorporationID,
+			OperatorID:           bid.BidderID,
+			CustomerPhone:        installationRequest.Customer.Phone,
+			Power:                bid.Power,
+			Area:                 bid.Area,
+			BuildingType:         enum.PanelStatusPending,
+			Tilt:                 0,
+			Azimuth:              0,
+			TotalNumberOfModules: 0,
+			Address: addressdto.CreateAddressRequest{
+				ProvinceID:    installationRequest.Address.ProvinceID,
+				CityID:        installationRequest.Address.CityID,
+				StreetAddress: installationRequest.Address.StreetAddress,
+				PostalCode:    installationRequest.Address.PostalCode,
+				HouseNumber:   installationRequest.Address.HouseNumber,
+				Unit:          installationRequest.Address.Unit,
+			},
+		}
+		if err := bidService.installationService.AddPanel(panelInfo); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
 }
 
 func (bidService *BidService) RejectBid(request biddto.GetCustomerBidRequest) error {
@@ -285,13 +329,9 @@ func (bidService *BidService) RejectBid(request biddto.GetCustomerBidRequest) er
 		return conflictErrors
 	}
 
-	bid, err := bidService.bidRepository.FindRequestBid(bidService.db, request.BidID, request.RequestID)
+	bid, err := bidService.getRequestBid(request.BidID, request.RequestID)
 	if err != nil {
 		return err
-	}
-	if bid == nil {
-		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
-		return notFoundError
 	}
 
 	if bid.Status != enum.BidStatusPending {
@@ -307,78 +347,11 @@ func (bidService *BidService) RejectBid(request biddto.GetCustomerBidRequest) er
 	return nil
 }
 
-func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
-	var conflictErrors exception.ConflictErrors
-
-	approved, err := bidService.corporationService.ISCorporationApproved(bidInfo.CorporationID)
-	if err != nil {
-		return err
-	}
-	if !approved {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: bidService.constants.Field.Bid,
-		}
-		return forbiddenError
-	}
-
-	bidService.userService.IsUserActive(bidInfo.BidderID)
-	err = bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.BidderID)
-	if err != nil {
-		return err
-	}
-
-	installationRequest, err := bidService.installationService.GetPublicInstallationRequest(bidInfo.RequestID)
-	if err != nil {
-		return err
-	}
-	if installationRequest.Status != enum.InstallationRequestStatusActive.String() {
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
-		return conflictErrors
-	}
-
-	allowedStatus := []enum.BidStatus{enum.BidStatusPending}
-	bid, err := bidService.bidRepository.FindBidByCorporationAndRequestID(bidService.db, bidInfo.RequestID, bidInfo.CorporationID, allowedStatus)
-	if err != nil {
-		return err
-	}
-	if bid != nil {
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyExist)
-		return conflictErrors
-	}
-
-	if bidInfo.GuaranteeID != nil {
-		if err := bidService.guaranteeService.ValidateActiveGuaranteeOwnerShip(*bidInfo.GuaranteeID, bidInfo.CorporationID); err != nil {
-			return err
-		}
-	}
-
-	paymentTermsID, err := bidService.paymentService.CreatePaymentTerms(bidInfo.PaymentTerms)
-	if err != nil {
-		return err
-	}
-
-	bid = &entity.Bid{
-		CorporationID:    bidInfo.CorporationID,
-		BidderID:         bidInfo.BidderID,
-		RequestID:        bidInfo.RequestID,
-		Status:           bidInfo.Status,
-		Cost:             bidInfo.Cost,
-		Area:             bidInfo.Area,
-		Power:            bidInfo.Power,
-		Description:      bidInfo.Description,
-		InstallationTime: bidInfo.InstallationTime,
-		PaymentTermsID:   paymentTermsID,
-		GuaranteeID:      bidInfo.GuaranteeID,
-	}
-	if err := bidService.bidRepository.CreateBid(bidService.db, bid); err != nil {
-		return err
-	}
-
+func (bidService *BidService) sendNotification(requestID, bidID, customerID uint) {
 	additionalData := biddto.BidNotificationData{
-		RequestID: installationRequest.ID,
-		BidID:     bid.ID,
-		UserID:    installationRequest.Customer.ID,
+		RequestID: requestID,
+		BidID:     bidID,
+		UserID:    customerID,
 	}
 	data, err := json.Marshal(additionalData)
 	if err != nil {
@@ -391,19 +364,88 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 		Data        []byte                `json:"data"`
 	}{
 		TypeName:    enum.CorpSendBidNotificationType,
-		RecipientID: installationRequest.Customer.ID,
+		RecipientID: customerID,
 		Data:        data,
 	}
 
 	if err := bidService.rabbitMQ.PublishMessage(bidService.constants.RabbitMQ.Events.SendNotification, msg); err != nil {
 		log.Printf("error during send notification after bid: %v", err)
 	}
+}
+
+func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
+	if err := bidService.userService.IsUserActive(bidInfo.BidderID); err != nil {
+		return err
+	}
+
+	if err := bidService.corporationService.ISCorporationApproved(bidInfo.CorporationID); err != nil {
+		return err
+	}
+
+	if err := bidService.corporationService.CheckApplicantAccess(bidInfo.CorporationID, bidInfo.BidderID); err != nil {
+		return err
+	}
+
+	installationRequest, err := bidService.installationService.GetPublicInstallationRequest(bidInfo.RequestID)
+	if err != nil {
+		return err
+	}
+
+	if installationRequest.Status != enum.InstallationRequestStatusActive.String() {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
+		return conflictErrors
+	}
+
+	allowedStatus := []enum.BidStatus{enum.BidStatusPending}
+	bid, err := bidService.getCorporationRequestBid(bidInfo.CorporationID, bidInfo.RequestID, allowedStatus)
+	if err != nil {
+		return err
+	}
+
+	if bidInfo.GuaranteeID != nil {
+		if err := bidService.guaranteeService.ValidateActiveGuaranteeOwnerShip(*bidInfo.GuaranteeID, bidInfo.CorporationID); err != nil {
+			return err
+		}
+	}
+
+	err = bidService.db.WithTransaction(func(tx database.Database) error {
+		paymentTermsID, err := bidService.paymentService.CreatePaymentTerms(bidInfo.PaymentTerms)
+		if err != nil {
+			return err
+		}
+
+		bid = &entity.Bid{
+			CorporationID:    bidInfo.CorporationID,
+			BidderID:         bidInfo.BidderID,
+			RequestID:        bidInfo.RequestID,
+			Status:           bidInfo.Status,
+			Cost:             bidInfo.Cost,
+			Area:             bidInfo.Area,
+			Power:            bidInfo.Power,
+			Description:      bidInfo.Description,
+			InstallationTime: bidInfo.InstallationTime,
+			PaymentTermsID:   paymentTermsID,
+			GuaranteeID:      bidInfo.GuaranteeID,
+		}
+		if err := bidService.bidRepository.CreateBid(tx, bid); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	bidService.sendNotification(bid.RequestID, bid.ID, installationRequest.Customer.ID)
+
 	return nil
 }
 
 func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBidsRequest) ([]biddto.CorporationBidResponse, error) {
-	err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
-	if err != nil {
+	if err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID); err != nil {
 		return nil, err
 	}
 
@@ -431,15 +473,19 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 		if err != nil {
 			return nil, err
 		}
+
 		bidder, err := bidService.userService.GetUserCredential(bid.BidderID)
 		if err != nil {
 			return nil, err
 		}
+
 		payment, _ := bidService.paymentService.GetPaymentTerms(bid.PaymentTermsID)
+
 		var guarantee guaranteedto.GuaranteeResponse
 		if bid.GuaranteeID != nil {
 			guarantee, _ = bidService.guaranteeService.GetGuarantee(*bid.GuaranteeID)
 		}
+
 		bidResponses[i] = biddto.CorporationBidResponse{
 			ID:                  bid.ID,
 			Bidder:              bidder,
@@ -459,18 +505,13 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 }
 
 func (bidService *BidService) GetCorporationBid(request biddto.GetBidRequest) (biddto.CorporationBidResponse, error) {
-	err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID)
-	if err != nil {
+	if err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID); err != nil {
 		return biddto.CorporationBidResponse{}, err
 	}
 
-	bid, err := bidService.bidRepository.FindCorporationBid(bidService.db, request.BidID, request.CorporationID)
+	bid, err := bidService.getCorporationBid(request.BidID, request.CorporationID)
 	if err != nil {
 		return biddto.CorporationBidResponse{}, err
-	}
-	if bid == nil {
-		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
-		return biddto.CorporationBidResponse{}, notFoundError
 	}
 
 	getInstallationRequest := installationdto.CorporationPanelRequest{
@@ -487,6 +528,7 @@ func (bidService *BidService) GetCorporationBid(request biddto.GetBidRequest) (b
 	if err != nil {
 		return biddto.CorporationBidResponse{}, err
 	}
+
 	payment, _ := bidService.paymentService.GetPaymentTerms(bid.PaymentTermsID)
 
 	var guarantee guaranteedto.GuaranteeResponse
@@ -509,69 +551,84 @@ func (bidService *BidService) GetCorporationBid(request biddto.GetBidRequest) (b
 	}, nil
 }
 
+func (bidService *BidService) checkUpdateBidStatus(status enum.BidStatus) error {
+	var conflictErrors exception.ConflictErrors
+	if status == enum.BidStatusAccepted {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyAccepted)
+		return conflictErrors
+	} else if status == enum.BidStatusCanceled {
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyCanceled)
+		return conflictErrors
+	} else if status != enum.BidStatusPending {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
+		return conflictErrors
+	}
+	return nil
+}
+
+func (bidService *BidService) applyBidUpdates(bid *entity.Bid, cost, area, power, guaranteeID *uint, description *string, installationTime *time.Time) {
+	if cost != nil {
+		bid.Cost = *cost
+	}
+
+	if area != nil {
+		bid.Area = *area
+	}
+
+	if power != nil {
+		bid.Power = *power
+	}
+
+	if description != nil {
+		bid.Description = *description
+	}
+
+	if installationTime != nil {
+		bid.InstallationTime = *installationTime
+	}
+
+	if guaranteeID != nil {
+		bid.GuaranteeID = guaranteeID
+	}
+}
+
 func (bidService *BidService) UpdateBid(request biddto.UpdateBidRequest) error {
 	err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.BidderID)
 	if err != nil {
 		return err
 	}
 
-	bid, err := bidService.bidRepository.FindCorporationBid(bidService.db, request.BidID, request.CorporationID)
+	if err := bidService.userService.IsUserActive(request.BidderID); err != nil {
+		return err
+	}
+
+	bid, err := bidService.getCorporationBid(request.BidID, request.CorporationID)
 	if err != nil {
 		return err
 	}
-	if bid == nil {
-		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
-		return notFoundError
-	}
 
-	var conflictErrors exception.ConflictErrors
-	if bid.Status == enum.BidStatusAccepted {
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyAccepted)
-		return conflictErrors
-	} else if bid.Status == enum.BidStatusCanceled {
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.AlreadyCanceled)
-		return conflictErrors
-	} else if bid.Status != enum.BidStatusPending {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(bidService.constants.Field.Bid, bidService.constants.Tag.ForbiddenStatus)
-		return conflictErrors
-	}
-
-	if request.Cost != nil {
-		bid.Cost = *request.Cost
-	}
-
-	if request.Area != nil {
-		bid.Area = *request.Area
-	}
-
-	if request.Power != nil {
-		bid.Power = *request.Power
-	}
-
-	if request.Description != nil {
-		bid.Description = *request.Description
-	}
-
-	if request.InstallationTime != nil {
-		bid.InstallationTime = *request.InstallationTime
-	}
-
-	if request.GuaranteeID != nil {
-		bid.GuaranteeID = request.GuaranteeID
-	}
-
-	if request.PaymentTerms != nil {
-		request.PaymentTerms.ID = bid.PaymentTermsID
-		if err := bidService.paymentService.UpdatePaymentTerms(*request.PaymentTerms); err != nil {
-			return err
-		}
-	}
-
-	if err := bidService.bidRepository.UpdateBid(bidService.db, bid); err != nil {
+	if err := bidService.checkUpdateBidStatus(bid.Status); err != nil {
 		return err
 	}
-	return nil
+
+	bidService.applyBidUpdates(bid, request.Cost, request.Area, request.Power, request.GuaranteeID, request.Description, request.InstallationTime)
+
+	err = bidService.db.WithTransaction(func(tx database.Database) error {
+		if request.PaymentTerms != nil {
+			request.PaymentTerms.ID = bid.PaymentTermsID
+			if err := bidService.paymentService.UpdatePaymentTerms(*request.PaymentTerms); err != nil {
+				return err
+			}
+		}
+
+		if err := bidService.bidRepository.UpdateBid(tx, bid); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
 }
 
 func (bidService *BidService) CancelBid(bidInfo biddto.GetBidRequest) error {
@@ -580,13 +637,13 @@ func (bidService *BidService) CancelBid(bidInfo biddto.GetBidRequest) error {
 		return err
 	}
 
-	bid, err := bidService.bidRepository.FindCorporationBid(bidService.db, bidInfo.BidID, bidInfo.CorporationID)
-	if err != nil {
+	if err := bidService.userService.IsUserActive(bidInfo.UserID); err != nil {
 		return err
 	}
-	if bid == nil {
-		notFoundError := exception.NotFoundError{Item: bidService.constants.Field.Bid}
-		return notFoundError
+
+	bid, err := bidService.getCorporationBid(bidInfo.BidID, bidInfo.CorporationID)
+	if err != nil {
+		return err
 	}
 
 	var conflictErrors exception.ConflictErrors

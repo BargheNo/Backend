@@ -226,30 +226,6 @@ func (s *UserServiceTestSuite) TestEnterNewEmail() {
 
 }
 
-func (s *UserServiceTestSuite) TestDoesUserExist() {
-	s.Run("success - User exists", func() {
-		userID := uint(1)
-		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
-
-		s.userService.DoesUserExist(userID)
-
-		s.userRepository.AssertExpectations(s.T())
-	})
-
-	s.Run("Error - User does not exist", func() {
-		userID := uint(1)
-		var nilUser *entity.User = nil
-
-		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, false).Once()
-
-		s.Panics(func() {
-			s.userService.DoesUserExist(userID)
-		})
-
-		s.userRepository.AssertExpectations(s.T())
-	})
-}
-
 func (s *UserServiceTestSuite) TestIsUserActive() {
 	s.Run("success - User is active", func() {
 		userID := uint(1)
@@ -1234,7 +1210,7 @@ func (s *UserServiceTestSuite) TestResetPassword() {
 		s.userRepository.On("UpdateUser", s.db, user).Return(nil).Once()
 
 		request := userdto.ResetPasswordRequest{
-			ID:       1,
+			UserID:   1,
 			Password: "NewPassword@123",
 		}
 		s.userService.ResetPassword(request)
@@ -1246,7 +1222,7 @@ func (s *UserServiceTestSuite) TestResetPassword() {
 		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(nilUser, false).Once()
 
 		request := userdto.ResetPasswordRequest{
-			ID:       1,
+			UserID:   1,
 			Password: "NewPassword@123",
 		}
 		s.Panics(func() {
@@ -1262,7 +1238,7 @@ func (s *UserServiceTestSuite) TestResetPassword() {
 		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
 
 		request := userdto.ResetPasswordRequest{
-			ID:       1,
+			UserID:   1,
 			Password: "NewPassword@123",
 		}
 		s.Panics(func() {
@@ -1279,7 +1255,7 @@ func (s *UserServiceTestSuite) TestResetPassword() {
 		s.userRepository.On("UpdateUser", s.db, user).Return(errors.New("update error")).Once()
 
 		request := userdto.ResetPasswordRequest{
-			ID:       1,
+			UserID:   1,
 			Password: "NewPassword@123",
 		}
 		s.Panics(func() {
@@ -1295,7 +1271,7 @@ func (s *UserServiceTestSuite) TestResetPassword() {
 		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
 
 		request := userdto.ResetPasswordRequest{
-			ID:       1,
+			UserID:   1,
 			Password: strings.Repeat("A1@j", 100),
 		}
 		s.Panics(func() {
@@ -1311,7 +1287,7 @@ func (s *UserServiceTestSuite) TestResetPassword() {
 		s.userRepository.On("FindUserByID", s.db, mock.Anything).Return(user, true).Once()
 
 		request := userdto.ResetPasswordRequest{
-			ID:       1,
+			UserID:   1,
 			Password: "weakpassword",
 		}
 		s.Panics(func() {
@@ -1331,7 +1307,7 @@ func (s *UserServiceTestSuite) TestFindUserByPhone() {
 
 		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
 
-		s.userService.FindUserByPhone(phone)
+		s.userService.FindActiveUserByPhone(phone)
 
 		s.userRepository.AssertExpectations(s.T())
 	})
@@ -1342,7 +1318,7 @@ func (s *UserServiceTestSuite) TestFindUserByPhone() {
 		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(nilUser, false).Once()
 
 		s.Panics(func() {
-			s.userService.FindUserByPhone(phone)
+			s.userService.FindActiveUserByPhone(phone)
 		})
 
 		s.userRepository.AssertExpectations(s.T())
@@ -1356,7 +1332,7 @@ func (s *UserServiceTestSuite) TestFindUserByPhone() {
 		s.userRepository.On("FindUserByPhone", s.db, mock.Anything).Return(user, true).Once()
 
 		s.Panics(func() {
-			s.userService.FindUserByPhone(phone)
+			s.userService.FindActiveUserByPhone(phone)
 		})
 
 		s.userRepository.AssertExpectations(s.T())
@@ -1735,7 +1711,7 @@ func (s *UserServiceTestSuite) TestCreateRole() {
 	})
 }
 
-func (s *UserServiceTestSuite) TestGetRoomDetails() {
+func (s *UserServiceTestSuite) TestGetRoleDetails() {
 	s.Run("success - Room details found", func() {
 		role := &entity.Role{
 			Name: "admin",
@@ -1749,7 +1725,7 @@ func (s *UserServiceTestSuite) TestGetRoomDetails() {
 		}
 		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(role, true).Once()
 		s.userRepository.On("FindRolePermissions", s.db, role).Return(nil).Once()
-		response, _ := s.userService.GetRoomDetails(1)
+		response, _ := s.userService.GetRoleDetails(1)
 
 		s.Equal(response.Name, "admin")
 		s.Equal(response.Permissions[0].Name, enum.PermissionGeneral.String())
@@ -1759,7 +1735,7 @@ func (s *UserServiceTestSuite) TestGetRoomDetails() {
 		s.userRepository.On("FindRoleByID", s.db, mock.Anything).Return(nilRole, false).Once()
 
 		s.Panics(func() {
-			s.userService.GetRoomDetails(1)
+			s.userService.GetRoleDetails(1)
 		})
 
 		s.userRepository.AssertExpectations(s.T())

@@ -184,13 +184,20 @@ func (guaranteeService *GuaranteeService) AddGuarantee(request guaranteedto.Crea
 		DurationMonths: request.Duration,
 		Description:    request.Description,
 	}
-	if err := guaranteeService.guaranteeRepository.CreateGuarantee(guaranteeService.db, guarantee); err != nil {
-		return 0, err
-	}
-	for _, terms := range request.GuaranteeTermsRequest {
-		if err := guaranteeService.addGuaranteeTerm(terms, guarantee.ID); err != nil {
-			return 0, err
+	err = guaranteeService.db.WithTransaction(func(tx database.Database) error {
+		if err := guaranteeService.guaranteeRepository.CreateGuarantee(tx, guarantee); err != nil {
+			return err
 		}
+		for _, terms := range request.GuaranteeTermsRequest {
+			if err := guaranteeService.addGuaranteeTerm(terms, guarantee.ID); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
 	}
 	return guarantee.ID, nil
 }

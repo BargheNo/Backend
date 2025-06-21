@@ -86,7 +86,7 @@ func (chatService *ChatService) CreateOrGetRoom(request chatdto.CreateOrGetUserR
 }
 
 func (chatService *ChatService) GetCorporationRoom(request chatdto.GetCorporationRoomRequest) (chatdto.ChatRoomDetailsResponse, error) {
-	customerModel, err := chatService.userService.FindUserByPhone(request.UserPhone)
+	customerModel, err := chatService.userService.FindActiveUserByPhone(request.UserPhone)
 	if err != nil {
 		return chatdto.ChatRoomDetailsResponse{}, err
 	}
@@ -160,7 +160,6 @@ func (chatService *ChatService) GetCorporationRooms(request chatdto.GetCorporati
 	if err != nil {
 		return nil, err
 	}
-	chatService.userService.DoesUserExist(request.ApplicantID)
 	err = chatService.corporationService.CheckApplicantAccess(request.CorporationID, request.ApplicantID)
 	if err != nil {
 		return nil, err
@@ -200,16 +199,8 @@ func (chatService *ChatService) validateRoomParticipantAccess(senderID, memberID
 }
 
 func (chatService *ChatService) SaveMessage(roomID, senderID uint, content string) (chatdto.RoomMessagesResponse, error) {
-	exist, err := chatService.userService.IsUserActive(senderID)
-	if err != nil {
+	if err := chatService.userService.IsUserActive(senderID); err != nil {
 		return chatdto.RoomMessagesResponse{}, err
-	}
-	if !exist {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: chatService.constants.Field.Room,
-		}
-		return chatdto.RoomMessagesResponse{}, forbiddenError
 	}
 
 	room, err := chatService.chatRepository.GetRoomByID(chatService.db, roomID)
@@ -251,7 +242,6 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 }
 
 func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRequest) ([]chatdto.RoomMessagesResponse, error) {
-	chatService.userService.DoesUserExist(request.UserID)
 	room, err := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
 	if err != nil {
 		return nil, err
@@ -284,7 +274,6 @@ func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRe
 }
 
 func (chatService *ChatService) BlockChatRoom(request chatdto.BlockServiceChatRequest) error {
-	chatService.userService.DoesUserExist(request.UserID)
 	room, err := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
 	if err != nil {
 		return err
@@ -310,7 +299,6 @@ func (chatService *ChatService) BlockChatRoom(request chatdto.BlockServiceChatRe
 }
 
 func (chatService *ChatService) UnBlockChatRoom(request chatdto.BlockServiceChatRequest) error {
-	chatService.userService.DoesUserExist(request.UserID)
 	room, err := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
 	if err != nil {
 		return err

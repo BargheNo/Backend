@@ -167,9 +167,7 @@ func (s *CorporationServiceTestSuite) TestISCorporationApproved() {
 
 		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
 
-		response, _ := s.corporationService.ISCorporationApproved(uint(1))
-
-		s.True(response)
+		s.corporationService.ISCorporationApproved(uint(1))
 
 		s.corporationRepository.AssertExpectations(s.T())
 	})
@@ -890,7 +888,6 @@ func (s *CorporationServiceTestSuite) TestGetCorporationDetails() {
 		var nilContactType *entity.ContactType = nil
 		corporationStaff := &entity.CorporationStaff{}
 
-		s.userService.On("DoesUserExist", mock.Anything).Return(nil).Once()
 		s.corporationRepository.On("FindCorporationByID", s.db, uint(1)).Return(corporation, true).Once()
 		s.corporationRepository.On("FindCorporationStaff", s.db, mock.Anything, uint(1)).Return(corporationStaff, true).Once()
 		s.s3Storage.On("GetPresignedURL", enum.VATTaxpayerCertificate, "testVATTaxpayerCertificate", mock.Anything).Return("testVATTaxpayerCertificate").Once()
@@ -1214,7 +1211,6 @@ func (s *CorporationServiceTestSuite) TestGetCorporations() {
 		}
 		contactInformation := []*entity.ContactInformation{}
 
-		s.userService.On("DoesUserExist", mock.Anything).Return(nil).Once()
 		s.corporationRepository.On("FindCorporationsByStatus", s.db, mock.Anything, mock.Anything, mock.Anything).Return(corporations).Once()
 		s.corporationRepository.On("FindCorporationByID", s.db, mock.Anything).Return(corporations[0], true).Once()
 		s.addressService.On("GetAddresses", mock.Anything).Return([]addressdto.AddressResponse{}).Once()

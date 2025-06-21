@@ -32,7 +32,7 @@ func (repo *ReportRepository) GetReportsByObjectType(db database.Database, objec
 	return reports, nil
 }
 
-func (repo *ReportRepository) GetReportByID(db database.Database, id uint) (*entity.Report, error) {
+func (repo *ReportRepository) FindReportByID(db database.Database, id uint) (*entity.Report, error) {
 	var report entity.Report
 	err := db.GetDB().Where("id = ?", id).First(&report).Error
 	if err != nil {

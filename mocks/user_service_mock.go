@@ -15,14 +15,9 @@ func NewUserServiceMock() *UserServiceMock {
 	return &UserServiceMock{}
 }
 
-func (s *UserServiceMock) DoesUserExist(userID uint) error {
+func (s *UserServiceMock) IsUserActive(userID uint) error {
 	args := s.Called(userID)
 	return args.Error(0)
-}
-
-func (s *UserServiceMock) IsUserActive(userID uint) (bool, error) {
-	args := s.Called(userID)
-	return args.Bool(0), args.Error(1)
 }
 
 func (s *UserServiceMock) GetUserByID(userID uint) (*entity.User, error) {
@@ -98,9 +93,9 @@ func (s *UserServiceMock) ResetPassword(resetPassInfo userdto.ResetPasswordReque
 	return args.Error(0)
 }
 
-func (s *UserServiceMock) FindUserByPhone(phone string) (userdto.UserResponse, error) {
+func (s *UserServiceMock) FindActiveUserByPhone(phone string) (*entity.User, error) {
 	args := s.Called(phone)
-	return args.Get(0).(userdto.UserResponse), args.Error(1)
+	return args.Get(0).(*entity.User), args.Error(1)
 }
 
 func (s *UserServiceMock) UpdateProfile(profileInfo userdto.UpdateProfileRequest) error {
@@ -123,7 +118,7 @@ func (s *UserServiceMock) CreateRole(newRoleRequest userdto.NewRoleRequest) erro
 	return args.Error(0)
 }
 
-func (s *UserServiceMock) GetRoomDetails(roleID uint) (userdto.RoleResponse, error) {
+func (s *UserServiceMock) GetRoleDetails(roleID uint) (userdto.RoleResponse, error) {
 	args := s.Called(roleID)
 	return args.Get(0).(userdto.RoleResponse), args.Error(1)
 }

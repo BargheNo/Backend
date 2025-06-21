@@ -212,8 +212,8 @@ func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Contex
 
 func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 	type getPostsParams struct {
-		CorporationID uint   `uri:"corporationID" validate:"required"`
-		Statuses      []uint `form:"statuses" validate:"required"`
+		CorporationID uint `uri:"corporationID" validate:"required"`
+		Status        uint `form:"status" validate:"required"`
 	}
 	params := controller.Validated[getPostsParams](ctx)
 	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
@@ -221,12 +221,12 @@ func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 
 	userID, _ := ctx.Get(blogController.constants.Context.ID)
 
-	getPostsRequest := blogdto.GetPostsRequest{
+	getPostsRequest := blogdto.GetCorporationPostsRequest{
+		UserID:        userID.(uint),
 		CorporationID: params.CorporationID,
-		Statuses:      params.Statuses,
+		Status:        params.Status,
 		Offset:        offset,
 		Limit:         limit,
-		UserID:        userID.(uint),
 	}
 	posts, err := blogController.blogService.GetCorporationPosts(getPostsRequest)
 	if err != nil {
@@ -244,11 +244,10 @@ func (blogController *CorporationBlogController) GetPost(ctx *gin.Context) {
 	params := controller.Validated[getPostParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
 
-	getPostRequest := blogdto.GetPostRequest{
+	getPostRequest := blogdto.GetCorporationPostRequest{
 		UserID:        authorID.(uint),
 		PostID:        params.PostID,
 		CorporationID: params.CorporationID,
-		UserType:      enum.UserTypeCorporation,
 	}
 	post, err := blogController.blogService.GetCorporationPost(getPostRequest)
 	if err != nil {

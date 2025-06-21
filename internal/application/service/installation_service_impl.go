@@ -51,6 +51,61 @@ func NewInstallationService(deps InstallationServiceDeps) *InstallationService {
 	}
 }
 
+func (installationService *InstallationService) getOwnerRequest(requestID, ownerID uint) (*entity.InstallationRequest, error) {
+	request, err := installationService.installationRepository.FindRequestByOwner(installationService.db, requestID, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	if request == nil {
+		return nil, exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+	}
+	return request, nil
+}
+
+func (installationService *InstallationService) getRequest(requestID uint) (*entity.InstallationRequest, error) {
+	request, err := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
+	if err != nil {
+		return nil, err
+	}
+	if request == nil {
+		return nil, exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
+	}
+	return request, nil
+}
+
+func (installationService *InstallationService) getCorporationPanel(panelID, corporationID uint) (*entity.Panel, error) {
+	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, panelID, corporationID)
+	if err != nil {
+		return nil, err
+	}
+	if panel == nil {
+		return nil, exception.NotFoundError{Item: installationService.constants.Field.Panel}
+	}
+	return panel, nil
+}
+
+func (installationService *InstallationService) getCustomerPanel(panelID, ownerID uint) (*entity.Panel, error) {
+	panel, err := installationService.installationRepository.FindCustomerPanel(installationService.db, panelID, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	if panel == nil {
+		return nil, exception.NotFoundError{Item: installationService.constants.Field.Panel}
+	}
+	return panel, nil
+}
+
+func (installationService *InstallationService) getPanel(panelID uint) (*entity.Panel, error) {
+	panel, err := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	if err != nil {
+		return nil, err
+	}
+	if panel == nil {
+		return nil, exception.NotFoundError{Item: installationService.constants.Field.Panel}
+	}
+	return panel, nil
+}
+
 func (installationService *InstallationService) GetRequestStatuses() []installationdto.EnumStatusResponse {
 	statuses := enum.GetAllInstallationRequestStatuses()
 	response := make([]installationdto.EnumStatusResponse, len(statuses))
@@ -76,12 +131,9 @@ func (installationService *InstallationService) GetBuildingTypes() []installatio
 }
 
 func (installationService *InstallationService) ValidateRequestOwnership(requestID, ownerID uint) (installationdto.PublicRequestDetailsResponse, error) {
-	request, err := installationService.installationRepository.FindRequestByOwner(installationService.db, requestID, ownerID)
+	request, err := installationService.getOwnerRequest(requestID, ownerID)
 	if err != nil {
 		return installationdto.PublicRequestDetailsResponse{}, err
-	}
-	if request == nil {
-		return installationdto.PublicRequestDetailsResponse{}, exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
 	}
 
 	customer, err := installationService.userService.GetUserCredential(request.OwnerID)
@@ -109,16 +161,8 @@ func (installationService *InstallationService) ValidateRequestOwnership(request
 
 func (installationService *InstallationService) CreateInstallationRequest(request installationdto.NewInstallationRequest) error {
 	// compare installed panels names to new request name
-	ok, err := installationService.userService.IsUserActive(request.OwnerID)
-	if err != nil {
+	if err := installationService.userService.IsUserActive(request.OwnerID); err != nil {
 		return err
-	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: installationService.constants.Field.InstallationRequest,
-		}
-		return forbiddenError
 	}
 
 	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
@@ -158,11 +202,15 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 			Unit:          request.Address.Unit,
 		},
 	}
-	err = installationService.installationRepository.CreateRequest(installationService.db, installationRequest)
-	if err != nil {
-		return err
-	}
-	return nil
+	err = installationService.db.WithTransaction(func(tx database.Database) error {
+		err = installationService.installationRepository.CreateRequest(installationService.db, installationRequest)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
 }
 
 func (installationService *InstallationService) GetOwnerInstallationRequests(request installationdto.CustomerRequestsListRequest) ([]installationdto.AnonymousRequestsResponse, error) {
@@ -202,12 +250,9 @@ func (installationService *InstallationService) GetOwnerInstallationRequests(req
 }
 
 func (installationService *InstallationService) GetOwnerInstallationRequest(request installationdto.GetOwnerRequest) (installationdto.AnonymousRequestsResponse, error) {
-	installationRequest, err := installationService.installationRepository.FindRequestByOwner(installationService.db, request.InstallationID, request.OwnerID)
+	installationRequest, err := installationService.getOwnerRequest(request.InstallationID, request.OwnerID)
 	if err != nil {
 		return installationdto.AnonymousRequestsResponse{}, err
-	}
-	if installationRequest == nil {
-		return installationdto.AnonymousRequestsResponse{}, exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
 	}
 
 	address, err := installationService.addressService.GetAddress(request.InstallationID, installationService.constants.AddressOwners.InstallationRequest)
@@ -228,12 +273,9 @@ func (installationService *InstallationService) GetOwnerInstallationRequest(requ
 }
 
 func (installationService *InstallationService) ChangeInstallationRequestStatus(request installationdto.ChangeRequestStatusRequest) error {
-	installationRequest, err := installationService.installationRepository.FindRequestByOwner(installationService.db, request.RequestID, request.OwnerID)
+	installationRequest, err := installationService.getOwnerRequest(request.RequestID, request.OwnerID)
 	if err != nil {
 		return err
-	}
-	if installationRequest == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
 	}
 
 	if installationRequest.Status == enum.InstallationRequestStatusCancelled {
@@ -251,8 +293,7 @@ func (installationService *InstallationService) ChangeInstallationRequestStatus(
 }
 
 func (installationService *InstallationService) GetAnonymousInstallationRequests(request installationdto.CorporationPanelListRequest) ([]installationdto.AnonymousRequestsResponse, error) {
-	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
-	if err != nil {
+	if err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID); err != nil {
 		return nil, err
 	}
 
@@ -287,16 +328,15 @@ func (installationService *InstallationService) GetAnonymousInstallationRequests
 }
 
 func (installationService *InstallationService) GetAnonymousInstallationRequest(request installationdto.CorporationPanelRequest) (installationdto.AnonymousRequestsResponse, error) {
-	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
-	if err != nil {
+	if err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID); err != nil {
 		return installationdto.AnonymousRequestsResponse{}, err
 	}
 
-	installationRequest, err := installationService.installationRepository.FindRequestByID(installationService.db, request.InstallationID)
+	installationRequest, err := installationService.getRequest(request.InstallationID)
 	if err != nil {
 		return installationdto.AnonymousRequestsResponse{}, err
 	}
-	if installationRequest == nil || installationRequest.Status != enum.InstallationRequestStatusActive {
+	if installationRequest.Status != enum.InstallationRequestStatusActive {
 		return installationdto.AnonymousRequestsResponse{}, exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
 	}
 
@@ -304,6 +344,7 @@ func (installationService *InstallationService) GetAnonymousInstallationRequest(
 	if err != nil {
 		return installationdto.AnonymousRequestsResponse{}, err
 	}
+
 	response := installationdto.AnonymousRequestsResponse{
 		ID:           installationRequest.ID,
 		Name:         installationRequest.Name,
@@ -318,21 +359,21 @@ func (installationService *InstallationService) GetAnonymousInstallationRequest(
 }
 
 func (installationService *InstallationService) GetPublicInstallationRequest(requestID uint) (installationdto.PublicRequestDetailsResponse, error) {
-	installationRequest, err := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
+	installationRequest, err := installationService.getRequest(requestID)
 	if err != nil {
 		return installationdto.PublicRequestDetailsResponse{}, err
 	}
-	if installationRequest == nil {
-		return installationdto.PublicRequestDetailsResponse{}, exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
-	}
+
 	customer, err := installationService.userService.GetUserCredential(installationRequest.OwnerID)
 	if err != nil {
 		return installationdto.PublicRequestDetailsResponse{}, err
 	}
+
 	address, err := installationService.addressService.GetAddress(installationRequest.ID, installationService.constants.AddressOwners.InstallationRequest)
 	if err != nil {
 		return installationdto.PublicRequestDetailsResponse{}, err
 	}
+
 	response := installationdto.PublicRequestDetailsResponse{
 		ID:           installationRequest.ID,
 		Name:         installationRequest.Name,
@@ -368,6 +409,7 @@ func (installationService *InstallationService) GetInstallationRequestsByAdmin(r
 		if err != nil {
 			return nil, err
 		}
+
 		address, err := installationService.addressService.GetAddress(installationRequest.ID, installationService.constants.AddressOwners.InstallationRequest)
 		if err != nil {
 			return nil, err
@@ -391,17 +433,17 @@ func (installationService *InstallationService) GetInstallationRequestsByAdmin(r
 }
 
 func (installationService *InstallationService) CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest) error {
-	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
-	if err != nil {
+	if err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID); err != nil {
 		return err
 	}
 
-	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, request.PanelID, request.CorporationID)
-	if err != nil {
+	if err := installationService.userService.IsUserActive(request.OperatorID); err != nil {
 		return err
 	}
-	if panel == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.Panel}
+
+	panel, err := installationService.getCorporationPanel(request.PanelID, request.CorporationID)
+	if err != nil {
+		return err
 	}
 
 	panel.Tilt = request.Tilt
@@ -415,12 +457,9 @@ func (installationService *InstallationService) CompleteInstallationRequest(requ
 }
 
 func (installationService *InstallationService) UpdateInstallationRequestByAdmin(newRequest installationdto.UpdateInstallationRequest) error {
-	installationRequest, err := installationService.installationRepository.FindRequestByID(installationService.db, newRequest.RequestID)
+	installationRequest, err := installationService.getRequest(newRequest.RequestID)
 	if err != nil {
 		return err
-	}
-	if installationRequest == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
 	}
 
 	if newRequest.Name != nil {
@@ -452,12 +491,9 @@ func (installationService *InstallationService) UpdateInstallationRequestByAdmin
 }
 
 func (installationService *InstallationService) DeleteInstallationRequest(requestID uint) error {
-	installationRequest, err := installationService.installationRepository.FindRequestByID(installationService.db, requestID)
+	installationRequest, err := installationService.getRequest(requestID)
 	if err != nil {
 		return err
-	}
-	if installationRequest == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
 	}
 
 	if err := installationService.installationRepository.DeleteRequest(installationService.db, installationRequest); err != nil {
@@ -518,13 +554,11 @@ func (installationService *InstallationService) ValidatePanelOwnership(panelID, 
 }
 
 func (installationService *InstallationService) ValidatePanelGuarantee(panelID uint) error {
-	panel, err := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	panel, err := installationService.getPanel(panelID)
 	if err != nil {
 		return err
 	}
-	if panel == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.InstallationRequest}
-	}
+
 	if panel.GuaranteeStatus != enum.PanelGuaranteeStatusActive {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(installationService.constants.Field.Guarantee, installationService.constants.Tag.NotActive)
@@ -535,23 +569,19 @@ func (installationService *InstallationService) ValidatePanelGuarantee(panelID u
 
 // TODO: nor done remain for the bid/bidID/request && maybe remove:FindPanelByNameAndCustomerID
 func (installationService *InstallationService) AddPanel(panelInfo installationdto.AddPanelRequest) error {
-	err := installationService.corporationService.CheckApplicantAccess(panelInfo.CorporationID, panelInfo.OperatorID)
-	if err != nil {
+	if err := installationService.corporationService.ISCorporationApproved(panelInfo.CorporationID); err != nil {
 		return err
-	}
-	ok, err := installationService.userService.IsUserActive(panelInfo.OperatorID)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: installationService.constants.Field.Panel,
-		}
-		return forbiddenError
 	}
 
-	customer, err := installationService.userService.FindUserByPhone(panelInfo.CustomerPhone)
+	if err := installationService.corporationService.CheckApplicantAccess(panelInfo.CorporationID, panelInfo.OperatorID); err != nil {
+		return err
+	}
+
+	if err := installationService.userService.IsUserActive(panelInfo.OperatorID); err != nil {
+		return err
+	}
+
+	customer, err := installationService.userService.FindActiveUserByPhone(panelInfo.CustomerPhone)
 	if err != nil {
 		return err
 	}
@@ -597,23 +627,25 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 			Unit:          panelInfo.Address.Unit,
 		},
 	}
+	err = installationService.db.WithTransaction(func(tx database.Database) error {
+		if err = installationService.installationRepository.CreatePanel(installationService.db, panel); err != nil {
+			return err
+		}
+		request := chatdto.CreateOrGetUserRoomRequest{
+			CorporationID: panel.CorporationID,
+			UserID:        customer.ID,
+		}
+		if _, err := installationService.chatService.CreateOrGetRoom(request); err != nil {
+			return err
+		}
+		return nil
+	})
 
-	err = installationService.installationRepository.CreatePanel(installationService.db, panel)
-	if err != nil {
-		return err
-	}
-
-	request := chatdto.CreateOrGetUserRoomRequest{
-		CorporationID: panel.CorporationID,
-		UserID:        customer.ID,
-	}
-	installationService.chatService.CreateOrGetRoom(request)
-	return nil
+	return err
 }
 
 func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) ([]installationdto.CorporationPanelListResponse, error) {
-	err := installationService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
-	if err != nil {
+	if err := installationService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID); err != nil {
 		return nil, err
 	}
 
@@ -664,17 +696,13 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 }
 
 func (installationService *InstallationService) GetCorporationPanel(request installationdto.CorporationPanelRequest) (installationdto.CorporationPanelResponse, error) {
-	err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
-	if err != nil {
+	if err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID); err != nil {
 		return installationdto.CorporationPanelResponse{}, err
 	}
 
-	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, request.InstallationID, request.CorporationID)
+	panel, err := installationService.getCorporationPanel(request.InstallationID, request.CorporationID)
 	if err != nil {
 		return installationdto.CorporationPanelResponse{}, err
-	}
-	if panel == nil {
-		return installationdto.CorporationPanelResponse{}, exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	address, err := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
@@ -761,12 +789,9 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 }
 
 func (installationService *InstallationService) GetCustomerPanel(panelInfo installationdto.GetOwnerRequest) (installationdto.CustomerPanelResponse, error) {
-	panel, err := installationService.installationRepository.FindCustomerPanel(installationService.db, panelInfo.InstallationID, panelInfo.OwnerID)
+	panel, err := installationService.getCustomerPanel(panelInfo.InstallationID, panelInfo.OwnerID)
 	if err != nil {
 		return installationdto.CustomerPanelResponse{}, err
-	}
-	if panel == nil {
-		return installationdto.CustomerPanelResponse{}, exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	address, err := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
@@ -805,12 +830,9 @@ func (installationService *InstallationService) GetCustomerPanel(panelInfo insta
 }
 
 func (installationService *InstallationService) GetPanelByAdmin(panelID uint) (installationdto.AdminPanelResponse, error) {
-	panel, err := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	panel, err := installationService.getPanel(panelID)
 	if err != nil {
 		return installationdto.AdminPanelResponse{}, err
-	}
-	if panel == nil {
-		return installationdto.AdminPanelResponse{}, exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	customer, err := installationService.userService.GetUserCredential(panel.CustomerID)
@@ -928,12 +950,9 @@ func (installationService *InstallationService) GetPanelsByAdmin(listInfo instal
 }
 
 func (installationService *InstallationService) UpdatePanel(request installationdto.UpdatePanelRequest) error {
-	panel, err := installationService.installationRepository.FindPanelByID(installationService.db, request.PanelID)
+	panel, err := installationService.getPanel(request.PanelID)
 	if err != nil {
 		return err
-	}
-	if panel == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	if request.Name != nil {
@@ -968,12 +987,9 @@ func (installationService *InstallationService) UpdatePanel(request installation
 }
 
 func (installationService *InstallationService) DeletePanel(panelID uint) error {
-	panel, err := installationService.installationRepository.FindPanelByID(installationService.db, panelID)
+	panel, err := installationService.getPanel(panelID)
 	if err != nil {
 		return err
-	}
-	if panel == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	if err := installationService.installationRepository.DeletePanel(installationService.db, panel); err != nil {
@@ -988,12 +1004,9 @@ func (installationService *InstallationService) ViolatePanelGuaranteeStatus(requ
 		return 0, err
 	}
 
-	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, request.PanelID, request.CorporationID)
+	panel, err := installationService.getCorporationPanel(request.PanelID, request.CorporationID)
 	if err != nil {
 		return 0, err
-	}
-	if panel == nil {
-		return 0, exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
@@ -1006,15 +1019,20 @@ func (installationService *InstallationService) ViolatePanelGuaranteeStatus(requ
 		return 0, conflictErrors
 	}
 
-	violationID, err := installationService.guaranteeService.CreateGuaranteeViolation(request.GuaranteeViolation)
-	if err != nil {
-		return 0, err
-	}
-	panel.GuaranteeStatus = enum.PanelGuaranteeStatusVoided
+	var violationID uint
+	err = installationService.db.WithTransaction(func(tx database.Database) error {
+		var err error
+		violationID, err = installationService.guaranteeService.CreateGuaranteeViolation(request.GuaranteeViolation)
+		if err != nil {
+			return err
+		}
+		panel.GuaranteeStatus = enum.PanelGuaranteeStatusVoided
 
-	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {
-		return 0, err
-	}
+		if err := installationService.installationRepository.UpdatePanel(tx, panel); err != nil {
+			return err
+		}
+		return nil
+	})
 
 	return violationID, nil
 }
@@ -1025,12 +1043,9 @@ func (installationService *InstallationService) ClearPanelGuaranteeViolation(vio
 		return err
 	}
 
-	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
+	panel, err := installationService.getCorporationPanel(violationInfo.PanelID, violationInfo.CorporationID)
 	if err != nil {
 		return err
-	}
-	if panel == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
@@ -1041,18 +1056,24 @@ func (installationService *InstallationService) ClearPanelGuaranteeViolation(vio
 		return exception.NotFoundError{Item: installationService.constants.Field.GuaranteeViolation}
 	}
 
-	installationService.guaranteeService.RemovePanelGuaranteeViolation(violationInfo.PanelID)
+	err = installationService.db.WithTransaction(func(tx database.Database) error {
+		if err := installationService.guaranteeService.RemovePanelGuaranteeViolation(violationInfo.PanelID); err != nil {
+			return err
+		}
 
-	if panel.GuaranteeEndDate.Before(time.Now()) {
-		panel.GuaranteeStatus = enum.PanelGuaranteeStatusExpired
-	} else {
-		panel.GuaranteeStatus = enum.PanelGuaranteeStatusActive
-	}
+		if panel.GuaranteeEndDate.Before(time.Now()) {
+			panel.GuaranteeStatus = enum.PanelGuaranteeStatusExpired
+		} else {
+			panel.GuaranteeStatus = enum.PanelGuaranteeStatusActive
+		}
 
-	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {
-		return err
-	}
-	return nil
+		if err := installationService.installationRepository.UpdatePanel(tx, panel); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
 }
 
 func (installationService *InstallationService) GetCorporationPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) (guaranteedto.CorporationGuaranteeViolationResponse, error) {
@@ -1063,12 +1084,9 @@ func (installationService *InstallationService) GetCorporationPanelGuaranteeViol
 		return violation, err
 	}
 
-	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
+	panel, err := installationService.getCorporationPanel(violationInfo.PanelID, violationInfo.CorporationID)
 	if err != nil {
 		return violation, err
-	}
-	if panel == nil {
-		return violation, exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
@@ -1090,12 +1108,9 @@ func (installationService *InstallationService) GetCorporationPanelGuaranteeViol
 func (installationService *InstallationService) GetCustomerPanelGuaranteeViolation(violationInfo installationdto.GetCustomerGuaranteeViolationRequest) (guaranteedto.CustomerGuaranteeViolationResponse, error) {
 	var violation guaranteedto.CustomerGuaranteeViolationResponse
 
-	panel, err := installationService.installationRepository.FindCustomerPanel(installationService.db, violationInfo.PanelID, violationInfo.OwnerID)
+	panel, err := installationService.getCustomerPanel(violationInfo.PanelID, violationInfo.OwnerID)
 	if err != nil {
 		return violation, err
-	}
-	if panel == nil {
-		return violation, exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
@@ -1120,12 +1135,9 @@ func (installationService *InstallationService) UpdatePanelGuaranteeViolation(vi
 		return err
 	}
 
-	panel, err := installationService.installationRepository.FindCorporationPanel(installationService.db, violationInfo.PanelID, violationInfo.CorporationID)
+	panel, err := installationService.getCorporationPanel(violationInfo.PanelID, violationInfo.CorporationID)
 	if err != nil {
 		return err
-	}
-	if panel == nil {
-		return exception.NotFoundError{Item: installationService.constants.Field.Panel}
 	}
 
 	if panel.GuaranteeStatus == enum.PanelGuaranteeStatusEmpty {
@@ -1142,6 +1154,9 @@ func (installationService *InstallationService) UpdatePanelGuaranteeViolation(vi
 		Reason:     violationInfo.Reason,
 		Details:    violationInfo.Details,
 	}
-	installationService.guaranteeService.UpdateGuaranteeViolation(request)
+	if err := installationService.guaranteeService.UpdateGuaranteeViolation(request); err != nil {
+		return err
+	}
+
 	return nil
 }
