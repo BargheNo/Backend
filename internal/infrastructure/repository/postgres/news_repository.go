@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
@@ -38,9 +39,9 @@ func (repo *NewsRepository) FindNewsByTittle(db database.Database, title string)
 	return &news, nil
 }
 
-func (repo *NewsRepository) FindNewsByStatus(db database.Database, statues []uint, opts ...repository.QueryModifier) ([]*entity.News, error) {
+func (repo *NewsRepository) FindNewsByStatus(db database.Database, statuses []enum.NewsStatus, opts ...repository.QueryModifier) ([]*entity.News, error) {
 	var news []*entity.News
-	query := db.GetDB().Where("status IN ?", statues)
+	query := db.GetDB().Where("status IN ?", statuses)
 	for _, opt := range opts {
 		query = opt.Apply(query).(*gorm.DB)
 	}
@@ -63,9 +64,9 @@ func (repo *NewsRepository) DeleteNews(db database.Database, newsID uint) error 
 	return db.GetDB().Delete(&entity.News{}, newsID).Error
 }
 
-func (repo *NewsRepository) GetMediaByID(db database.Database, mediaID uint) (*entity.Media, error) {
+func (repo *NewsRepository) FindNewsMediaByID(db database.Database, mediaID, newsID uint, ownerType string) (*entity.Media, error) {
 	var media entity.Media
-	result := db.GetDB().First(&media, mediaID)
+	result := db.GetDB().Where("id = ? AND owner_id = ? AND owner_type = ?", mediaID, newsID, ownerType).First(&media)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -75,7 +76,7 @@ func (repo *NewsRepository) GetMediaByID(db database.Database, mediaID uint) (*e
 	return &media, nil
 }
 
-func (repo *NewsRepository) AddMedia(db database.Database, media *entity.Media) error {
+func (repo *NewsRepository) CreateMedia(db database.Database, media *entity.Media) error {
 	return db.GetDB().Create(&media).Error
 }
 

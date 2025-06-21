@@ -36,16 +36,21 @@ type DeleteNewsRequest struct {
 	AuthorID uint
 }
 
-type GetNewsListRequest struct {
-	Statuses []uint
-	Offset   int
-	Limit    int
+type GetAdminNewsListRequest struct {
+	Status uint
+	Offset int
+	Limit  int
 }
 
-type GetNewsRequest struct {
-	NewsID   uint
-	UserType enum.UserType
+type GetPublicNewsListRequest struct {
+	Offset int
+	Limit  int
 }
+
+// type GetNewsRequest struct {
+// 	NewsID   uint
+// 	UserType enum.UserType
+// }
 
 type AddNewsMediaRequest struct {
 	NewsID   uint

@@ -57,7 +57,6 @@ func NewNotificationService(deps NotificationServiceDeps) *NotificationService {
 }
 
 func (notificationService *NotificationService) CreateAndSendNotification(typeName enum.NotificationType, recipientID uint, data []byte) error {
-	notificationService.userService.DoesUserExist(recipientID)
 	notificationType, err := notificationService.notificationRepository.GetNotificationTypeByName(notificationService.db, typeName)
 	if err != nil {
 		return err
@@ -275,7 +274,6 @@ func (notificationService *NotificationService) GetNotificationsType() ([]notifi
 }
 
 func (notificationService *NotificationService) GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) ([]notificationdto.NotificationListResponse, error) {
-	notificationService.userService.DoesUserExist(notificationsRequest.UserID)
 	paginationModifier := repositoryimpl.NewPaginationModifier(notificationsRequest.Limit, notificationsRequest.Offset)
 	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
 
@@ -315,10 +313,6 @@ func (notificationService *NotificationService) GetUserNotifications(notificatio
 }
 
 func (notificationService *NotificationService) CreateNotificationSettings(userID uint) error {
-	err := notificationService.userService.DoesUserExist(userID)
-	if err != nil {
-		return err
-	}
 	notificationTypes, err := notificationService.notificationRepository.GetNotificationTypes(notificationService.db)
 	if err != nil {
 		return err
@@ -347,8 +341,6 @@ func (notificationService *NotificationService) CreateNotificationSettings(userI
 }
 
 func (notificationService *NotificationService) GetUserNotificationSettings(userID uint) ([]notificationdto.NotificationSettingResponse, error) {
-	notificationService.userService.DoesUserExist(userID)
-
 	settings, err := notificationService.notificationRepository.GetNotificationSettingByUserID(notificationService.db, userID)
 	if err != nil {
 		return nil, err
@@ -381,7 +373,6 @@ func (notificationService *NotificationService) GetUserNotificationSettings(user
 }
 
 func (notificationService *NotificationService) UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest) error {
-	notificationService.userService.DoesUserExist(newSettingInfo.UserID)
 	setting, err := notificationService.notificationRepository.GetNotificationSettingByID(notificationService.db, newSettingInfo.SettingID)
 	if err != nil {
 		return err

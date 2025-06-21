@@ -31,11 +31,9 @@ func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
 	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 
-	request := blogdto.GetPostsRequest{
-		Statuses: []uint{2},
-		UserType: enum.UserTypeGuest,
-		Offset:   offset,
-		Limit:    limit,
+	request := blogdto.GetPublicPostsRequest{
+		Offset: offset,
+		Limit:  limit,
 	}
 	posts, err := blogController.blogService.GetGeneralPosts(request)
 	if err != nil {
@@ -53,10 +51,8 @@ func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Contex
 	offset, limit := pagination.GetOffsetLimit()
 	params := controller.Validated[getCorporationPostsParams](ctx)
 
-	request := blogdto.GetPostsRequest{
-		Statuses:      []uint{2},
+	request := blogdto.GetPublicCorporationPostsRequest{
 		CorporationID: params.CorporationID,
-		UserType:      enum.UserTypeGuest,
 		Offset:        offset,
 		Limit:         limit,
 	}
@@ -74,12 +70,7 @@ func (blogController *GeneralBlogController) GetPost(ctx *gin.Context) {
 	}
 	params := controller.Validated[getPostParams](ctx)
 
-	getPostRequest := blogdto.GetPostRequest{
-		PostID:   params.PostID,
-		UserType: enum.UserTypeGuest,
-	}
-
-	post, err := blogController.blogService.GetGeneralPost(getPostRequest)
+	post, err := blogController.blogService.GetGeneralPost(params.PostID)
 	if err != nil {
 		panic(err)
 	}

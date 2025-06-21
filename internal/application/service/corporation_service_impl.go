@@ -90,6 +90,18 @@ func (corporationService *CorporationService) getCorporationByIDAndStatus(corpor
 	return corporation, nil
 }
 
+func (corporationService *CorporationService) getCorporationByID(corporationID uint) (*entity.Corporation, error) {
+	corporation, err := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	if err != nil {
+		return nil, err
+	}
+	if corporation == nil {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		return nil, notFoundError
+	}
+	return corporation, nil
+}
+
 func (corporationService *CorporationService) DoesCorporationExist(corporationID uint) error {
 	corporation, err := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
 	if err != nil {
@@ -102,27 +114,55 @@ func (corporationService *CorporationService) DoesCorporationExist(corporationID
 	return nil
 }
 
-func (corporationService *CorporationService) GetCorporationCredentials(corporationID uint) (corporationdto.CorporationCredentialResponse, error) {
+func (corporationService *CorporationService) CheckApplicantAccess(corporationID, applicantID uint) error {
+	staff, err := corporationService.corporationRepository.FindCorporationStaff(corporationService.db, applicantID, corporationID)
+	if err != nil {
+		return err
+	}
+	if staff == nil {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
+		return notFoundError
+	}
+	return nil
+}
+
+func (corporationService *CorporationService) ISCorporationApproved(corporationID uint) error {
 	corporation, err := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
 	if err != nil {
-		return corporationdto.CorporationCredentialResponse{}, err
+		return err
 	}
 	if corporation == nil {
 		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		return corporationdto.CorporationCredentialResponse{}, notFoundError
+		return notFoundError
 	}
+
+	if corporation.Status != enum.CorpStatusApproved {
+		exception.NewUnapprovedCorporationForbiddenError()
+	}
+	return nil
+}
+
+func (corporationService *CorporationService) GetCorporationCredentials(corporationID uint) (corporationdto.CorporationCredentialResponse, error) {
+	corporation, err := corporationService.getCorporationByID(corporationID)
+	if err != nil {
+		return corporationdto.CorporationCredentialResponse{}, err
+	}
+
 	ownerInfo := addressdto.GetOwnerAddressesRequest{
 		OwnerID:   corporation.ID,
 		OwnerType: corporationService.constants.AddressOwners.Corporation,
 	}
+
 	addresses, err := corporationService.addressService.GetAddresses(ownerInfo)
 	if err != nil {
 		return corporationdto.CorporationCredentialResponse{}, err
 	}
+
 	contactInfo, err := corporationService.getContactInfo(corporation.ID)
 	if err != nil {
 		return corporationdto.CorporationCredentialResponse{}, err
 	}
+
 	return corporationdto.CorporationCredentialResponse{
 		ID:          corporation.ID,
 		Name:        corporation.Name,
@@ -131,107 +171,107 @@ func (corporationService *CorporationService) GetCorporationCredentials(corporat
 	}, nil
 }
 
-func (corporationService *CorporationService) ISCorporationApproved(corporationID uint) (bool, error) {
-	corporation, err := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
-	if err != nil {
-		return false, err
-	}
-	if corporation == nil {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		return false, notFoundError
-	}
-	isApproved := corporation.Status == enum.CorpStatusApproved
-	return isApproved, nil
+func (corporationService *CorporationService) addSignatories(signatories []corporationdto.Signatory, corporationID uint) error {
+	err := corporationService.db.WithTransaction(func(tx database.Database) error {
+		for _, signatory := range signatories {
+			signatoryModel, err := corporationService.corporationRepository.FindCorporationSignatoryByNationalID(corporationService.db, corporationID, signatory.NationalCardNumber, signatory.Position)
+			if err != nil {
+				return err
+			}
+			if signatoryModel != nil {
+				continue
+			}
+
+			signatoryEntity := &entity.Signatory{
+				CorporationID:      corporationID,
+				Name:               signatory.Name,
+				NationalCardNumber: signatory.NationalCardNumber,
+				Position:           signatory.Position,
+			}
+			err = corporationService.corporationRepository.CreateSignatory(tx, signatoryEntity)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return err
 }
 
-// TODO: need to change check applicant access to only one function and if it was failed got 404 not found
-func (corporationService *CorporationService) CheckApplicantAccess(corporationID, applicantID uint) error {
-	staff, err := corporationService.corporationRepository.FindCorporationStaff(corporationService.db, applicantID, corporationID)
+func (corporationService *CorporationService) checkDuplicateName(conflictErrors *exception.ConflictErrors, name string, activeStatus []enum.CorporationStatus) error {
+	corporation, err := corporationService.corporationRepository.FindCorporationByName(corporationService.db, name, activeStatus)
 	if err != nil {
 		return err
 	}
-	if staff == nil {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: corporationService.constants.Field.Corporation,
-		}
-		return forbiddenError
+	if corporation != nil {
+		conflictErrors.Add(corporationService.constants.Field.Name, corporationService.constants.Tag.AlreadyExist)
 	}
 	return nil
 }
 
-func (corporationService *CorporationService) addSignatories(signatories []corporationdto.Signatory, corporationID uint) error {
-	for _, signatory := range signatories {
-		signatoryModel, err := corporationService.corporationRepository.FindCorporationSignatoryByNationalID(corporationService.db, corporationID, signatory.NationalCardNumber, signatory.Position)
-		if err != nil {
-			return err
-		}
-		if signatoryModel != nil {
-			continue
-		}
-		signatoryEntity := &entity.Signatory{
-			CorporationID:      corporationID,
-			Name:               signatory.Name,
-			NationalCardNumber: signatory.NationalCardNumber,
-			Position:           signatory.Position,
-		}
-		err = corporationService.corporationRepository.CreateSignatory(corporationService.db, signatoryEntity)
-		if err != nil {
-			return err
-		}
+func (corporationService *CorporationService) checkDuplicateNationalID(conflictErrors *exception.ConflictErrors, nationalID string, activeStatus []enum.CorporationStatus) error {
+	corporation, err := corporationService.corporationRepository.FindCorporationByNationalID(corporationService.db, nationalID, activeStatus)
+	if err != nil {
+		return err
+	}
+	if corporation != nil {
+		conflictErrors.Add(corporationService.constants.Field.NationalID, corporationService.constants.Tag.AlreadyExist)
+	}
+	return nil
+}
+
+func (corporationService *CorporationService) checkDuplicateRegistrationNumber(conflictErrors *exception.ConflictErrors, registrationNumber string, activeStatus []enum.CorporationStatus) error {
+	corporation, err := corporationService.corporationRepository.FindCorporationByRegistrationNumber(corporationService.db, registrationNumber, activeStatus)
+	if err != nil {
+		return err
+	}
+	if corporation != nil {
+		conflictErrors.Add(corporationService.constants.Field.RegistrationNumber, corporationService.constants.Tag.AlreadyExist)
+	}
+	return nil
+}
+
+func (corporationService *CorporationService) checkDuplicateIBAN(conflictErrors *exception.ConflictErrors, iban string, activeStatus []enum.CorporationStatus) error {
+	corporation, err := corporationService.corporationRepository.FindCorporationByIBAN(corporationService.db, iban, activeStatus)
+	if err != nil {
+		return err
+	}
+	if corporation != nil {
+		conflictErrors.Add(corporationService.constants.Field.IBAN, corporationService.constants.Tag.AlreadyExist)
 	}
 	return nil
 }
 
 func (corporationService *CorporationService) Register(registerInfo corporationdto.RegisterRequest) (corporationdto.CorporationCredentialResponse, error) {
-	ok, err := corporationService.userService.IsUserActive(registerInfo.ApplicantID)
-	if err != nil {
+	if err := corporationService.userService.IsUserActive(registerInfo.ApplicantID); err != nil {
 		return corporationdto.CorporationCredentialResponse{}, err
 	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: "",
-		}
-		return corporationdto.CorporationCredentialResponse{}, forbiddenError
-	}
+
 	activeStatus := []enum.CorporationStatus{enum.CorpStatusApproved, enum.CorpStatusAwaitingApproval}
 	var conflictErrors exception.ConflictErrors
-	corporation, err := corporationService.corporationRepository.FindCorporationByName(corporationService.db, registerInfo.Name, activeStatus)
-	if err != nil {
+	if err := corporationService.checkDuplicateName(&conflictErrors, registerInfo.Name, activeStatus); err != nil {
 		return corporationdto.CorporationCredentialResponse{}, err
 	}
-	if corporation != nil {
-		conflictErrors.Add(corporationService.constants.Field.Name, corporationService.constants.Tag.AlreadyExist)
-	}
-	corporation, err = corporationService.corporationRepository.FindCorporationByNationalID(corporationService.db, registerInfo.NationalID, activeStatus)
-	if err != nil {
+
+	if err := corporationService.checkDuplicateNationalID(&conflictErrors, registerInfo.NationalID, activeStatus); err != nil {
 		return corporationdto.CorporationCredentialResponse{}, err
 	}
-	if corporation != nil {
-		conflictErrors.Add(corporationService.constants.Field.NationalID, corporationService.constants.Tag.AlreadyExist)
-	}
-	corporation, err = corporationService.corporationRepository.FindCorporationByRegistrationNumber(corporationService.db, registerInfo.RegistrationNumber, activeStatus)
-	if err != nil {
+
+	if err := corporationService.checkDuplicateRegistrationNumber(&conflictErrors, registerInfo.RegistrationNumber, activeStatus); err != nil {
 		return corporationdto.CorporationCredentialResponse{}, err
 	}
-	if corporation != nil {
-		conflictErrors.Add(corporationService.constants.Field.RegistrationNumber, corporationService.constants.Tag.AlreadyExist)
-	}
+
 	if registerInfo.IBAN != "" {
-		corporation, err = corporationService.corporationRepository.FindCorporationByIBAN(corporationService.db, registerInfo.IBAN, activeStatus)
-		if err != nil {
+		if err := corporationService.checkDuplicateIBAN(&conflictErrors, registerInfo.IBAN, activeStatus); err != nil {
 			return corporationdto.CorporationCredentialResponse{}, err
 		}
-		if corporation != nil {
-			conflictErrors.Add(corporationService.constants.Field.IBAN, corporationService.constants.Tag.AlreadyExist)
-		}
 	}
+
 	if len(conflictErrors.Errors) > 0 {
 		return corporationdto.CorporationCredentialResponse{}, conflictErrors
 	}
 
-	corporation = &entity.Corporation{
+	corporation := &entity.Corporation{
 		Name:               registerInfo.Name,
 		RegistrationNumber: registerInfo.RegistrationNumber,
 		NationalID:         registerInfo.NationalID,
@@ -239,23 +279,30 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		Status:             enum.CorpStatusAwaitingApproval,
 	}
 
-	err = corporationService.corporationRepository.CreateCorporation(corporationService.db, corporation)
+	err := corporationService.db.WithTransaction(func(tx database.Database) error {
+		err := corporationService.corporationRepository.CreateCorporation(tx, corporation)
+		if err != nil {
+			return err
+		}
+
+		staff := &entity.CorporationStaff{
+			StaffID:       registerInfo.ApplicantID,
+			CorporationID: corporation.ID,
+			StaffType:     enum.StaffTypeManager,
+		}
+		err = corporationService.corporationRepository.CreateCorporationStaff(tx, staff)
+		if err != nil {
+			return err
+		}
+
+		if err := corporationService.addSignatories(registerInfo.Signatories, corporation.ID); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		return corporationdto.CorporationCredentialResponse{}, err
-	}
-
-	staff := &entity.CorporationStaff{
-		StaffID:       registerInfo.ApplicantID,
-		CorporationID: corporation.ID,
-		StaffType:     enum.StaffTypeManager,
-	}
-
-	err = corporationService.corporationRepository.CreateCorporationStaff(corporationService.db, staff)
-	if err != nil {
-		return corporationdto.CorporationCredentialResponse{}, err
-	}
-
-	if err := corporationService.addSignatories(registerInfo.Signatories, corporation.ID); err != nil {
 		return corporationdto.CorporationCredentialResponse{}, err
 	}
 
@@ -263,14 +310,18 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 }
 
 func (corporationService *CorporationService) replaceSignatories(corporationID uint, signatories []corporationdto.Signatory) error {
-	err := corporationService.corporationRepository.DeleteCorporationSignatories(corporationService.db, corporationID)
-	if err != nil {
-		return err
-	}
-	if err := corporationService.addSignatories(signatories, corporationID); err != nil {
-		return err
-	}
-	return nil
+	err := corporationService.db.WithTransaction(func(tx database.Database) error {
+		if err := corporationService.corporationRepository.DeleteCorporationSignatories(tx, corporationID); err != nil {
+			return err
+		}
+
+		if err := corporationService.addSignatories(signatories, corporationID); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return err
 }
 
 func (corporationService *CorporationService) UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest) error {
@@ -279,33 +330,33 @@ func (corporationService *CorporationService) UpdateRegister(updateRegisterInfo 
 		return err
 	}
 
-	ok, err := corporationService.userService.IsUserActive(updateRegisterInfo.ApplicantID)
-	if err != nil {
+	if err := corporationService.userService.IsUserActive(updateRegisterInfo.ApplicantID); err != nil {
 		return err
 	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: "",
-		}
-		return forbiddenError
-	}
+
 	err = corporationService.CheckApplicantAccess(updateRegisterInfo.CorporationID, updateRegisterInfo.ApplicantID)
 	if err != nil {
 		return err
 	}
 
-	corporationService.checkCorporationConflicts(corporation, updateRegisterInfo.Name, updateRegisterInfo.NationalID, updateRegisterInfo.RegistrationNumber, updateRegisterInfo.IBAN)
-
-	err = corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
-	if err != nil {
+	if err = corporationService.checkCorporationConflicts(corporation, updateRegisterInfo.Name, updateRegisterInfo.NationalID, updateRegisterInfo.RegistrationNumber, updateRegisterInfo.IBAN); err != nil {
 		return err
 	}
 
-	err = corporationService.replaceSignatories(updateRegisterInfo.CorporationID, updateRegisterInfo.Signatories)
-	if err != nil {
-		return err
-	}
+	err = corporationService.db.WithTransaction(func(tx database.Database) error {
+		err = corporationService.corporationRepository.UpdateCorporation(tx, corporation)
+		if err != nil {
+			return err
+		}
+
+		err = corporationService.replaceSignatories(updateRegisterInfo.CorporationID, updateRegisterInfo.Signatories)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	return nil
 }
 
@@ -313,45 +364,29 @@ func (corporationService *CorporationService) checkCorporationConflicts(corporat
 	activeStatus := []enum.CorporationStatus{enum.CorpStatusApproved, enum.CorpStatusAwaitingApproval}
 	var conflictErrors exception.ConflictErrors
 	if name != nil {
-		corporationModel, err := corporationService.corporationRepository.FindCorporationByName(corporationService.db, *name, activeStatus)
-		if err != nil {
+		if err := corporationService.checkDuplicateName(&conflictErrors, *name, activeStatus); err != nil {
 			return err
-		}
-		if corporationModel != nil {
-			conflictErrors.Add(corporationService.constants.Field.Name, corporationService.constants.Tag.AlreadyExist)
 		}
 		corporation.Name = *name
 	}
 
 	if nationalID != nil {
-		corporationModel, err := corporationService.corporationRepository.FindCorporationByNationalID(corporationService.db, *nationalID, activeStatus)
-		if err != nil {
+		if err := corporationService.checkDuplicateNationalID(&conflictErrors, *nationalID, activeStatus); err != nil {
 			return err
-		}
-		if corporationModel != nil {
-			conflictErrors.Add(corporationService.constants.Field.NationalID, corporationService.constants.Tag.AlreadyExist)
 		}
 		corporation.NationalID = *nationalID
 	}
 
 	if registrationNumber != nil {
-		corporationModel, err := corporationService.corporationRepository.FindCorporationByRegistrationNumber(corporationService.db, *registrationNumber, activeStatus)
-		if err != nil {
+		if err := corporationService.checkDuplicateRegistrationNumber(&conflictErrors, *registrationNumber, activeStatus); err != nil {
 			return err
-		}
-		if corporationModel != nil {
-			conflictErrors.Add(corporationService.constants.Field.RegistrationNumber, corporationService.constants.Tag.AlreadyExist)
 		}
 		corporation.RegistrationNumber = *registrationNumber
 	}
 
 	if iban != nil {
-		corporationModel, err := corporationService.corporationRepository.FindCorporationByIBAN(corporationService.db, *iban, activeStatus)
-		if err != nil {
+		if err := corporationService.checkDuplicateIBAN(&conflictErrors, *iban, activeStatus); err != nil {
 			return err
-		}
-		if corporationModel != nil {
-			conflictErrors.Add(corporationService.constants.Field.IBAN, corporationService.constants.Tag.AlreadyExist)
 		}
 		corporation.IBAN = *iban
 	}
@@ -368,52 +403,44 @@ func (corporationService *CorporationService) AddCertificateFiles(requestInfo co
 		return err
 	}
 
-	ok, err := corporationService.userService.IsUserActive(requestInfo.ApplicantID)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: "",
-		}
-		return forbiddenError
-	}
-	err = corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID)
-	if err != nil {
+	if err := corporationService.userService.IsUserActive(requestInfo.ApplicantID); err != nil {
 		return err
 	}
 
-	prevVatTaxPayerPath := corporation.VATTaxpayerCertificate
-	prevOfficialNewspaperPath := corporation.OfficialNewspaperAD
+	if err = corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID); err != nil {
+		return err
+	}
+
+	prevVatTaxPayerPath := ""
 
 	if requestInfo.VATTaxpayerCertificate != nil {
 		taxPayerPath := corporationService.constants.S3BucketPath.GetVATTaxpayerCertificatePath(corporation.ID, requestInfo.VATTaxpayerCertificate.Filename)
 		corporationService.s3Storage.UploadObject(enum.VATTaxpayerCertificate, taxPayerPath, requestInfo.VATTaxpayerCertificate)
+		prevVatTaxPayerPath = corporation.VATTaxpayerCertificate
 		corporation.VATTaxpayerCertificate = taxPayerPath
-		if prevVatTaxPayerPath != "" {
-			err := corporationService.s3Storage.DeleteObject(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
+	prevOfficialNewspaperPath := ""
 	if requestInfo.OfficialNewspaperAD != nil {
 		newspaperADPath := corporationService.constants.S3BucketPath.GetOfficialNewspaperADPath(corporation.ID, requestInfo.OfficialNewspaperAD.Filename)
 		corporationService.s3Storage.UploadObject(enum.OfficialNewspaperAD, newspaperADPath, requestInfo.OfficialNewspaperAD)
+		prevOfficialNewspaperPath = corporation.OfficialNewspaperAD
 		corporation.OfficialNewspaperAD = newspaperADPath
-		if prevOfficialNewspaperPath != "" {
-			err := corporationService.s3Storage.DeleteObject(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD)
-			if err != nil {
-				return err
-			}
-		}
 	}
+
 	err = corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
 	if err != nil {
 		return err
 	}
+
+	if prevVatTaxPayerPath != "" {
+		corporationService.s3Storage.DeleteObject(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate)
+	}
+
+	if prevOfficialNewspaperPath != "" {
+		corporationService.s3Storage.DeleteObject(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD)
+	}
+
 	return nil
 }
 
@@ -423,19 +450,11 @@ func (corporationService *CorporationService) AddContactInfo(contactInfo corpora
 		return err
 	}
 
-	ok, err := corporationService.userService.IsUserActive(contactInfo.ApplicantID)
-	if err != nil {
+	if err := corporationService.userService.IsUserActive(contactInfo.ApplicantID); err != nil {
 		return err
 	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: "",
-		}
-		return forbiddenError
-	}
-	err = corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
-	if err != nil {
+
+	if err = corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID); err != nil {
 		return err
 	}
 
@@ -473,17 +492,10 @@ func (corporationService *CorporationService) DeleteContactInfo(contactInfo corp
 		return err
 	}
 
-	ok, err := corporationService.userService.IsUserActive(contactInfo.ApplicantID)
-	if err != nil {
+	if err := corporationService.userService.IsUserActive(contactInfo.ApplicantID); err != nil {
 		return err
 	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: "",
-		}
-		return forbiddenError
-	}
+
 	err = corporationService.CheckApplicantAccess(contactInfo.CorporationID, contactInfo.ApplicantID)
 	if err != nil {
 		return err
@@ -570,12 +582,8 @@ func (corporationService *CorporationService) GetCorporationDetails(requestInfo 
 	if err != nil {
 		return corporationdto.CorporationPrivateInfoResponse{}, err
 	}
-	err = corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.UserID)
-	if err != nil {
-		return corporationdto.CorporationPrivateInfoResponse{}, err
-	}
-	err = corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.UserID)
-	if err != nil {
+
+	if err = corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.UserID); err != nil {
 		return corporationdto.CorporationPrivateInfoResponse{}, err
 	}
 
@@ -591,6 +599,7 @@ func (corporationService *CorporationService) getContactInfo(corporationID uint)
 	if err != nil {
 		return nil, err
 	}
+
 	response := make([]corporationdto.ContactInformationResponse, len(contactInfo))
 	for i, contact := range contactInfo {
 		contactType, err := corporationService.corporationRepository.FindContactTypeByID(corporationService.db, contact.TypeID)
@@ -614,6 +623,7 @@ func (corporationService *CorporationService) getCorporationSignatories(corporat
 	if err != nil {
 		return nil, err
 	}
+
 	response := make([]corporationdto.SignatoryResponse, len(signatories))
 	for i, signatory := range signatories {
 		response[i] = corporationdto.SignatoryResponse{
@@ -647,19 +657,11 @@ func (corporationService *CorporationService) AddAddress(addressInfo corporation
 		return err
 	}
 
-	ok, err := corporationService.userService.IsUserActive(addressInfo.ApplicantID)
-	if err != nil {
+	if err := corporationService.userService.IsUserActive(addressInfo.ApplicantID); err != nil {
 		return err
 	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: "",
-		}
-		return forbiddenError
-	}
-	err = corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID)
-	if err != nil {
+
+	if err = corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.ApplicantID); err != nil {
 		return err
 	}
 
@@ -670,28 +672,22 @@ func (corporationService *CorporationService) AddAddress(addressInfo corporation
 }
 
 func (corporationService *CorporationService) DeleteAddress(addressInfo corporationdto.DeleteAddressRequest) error {
-	_, err := corporationService.getCorporationByIDAndStatus(addressInfo.CorporationID, addressInfo.CorporationStatus)
-	if err != nil {
+	if _, err := corporationService.getCorporationByIDAndStatus(addressInfo.CorporationID, addressInfo.CorporationStatus); err != nil {
 		return err
 	}
 
-	ok, err := corporationService.userService.IsUserActive(addressInfo.UserID)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: "",
-		}
-		return forbiddenError
-	}
-	err = corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID)
-	if err != nil {
+	if err := corporationService.userService.IsUserActive(addressInfo.UserID); err != nil {
 		return err
 	}
 
-	corporationService.addressService.DeleteAddress(addressInfo.AddressID)
+	if err := corporationService.CheckApplicantAccess(addressInfo.CorporationID, addressInfo.UserID); err != nil {
+		return err
+	}
+
+	if err := corporationService.addressService.DeleteAddress(addressInfo.AddressID); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -701,44 +697,34 @@ func (corporationService *CorporationService) ChangeLogo(changeLogoRequest corpo
 		return err
 	}
 
-	ok, err := corporationService.userService.IsUserActive(changeLogoRequest.ApplicantID)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: "",
-		}
-		return forbiddenError
-	}
-	err = corporationService.CheckApplicantAccess(changeLogoRequest.CorporationID, changeLogoRequest.ApplicantID)
-	if err != nil {
+	if err = corporationService.CheckApplicantAccess(changeLogoRequest.CorporationID, changeLogoRequest.ApplicantID); err != nil {
 		return err
 	}
 
-	prevLogoPath := corporation.Logo
-
+	prevLogoPath := ""
 	if changeLogoRequest.Logo != nil {
 		newLogoPath := corporationService.constants.S3BucketPath.GetCorporationLogoPath(changeLogoRequest.CorporationID, changeLogoRequest.Logo.Filename)
 		corporationService.s3Storage.UploadObject(enum.LogoPic, newLogoPath, changeLogoRequest.Logo)
 		corporation.Logo = newLogoPath
+		prevLogoPath = corporation.Logo
+	}
+
+	err = corporationService.db.WithTransaction(func(tx database.Database) error {
+		err = corporationService.corporationRepository.UpdateCorporation(tx, corporation)
+		if err != nil {
+			return err
+		}
+
 		if prevLogoPath != "" {
-			err := corporationService.s3Storage.DeleteObject(enum.LogoPic, corporation.Logo)
-			if err != nil {
+			if err := corporationService.s3Storage.DeleteObject(enum.LogoPic, corporation.Logo); err != nil {
 				return err
 			}
 		}
-	}
-	err = corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
-func (corporationService *CorporationService) GetCorporationByIDAndStatus(corporationID uint, status enum.CorporationStatus) (*entity.Corporation, error) {
-	return corporationService.getCorporationByIDAndStatus(corporationID, status)
+		return nil
+	})
+
+	return err
 }
 
 func (corporationService *CorporationService) GetUserCorporations(userID uint) ([]corporationdto.CorporationCredentialResponse, error) {
@@ -799,14 +785,11 @@ func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo co
 }
 
 func (corporationService *CorporationService) GetCorporationByAdmin(corporationID uint) (corporationdto.CorporationPrivateInfoResponse, error) {
-	corporation, err := corporationService.corporationRepository.FindCorporationByID(corporationService.db, corporationID)
+	corporation, err := corporationService.getCorporationByID(corporationID)
 	if err != nil {
 		return corporationdto.CorporationPrivateInfoResponse{}, err
 	}
-	if corporation == nil {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		return corporationdto.CorporationPrivateInfoResponse{}, notFoundError
-	}
+
 	details, err := corporationService.getPrivateCorporationDetails(corporation)
 	if err != nil {
 		return corporationdto.CorporationPrivateInfoResponse{}, err
@@ -850,13 +833,9 @@ func (corporationService *CorporationService) GetCorporationReviewsByAdmin(corpo
 }
 
 func (corporationService *CorporationService) ApproveCorporationRegistration(request corporationdto.HandleCorporationActionRequest) error {
-	corporation, err := corporationService.corporationRepository.FindCorporationByID(corporationService.db, request.CorporationID)
+	corporation, err := corporationService.getCorporationByID(request.CorporationID)
 	if err != nil {
 		return err
-	}
-	if corporation == nil {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		return notFoundError
 	}
 
 	var conflictErrors exception.ConflictErrors
@@ -878,25 +857,27 @@ func (corporationService *CorporationService) ApproveCorporationRegistration(req
 		Reason:        request.Reason,
 		Notes:         request.Notes,
 	}
-	if err := corporationService.corporationRepository.CreateReview(corporationService.db, review); err != nil {
-		return err
-	}
 
-	corporation.Status = enum.CorpStatusApproved
-	if err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation); err != nil {
-		return err
-	}
-	return nil
+	err = corporationService.db.WithTransaction(func(tx database.Database) error {
+		if err := corporationService.corporationRepository.CreateReview(tx, review); err != nil {
+			return err
+		}
+
+		corporation.Status = enum.CorpStatusApproved
+		if err := corporationService.corporationRepository.UpdateCorporation(tx, corporation); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (corporationService *CorporationService) RejectCorporationRegistration(request corporationdto.HandleCorporationActionRequest) error {
-	corporation, err := corporationService.corporationRepository.FindCorporationByID(corporationService.db, request.CorporationID)
+	corporation, err := corporationService.getCorporationByID(request.CorporationID)
 	if err != nil {
 		return err
-	}
-	if corporation == nil {
-		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Corporation}
-		return notFoundError
 	}
 
 	if enum.ReviewAction(request.ActionID) == enum.ReviewActionApproved {
@@ -926,20 +907,26 @@ func (corporationService *CorporationService) RejectCorporationRegistration(requ
 		Reason:        request.Reason,
 		Notes:         request.Notes,
 	}
-	if err := corporationService.corporationRepository.CreateReview(corporationService.db, review); err != nil {
-		return err
-	}
 
-	var corpStatus enum.CorporationStatus
-	if enum.ReviewAction(request.ActionID) == enum.ReviewActionSuspended {
-		corpStatus = enum.CorpStatusSuspend
-	} else {
-		corpStatus = enum.CorpStatusRejected
-	}
+	err = corporationService.db.WithTransaction(func(tx database.Database) error {
+		if err := corporationService.corporationRepository.CreateReview(tx, review); err != nil {
+			return err
+		}
 
-	corporation.Status = corpStatus
-	if err := corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation); err != nil {
-		return err
-	}
-	return nil
+		var corpStatus enum.CorporationStatus
+		if enum.ReviewAction(request.ActionID) == enum.ReviewActionSuspended {
+			corpStatus = enum.CorpStatusSuspend
+		} else {
+			corpStatus = enum.CorpStatusRejected
+		}
+
+		corporation.Status = corpStatus
+		if err := corporationService.corporationRepository.UpdateCorporation(tx, corporation); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }

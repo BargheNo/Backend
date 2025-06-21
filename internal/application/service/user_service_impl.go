@@ -169,18 +169,15 @@ func (userService *UserService) enterNewEmail(firstName, lastName, email, emailS
 	return nil
 }
 
-func (userService *UserService) DoesUserExist(userID uint) error {
-	_, err := userService.GetUserByID(userID)
-	return err
-}
-
-func (userService *UserService) IsUserActive(userID uint) (bool, error) {
+func (userService *UserService) IsUserActive(userID uint) error {
 	user, err := userService.GetUserByID(userID)
 	if err != nil {
-		return false, err
+		return err
 	}
-	isActive := enum.UserStatusActive == user.Status
-	return isActive, nil
+	if user.Status == enum.UserStatusBlock {
+		return exception.NewBannedUserForbiddenError()
+	}
+	return nil
 }
 
 func (userService *UserService) GetUserByID(userID uint) (*entity.User, error) {
@@ -578,31 +575,43 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 	if profileInfo.FirstName != nil {
 		user.FirstName = *profileInfo.FirstName
 	}
+
 	if profileInfo.LastName != nil {
 		user.LastName = *profileInfo.LastName
 	}
+
 	if profileInfo.Email != nil && user.Email != *profileInfo.Email {
 		userService.enterNewEmail(user.FirstName, user.LastName, *profileInfo.Email, profileInfo.EmailSubject, profileInfo.TemplateFile)
 		user.Email = *profileInfo.Email
 		user.EmailVerified = false
 	}
+
 	if profileInfo.NationalCode != nil {
 		user.NationalCode = *profileInfo.NationalCode
 	}
+
+	oldProfilePicPath := ""
 	if profileInfo.ProfilePic != nil {
 		profilePicPath := userService.constants.S3BucketPath.GetUserProfilePath(profileInfo.UserID, profileInfo.ProfilePic.Filename)
 		userService.s3Storage.UploadObject(enum.ProfilePic, profilePicPath, profileInfo.ProfilePic)
-		err := userService.s3Storage.DeleteObject(enum.ProfilePic, user.ProfilePicPath)
-		if err != nil {
-			return err
-		}
+		oldProfilePicPath = user.ProfilePicPath
 		user.ProfilePicPath = profilePicPath
 	}
-	err = userService.userRepository.UpdateUser(userService.db, user)
-	if err != nil {
-		return err
-	}
-	return nil
+	err = userService.db.WithTransaction(func(tx database.Database) error {
+		if err := userService.userRepository.UpdateUser(tx, user); err != nil {
+			return err
+		}
+
+		if oldProfilePicPath != "" {
+			if err = userService.s3Storage.DeleteObject(enum.ProfilePic, oldProfilePicPath); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (userService *UserService) GetAllPermissions() ([]userdto.PermissionResponse, error) {

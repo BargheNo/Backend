@@ -83,7 +83,9 @@ func (paymentService *PaymentService) CreatePaymentTerms(paymentTermsRequest pay
 	}
 	if paymentTermsRequest.InstallmentPlan != nil {
 		paymentTermsRequest.InstallmentPlan.PaymentTermsID = terms.ID
-		paymentService.createInstallmentPlan(*paymentTermsRequest.InstallmentPlan)
+		if err := paymentService.createInstallmentPlan(*paymentTermsRequest.InstallmentPlan); err != nil {
+			return 0, err
+		}
 	}
 	return terms.ID, nil
 }

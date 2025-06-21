@@ -27,13 +27,23 @@ type EditPostRequest struct {
 	Status        uint
 }
 
-type GetPostsRequest struct {
-	UserID        uint
-	Statuses      []uint
+type GetPublicPostsRequest struct {
+	Offset int
+	Limit  int
+}
+
+type GetPublicCorporationPostsRequest struct {
 	CorporationID uint
 	Offset        int
 	Limit         int
-	UserType      enum.UserType
+}
+
+type GetCorporationPostsRequest struct {
+	UserID        uint
+	CorporationID uint
+	Status        uint
+	Offset        int
+	Limit         int
 }
 
 type DeletePostRequest struct {
@@ -57,11 +67,10 @@ type AccessPostMediaRequest struct {
 	UserType      enum.UserType
 }
 
-type GetPostRequest struct {
+type GetCorporationPostRequest struct {
 	UserID        uint
 	PostID        uint
 	CorporationID uint
-	UserType      enum.UserType
 }
 
 type LikePostRequest struct {

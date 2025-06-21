@@ -31,12 +31,11 @@ func (newsController *GeneralNewsController) GetNewsList(ctx *gin.Context) {
 	pagination := controller.GetPagination(ctx, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 
-	getNewsRequest := newsdto.GetNewsListRequest{
-		Statuses: []uint{1},
-		Offset:   offset,
-		Limit:    limit,
+	getNewsRequest := newsdto.GetPublicNewsListRequest{
+		Offset: offset,
+		Limit:  limit,
 	}
-	news, err := newsController.newsService.GetNewsList(getNewsRequest)
+	news, err := newsController.newsService.GetPublicNewsList(getNewsRequest)
 	if err != nil {
 		panic(err)
 	}
@@ -50,11 +49,7 @@ func (newsController *GeneralNewsController) GetNews(ctx *gin.Context) {
 	}
 	params := controller.Validated[getNewsParams](ctx)
 
-	getNewsRequest := newsdto.GetNewsRequest{
-		NewsID:   params.NewsID,
-		UserType: enum.UserTypeGuest,
-	}
-	news, err := newsController.newsService.GetNews(getNewsRequest)
+	news, err := newsController.newsService.GetPublicNews(params.NewsID)
 	if err != nil {
 		panic(err)
 	}

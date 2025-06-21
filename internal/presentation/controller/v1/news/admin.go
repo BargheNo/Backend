@@ -29,6 +29,11 @@ func NewAdminNewsController(
 	}
 }
 
+func (newsController *AdminNewsController) GetAllNewsStatuses(ctx *gin.Context) {
+	statuses := newsController.newsService.GetAllNewsStatuses()
+	controller.Response(ctx, 200, "", statuses)
+}
+
 func (newsController *AdminNewsController) CreateDraftNews(ctx *gin.Context) {
 	type createNewsParams struct {
 		Title       string                `json:"title" validate:"required"`
@@ -128,25 +133,20 @@ func (newsController *AdminNewsController) UnpublishNews(ctx *gin.Context) {
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (newsController *AdminNewsController) GetAllNewsStatuses(ctx *gin.Context) {
-	statuses := newsController.newsService.GetAllNewsStatuses()
-	controller.Response(ctx, 200, "", statuses)
-}
-
 func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 	type getNewsParams struct {
-		Statuses []uint `form:"statuses" validate:"required"`
+		Status uint `form:"status" validate:"required"`
 	}
 	params := controller.Validated[getNewsParams](ctx)
 	pagination := controller.GetPagination(ctx, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 
-	getNewsRequest := newsdto.GetNewsListRequest{
-		Statuses: params.Statuses,
-		Offset:   offset,
-		Limit:    limit,
+	getNewsRequest := newsdto.GetAdminNewsListRequest{
+		Status: params.Status,
+		Offset: offset,
+		Limit:  limit,
 	}
-	news, err := newsController.newsService.GetNewsList(getNewsRequest)
+	news, err := newsController.newsService.GetAdminNewsList(getNewsRequest)
 	if err != nil {
 		panic(err)
 	}
@@ -160,11 +160,7 @@ func (newsController *AdminNewsController) GetNews(ctx *gin.Context) {
 	}
 	params := controller.Validated[getNewsParams](ctx)
 
-	getNewsRequest := newsdto.GetNewsRequest{
-		NewsID:   params.NewsID,
-		UserType: enum.UserTypeAdmin,
-	}
-	news, err := newsController.newsService.GetNews(getNewsRequest)
+	news, err := newsController.newsService.GetAdminNews(params.NewsID)
 	if err != nil {
 		panic(err)
 	}

@@ -7,7 +7,7 @@ import (
 type CorporationService interface {
 	GetCorporationStatuses() []corporationdto.GetStatusesResponse
 	DoesCorporationExist(corporationID uint) error
-	ISCorporationApproved(corporationID uint) (bool, error)
+	ISCorporationApproved(corporationID uint) error
 	GetCorporationCredentials(corporationID uint) (corporationdto.CorporationCredentialResponse, error)
 	CheckApplicantAccess(corporationID, applicantID uint) error
 	Register(registerInfo corporationdto.RegisterRequest) (corporationdto.CorporationCredentialResponse, error)

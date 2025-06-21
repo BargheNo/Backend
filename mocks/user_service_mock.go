@@ -15,14 +15,9 @@ func NewUserServiceMock() *UserServiceMock {
 	return &UserServiceMock{}
 }
 
-func (s *UserServiceMock) DoesUserExist(userID uint) error {
+func (s *UserServiceMock) IsUserActive(userID uint) error {
 	args := s.Called(userID)
 	return args.Error(0)
-}
-
-func (s *UserServiceMock) IsUserActive(userID uint) (bool, error) {
-	args := s.Called(userID)
-	return args.Bool(0), args.Error(1)
 }
 
 func (s *UserServiceMock) GetUserByID(userID uint) (*entity.User, error) {

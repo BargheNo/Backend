@@ -226,30 +226,6 @@ func (s *UserServiceTestSuite) TestEnterNewEmail() {
 
 }
 
-func (s *UserServiceTestSuite) TestDoesUserExist() {
-	s.Run("success - User exists", func() {
-		userID := uint(1)
-		s.userRepository.On("FindUserByID", s.db, userID).Return(&entity.User{}, true).Once()
-
-		s.userService.DoesUserExist(userID)
-
-		s.userRepository.AssertExpectations(s.T())
-	})
-
-	s.Run("Error - User does not exist", func() {
-		userID := uint(1)
-		var nilUser *entity.User = nil
-
-		s.userRepository.On("FindUserByID", s.db, userID).Return(nilUser, false).Once()
-
-		s.Panics(func() {
-			s.userService.DoesUserExist(userID)
-		})
-
-		s.userRepository.AssertExpectations(s.T())
-	})
-}
-
 func (s *UserServiceTestSuite) TestIsUserActive() {
 	s.Run("success - User is active", func() {
 		userID := uint(1)

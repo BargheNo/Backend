@@ -36,8 +36,8 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 		Description string                `form:"description" validate:"required"`
 		Image       *multipart.FileHeader `form:"image"`
 	}
-
 	params := controller.Validated[createTicketParams](ctx)
+	// TODO: what? why? :)
 	subject, err := strconv.Atoi(params.Subject)
 	if err != nil {
 		subject = 2

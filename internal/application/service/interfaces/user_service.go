@@ -7,8 +7,7 @@ import (
 )
 
 type UserService interface {
-	DoesUserExist(userID uint) error
-	IsUserActive(userID uint) (bool, error)
+	IsUserActive(userID uint) error
 	GetUserByID(userID uint) (*entity.User, error)
 	GetUserCredential(userID uint) (userdto.CredentialResponse, error)
 	GetUsersByPermission(permissionTypes []enum.PermissionType) ([]*entity.User, error)

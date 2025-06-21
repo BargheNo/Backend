@@ -43,27 +43,67 @@ func NewMaintenanceService(
 	}
 }
 
-func (maintenanceService *MaintenanceService) ValidateCustomerRecord(recordID, userID uint) error {
-	maintenanceRecord, err := maintenanceService.maintenanceRepository.FindRecordByID(maintenanceService.db, recordID)
+func (maintenanceService *MaintenanceService) getRequest(requestID uint) (*entity.MaintenanceRequest, error) {
+	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, requestID)
 	if err != nil {
-		return err
-	}
-	if maintenanceRecord == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
-		return notFoundError
-	}
-
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceRecord.RequestID)
-	if err != nil {
-		return err
+		return nil, err
 	}
 	if maintenanceRequest == nil {
 		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return notFoundError
+		return nil, notFoundError
+	}
+	return maintenanceRequest, nil
+}
+
+func (maintenanceService *MaintenanceService) getCorporationRequest(requestID, corporationID uint) (*entity.MaintenanceRequest, error) {
+	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
+	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, requestID, corporationID, allowedStatuses)
+	if err != nil {
+		return nil, err
+	}
+	if maintenanceRequest == nil {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
+		return nil, notFoundError
+	}
+	return maintenanceRequest, nil
+}
+
+func (maintenanceService *MaintenanceService) getRecord(recordID uint) (*entity.MaintenanceRecord, error) {
+	maintenanceRecord, err := maintenanceService.maintenanceRepository.FindRecordByID(maintenanceService.db, recordID)
+	if err != nil {
+		return nil, err
+	}
+	if maintenanceRecord == nil {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
+		return nil, notFoundError
+	}
+	return maintenanceRecord, nil
+}
+
+func (maintenanceService *MaintenanceService) getRequestRecord(requestID uint) (*entity.MaintenanceRecord, error) {
+	maintenanceRecord, err := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, requestID)
+	if err != nil {
+		return nil, err
+	}
+	if maintenanceRecord == nil {
+		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
+		return nil, notFoundError
+	}
+	return maintenanceRecord, nil
+}
+
+func (maintenanceService *MaintenanceService) ValidateCustomerRecord(recordID, userID uint) error {
+	maintenanceRecord, err := maintenanceService.getRecord(recordID)
+	if err != nil {
+		return err
 	}
 
-	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, userID)
+	maintenanceRequest, err := maintenanceService.getRequest(maintenanceRecord.RequestID)
 	if err != nil {
+		return err
+	}
+
+	if _, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, userID); err != nil {
 		return err
 	}
 
@@ -72,22 +112,14 @@ func (maintenanceService *MaintenanceService) ValidateCustomerRecord(recordID, u
 
 func (maintenanceService *MaintenanceService) GetRequestByAdmin(recordID uint) (maintenancedto.AdminMaintenanceRequestResponse, error) {
 	var response maintenancedto.AdminMaintenanceRequestResponse
-	maintenanceRecord, err := maintenanceService.maintenanceRepository.FindRecordByID(maintenanceService.db, recordID)
+	maintenanceRecord, err := maintenanceService.getRecord(recordID)
 	if err != nil {
 		return response, err
-	}
-	if maintenanceRecord == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
-		return response, notFoundError
 	}
 
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceRecord.RequestID)
+	maintenanceRequest, err := maintenanceService.getRequest(maintenanceRecord.RequestID)
 	if err != nil {
 		return response, err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return response, notFoundError
 	}
 
 	panel, err := maintenanceService.installationService.GetPanelByAdmin(maintenanceRequest.PanelID)
@@ -162,24 +194,15 @@ func (maintenanceService *MaintenanceService) GetMaintenanceRequestStatuses(agen
 }
 
 func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request maintenancedto.CreateMaintenanceRequest) error {
-	if exist, err := maintenanceService.userService.IsUserActive(request.OwnerID); !exist {
-		if err != nil {
-			return err
-		}
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: maintenanceService.constants.Field.MaintenanceRequest,
-		}
-		return forbiddenError
-	}
-
-	err := maintenanceService.corporationService.DoesCorporationExist(request.CorporationID)
-	if err != nil {
+	if err := maintenanceService.userService.IsUserActive(request.OwnerID); err != nil {
 		return err
 	}
 
-	_, err = maintenanceService.installationService.ValidatePanelOwnership(request.PanelID, request.OwnerID)
-	if err != nil {
+	if err := maintenanceService.corporationService.DoesCorporationExist(request.CorporationID); err != nil {
+		return err
+	}
+
+	if _, err := maintenanceService.installationService.ValidatePanelOwnership(request.PanelID, request.OwnerID); err != nil {
 		return err
 	}
 
@@ -259,8 +282,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequests(listInfo maintenancedto.CustomerPanelMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, error) {
-	_, err := maintenanceService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID)
-	if err != nil {
+	if _, err := maintenanceService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID); err != nil {
 		return nil, err
 	}
 
@@ -306,13 +328,9 @@ func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequest
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) (maintenancedto.CustomerMaintenanceRequestResponse, error) {
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
+	maintenanceRequest, err := maintenanceService.getRequest(maintenanceInfo.RequestID)
 	if err != nil {
 		return maintenancedto.CustomerMaintenanceRequestResponse{}, err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return maintenancedto.CustomerMaintenanceRequestResponse{}, notFoundError
 	}
 
 	panelInfoRequest := installationdto.GetOwnerRequest{
@@ -350,13 +368,9 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequest(main
 }
 
 func (maintenanceService *MaintenanceService) getCustomerMaintenanceRecord(requestID, panelID uint) (maintenancedto.CustomerMaintenanceRecordResponse, error) {
-	record, err := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, requestID)
+	record, err := maintenanceService.getRequestRecord(requestID)
 	if err != nil {
 		return maintenancedto.CustomerMaintenanceRecordResponse{}, err
-	}
-	if record == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
-		return maintenancedto.CustomerMaintenanceRecordResponse{}, notFoundError
 	}
 
 	violation, err := maintenanceService.guaranteeService.GetCustomerPanelGuaranteeViolation(panelID)
@@ -377,17 +391,12 @@ func (maintenanceService *MaintenanceService) getCustomerMaintenanceRecord(reque
 }
 
 func (maintenanceService *MaintenanceService) UpdateMaintenanceRequest(updateRequest maintenancedto.UpdateCustomerRequest) error {
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, updateRequest.RequestID)
+	maintenanceRequest, err := maintenanceService.getRequest(updateRequest.RequestID)
 	if err != nil {
 		return err
 	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return notFoundError
-	}
 
-	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, updateRequest.OwnerID)
-	if err != nil {
+	if _, err := maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, updateRequest.OwnerID); err != nil {
 		return err
 	}
 
@@ -421,21 +430,16 @@ func (maintenanceService *MaintenanceService) UpdateMaintenanceRequest(updateReq
 
 	}
 
-	err = maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest)
-	if err != nil {
+	if err = maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (maintenanceService *MaintenanceService) CancelMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) error {
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
+	maintenanceRequest, err := maintenanceService.getRequest(maintenanceInfo.RequestID)
 	if err != nil {
 		return err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return notFoundError
 	}
 
 	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID)
@@ -462,13 +466,9 @@ func (maintenanceService *MaintenanceService) CancelMaintenanceRequest(maintenan
 }
 
 func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) error {
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindRequestByID(maintenanceService.db, maintenanceInfo.RequestID)
+	maintenanceRequest, err := maintenanceService.getRequest(maintenanceInfo.RequestID)
 	if err != nil {
 		return err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return notFoundError
 	}
 
 	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID)
@@ -476,13 +476,9 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 		return err
 	}
 
-	record, err := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, maintenanceInfo.RequestID)
+	record, err := maintenanceService.getRequestRecord(maintenanceInfo.RequestID)
 	if err != nil {
 		return err
-	}
-	if record == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
-		return notFoundError
 	}
 
 	if record.IsUserApproved {
@@ -493,8 +489,7 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 
 	record.IsUserApproved = true
 
-	err = maintenanceService.maintenanceRepository.UpdateMaintenanceRecord(maintenanceService.db, record)
-	if err != nil {
+	if err = maintenanceService.maintenanceRepository.UpdateMaintenanceRecord(maintenanceService.db, record); err != nil {
 		return err
 	}
 	return nil
@@ -543,19 +538,13 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 }
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) (maintenancedto.CorporationMaintenanceResponse, error) {
-	err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
-	if err != nil {
+	if err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID); err != nil {
 		return maintenancedto.CorporationMaintenanceResponse{}, err
 	}
 
-	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
+	maintenanceRequest, err := maintenanceService.getCorporationRequest(maintenanceInfo.RequestID, maintenanceInfo.CorporationID)
 	if err != nil {
 		return maintenancedto.CorporationMaintenanceResponse{}, err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return maintenancedto.CorporationMaintenanceResponse{}, notFoundError
 	}
 
 	panelInfoRequest := installationdto.CorporationPanelRequest{
@@ -572,6 +561,7 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(m
 	if err != nil {
 		return maintenancedto.CorporationMaintenanceResponse{}, err
 	}
+	
 	response := maintenancedto.CorporationMaintenanceResponse{
 		ID:                   maintenanceRequest.ID,
 		CreatedAt:            maintenanceRequest.CreatedAt,
@@ -587,13 +577,9 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(m
 }
 
 func (maintenanceService *MaintenanceService) getCorporationMaintenanceRecord(requestID, panelID uint) (maintenancedto.CorporationMaintenanceRecordResponse, error) {
-	record, err := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, requestID)
+	record, err := maintenanceService.getRequestRecord(requestID)
 	if err != nil {
 		return maintenancedto.CorporationMaintenanceRecordResponse{}, err
-	}
-	if record == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
-		return maintenancedto.CorporationMaintenanceRecordResponse{}, notFoundError
 	}
 
 	operator, err := maintenanceService.userService.GetUserCredential(record.OperatorID)
@@ -620,19 +606,13 @@ func (maintenanceService *MaintenanceService) getCorporationMaintenanceRecord(re
 
 // TODO: CHECKED COULD BE BETTER add timer
 func (maintenanceService *MaintenanceService) AcceptMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) error {
-	err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
-	if err != nil {
+	if err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID); err != nil {
 		return err
 	}
 
-	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
+	maintenanceRequest, err := maintenanceService.getCorporationRequest(maintenanceInfo.RequestID, maintenanceInfo.CorporationID)
 	if err != nil {
 		return err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return notFoundError
 	}
 
 	var conflictErrors exception.ConflictErrors
@@ -654,19 +634,13 @@ func (maintenanceService *MaintenanceService) AcceptMaintenanceRequest(maintenan
 
 // TODO: CHECKED COULD BE BETTER add reason
 func (maintenanceService *MaintenanceService) RejectMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) error {
-	err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID)
-	if err != nil {
+	if err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID); err != nil {
 		return err
 	}
 
-	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, maintenanceInfo.RequestID, maintenanceInfo.CorporationID, allowedStatuses)
+	maintenanceRequest, err := maintenanceService.getCorporationRequest(maintenanceInfo.RequestID, maintenanceInfo.CorporationID)
 	if err != nil {
 		return err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return notFoundError
 	}
 
 	var conflictErrors exception.ConflictErrors
@@ -687,19 +661,13 @@ func (maintenanceService *MaintenanceService) RejectMaintenanceRequest(maintenan
 }
 
 func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo maintenancedto.CreateMaintenanceRecordRequest) error {
-	err := maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
-	if err != nil {
+	if err := maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID); err != nil {
 		return err
 	}
 
-	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, recordInfo.RequestID, recordInfo.CorporationID, allowedStatuses)
+	maintenanceRequest, err := maintenanceService.getCorporationRequest(recordInfo.RequestID, recordInfo.CorporationID)
 	if err != nil {
 		return err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return notFoundError
 	}
 
 	record, err := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, recordInfo.RequestID)
@@ -712,75 +680,63 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo
 		return conflictErrors
 	}
 
-	var guaranteeViolationID *uint = nil
-	if recordInfo.GuaranteeViolation != nil {
-		recordInfo.GuaranteeViolation.PanelID = maintenanceRequest.PanelID
-		request := installationdto.CreateViolatePanelGuaranteeRequest{
-			CorporationID:      recordInfo.CorporationID,
-			OperatorID:         recordInfo.OperatorID,
-			PanelID:            maintenanceRequest.PanelID,
-			GuaranteeViolation: *recordInfo.GuaranteeViolation,
+	err = maintenanceService.db.WithTransaction(func(tx database.Database) error {
+		var guaranteeViolationID *uint = nil
+		if recordInfo.GuaranteeViolation != nil {
+			recordInfo.GuaranteeViolation.PanelID = maintenanceRequest.PanelID
+			request := installationdto.CreateViolatePanelGuaranteeRequest{
+				CorporationID:      recordInfo.CorporationID,
+				OperatorID:         recordInfo.OperatorID,
+				PanelID:            maintenanceRequest.PanelID,
+				GuaranteeViolation: *recordInfo.GuaranteeViolation,
+			}
+			temp, err := maintenanceService.installationService.ViolatePanelGuaranteeStatus(request)
+			if err != nil {
+				return err
+			}
+			guaranteeViolationID = &temp
 		}
-		temp, err := maintenanceService.installationService.ViolatePanelGuaranteeStatus(request)
-		if err != nil {
+
+		record = &entity.MaintenanceRecord{
+			OperatorID:           recordInfo.OperatorID,
+			RequestID:            recordInfo.RequestID,
+			IsUserApproved:       false,
+			Title:                recordInfo.Title,
+			Details:              recordInfo.Details,
+			GuaranteeViolationID: guaranteeViolationID,
+		}
+		if err := maintenanceService.maintenanceRepository.CreateMaintenanceRecord(tx, record); err != nil {
 			return err
 		}
-		guaranteeViolationID = &temp
-	}
 
-	record = &entity.MaintenanceRecord{
-		OperatorID:           recordInfo.OperatorID,
-		RequestID:            recordInfo.RequestID,
-		IsUserApproved:       false,
-		Title:                recordInfo.Title,
-		Details:              recordInfo.Details,
-		GuaranteeViolationID: guaranteeViolationID,
-	}
-	if err := maintenanceService.maintenanceRepository.CreateMaintenanceRecord(maintenanceService.db, record); err != nil {
-		return err
-	}
-
-	maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
-	if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest); err != nil {
-		return err
-	}
-	return nil
+		maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
+		if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(tx, maintenanceRequest); err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
 }
 
 func (maintenanceService *MaintenanceService) UpdateMaintenanceRecord(recordInfo maintenancedto.UpdateMaintenanceRecordRequest) error {
-	err := maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID)
+	if err := maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID); err != nil {
+		return err
+	}
+
+	maintenanceRequest, err := maintenanceService.getCorporationRequest(recordInfo.RequestID, recordInfo.CorporationID)
 	if err != nil {
 		return err
 	}
 
-	allowedStatuses := enum.GetAllowedMaintenanceRequestStatuses(enum.AgentTypeCorporation)
-	maintenanceRequest, err := maintenanceService.maintenanceRepository.FindCorporationRequestByStatus(maintenanceService.db, recordInfo.RequestID, recordInfo.CorporationID, allowedStatuses)
+	maintenanceRecord, err := maintenanceService.getRequestRecord(recordInfo.RequestID)
 	if err != nil {
 		return err
-	}
-	if maintenanceRequest == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRequest}
-		return notFoundError
-	}
-
-	maintenanceRecord, err := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, recordInfo.RequestID)
-	if err != nil {
-		return err
-	}
-	if maintenanceRecord == nil {
-		notFoundError := exception.NotFoundError{Item: maintenanceService.constants.Field.MaintenanceRecord}
-		return notFoundError
 	}
 
 	if maintenanceRecord.IsUserApproved {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRecord, maintenanceService.constants.Tag.NotActive)
 		return conflictErrors
-	}
-
-	if recordInfo.GuaranteeViolation != nil {
-		recordInfo.GuaranteeViolation.PanelID = maintenanceRequest.PanelID
-		maintenanceService.guaranteeService.UpdateGuaranteeViolation(*recordInfo.GuaranteeViolation)
 	}
 
 	if recordInfo.Title != nil {
@@ -790,8 +746,18 @@ func (maintenanceService *MaintenanceService) UpdateMaintenanceRecord(recordInfo
 		maintenanceRecord.Details = *recordInfo.Details
 	}
 
-	if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRecord(maintenanceService.db, maintenanceRecord); err != nil {
-		return err
-	}
-	return nil
+	err = maintenanceService.db.WithTransaction(func(tx database.Database) error {
+		if recordInfo.GuaranteeViolation != nil {
+			recordInfo.GuaranteeViolation.PanelID = maintenanceRequest.PanelID
+			if err := maintenanceService.guaranteeService.UpdateGuaranteeViolation(*recordInfo.GuaranteeViolation); err != nil {
+				return err
+			}
+		}
+
+		if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRecord(tx, maintenanceRecord); err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
 }

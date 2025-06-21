@@ -5,6 +5,7 @@ type NewsStatus uint
 const (
 	NewsStatusActive NewsStatus = iota + 1
 	NewsStatusDraft
+	NewsStatusAll
 )
 
 func (status NewsStatus) String() string {
@@ -13,6 +14,8 @@ func (status NewsStatus) String() string {
 		return "منتشر شده"
 	case NewsStatusDraft:
 		return "پیش نویس"
+	case NewsStatusAll:
+		return "همه"
 	}
 	return ""
 }
@@ -21,5 +24,6 @@ func GetAllNewsStatus() []NewsStatus {
 	return []NewsStatus{
 		NewsStatusActive,
 		NewsStatusDraft,
+		NewsStatusAll,
 	}
 }
