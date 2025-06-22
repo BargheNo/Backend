@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"time"
@@ -6,31 +6,31 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type CorporationService struct {
 	constants             *bootstrap.Constants
-	userService           service.UserService
-	addressService        service.AddressService
+	userService           port.UserService
+	addressService        port.AddressService
 	s3Storage             s3.S3Storage
-	corporationRepository repository.CorporationRepository
+	corporationRepository postgres.CorporationRepository
 	db                    database.Database
 }
 
 func NewCorporationService(
 	constants *bootstrap.Constants,
-	userService service.UserService,
-	addressService service.AddressService,
+	userService port.UserService,
+	addressService port.AddressService,
 	s3Storage s3.S3Storage,
-	corporationRepository repository.CorporationRepository,
+	corporationRepository postgres.CorporationRepository,
 	db database.Database,
 ) *CorporationService {
 	return &CorporationService{
@@ -765,8 +765,8 @@ func (corporationService *CorporationService) GetAvailableCorporations() ([]corp
 func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, error) {
 	allowedStatuses := corporationService.mapStatusIDToAllowedStatuses(listInfo.Status)
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, sortingModifier, paginationModifier)
 	if err != nil {
@@ -810,7 +810,7 @@ func (corporationService *CorporationService) GetReviewActions() []corporationdt
 }
 
 func (corporationService *CorporationService) GetCorporationReviewsByAdmin(corporationID uint) ([]corporationdto.GetAdminCorporationReview, error) {
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 	reviews, err := corporationService.corporationRepository.FindCorporationReviews(corporationService.db, corporationID, sortingModifier)
 	if err != nil {
 		return nil, err

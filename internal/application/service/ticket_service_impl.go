@@ -1,32 +1,32 @@
-package serviceimpl
+package service
 
 import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type TicketService struct {
 	constants        *bootstrap.Constants
-	ticketRepository repository.TicketRepository
-	userService      service.UserService
+	userService      port.UserService
+	ticketRepository postgres.TicketRepository
 	s3Storage        s3.S3Storage
 	db               database.Database
 }
 
 func NewTicketService(
 	constants *bootstrap.Constants,
-	ticketRepository repository.TicketRepository,
-	userService service.UserService,
+	ticketRepository postgres.TicketRepository,
+	userService port.UserService,
 	s3Storage s3.S3Storage,
 	db database.Database,
 ) *TicketService {
@@ -82,8 +82,8 @@ func (ticketService *TicketService) CreateCustomerTicket(requestInfo ticketdto.C
 }
 
 func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	tickets, err := ticketService.ticketRepository.GetCustomerTickets(ticketService.db, requestInfo.OwnerID, paginationModifier, sortingModifier)
 	if err != nil {
@@ -162,8 +162,8 @@ func (ticketService *TicketService) GetCustomerTicketComments(requestInfo ticket
 		return nil, forbiddenError
 	}
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	comments, err := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID, paginationModifier, sortingModifier)
 	if err != nil {
@@ -212,8 +212,8 @@ func (ticketService *TicketService) CreateAdminTicketComment(requestInfo ticketd
 }
 
 func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	tickets, err := ticketService.ticketRepository.GetTickets(ticketService.db, paginationModifier, sortingModifier)
 	if err != nil {
@@ -252,8 +252,8 @@ func (ticketService *TicketService) GetAdminTicketComments(requestInfo ticketdto
 		return nil, err
 	}
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	comments, err := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID, paginationModifier, sortingModifier)
 	if err != nil {

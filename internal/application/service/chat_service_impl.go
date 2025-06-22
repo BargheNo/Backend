@@ -1,30 +1,31 @@
-package serviceimpl
+package service
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type ChatService struct {
 	constants          *bootstrap.Constants
-	userService        service.UserService
-	corporationService service.CorporationService
-	chatRepository     repository.ChatRepository
+	userService        port.UserService
+	corporationService port.CorporationService
+	chatRepository     postgres.ChatRepository
 	db                 database.Database
 }
 
 func NewChatService(
 	constants *bootstrap.Constants,
-	userService service.UserService,
-	corporationService service.CorporationService,
-	chatRepository repository.ChatRepository,
+	userService port.UserService,
+	corporationService port.CorporationService,
+	chatRepository postgres.ChatRepository,
 	db database.Database,
 ) *ChatService {
 	return &ChatService{
@@ -251,8 +252,8 @@ func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRe
 		return nil, notFoundError
 	}
 	chatService.validateRoomParticipantAccess(request.UserID, room.CustomerID, room.CorporationID)
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 	messages, err := chatService.chatRepository.GetRoomMessages(chatService.db, request.RoomID, paginationModifier, sortingModifier)
 	if err != nil {
 		return nil, err

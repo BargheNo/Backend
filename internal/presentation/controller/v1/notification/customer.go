@@ -3,7 +3,7 @@ package notification
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	notificationdto "github.com/BargheNo/Backend/internal/application/dto/notification"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -13,9 +13,9 @@ type CustomerNotificationController struct {
 	constants           *bootstrap.Constants
 	websocketSetting    *bootstrap.WebsocketSetting
 	pagination          *bootstrap.Pagination
-	notificationService service.NotificationService
-	jwtService          service.JWTService
-	userService         service.UserService
+	notificationService port.NotificationService
+	jwtService          port.JWTService
+	userService         port.UserService
 	hub                 *websocket.Hub
 }
 
@@ -23,9 +23,9 @@ func NewCustomerNotificationController(
 	constants *bootstrap.Constants,
 	websocketSetting *bootstrap.WebsocketSetting,
 	pagination *bootstrap.Pagination,
-	notificationService service.NotificationService,
-	jwtService service.JWTService,
-	userService service.UserService,
+	notificationService port.NotificationService,
+	jwtService port.JWTService,
+	userService port.UserService,
 	hub *websocket.Hub,
 ) *CustomerNotificationController {
 	return &CustomerNotificationController{

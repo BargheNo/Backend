@@ -1,4 +1,4 @@
-package metricsimpl
+package metrics
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"

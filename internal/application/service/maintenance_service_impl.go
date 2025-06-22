@@ -1,35 +1,35 @@
-package serviceimpl
+package service
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	maintenancedto "github.com/BargheNo/Backend/internal/application/dto/maintenance"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type MaintenanceService struct {
 	constants             *bootstrap.Constants
-	userService           service.UserService
-	installationService   service.InstallationService
-	corporationService    service.CorporationService
-	guaranteeService      service.GuaranteeService
-	maintenanceRepository repository.MaintenanceRepository
+	userService           port.UserService
+	installationService   port.InstallationService
+	corporationService    port.CorporationService
+	guaranteeService      port.GuaranteeService
+	maintenanceRepository postgres.MaintenanceRepository
 	db                    database.Database
 }
 
 func NewMaintenanceService(
 	constants *bootstrap.Constants,
-	userService service.UserService,
-	installationService service.InstallationService,
-	corporationService service.CorporationService,
-	guaranteeService service.GuaranteeService,
-	maintenanceRepository repository.MaintenanceRepository,
+	userService port.UserService,
+	installationService port.InstallationService,
+	corporationService port.CorporationService,
+	guaranteeService port.GuaranteeService,
+	maintenanceRepository postgres.MaintenanceRepository,
 	db database.Database,
 ) *MaintenanceService {
 	return &MaintenanceService{
@@ -242,8 +242,8 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, error) {
 	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByCustomerID(maintenanceService.db, listInfo.OwnerID, allowedStatus, paginationModifier, sortingModifier)
 	if err != nil {
@@ -288,8 +288,8 @@ func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequest
 
 	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByPanelIDAndStatus(maintenanceService.db, listInfo.PanelID, allowedStatus, paginationModifier, sortingModifier)
 	if err != nil {
@@ -503,8 +503,8 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 
 	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCorporation)
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatus(maintenanceService.db, listInfo.CorporationID, allowedStatus, paginationModifier, sortingModifier)
 	if err != nil {
@@ -561,7 +561,7 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(m
 	if err != nil {
 		return maintenancedto.CorporationMaintenanceResponse{}, err
 	}
-	
+
 	response := maintenancedto.CorporationMaintenanceResponse{
 		ID:                   maintenanceRequest.ID,
 		CreatedAt:            maintenanceRequest.CreatedAt,

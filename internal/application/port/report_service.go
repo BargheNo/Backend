@@ -1,4 +1,4 @@
-package service
+package port
 
 import (
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"

@@ -1,4 +1,4 @@
-package service
+package port
 
 import (
 	notificationdto "github.com/BargheNo/Backend/internal/application/dto/notification"

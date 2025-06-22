@@ -1,4 +1,4 @@
-package service
+package port
 
 import "github.com/golang-jwt/jwt/v5"
 

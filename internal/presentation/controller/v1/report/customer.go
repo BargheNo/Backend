@@ -3,19 +3,19 @@ package report
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type CustomerReportController struct {
 	constants     *bootstrap.Constants
-	reportService service.ReportService
+	reportService port.ReportService
 }
 
 func NewCustomerReportController(
 	constants *bootstrap.Constants,
-	reportService service.ReportService,
+	reportService port.ReportService,
 ) *CustomerReportController {
 	return &CustomerReportController{
 		constants:     constants,

@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"encoding/json"
@@ -10,37 +10,37 @@ import (
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type BidService struct {
 	constants           *bootstrap.Constants
-	installationService service.InstallationService
-	userService         service.UserService
-	corporationService  service.CorporationService
-	paymentService      service.PaymentService
-	guaranteeService    service.GuaranteeService
+	installationService port.InstallationService
+	userService         port.UserService
+	corporationService  port.CorporationService
+	paymentService      port.PaymentService
+	guaranteeService    port.GuaranteeService
 	rabbitMQ            message.Broker
-	bidRepository       repository.BidRepository
+	bidRepository       postgres.BidRepository
 	db                  database.Database
 }
 
 type BidServiceDeps struct {
 	Constants           *bootstrap.Constants
-	InstallationService service.InstallationService
-	UserService         service.UserService
-	CorporationService  service.CorporationService
-	PaymentService      service.PaymentService
-	GuaranteeService    service.GuaranteeService
+	InstallationService port.InstallationService
+	UserService         port.UserService
+	CorporationService  port.CorporationService
+	PaymentService      port.PaymentService
+	GuaranteeService    port.GuaranteeService
 	RabbitMQ            message.Broker
-	BidRepository       repository.BidRepository
+	BidRepository       postgres.BidRepository
 	DB                  database.Database
 }
 
@@ -112,8 +112,8 @@ func (bidService *BidService) GetRequestAnonymousBids(requestInfo biddto.GetList
 		return nil, err
 	}
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	allowedStatus := []enum.BidStatus{enum.BidStatusPending, enum.BidStatusAccepted, enum.BidStatusRejected}
 
@@ -154,8 +154,8 @@ func (bidService *BidService) GetRequestAnonymousBids(requestInfo biddto.GetList
 }
 
 func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRequestBidsRequestByAdmin) ([]biddto.AdminBidResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	allowedStatus := enum.GetAllBidStatuses()
 
@@ -449,8 +449,8 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 		return nil, err
 	}
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("updated_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("updated_at", true)
 
 	allowedStatus := []enum.BidStatus{enum.BidStatus(request.Status)}
 	if enum.BidStatus(request.Status) == enum.BidStatusAll {

@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"encoding/json"
@@ -7,12 +7,13 @@ import (
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	notificationdto "github.com/BargheNo/Backend/internal/application/dto/notification"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/domain/communication"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
@@ -20,11 +21,11 @@ import (
 
 type NotificationService struct {
 	constants              *bootstrap.Constants
-	userService            service.UserService
-	emailService           service.EmailService
-	bidService             service.BidService
-	reportService          service.ReportService
-	notificationRepository repository.NotificationRepository
+	userService            port.UserService
+	bidService             port.BidService
+	reportService          port.ReportService
+	emailService           communication.EmailService
+	notificationRepository postgres.NotificationRepository
 	wsHub                  *websocket.Hub
 	rabbitMQ               message.Broker
 	db                     database.Database
@@ -32,11 +33,11 @@ type NotificationService struct {
 
 type NotificationServiceDeps struct {
 	Constants              *bootstrap.Constants
-	UserService            service.UserService
-	EmailService           service.EmailService
-	BidService             service.BidService
-	ReportService          service.ReportService
-	NotificationRepository repository.NotificationRepository
+	UserService            port.UserService
+	BidService             port.BidService
+	ReportService          port.ReportService
+	EmailService           communication.EmailService
+	NotificationRepository postgres.NotificationRepository
 	WSHub                  *websocket.Hub
 	RabbitMQ               message.Broker
 	DB                     database.Database
@@ -46,9 +47,9 @@ func NewNotificationService(deps NotificationServiceDeps) *NotificationService {
 	return &NotificationService{
 		constants:              deps.Constants,
 		userService:            deps.UserService,
-		emailService:           deps.EmailService,
 		bidService:             deps.BidService,
 		reportService:          deps.ReportService,
+		emailService:           deps.EmailService,
 		notificationRepository: deps.NotificationRepository,
 		wsHub:                  deps.WSHub,
 		rabbitMQ:               deps.RabbitMQ,

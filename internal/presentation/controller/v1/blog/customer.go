@@ -3,20 +3,20 @@ package blog
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type CustomerBlogController struct {
 	constants   *bootstrap.Constants
-	blogService service.BlogService
+	blogService port.BlogService
 	pagination  *bootstrap.Pagination
 }
 
 func NewCustomerBlogController(
 	constants *bootstrap.Constants,
-	blogService service.BlogService,
+	blogService port.BlogService,
 	pagination *bootstrap.Pagination,
 ) *CustomerBlogController {
 	return &CustomerBlogController{

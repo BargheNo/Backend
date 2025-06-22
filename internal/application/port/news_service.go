@@ -1,4 +1,4 @@
-package service
+package port
 
 import (
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"

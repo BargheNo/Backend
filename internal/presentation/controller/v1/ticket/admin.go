@@ -3,7 +3,7 @@ package ticket
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -11,15 +11,15 @@ import (
 type AdminTicketController struct {
 	constant      *bootstrap.Constants
 	pagination    *bootstrap.Pagination
-	userService   service.UserService
-	ticketService service.TicketService
+	userService   port.UserService
+	ticketService port.TicketService
 }
 
 func NewAdminTicketController(
 	constant *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	userService service.UserService,
-	ticketService service.TicketService,
+	userService port.UserService,
+	ticketService port.TicketService,
 ) *AdminTicketController {
 	return &AdminTicketController{
 		constant:      constant,

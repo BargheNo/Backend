@@ -5,7 +5,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -14,13 +14,13 @@ import (
 type AdminNewsController struct {
 	constants   *bootstrap.Constants
 	pagination  *bootstrap.Pagination
-	newsService service.NewsService
+	newsService port.NewsService
 }
 
 func NewAdminNewsController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	newsService service.NewsService,
+	newsService port.NewsService,
 ) *AdminNewsController {
 	return &AdminNewsController{
 		constants:   constants,

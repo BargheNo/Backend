@@ -1,4 +1,4 @@
-package localizationimpl
+package localization
 
 var Persian = map[string]interface{}{
 	"firstName":           "نام",

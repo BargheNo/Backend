@@ -6,7 +6,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -15,13 +15,13 @@ import (
 type CustomerCorporationController struct {
 	constants          *bootstrap.Constants
 	pagination         *bootstrap.Pagination
-	corporationService service.CorporationService
+	corporationService port.CorporationService
 }
 
 func NewCustomerCorporationController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	corporationService service.CorporationService,
+	corporationService port.CorporationService,
 ) *CustomerCorporationController {
 	return &CustomerCorporationController{
 		constants:          constants,

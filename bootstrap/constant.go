@@ -293,11 +293,11 @@ func NewConstants() *Constants {
 			OTP: "sendOTPTemplate",
 		},
 		JWTKeysPath: JWTKeysPath{
-			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
-			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
+			PublicKey:  "./internal/infrastructure/jwt/publicKey.pem",
+			PrivateKey: "./internal/infrastructure/jwt/privateKey.pem",
 		},
 		EmailTemplates: EmailTemplates{
-			Path:            "./internal/application/service/communication/email/templates/",
+			Path:            "./internal/infrastructure/communication/email/templates/",
 			PersianFileName: "fa.html",
 			EnglishFileName: "en.html",
 		},

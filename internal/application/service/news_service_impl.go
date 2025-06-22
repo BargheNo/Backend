@@ -1,33 +1,33 @@
-package serviceimpl
+package service
 
 import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type NewsService struct {
 	constants      *bootstrap.Constants
-	userService    service.UserService
+	userService    port.UserService
 	s3Storage      s3.S3Storage
-	newsRepository repository.NewsRepository
+	newsRepository postgres.NewsRepository
 	db             database.Database
 }
 
 func NewNewsService(
 	constants *bootstrap.Constants,
-	userService service.UserService,
+	userService port.UserService,
 	s3Storage s3.S3Storage,
-	newsRepository repository.NewsRepository,
+	newsRepository postgres.NewsRepository,
 	db database.Database,
 ) *NewsService {
 	return &NewsService{
@@ -161,8 +161,8 @@ func (newsService *NewsService) GetPublicNews(newsID uint) (newsdto.PublicNewsRe
 }
 
 func (newsService *NewsService) GetAdminNewsList(request newsdto.GetAdminNewsListRequest) ([]newsdto.AdminNewsResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	allowedStatuses := newsService.mapToFilterStatuses(request.Status)
 	news, err := newsService.newsRepository.FindNewsByStatus(newsService.db, allowedStatuses, paginationModifier, sortingModifier)
@@ -199,8 +199,8 @@ func (newsService *NewsService) GetAdminNewsList(request newsdto.GetAdminNewsLis
 }
 
 func (newsService *NewsService) GetPublicNewsList(request newsdto.GetPublicNewsListRequest) ([]newsdto.PublicNewsResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	allowedStatuses := []enum.NewsStatus{enum.NewsStatusActive}
 	news, err := newsService.newsRepository.FindNewsByStatus(newsService.db, allowedStatuses, paginationModifier, sortingModifier)

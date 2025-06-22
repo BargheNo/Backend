@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"

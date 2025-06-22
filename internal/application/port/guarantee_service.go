@@ -1,4 +1,4 @@
-package service
+package port
 
 import guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 

@@ -5,7 +5,7 @@ import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -14,13 +14,13 @@ import (
 type CorporationInstallationController struct {
 	constants           *bootstrap.Constants
 	pagination          *bootstrap.Pagination
-	installationService service.InstallationService
+	installationService port.InstallationService
 }
 
 func NewCorporationInstallationController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	installationService service.InstallationService,
+	installationService port.InstallationService,
 ) *CorporationInstallationController {
 	return &CorporationInstallationController{
 		constants:           constants,

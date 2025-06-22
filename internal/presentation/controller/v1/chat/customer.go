@@ -3,7 +3,7 @@ package chat
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
@@ -14,9 +14,9 @@ type CustomerChatController struct {
 	constants        *bootstrap.Constants
 	pagination       *bootstrap.Pagination
 	websocketSetting *bootstrap.WebsocketSetting
-	chatService      service.ChatService
-	jwtService       service.JWTService
-	userService      service.UserService
+	chatService      port.ChatService
+	jwtService       port.JWTService
+	userService      port.UserService
 	hub              *websocket.Hub
 }
 
@@ -24,9 +24,9 @@ func NewCustomerChatController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
 	websocketSetting *bootstrap.WebsocketSetting,
-	chatService service.ChatService,
-	jwtService service.JWTService,
-	userService service.UserService,
+	chatService port.ChatService,
+	jwtService port.JWTService,
+	userService port.UserService,
 	hub *websocket.Hub,
 ) *CustomerChatController {
 	return &CustomerChatController{

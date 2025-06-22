@@ -1,4 +1,4 @@
-package service
+package port
 
 import (
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"

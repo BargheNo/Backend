@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"encoding/json"
@@ -6,33 +6,33 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type ReportService struct {
 	constants           *bootstrap.Constants
-	userService         service.UserService
-	maintenanceService  service.MaintenanceService
-	installationService service.InstallationService
+	userService         port.UserService
+	maintenanceService  port.MaintenanceService
+	installationService port.InstallationService
 	rabbitMQ            message.Broker
-	reportRepository    repository.ReportRepository
+	reportRepository    postgres.ReportRepository
 	db                  database.Database
 }
 
 func NewReportService(
 	constants *bootstrap.Constants,
-	userService service.UserService,
-	maintenanceService service.MaintenanceService,
-	installationService service.InstallationService,
+	userService port.UserService,
+	maintenanceService port.MaintenanceService,
+	installationService port.InstallationService,
 	rabbitMQ message.Broker,
-	reportRepository repository.ReportRepository,
+	reportRepository postgres.ReportRepository,
 	db database.Database,
 ) *ReportService {
 	return &ReportService{
@@ -173,8 +173,8 @@ func (reportService *ReportService) GetPanelReport(reportID uint) (reportdto.Pan
 }
 
 func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, paginationModifier, sortingModifier)
 	if err != nil {
@@ -200,8 +200,8 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 }
 
 func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, paginationModifier, sortingModifier)
 	if err != nil {

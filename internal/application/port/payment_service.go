@@ -1,4 +1,4 @@
-package service
+package port
 
 import paymentdto "github.com/BargheNo/Backend/internal/application/dto/payment"
 

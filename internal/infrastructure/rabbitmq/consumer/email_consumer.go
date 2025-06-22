@@ -5,20 +5,20 @@ import (
 	"log"
 
 	"github.com/BargheNo/Backend/bootstrap"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/domain/communication"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 )
 
 type EmailConsumer struct {
 	constants    *bootstrap.RabbitMQConstants
 	rabbitMQ     *rabbitmq.RabbitMQ
-	emailService service.EmailService
+	emailService communication.EmailService
 }
 
 func NewEmailConsumer(
 	constants *bootstrap.RabbitMQConstants,
 	rabbitMQ *rabbitmq.RabbitMQ,
-	emailService service.EmailService,
+	emailService communication.EmailService,
 ) *EmailConsumer {
 	return &EmailConsumer{
 		constants:    constants,

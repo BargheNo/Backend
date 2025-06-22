@@ -3,7 +3,7 @@ package installation
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -11,13 +11,13 @@ import (
 type AdminInstallationController struct {
 	constants           *bootstrap.Constants
 	pagination          *bootstrap.Pagination
-	installationService service.InstallationService
+	installationService port.InstallationService
 }
 
 func NewAdminInstallationController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	installationService service.InstallationService,
+	installationService port.InstallationService,
 ) *AdminInstallationController {
 	return &AdminInstallationController{
 		constants:           constants,

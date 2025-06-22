@@ -2,19 +2,19 @@ package installation
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type GeneralInstallationController struct {
 	constants           *bootstrap.Constants
-	installationService service.InstallationService
+	installationService port.InstallationService
 }
 
 func NewGeneralInstallationController(
 	constants *bootstrap.Constants,
-	installationService service.InstallationService,
+	installationService port.InstallationService,
 ) *GeneralInstallationController {
 	return &GeneralInstallationController{
 		constants:           constants,

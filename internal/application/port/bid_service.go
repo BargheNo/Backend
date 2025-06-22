@@ -1,4 +1,4 @@
-package service
+package port
 
 import (
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"

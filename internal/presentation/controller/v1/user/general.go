@@ -3,21 +3,21 @@ package user
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type GeneralUserController struct {
 	constants   *bootstrap.Constants
-	userService service.UserService
-	jwtService  service.JWTService
+	userService port.UserService
+	jwtService  port.JWTService
 }
 
 func NewGeneralUserController(
 	constants *bootstrap.Constants,
-	userService service.UserService,
-	jwtService service.JWTService,
+	userService port.UserService,
+	jwtService port.JWTService,
 ) *GeneralUserController {
 	return &GeneralUserController{
 		constants:   constants,

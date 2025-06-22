@@ -3,7 +3,7 @@ package corporation
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -12,13 +12,13 @@ import (
 type AdminCorporationController struct {
 	constants          *bootstrap.Constants
 	pagination         *bootstrap.Pagination
-	corporationService service.CorporationService
+	corporationService port.CorporationService
 }
 
 func NewAdminCorporationController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	corporationService service.CorporationService,
+	corporationService port.CorporationService,
 ) *AdminCorporationController {
 	return &AdminCorporationController{
 		constants:          constants,

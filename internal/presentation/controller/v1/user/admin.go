@@ -3,7 +3,7 @@ package user
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -11,13 +11,13 @@ import (
 type AdminUserController struct {
 	constants   *bootstrap.Constants
 	pagination  *bootstrap.Pagination
-	userService service.UserService
+	userService port.UserService
 }
 
 func NewAdminUserController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	userService service.UserService,
+	userService port.UserService,
 ) *AdminUserController {
 	return &AdminUserController{
 		constants:   constants,
