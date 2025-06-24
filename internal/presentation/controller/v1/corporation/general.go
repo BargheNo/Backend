@@ -2,19 +2,19 @@ package corporation
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type GeneralCorporationController struct {
 	constants          *bootstrap.Constants
-	corporationService port.CorporationService
+	corporationService usecase.CorporationService
 }
 
 func NewGeneralCorporationController(
 	constants *bootstrap.Constants,
-	corporationService port.CorporationService,
+	corporationService usecase.CorporationService,
 ) *GeneralCorporationController {
 	return &GeneralCorporationController{
 		constants:          constants,

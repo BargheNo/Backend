@@ -5,8 +5,8 @@ package wire
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	"github.com/BargheNo/Backend/internal/application/port"
 	"github.com/BargheNo/Backend/internal/application/service"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/communication"
 	domainLogger "github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
@@ -110,24 +110,24 @@ var ServiceProviderSet = wire.NewSet(
 	service.NewPaymentService,
 	service.NewNewsService,
 	service.NewBlogService,
-	wire.Bind(new(port.UserService), new(*service.UserService)),
-	wire.Bind(new(port.OTPService), new(*service.OTPService)),
+	wire.Bind(new(usecase.UserService), new(*service.UserService)),
+	wire.Bind(new(usecase.OTPService), new(*service.OTPService)),
 	wire.Bind(new(communication.SMSService), new(*sms.SMSService)),
 	wire.Bind(new(communication.EmailService), new(*email.EmailService)),
-	wire.Bind(new(port.JWTService), new(*service.JWTService)),
-	wire.Bind(new(port.InstallationService), new(*service.InstallationService)),
-	wire.Bind(new(port.AddressService), new(*service.AddressService)),
-	wire.Bind(new(port.CorporationService), new(*service.CorporationService)),
-	wire.Bind(new(port.BidService), new(*service.BidService)),
-	wire.Bind(new(port.ChatService), new(*service.ChatService)),
-	wire.Bind(new(port.NotificationService), new(*service.NotificationService)),
-	wire.Bind(new(port.MaintenanceService), new(*service.MaintenanceService)),
-	wire.Bind(new(port.TicketService), new(*service.TicketService)),
-	wire.Bind(new(port.ReportService), new(*service.ReportService)),
-	wire.Bind(new(port.GuaranteeService), new(*service.GuaranteeService)),
-	wire.Bind(new(port.PaymentService), new(*service.PaymentService)),
-	wire.Bind(new(port.NewsService), new(*service.NewsService)),
-	wire.Bind(new(port.BlogService), new(*service.BlogService)),
+	wire.Bind(new(usecase.JWTService), new(*service.JWTService)),
+	wire.Bind(new(usecase.InstallationService), new(*service.InstallationService)),
+	wire.Bind(new(usecase.AddressService), new(*service.AddressService)),
+	wire.Bind(new(usecase.CorporationService), new(*service.CorporationService)),
+	wire.Bind(new(usecase.BidService), new(*service.BidService)),
+	wire.Bind(new(usecase.ChatService), new(*service.ChatService)),
+	wire.Bind(new(usecase.NotificationService), new(*service.NotificationService)),
+	wire.Bind(new(usecase.MaintenanceService), new(*service.MaintenanceService)),
+	wire.Bind(new(usecase.TicketService), new(*service.TicketService)),
+	wire.Bind(new(usecase.ReportService), new(*service.ReportService)),
+	wire.Bind(new(usecase.GuaranteeService), new(*service.GuaranteeService)),
+	wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)),
+	wire.Bind(new(usecase.NewsService), new(*service.NewsService)),
+	wire.Bind(new(usecase.BlogService), new(*service.BlogService)),
 )
 
 var AdapterProviderSet = wire.NewSet(

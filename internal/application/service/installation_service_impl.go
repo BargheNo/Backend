@@ -7,7 +7,7 @@ import (
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -18,22 +18,22 @@ import (
 
 type InstallationService struct {
 	constants              *bootstrap.Constants
-	addressService         port.AddressService
-	userService            port.UserService
-	corporationService     port.CorporationService
-	guaranteeService       port.GuaranteeService
-	chatService            port.ChatService
+	addressService         usecase.AddressService
+	userService            usecase.UserService
+	corporationService     usecase.CorporationService
+	guaranteeService       usecase.GuaranteeService
+	chatService            usecase.ChatService
 	installationRepository postgres.InstallationRepository
 	db                     database.Database
 }
 
 type InstallationServiceDeps struct {
 	Constants              *bootstrap.Constants
-	AddressService         port.AddressService
-	UserService            port.UserService
-	CorporationService     port.CorporationService
-	GuaranteeService       port.GuaranteeService
-	ChatService            port.ChatService
+	AddressService         usecase.AddressService
+	UserService            usecase.UserService
+	CorporationService     usecase.CorporationService
+	GuaranteeService       usecase.GuaranteeService
+	ChatService            usecase.ChatService
 	InstallationRepository postgres.InstallationRepository
 	DB                     database.Database
 }

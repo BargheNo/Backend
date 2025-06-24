@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -13,16 +13,16 @@ import (
 
 type GuaranteeService struct {
 	constants           *bootstrap.Constants
-	corporationService  port.CorporationService
-	userService         port.UserService
+	corporationService  usecase.CorporationService
+	userService         usecase.UserService
 	guaranteeRepository postgres.GuaranteeRepository
 	db                  database.Database
 }
 
 func NewGuaranteeService(
 	constants *bootstrap.Constants,
-	corporationService port.CorporationService,
-	userService port.UserService,
+	corporationService usecase.CorporationService,
+	userService usecase.UserService,
 	guaranteeRepository postgres.GuaranteeRepository,
 	db database.Database,
 ) *GuaranteeService {

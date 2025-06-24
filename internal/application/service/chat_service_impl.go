@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -15,16 +15,16 @@ import (
 
 type ChatService struct {
 	constants          *bootstrap.Constants
-	userService        port.UserService
-	corporationService port.CorporationService
+	userService        usecase.UserService
+	corporationService usecase.CorporationService
 	chatRepository     postgres.ChatRepository
 	db                 database.Database
 }
 
 func NewChatService(
 	constants *bootstrap.Constants,
-	userService port.UserService,
-	corporationService port.CorporationService,
+	userService usecase.UserService,
+	corporationService usecase.CorporationService,
 	chatRepository postgres.ChatRepository,
 	db database.Database,
 ) *ChatService {

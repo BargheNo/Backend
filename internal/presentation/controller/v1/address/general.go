@@ -3,19 +3,19 @@ package address
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type GeneralAddressController struct {
 	constants      *bootstrap.Constants
-	addressService port.AddressService
+	addressService usecase.AddressService
 }
 
 func NewGeneralAddressController(
 	constants *bootstrap.Constants,
-	addressService port.AddressService,
+	addressService usecase.AddressService,
 ) *GeneralAddressController {
 	return &GeneralAddressController{
 		constants:      constants,

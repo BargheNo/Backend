@@ -7,7 +7,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/communication"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
@@ -22,8 +22,8 @@ import (
 
 type UserService struct {
 	constants           *bootstrap.Constants
-	otpService          port.OTPService
-	jwtService          port.JWTService
+	otpService          usecase.OTPService
+	jwtService          usecase.JWTService
 	smsService          communication.SMSService
 	emailService        communication.EmailService
 	rabbitMQ            message.Broker
@@ -35,8 +35,8 @@ type UserService struct {
 
 type UserServiceDeps struct {
 	Constants           *bootstrap.Constants
-	OTPService          port.OTPService
-	JWTService          port.JWTService
+	OTPService          usecase.OTPService
+	JWTService          usecase.JWTService
 	SMSService          communication.SMSService
 	EmailService        communication.EmailService
 	RabbitMQ            message.Broker

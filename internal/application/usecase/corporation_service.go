@@ -1,4 +1,4 @@
-package port
+package usecase
 
 import (
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"

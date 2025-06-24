@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/BargheNo/Backend/bootstrap"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 )
@@ -13,13 +13,13 @@ import (
 type SendNotificationConsumer struct {
 	constants           *bootstrap.RabbitMQConstants
 	rabbitMQ            *rabbitmq.RabbitMQ
-	notificationService port.NotificationService
+	notificationService usecase.NotificationService
 }
 
 func NewSendNotificationConsumer(
 	constants *bootstrap.RabbitMQConstants,
 	rabbitMQ *rabbitmq.RabbitMQ,
-	notificationService port.NotificationService,
+	notificationService usecase.NotificationService,
 ) *SendNotificationConsumer {
 	return &SendNotificationConsumer{
 		constants:           constants,

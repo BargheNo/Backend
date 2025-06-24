@@ -1,4 +1,4 @@
-package port
+package usecase
 
 import ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
 

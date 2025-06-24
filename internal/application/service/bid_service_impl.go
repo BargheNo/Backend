@@ -10,7 +10,7 @@ import (
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -22,11 +22,11 @@ import (
 
 type BidService struct {
 	constants           *bootstrap.Constants
-	installationService port.InstallationService
-	userService         port.UserService
-	corporationService  port.CorporationService
-	paymentService      port.PaymentService
-	guaranteeService    port.GuaranteeService
+	installationService usecase.InstallationService
+	userService         usecase.UserService
+	corporationService  usecase.CorporationService
+	paymentService      usecase.PaymentService
+	guaranteeService    usecase.GuaranteeService
 	rabbitMQ            message.Broker
 	bidRepository       postgres.BidRepository
 	db                  database.Database
@@ -34,11 +34,11 @@ type BidService struct {
 
 type BidServiceDeps struct {
 	Constants           *bootstrap.Constants
-	InstallationService port.InstallationService
-	UserService         port.UserService
-	CorporationService  port.CorporationService
-	PaymentService      port.PaymentService
-	GuaranteeService    port.GuaranteeService
+	InstallationService usecase.InstallationService
+	UserService         usecase.UserService
+	CorporationService  usecase.CorporationService
+	PaymentService      usecase.PaymentService
+	GuaranteeService    usecase.GuaranteeService
 	RabbitMQ            message.Broker
 	BidRepository       postgres.BidRepository
 	DB                  database.Database

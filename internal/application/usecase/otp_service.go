@@ -1,4 +1,4 @@
-package port
+package usecase
 
 type OTPService interface {
 	GenerateOTP() (string, int, error)

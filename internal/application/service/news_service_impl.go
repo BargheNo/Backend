@@ -5,7 +5,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -17,7 +17,7 @@ import (
 
 type NewsService struct {
 	constants      *bootstrap.Constants
-	userService    port.UserService
+	userService    usecase.UserService
 	s3Storage      s3.S3Storage
 	newsRepository postgres.NewsRepository
 	db             database.Database
@@ -25,7 +25,7 @@ type NewsService struct {
 
 func NewNewsService(
 	constants *bootstrap.Constants,
-	userService port.UserService,
+	userService usecase.UserService,
 	s3Storage s3.S3Storage,
 	newsRepository postgres.NewsRepository,
 	db database.Database,

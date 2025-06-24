@@ -1,4 +1,4 @@
-package port
+package usecase
 
 import "github.com/golang-jwt/jwt/v5"
 

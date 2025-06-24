@@ -6,7 +6,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -18,9 +18,9 @@ import (
 
 type ReportService struct {
 	constants           *bootstrap.Constants
-	userService         port.UserService
-	maintenanceService  port.MaintenanceService
-	installationService port.InstallationService
+	userService         usecase.UserService
+	maintenanceService  usecase.MaintenanceService
+	installationService usecase.InstallationService
 	rabbitMQ            message.Broker
 	reportRepository    postgres.ReportRepository
 	db                  database.Database
@@ -28,9 +28,9 @@ type ReportService struct {
 
 func NewReportService(
 	constants *bootstrap.Constants,
-	userService port.UserService,
-	maintenanceService port.MaintenanceService,
-	installationService port.InstallationService,
+	userService usecase.UserService,
+	maintenanceService usecase.MaintenanceService,
+	installationService usecase.InstallationService,
 	rabbitMQ message.Broker,
 	reportRepository postgres.ReportRepository,
 	db database.Database,

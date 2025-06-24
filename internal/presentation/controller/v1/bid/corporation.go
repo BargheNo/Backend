@@ -6,7 +6,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	paymentdto "github.com/BargheNo/Backend/internal/application/dto/payment"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -15,13 +15,13 @@ import (
 type CorporationBidController struct {
 	constants  *bootstrap.Constants
 	pagination *bootstrap.Pagination
-	bidService port.BidService
+	bidService usecase.BidService
 }
 
 func NewCorporationBidController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	bidService port.BidService,
+	bidService usecase.BidService,
 ) *CorporationBidController {
 	return &CorporationBidController{
 		constants:  constants,

@@ -5,7 +5,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -16,8 +16,8 @@ import (
 )
 
 type BlogService struct {
-	userService        port.UserService
-	corporationService port.CorporationService
+	userService        usecase.UserService
+	corporationService usecase.CorporationService
 	blogRepository     postgres.BlogRepository
 	constants          *bootstrap.Constants
 	s3Storage          s3.S3Storage
@@ -25,8 +25,8 @@ type BlogService struct {
 }
 
 func NewBlogService(
-	userService port.UserService,
-	corporationService port.CorporationService,
+	userService usecase.UserService,
+	corporationService usecase.CorporationService,
 	blogRepository postgres.BlogRepository,
 	constants *bootstrap.Constants,
 	s3Storage s3.S3Storage,

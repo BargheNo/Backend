@@ -5,7 +5,7 @@ import (
 
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	maintenancedto "github.com/BargheNo/Backend/internal/application/dto/maintenance"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -14,13 +14,13 @@ import (
 type CorporationMaintenanceController struct {
 	constants          *bootstrap.Constants
 	pagination         *bootstrap.Pagination
-	maintenanceService port.MaintenanceService
+	maintenanceService usecase.MaintenanceService
 }
 
 func NewCorporationMaintenanceController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	maintenanceService port.MaintenanceService,
+	maintenanceService usecase.MaintenanceService,
 ) *CorporationMaintenanceController {
 	return &CorporationMaintenanceController{
 		constants:          constants,

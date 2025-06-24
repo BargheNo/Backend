@@ -6,7 +6,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -18,8 +18,8 @@ import (
 
 type CorporationService struct {
 	constants             *bootstrap.Constants
-	userService           port.UserService
-	addressService        port.AddressService
+	userService           usecase.UserService
+	addressService        usecase.AddressService
 	s3Storage             s3.S3Storage
 	corporationRepository postgres.CorporationRepository
 	db                    database.Database
@@ -27,8 +27,8 @@ type CorporationService struct {
 
 func NewCorporationService(
 	constants *bootstrap.Constants,
-	userService port.UserService,
-	addressService port.AddressService,
+	userService usecase.UserService,
+	addressService usecase.AddressService,
 	s3Storage s3.S3Storage,
 	corporationRepository postgres.CorporationRepository,
 	db database.Database,

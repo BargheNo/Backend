@@ -3,7 +3,7 @@ package news
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -12,13 +12,13 @@ import (
 type GeneralNewsController struct {
 	constants   *bootstrap.Constants
 	pagination  *bootstrap.Pagination
-	newsService port.NewsService
+	newsService usecase.NewsService
 }
 
 func NewGeneralNewsController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	newsService port.NewsService,
+	newsService usecase.NewsService,
 ) *GeneralNewsController {
 	return &GeneralNewsController{
 		constants:   constants,

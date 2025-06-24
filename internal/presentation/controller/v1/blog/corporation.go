@@ -5,7 +5,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -13,13 +13,13 @@ import (
 
 type CorporationBlogController struct {
 	constants   *bootstrap.Constants
-	blogService port.BlogService
+	blogService usecase.BlogService
 	pagination  *bootstrap.Pagination
 }
 
 func NewCorporationBlogController(
 	constants *bootstrap.Constants,
-	blogService port.BlogService,
+	blogService usecase.BlogService,
 	pagination *bootstrap.Pagination,
 ) *CorporationBlogController {
 	return &CorporationBlogController{

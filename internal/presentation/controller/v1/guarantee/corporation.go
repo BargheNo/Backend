@@ -3,7 +3,7 @@ package guarantee
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -11,12 +11,12 @@ import (
 
 type CorporationGuaranteeController struct {
 	constants        *bootstrap.Constants
-	guaranteeService port.GuaranteeService
+	guaranteeService usecase.GuaranteeService
 }
 
 func NewCorporationGuaranteeController(
 	constants *bootstrap.Constants,
-	guaranteeService port.GuaranteeService,
+	guaranteeService usecase.GuaranteeService,
 ) *CorporationGuaranteeController {
 	return &CorporationGuaranteeController{
 		constants:        constants,

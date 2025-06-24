@@ -4,7 +4,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	maintenancedto "github.com/BargheNo/Backend/internal/application/dto/maintenance"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -15,20 +15,20 @@ import (
 
 type MaintenanceService struct {
 	constants             *bootstrap.Constants
-	userService           port.UserService
-	installationService   port.InstallationService
-	corporationService    port.CorporationService
-	guaranteeService      port.GuaranteeService
+	userService           usecase.UserService
+	installationService   usecase.InstallationService
+	corporationService    usecase.CorporationService
+	guaranteeService      usecase.GuaranteeService
 	maintenanceRepository postgres.MaintenanceRepository
 	db                    database.Database
 }
 
 func NewMaintenanceService(
 	constants *bootstrap.Constants,
-	userService port.UserService,
-	installationService port.InstallationService,
-	corporationService port.CorporationService,
-	guaranteeService port.GuaranteeService,
+	userService usecase.UserService,
+	installationService usecase.InstallationService,
+	corporationService usecase.CorporationService,
+	guaranteeService usecase.GuaranteeService,
 	maintenanceRepository postgres.MaintenanceRepository,
 	db database.Database,
 ) *MaintenanceService {

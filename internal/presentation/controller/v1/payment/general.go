@@ -2,19 +2,19 @@ package payment
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type GeneralPaymentController struct {
 	constants      *bootstrap.Constants
-	paymentService port.PaymentService
+	paymentService usecase.PaymentService
 }
 
 func NewGeneralPaymentController(
 	constants *bootstrap.Constants,
-	paymentService port.PaymentService,
+	paymentService usecase.PaymentService,
 ) *GeneralPaymentController {
 	return &GeneralPaymentController{
 		constants:      constants,

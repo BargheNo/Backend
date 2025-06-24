@@ -5,7 +5,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -17,7 +17,7 @@ import (
 
 type TicketService struct {
 	constants        *bootstrap.Constants
-	userService      port.UserService
+	userService      usecase.UserService
 	ticketRepository postgres.TicketRepository
 	s3Storage        s3.S3Storage
 	db               database.Database
@@ -26,7 +26,7 @@ type TicketService struct {
 func NewTicketService(
 	constants *bootstrap.Constants,
 	ticketRepository postgres.TicketRepository,
-	userService port.UserService,
+	userService usecase.UserService,
 	s3Storage s3.S3Storage,
 	db database.Database,
 ) *TicketService {

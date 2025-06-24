@@ -7,7 +7,7 @@ import (
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
 	notificationdto "github.com/BargheNo/Backend/internal/application/dto/notification"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
-	"github.com/BargheNo/Backend/internal/application/port"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/communication"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
@@ -21,9 +21,9 @@ import (
 
 type NotificationService struct {
 	constants              *bootstrap.Constants
-	userService            port.UserService
-	bidService             port.BidService
-	reportService          port.ReportService
+	userService            usecase.UserService
+	bidService             usecase.BidService
+	reportService          usecase.ReportService
 	emailService           communication.EmailService
 	notificationRepository postgres.NotificationRepository
 	wsHub                  *websocket.Hub
@@ -33,9 +33,9 @@ type NotificationService struct {
 
 type NotificationServiceDeps struct {
 	Constants              *bootstrap.Constants
-	UserService            port.UserService
-	BidService             port.BidService
-	ReportService          port.ReportService
+	UserService            usecase.UserService
+	BidService             usecase.BidService
+	ReportService          usecase.ReportService
 	EmailService           communication.EmailService
 	NotificationRepository postgres.NotificationRepository
 	WSHub                  *websocket.Hub
