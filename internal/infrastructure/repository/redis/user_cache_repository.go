@@ -1,4 +1,4 @@
-package cacherepositoryimpl
+package redis
 
 import (
 	"context"

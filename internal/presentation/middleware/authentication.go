@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/BargheNo/Backend/bootstrap"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
@@ -15,14 +15,14 @@ import (
 
 type AuthMiddleware struct {
 	constants      *bootstrap.Constants
-	jwtService     service.JWTService
+	jwtService     usecase.JWTService
 	userRepository repository.UserRepository
 	db             database.Database
 }
 
 func NewAuthMiddleware(
 	constants *bootstrap.Constants,
-	jwtService service.JWTService,
+	jwtService usecase.JWTService,
 	userRepository repository.UserRepository,
 	db database.Database,
 ) *AuthMiddleware {

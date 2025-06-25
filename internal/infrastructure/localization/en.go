@@ -1,4 +1,4 @@
-package localizationimpl
+package localization
 
 var English = map[string]interface{}{
 	"firstName":           "first name",

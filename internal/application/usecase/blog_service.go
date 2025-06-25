@@ -1,4 +1,4 @@
-package service
+package usecase
 
 import blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
 

@@ -3,7 +3,7 @@ package bid
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -11,13 +11,13 @@ import (
 type AdminBidController struct {
 	constants  *bootstrap.Constants
 	pagination *bootstrap.Pagination
-	BidService service.BidService
+	BidService usecase.BidService
 }
 
 func NewAdminBidController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	BidService service.BidService,
+	BidService usecase.BidService,
 ) *AdminBidController {
 	return &AdminBidController{
 		constants:  constants,

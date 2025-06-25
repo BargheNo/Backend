@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"context"
@@ -7,13 +7,14 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
+	"github.com/BargheNo/Backend/internal/domain/communication"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
-	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"golang.org/x/crypto/bcrypt"
@@ -21,27 +22,27 @@ import (
 
 type UserService struct {
 	constants           *bootstrap.Constants
-	otpService          service.OTPService
-	jwtService          service.JWTService
-	smsService          service.SMSService
-	emailService        service.EmailService
+	otpService          usecase.OTPService
+	jwtService          usecase.JWTService
+	smsService          communication.SMSService
+	emailService        communication.EmailService
 	rabbitMQ            message.Broker
 	s3Storage           s3.S3Storage
-	userRepository      repository.UserRepository
-	userCacheRepository cacherepository.UserCacheRepository
+	userRepository      postgres.UserRepository
+	userCacheRepository redis.UserCacheRepository
 	db                  database.Database
 }
 
 type UserServiceDeps struct {
 	Constants           *bootstrap.Constants
-	OTPService          service.OTPService
-	JWTService          service.JWTService
-	SMSService          service.SMSService
-	EmailService        service.EmailService
+	OTPService          usecase.OTPService
+	JWTService          usecase.JWTService
+	SMSService          communication.SMSService
+	EmailService        communication.EmailService
 	RabbitMQ            message.Broker
 	S3Storage           s3.S3Storage
-	UserRepository      repository.UserRepository
-	UserCacheRepository cacherepository.UserCacheRepository
+	UserRepository      postgres.UserRepository
+	UserCacheRepository redis.UserCacheRepository
 	DB                  database.Database
 }
 

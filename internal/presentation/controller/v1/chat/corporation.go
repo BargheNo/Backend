@@ -3,7 +3,7 @@ package chat
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -11,12 +11,12 @@ import (
 
 type CorporationChatController struct {
 	constants   *bootstrap.Constants
-	chatService service.ChatService
+	chatService usecase.ChatService
 }
 
 func NewCorporationChatController(
 	constants *bootstrap.Constants,
-	chatService service.ChatService,
+	chatService usecase.ChatService,
 ) *CorporationChatController {
 	return &CorporationChatController{
 		constants:   constants,

@@ -1,4 +1,4 @@
-package service
+package usecase
 
 import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"

@@ -1,23 +1,23 @@
-package serviceimpl
+package service
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
 type AddressService struct {
 	constants         *bootstrap.Constants
-	addressRepository repository.AddressRepository
+	addressRepository postgres.AddressRepository
 	db                database.Database
 }
 
 func NewAddressService(
 	constants *bootstrap.Constants,
-	addressRepository repository.AddressRepository,
+	addressRepository postgres.AddressRepository,
 	db database.Database,
 ) *AddressService {
 	return &AddressService{

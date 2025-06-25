@@ -1,4 +1,4 @@
-package service
+package usecase
 
 import (
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
@@ -32,7 +32,7 @@ type InstallationService interface {
 	GetRequestStatuses() []installationdto.EnumStatusResponse
 	UpdateInstallationRequestByAdmin(newRequest installationdto.UpdateInstallationRequest) error
 	UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest) error
-  GetPanelStatus() []installationdto.EnumStatusResponse
+	GetPanelStatus() []installationdto.EnumStatusResponse
 	ValidatePanelGuarantee(panelID uint) error
 	ValidatePanelOwnership(panelID uint, userID uint) (installationdto.AdminPanelResponse, error)
 	ValidateRequestOwnership(requestID uint, ownerID uint) (installationdto.PublicRequestDetailsResponse, error)

@@ -3,7 +3,7 @@ package report
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -11,13 +11,13 @@ import (
 type AdminReportController struct {
 	constants     *bootstrap.Constants
 	pagination    *bootstrap.Pagination
-	reportService service.ReportService
+	reportService usecase.ReportService
 }
 
 func NewAdminReportController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	reportService service.ReportService,
+	reportService usecase.ReportService,
 ) *AdminReportController {
 	return &AdminReportController{
 		constants:     constants,

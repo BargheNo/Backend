@@ -2,19 +2,19 @@ package notification
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type GeneralNotificationController struct {
 	constants           *bootstrap.Constants
-	notificationService service.NotificationService
+	notificationService usecase.NotificationService
 }
 
 func NewGeneralNotificationController(
 	constants *bootstrap.Constants,
-	notificationService service.NotificationService,
+	notificationService usecase.NotificationService,
 ) *GeneralNotificationController {
 	return &GeneralNotificationController{
 		constants:           constants,

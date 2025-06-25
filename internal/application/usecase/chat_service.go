@@ -1,4 +1,4 @@
-package service
+package usecase
 
 import (
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"

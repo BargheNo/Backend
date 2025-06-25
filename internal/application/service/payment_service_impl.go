@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
@@ -6,19 +6,19 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
 type PaymentService struct {
 	constants         *bootstrap.Constants
-	paymentRepository repository.PaymentRepository
+	paymentRepository postgres.PaymentRepository
 	db                database.Database
 }
 
 func NewPaymentService(
 	constants *bootstrap.Constants,
-	paymentRepository repository.PaymentRepository,
+	paymentRepository postgres.PaymentRepository,
 	db database.Database,
 ) *PaymentService {
 	return &PaymentService{

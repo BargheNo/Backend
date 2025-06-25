@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"time"
@@ -7,34 +7,34 @@ import (
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type InstallationService struct {
 	constants              *bootstrap.Constants
-	addressService         service.AddressService
-	userService            service.UserService
-	corporationService     service.CorporationService
-	guaranteeService       service.GuaranteeService
-	chatService            service.ChatService
-	installationRepository repository.InstallationRepository
+	addressService         usecase.AddressService
+	userService            usecase.UserService
+	corporationService     usecase.CorporationService
+	guaranteeService       usecase.GuaranteeService
+	chatService            usecase.ChatService
+	installationRepository postgres.InstallationRepository
 	db                     database.Database
 }
 
 type InstallationServiceDeps struct {
 	Constants              *bootstrap.Constants
-	AddressService         service.AddressService
-	UserService            service.UserService
-	CorporationService     service.CorporationService
-	GuaranteeService       service.GuaranteeService
-	ChatService            service.ChatService
-	InstallationRepository repository.InstallationRepository
+	AddressService         usecase.AddressService
+	UserService            usecase.UserService
+	CorporationService     usecase.CorporationService
+	GuaranteeService       usecase.GuaranteeService
+	ChatService            usecase.ChatService
+	InstallationRepository postgres.InstallationRepository
 	DB                     database.Database
 }
 
@@ -220,8 +220,8 @@ func (installationService *InstallationService) GetOwnerInstallationRequests(req
 		allowedStatus = enum.GetAllInstallationRequestStatuses()
 	}
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	requests, err := installationService.installationRepository.FindOwnerRequests(
 		installationService.db, request.OwnerID, allowedStatus, paginationModifier, sortingModifier)
@@ -299,8 +299,8 @@ func (installationService *InstallationService) GetAnonymousInstallationRequests
 
 	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	installationRequests, err := installationService.installationRepository.FindRequestsByStatus(installationService.db, allowedStatus, paginationModifier, sortingModifier)
 	if err != nil {
@@ -395,8 +395,8 @@ func (installationService *InstallationService) GetInstallationRequestsByAdmin(r
 		allowedStatuses = enum.GetAllInstallationRequestStatuses()
 	}
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	installationRequests, err := installationService.installationRepository.FindRequestsByStatus(installationService.db, allowedStatuses, sortingModifier, paginationModifier)
 	if err != nil {
@@ -649,8 +649,8 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 		return nil, err
 	}
 
-	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	allowedStatus := []enum.PanelStatus{enum.PanelStatus(listInfo.Status)}
 	if enum.PanelStatus(listInfo.Status) == enum.PanelStatusAll {
@@ -746,8 +746,8 @@ func (installationService *InstallationService) GetCorporationPanel(request inst
 }
 
 func (installationService *InstallationService) GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) ([]installationdto.CustomerPanelListResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	allowedStatus := []enum.PanelStatus{enum.PanelStatus(listInfo.Status)}
 	if enum.PanelStatus(listInfo.Status) == enum.PanelStatusAll {
@@ -890,8 +890,8 @@ func (installationService *InstallationService) GetPanelStatus() []installationd
 }
 
 func (installationService *InstallationService) GetPanelsByAdmin(listInfo installationdto.AdminInstallationListRequest) ([]installationdto.AdminPanelResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	allowedStatus := []enum.PanelStatus{enum.PanelStatus(listInfo.Status)}
 	if enum.PanelStatus(listInfo.Status) == enum.PanelStatusAll {

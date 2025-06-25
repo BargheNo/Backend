@@ -1,4 +1,4 @@
-package service
+package usecase
 
 import (
 	biddto "github.com/BargheNo/Backend/internal/application/dto/bid"

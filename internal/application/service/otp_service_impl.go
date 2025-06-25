@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"context"
@@ -7,19 +7,19 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
+	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 )
 
 type OTPService struct {
 	constants           *bootstrap.Constants
 	otpConfig           *bootstrap.OTP
-	userCacheRepository cacherepository.UserCacheRepository
+	userCacheRepository redis.UserCacheRepository
 }
 
 func NewOTPService(
 	constants *bootstrap.Constants,
 	otpConfig *bootstrap.OTP,
-	userCacheRepository cacherepository.UserCacheRepository,
+	userCacheRepository redis.UserCacheRepository,
 ) *OTPService {
 	return &OTPService{
 		constants:           constants,

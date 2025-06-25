@@ -5,27 +5,28 @@ package wire
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	jwtimpl "github.com/BargheNo/Backend/internal/application/adapter/jwt"
-	localizationimpl "github.com/BargheNo/Backend/internal/application/adapter/localization"
-	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
-	metricsimpl "github.com/BargheNo/Backend/internal/application/adapter/metrics"
-	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
-	"github.com/BargheNo/Backend/internal/application/service/communication/email"
-	"github.com/BargheNo/Backend/internal/application/service/communication/sms"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
-	"github.com/BargheNo/Backend/internal/domain/logger"
+	"github.com/BargheNo/Backend/internal/application/service"
+	"github.com/BargheNo/Backend/internal/application/usecase"
+	"github.com/BargheNo/Backend/internal/domain/communication"
+	domainLogger "github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
-	"github.com/BargheNo/Backend/internal/domain/metrics"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
-	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
+	domainMetrics "github.com/BargheNo/Backend/internal/domain/metrics"
+	domainPostgres "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	domainRedis "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
+	"github.com/BargheNo/Backend/internal/infrastructure/communication/email"
+	"github.com/BargheNo/Backend/internal/infrastructure/communication/sms"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
+	infraJWT "github.com/BargheNo/Backend/internal/infrastructure/jwt"
+	infraLocalization "github.com/BargheNo/Backend/internal/infrastructure/localization"
+	infraLogger "github.com/BargheNo/Backend/internal/infrastructure/logger"
+	infraMetrics "github.com/BargheNo/Backend/internal/infrastructure/metrics"
+	infraRabbitMQ "github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
-	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
+	infraPostgres "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	infraRedis "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
-	"github.com/BargheNo/Backend/internal/infrastructure/storage"
+	infraStorage "github.com/BargheNo/Backend/internal/infrastructure/storage"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
@@ -54,92 +55,92 @@ var DatabaseProviderSet = wire.NewSet(
 )
 
 var RepositoryProviderSet = wire.NewSet(
-	repositoryimpl.NewUserRepository,
-	repositoryimpl.NewInstallationRepository,
-	repositoryimpl.NewAddressRepository,
-	cacherepositoryimpl.NewUserCacheRepository,
-	repositoryimpl.NewCorporationRepository,
-	repositoryimpl.NewBidRepository,
-	repositoryimpl.NewChatRepository,
-	repositoryimpl.NewNotificationRepository,
-	repositoryimpl.NewMaintenanceRepository,
-	repositoryimpl.NewTicketRepository,
-	repositoryimpl.NewReportRepository,
-	repositoryimpl.NewGuaranteeRepository,
-	repositoryimpl.NewPaymentRepository,
-	repositoryimpl.NewNewsRepository,
-	repositoryimpl.NewBlogRepository,
-	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
-	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
-	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
-	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
-	wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)),
-	wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)),
-	wire.Bind(new(repository.ChatRepository), new(*repositoryimpl.ChatRepository)),
-	wire.Bind(new(repository.NotificationRepository), new(*repositoryimpl.NotificationRepository)),
-	wire.Bind(new(repository.MaintenanceRepository), new(*repositoryimpl.MaintenanceRepository)),
-	wire.Bind(new(repository.TicketRepository), new(*repositoryimpl.TicketRepository)),
-	wire.Bind(new(repository.ReportRepository), new(*repositoryimpl.ReportRepository)),
-	wire.Bind(new(repository.GuaranteeRepository), new(*repositoryimpl.GuaranteeRepository)),
-	wire.Bind(new(repository.PaymentRepository), new(*repositoryimpl.PaymentRepository)),
-	wire.Bind(new(repository.NewsRepository), new(*repositoryimpl.NewsRepository)),
-	wire.Bind(new(repository.BlogRepository), new(*repositoryimpl.BlogRepository)),
+	infraPostgres.NewUserRepository,
+	infraPostgres.NewInstallationRepository,
+	infraPostgres.NewAddressRepository,
+	infraRedis.NewUserCacheRepository,
+	infraPostgres.NewCorporationRepository,
+	infraPostgres.NewBidRepository,
+	infraPostgres.NewChatRepository,
+	infraPostgres.NewNotificationRepository,
+	infraPostgres.NewMaintenanceRepository,
+	infraPostgres.NewTicketRepository,
+	infraPostgres.NewReportRepository,
+	infraPostgres.NewGuaranteeRepository,
+	infraPostgres.NewPaymentRepository,
+	infraPostgres.NewNewsRepository,
+	infraPostgres.NewBlogRepository,
+	wire.Bind(new(domainPostgres.UserRepository), new(*infraPostgres.UserRepository)),
+	wire.Bind(new(domainPostgres.InstallationRepository), new(*infraPostgres.InstallationRepository)),
+	wire.Bind(new(domainPostgres.AddressRepository), new(*infraPostgres.AddressRepository)),
+	wire.Bind(new(domainRedis.UserCacheRepository), new(*infraRedis.UserCacheRepository)),
+	wire.Bind(new(domainPostgres.CorporationRepository), new(*infraPostgres.CorporationRepository)),
+	wire.Bind(new(domainPostgres.BidRepository), new(*infraPostgres.BidRepository)),
+	wire.Bind(new(domainPostgres.ChatRepository), new(*infraPostgres.ChatRepository)),
+	wire.Bind(new(domainPostgres.NotificationRepository), new(*infraPostgres.NotificationRepository)),
+	wire.Bind(new(domainPostgres.MaintenanceRepository), new(*infraPostgres.MaintenanceRepository)),
+	wire.Bind(new(domainPostgres.TicketRepository), new(*infraPostgres.TicketRepository)),
+	wire.Bind(new(domainPostgres.ReportRepository), new(*infraPostgres.ReportRepository)),
+	wire.Bind(new(domainPostgres.GuaranteeRepository), new(*infraPostgres.GuaranteeRepository)),
+	wire.Bind(new(domainPostgres.PaymentRepository), new(*infraPostgres.PaymentRepository)),
+	wire.Bind(new(domainPostgres.NewsRepository), new(*infraPostgres.NewsRepository)),
+	wire.Bind(new(domainPostgres.BlogRepository), new(*infraPostgres.BlogRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
-	wire.Struct(new(serviceimpl.UserServiceDeps), "*"),
-	wire.Struct(new(serviceimpl.NotificationServiceDeps), "*"),
-	wire.Struct(new(serviceimpl.InstallationServiceDeps), "*"),
-	wire.Struct(new(serviceimpl.BidServiceDeps), "*"),
-	serviceimpl.NewUserService,
-	serviceimpl.NewOTPService,
+	wire.Struct(new(service.UserServiceDeps), "*"),
+	wire.Struct(new(service.NotificationServiceDeps), "*"),
+	wire.Struct(new(service.InstallationServiceDeps), "*"),
+	wire.Struct(new(service.BidServiceDeps), "*"),
+	service.NewUserService,
+	service.NewOTPService,
 	sms.NewSMSService,
 	email.NewEmailService,
-	serviceimpl.NewJWTService,
-	serviceimpl.NewInstallationService,
-	serviceimpl.NewAddressService,
-	serviceimpl.NewCorporationService,
-	serviceimpl.NewBidService,
-	serviceimpl.NewChatService,
-	serviceimpl.NewNotificationService,
-	serviceimpl.NewMaintenanceService,
-	serviceimpl.NewTicketService,
-	serviceimpl.NewReportService,
-	serviceimpl.NewGuaranteeService,
-	serviceimpl.NewPaymentService,
-	serviceimpl.NewNewsService,
-	serviceimpl.NewBlogService,
-	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
-	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
-	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
-	wire.Bind(new(service.EmailService), new(*email.EmailService)),
-	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
-	wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)),
-	wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)),
-	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
-	wire.Bind(new(service.BidService), new(*serviceimpl.BidService)),
-	wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)),
-	wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)),
-	wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)),
-	wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)),
-	wire.Bind(new(service.ReportService), new(*serviceimpl.ReportService)),
-	wire.Bind(new(service.GuaranteeService), new(*serviceimpl.GuaranteeService)),
-	wire.Bind(new(service.PaymentService), new(*serviceimpl.PaymentService)),
-	wire.Bind(new(service.NewsService), new(*serviceimpl.NewsService)),
-	wire.Bind(new(service.BlogService), new(*serviceimpl.BlogService)),
+	service.NewJWTService,
+	service.NewInstallationService,
+	service.NewAddressService,
+	service.NewCorporationService,
+	service.NewBidService,
+	service.NewChatService,
+	service.NewNotificationService,
+	service.NewMaintenanceService,
+	service.NewTicketService,
+	service.NewReportService,
+	service.NewGuaranteeService,
+	service.NewPaymentService,
+	service.NewNewsService,
+	service.NewBlogService,
+	wire.Bind(new(usecase.UserService), new(*service.UserService)),
+	wire.Bind(new(usecase.OTPService), new(*service.OTPService)),
+	wire.Bind(new(communication.SMSService), new(*sms.SMSService)),
+	wire.Bind(new(communication.EmailService), new(*email.EmailService)),
+	wire.Bind(new(usecase.JWTService), new(*service.JWTService)),
+	wire.Bind(new(usecase.InstallationService), new(*service.InstallationService)),
+	wire.Bind(new(usecase.AddressService), new(*service.AddressService)),
+	wire.Bind(new(usecase.CorporationService), new(*service.CorporationService)),
+	wire.Bind(new(usecase.BidService), new(*service.BidService)),
+	wire.Bind(new(usecase.ChatService), new(*service.ChatService)),
+	wire.Bind(new(usecase.NotificationService), new(*service.NotificationService)),
+	wire.Bind(new(usecase.MaintenanceService), new(*service.MaintenanceService)),
+	wire.Bind(new(usecase.TicketService), new(*service.TicketService)),
+	wire.Bind(new(usecase.ReportService), new(*service.ReportService)),
+	wire.Bind(new(usecase.GuaranteeService), new(*service.GuaranteeService)),
+	wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)),
+	wire.Bind(new(usecase.NewsService), new(*service.NewsService)),
+	wire.Bind(new(usecase.BlogService), new(*service.BlogService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
-	localizationimpl.NewTranslationService,
-	loggerimpl.NewLogger,
-	jwtimpl.NewJWTKeyManager,
-	metricsimpl.NewPrometheusMetrics,
-	storage.NewS3Storage,
-	rabbitmq.NewRabbitMQ,
-	wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)),
-	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
-	wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)),
-	wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)),
+	infraLocalization.NewTranslationService,
+	infraLogger.NewLogger,
+	infraJWT.NewJWTKeyManager,
+	infraMetrics.NewPrometheusMetrics,
+	infraStorage.NewS3Storage,
+	infraRabbitMQ.NewRabbitMQ,
+	wire.Bind(new(domainLogger.Logger), new(*infraLogger.Logger)),
+	wire.Bind(new(domainMetrics.MetricsClient), new(*infraMetrics.PrometheusMetrics)),
+	wire.Bind(new(s3.S3Storage), new(*infraStorage.S3Storage)),
+	wire.Bind(new(message.Broker), new(*infraRabbitMQ.RabbitMQ)),
 )
 
 var GeneralControllerProviderSet = wire.NewSet(

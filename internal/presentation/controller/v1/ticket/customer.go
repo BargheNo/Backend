@@ -6,7 +6,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -14,13 +14,13 @@ import (
 
 type CustomerTicketController struct {
 	constants     *bootstrap.Constants
-	ticketService service.TicketService
+	ticketService usecase.TicketService
 	pagination    *bootstrap.Pagination
 }
 
 func NewCustomerTicketController(
 	constants *bootstrap.Constants,
-	ticketService service.TicketService,
+	ticketService usecase.TicketService,
 	pagination *bootstrap.Pagination,
 ) *CustomerTicketController {
 	return &CustomerTicketController{

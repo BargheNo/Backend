@@ -1,33 +1,33 @@
-package serviceimpl
+package service
 
 import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	blogdto "github.com/BargheNo/Backend/internal/application/dto/blog"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type BlogService struct {
-	userService        service.UserService
-	corporationService service.CorporationService
-	blogRepository     repository.BlogRepository
+	userService        usecase.UserService
+	corporationService usecase.CorporationService
+	blogRepository     postgres.BlogRepository
 	constants          *bootstrap.Constants
 	s3Storage          s3.S3Storage
 	db                 database.Database
 }
 
 func NewBlogService(
-	userService service.UserService,
-	corporationService service.CorporationService,
-	blogRepository repository.BlogRepository,
+	userService usecase.UserService,
+	corporationService usecase.CorporationService,
+	blogRepository postgres.BlogRepository,
 	constants *bootstrap.Constants,
 	s3Storage s3.S3Storage,
 	db database.Database,
@@ -153,8 +153,8 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) (u
 }
 
 func (blogService *BlogService) GetCorporationPosts(request blogdto.GetCorporationPostsRequest) ([]blogdto.CorporationPostResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	if err := blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID); err != nil {
 		return nil, err
@@ -202,8 +202,8 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetCorporati
 }
 
 func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.GetPublicCorporationPostsRequest) ([]blogdto.GeneralPostResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	if err := blogService.corporationService.DoesCorporationExist(request.CorporationID); err != nil {
 		return nil, err
@@ -250,8 +250,8 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 }
 
 func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPublicPostsRequest) ([]blogdto.GeneralPostResponse, error) {
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
 	allowedStatuses := []enum.PostStatus{enum.PostStatusPublished}
 	posts, err := blogService.blogRepository.FindPostsByStatus(blogService.db, allowedStatuses, paginationModifier, sortingModifier)

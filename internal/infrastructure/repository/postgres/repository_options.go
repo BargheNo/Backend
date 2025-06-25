@@ -1,4 +1,4 @@
-package repositoryimpl
+package postgres
 
 import "gorm.io/gorm"
 
