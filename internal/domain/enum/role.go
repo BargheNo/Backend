@@ -18,20 +18,26 @@ var rolePermissions = map[RoleName][]PermissionType{
 	},
 	Customer: {},
 	Technician: {
-		PanelViewUsageData, RepairViewAssigned, RepairAcceptRequest, RepairMarkComplete, ChatSendMessage, ChatViewAll,
+		BidViewInstallationRequests, BidViewAll, BidCreate, BidEdit, BidCancel,
+		MaintenanceViewAll, MaintenanceAcceptRequest, MaintenanceCreateRecord, MaintenanceUpdateRecord,
 	},
 	CorporationManager: {
-		CorporationManage, CorporationViewStats, CorporationUpdateSettings, PanelViewAssigned, PanelAssignToCustomer, PanelViewUsageData, PanelRemove, ReportViewOwn, AnalyticsViewAll,
-		TicketCreate, TicketViewOwn, ReportViewOwn, ReportCreate, ProfileUpdate, UserViewCustomers,
+		PanelViewAll, PanelCreate,
+		BidViewInstallationRequests, BidViewAll, BidCreate, BidEdit, BidCancel,
+		MaintenanceViewAll, MaintenanceAcceptRequest, MaintenanceCreateRecord, MaintenanceUpdateRecord,
+		GuaranteeViewAll, GuaranteeCreate, GuaranteeArchiveUnarchive,
+		CorpBlogViewAll, CorpBlogCreate, CorpBlogEdit, CorpBlogDelete,
+		ProfileViewPrivate, ProfileUpdate,
 	},
 	SupportAgent: {
-		TicketViewAll, TicketRespond, ReportViewAll, ReportManage, TicketCreate, ChatViewAll, UserViewAll, CorporationViewAll,
+		TicketViewAll, TicketRespond, TicketClose, TicketComment,
+		ReportViewAll, ReportRespond,
 	},
 	ContentManager: {
-		BlogCreate, BlogEdit, BlogDelete, BlogView, BlogComment, NewsCreate, NewsEdit, NewsDelete, NewsView, NewsComment,
+		NewsViewAll, NewsCreate, NewsEdit, NewsDelete,
 	},
 	Moderator: {
-		UserViewAll, TicketViewAll, BlogComment, NewsComment,
+		CorpBlogViewAll, CorpBlogCreate, CorpBlogEdit, CorpBlogDelete,
 	},
 }
 

@@ -1,7 +1,6 @@
 package httpv1
 
 import (
-	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/wire"
 	"github.com/gin-gonic/gin"
 )
@@ -12,9 +11,12 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	ticket := routerGroup.Group("/ticket")
 	{
 		ticket.GET("", app.Controllers.Admin.TicketController.GetTickets)
-		ticket.GET("/:ticketID/comments", app.Controllers.Admin.TicketController.GetComments)
-		ticket.POST("/:ticketID/comments", app.Controllers.Admin.TicketController.CreateComment)
-		ticket.POST("/:ticketID/resolve", app.Controllers.Admin.TicketController.ResolveTicket)
+		ticketsSubGroup := ticket.Group("/:ticketID")
+		{
+			ticketsSubGroup.GET("/comments", app.Controllers.Admin.TicketController.GetComments)
+			ticketsSubGroup.POST("/comments", app.Controllers.Admin.TicketController.CreateComment)
+			ticketsSubGroup.POST("/resolve", app.Controllers.Admin.TicketController.ResolveTicket)
+		}
 	}
 
 	installations := routerGroup.Group("/installation")
@@ -82,7 +84,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	}
 
 	userManagement := routerGroup.Group("/users")
-	userManagement.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.UserManageRolesPermissions}))
 	{
 		userManagement.GET("", app.Controllers.Admin.UserController.GetUsers)
 		userManagement.PUT("/:userID/ban", app.Controllers.Admin.UserController.BanUser)

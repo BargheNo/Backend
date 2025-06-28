@@ -6,229 +6,327 @@ type PermissionCategory uint
 const (
 	PermissionAll PermissionType = iota + 1
 	PermissionGeneral
+
+	// Admin Role Permissions
+	// User Management
 	UserViewAll
-	UserViewCustomers
-	UserApproveCorporation
-	UserRejectCorporation
-	UserManageRolesPermissions
+	UserBanUnban
+	UserChangeRole
+	UserViewRoles
+	UserManageRolePermissions
+	UserRemoveRole
+	UserCreateRole
+
+	// Corporation Management
+	CorporationViewAll
+	CorporationApproveDecline
+
+	// Panel Installation Request Management
+	InstallationRequestViewAll
+	InstallationRequestEdit
+	InstallationRequestRemove
+
+	// Ticket Management
 	TicketViewAll
-	TicketCreate
-	TicketViewOwn
 	TicketRespond
+	TicketClose
+	TicketComment
+
+	// Report Management
 	ReportViewAll
-	ReportManage
-	ReportCreate
-	ReportViewOwn
-	BlogCreate
-	BlogEdit
-	BlogDelete
-	BlogView
-	BlogComment
+	ReportRespond
+
+	// Blog Management (Admin)
+	AdminBlogViewAll
+	AdminBlogCreate
+	AdminBlogEdit
+	AdminBlogDelete
+
+	// News Management
+	NewsViewAll
 	NewsCreate
 	NewsEdit
 	NewsDelete
-	NewsView
-	NewsComment
+
+	// Corporation Role Permissions
+	// Panel Management
 	PanelViewAll
-	PanelAssignToCustomer
-	PanelRemove
-	PanelViewAssigned
-	PanelRequestPurchase
-	PanelViewOwned
-	PanelViewUsageData
-	ChatViewAll
-	ChatSendMessage
-	SystemSettingsUpdate
-	RepairViewAll
-	RepairAssignExpert
-	RepairAcceptRequest
-	RepairMarkComplete
-	RepairRequest
-	RepairViewAssigned
-	AnalyticsViewAll
+	PanelCreate
+
+	// Bid Management
+	BidViewInstallationRequests
+	BidViewAll
+	BidCreate
+	BidEdit
+	BidCancel
+
+	// Maintenance Management
+	MaintenanceViewAll
+	MaintenanceAcceptRequest
+	MaintenanceCreateRecord
+	MaintenanceUpdateRecord
+
+	// Guarantee Management
+	GuaranteeViewAll
+	GuaranteeCreate
+	GuaranteeArchiveUnarchive
+
+	// Blog Management (Corporation)
+	CorpBlogViewAll
+	CorpBlogCreate
+	CorpBlogEdit
+	CorpBlogDelete
+
+	// Profile Management
+	ProfileViewPrivate
 	ProfileUpdate
-	CorporationViewAll
-	CorporationManage
-	CorporationViewStats
-	CorporationUpdateSettings
 )
 
 const (
 	CategoryGeneral PermissionCategory = iota + 1
 	CategoryUser
+	CategoryCorporation
+	CategoryInstallationRequest
 	CategoryTicket
 	CategoryReport
 	CategoryBlog
 	CategoryNews
 	CategoryPanel
-	CategoryChat
-	CategorySystem
-	CategoryRepair
-	CategoryAnalytics
+	CategoryBid
+	CategoryMaintenance
+	CategoryGuarantee
 	CategoryProfile
-	CategoryCorporation
 )
 
 var permissionNames = map[PermissionType]string{
-	PermissionAll:              "general.all",
-	PermissionGeneral:          "general.general",
-	UserViewAll:                "user.view_all",
-	UserViewCustomers:          "user.view_customers",
-	UserApproveCorporation:     "user.approve_Corporation",
-	UserRejectCorporation:      "user.reject_Corporation",
-	UserManageRolesPermissions: "user.manage_roles_permissions",
-	TicketViewAll:              "ticket.view_all",
-	TicketCreate:               "ticket.create",
-	TicketViewOwn:              "ticket.view_own",
-	TicketRespond:              "ticket.respond",
-	ReportViewAll:              "report.view_all",
-	ReportManage:               "report.manage",
-	ReportCreate:               "report.create",
-	ReportViewOwn:              "report.view_own",
-	BlogCreate:                 "blog.create",
-	BlogEdit:                   "blog.edit",
-	BlogDelete:                 "blog.delete",
-	BlogView:                   "blog.view",
-	BlogComment:                "blog.comment",
-	NewsCreate:                 "news.create",
-	NewsEdit:                   "news.edit",
-	NewsDelete:                 "news.delete",
-	NewsView:                   "news.view",
-	NewsComment:                "news.comment",
-	PanelViewAll:               "panel.view_all",
-	PanelAssignToCustomer:      "panel.assign_to_customer",
-	PanelRemove:                "panel.remove",
-	PanelViewAssigned:          "panel.view_assigned",
-	PanelRequestPurchase:       "panel.request_purchase",
-	PanelViewOwned:             "panel.view_owned",
-	PanelViewUsageData:         "panel.view_usage_data",
-	ChatViewAll:                "chat.view_all",
-	ChatSendMessage:            "chat.send_message",
-	SystemSettingsUpdate:       "systemSettings.update",
-	RepairViewAll:              "repair.view_all",
-	RepairAssignExpert:         "repair.assign_expert",
-	RepairAcceptRequest:        "repair.accept_request",
-	RepairMarkComplete:         "repair.mark_complete",
-	RepairRequest:              "repair.request",
-	RepairViewAssigned:         "repair.view_assigned",
-	AnalyticsViewAll:           "analytics.view_all",
-	ProfileUpdate:              "profile.update",
-	CorporationViewAll:         "Corporation.view_all",
-	CorporationManage:          "Corporation.manage",
-	CorporationViewStats:       "Corporation.view_stats",
-	CorporationUpdateSettings:  "Corporation.update_settings",
+	PermissionAll:     "general.all",
+	PermissionGeneral: "general.general",
+
+	// User Management
+	UserViewAll:               "user.view_all",
+	UserBanUnban:              "user.ban_unban",
+	UserChangeRole:            "user.change_role",
+	UserViewRoles:             "user.view_roles",
+	UserManageRolePermissions: "user.manage_role_permissions",
+	UserRemoveRole:            "user.remove_role",
+	UserCreateRole:            "user.create_role",
+
+	// Corporation Management
+	CorporationViewAll:        "corporation.view_all",
+	CorporationApproveDecline: "corporation.approve_decline",
+
+	// Installation Request Management
+	InstallationRequestViewAll: "installation_request.view_all",
+	InstallationRequestEdit:    "installation_request.edit",
+	InstallationRequestRemove:  "installation_request.remove",
+
+	// Ticket Management
+	TicketViewAll: "ticket.view_all",
+	TicketRespond: "ticket.respond",
+	TicketClose:   "ticket.close",
+	TicketComment: "ticket.comment",
+
+	// Report Management
+	ReportViewAll: "report.view_all",
+	ReportRespond: "report.respond",
+
+	// Blog Management (Admin)
+	AdminBlogViewAll: "admin_blog.view_all",
+	AdminBlogCreate:  "admin_blog.create",
+	AdminBlogEdit:    "admin_blog.edit",
+	AdminBlogDelete:  "admin_blog.delete",
+
+	// News Management
+	NewsViewAll: "news.view_all",
+	NewsCreate:  "news.create",
+	NewsEdit:    "news.edit",
+	NewsDelete:  "news.delete",
+
+	// Panel Management
+	PanelViewAll: "panel.view_all",
+	PanelCreate:  "panel.create",
+
+	// Bid Management
+	BidViewInstallationRequests: "bid.view_installation_requests",
+	BidViewAll:                  "bid.view_all",
+	BidCreate:                   "bid.create",
+	BidEdit:                     "bid.edit",
+	BidCancel:                   "bid.cancel",
+
+	// Maintenance Management
+	MaintenanceViewAll:       "maintenance.view_all",
+	MaintenanceAcceptRequest: "maintenance.accept_request",
+	MaintenanceCreateRecord:  "maintenance.create_record",
+	MaintenanceUpdateRecord:  "maintenance.update_record",
+
+	// Guarantee Management
+	GuaranteeViewAll:          "guarantee.view_all",
+	GuaranteeCreate:           "guarantee.create",
+	GuaranteeArchiveUnarchive: "guarantee.archive_unarchive",
+
+	// Blog Management (Corporation)
+	CorpBlogViewAll: "corp_blog.view_all",
+	CorpBlogCreate:  "corp_blog.create",
+	CorpBlogEdit:    "corp_blog.edit",
+	CorpBlogDelete:  "corp_blog.delete",
+
+	// Profile Management
+	ProfileViewPrivate: "profile.view_private",
+	ProfileUpdate:      "profile.update",
 }
 
 var permissionDescriptions = map[PermissionType]string{
-	PermissionAll:              "دسترسی کامل به سیستم",
-	PermissionGeneral:          "دسترسی عمومی",
-	UserViewAll:                "مشاهده تمامی کاربران سیستم",
-	UserViewCustomers:          "مشاهده تمامی مشتریان شرکت",
-	UserApproveCorporation:     "تایید فروشندگان و تامین کنندگان",
-	UserRejectCorporation:      "رد درخواست فروشندگان و تامین کنندگان",
-	UserManageRolesPermissions: "مدیریت نقش و دسترسی کاربران",
-	TicketViewAll:              "مدیریت تمامی تیکت های سیستم",
-	TicketCreate:               "ایجاد تیکت جدید",
-	TicketViewOwn:              "مشاهده تیکت های خود",
-	TicketRespond:              " پاسخ دادن به تیکت ها",
-	ReportViewAll:              "مشاهده تمامی گزارش های سیستم",
-	ReportManage:               "مدیریت گزارش های سیستم",
-	ReportCreate:               "ایجاد گزارش جدید",
-	ReportViewOwn:              "مشاهده گزارش های خود",
-	BlogCreate:                 "ایجاد مطلب جدید در بلاگ",
-	BlogEdit:                   "ویرایش مطالب بلاگ",
-	BlogDelete:                 "حذف مطالب بلاگ",
-	BlogView:                   "مشاهده مطالب بلاگ",
-	BlogComment:                "ثبت نظر برای مطالب بلاگ",
-	NewsCreate:                 "ایجاد خبر جدید",
-	NewsEdit:                   "ویرایش اخبار",
-	NewsDelete:                 "حذف اخبار",
-	NewsView:                   "مشاهده اخبار",
-	NewsComment:                "ثبت نظر برای اخبار",
-	PanelViewAll:               "مشاهده تمامی پنل های سیستم",
-	PanelAssignToCustomer:      "اختصاص پنل به مشتری",
-	PanelRemove:                "حذف پنل از سیستم",
-	PanelViewAssigned:          "مشاهده پنل های اختصاص داده شده",
-	PanelRequestPurchase:       "درخواست خرید پنل",
-	PanelViewOwned:             "مشاهده پنل های متعلق به خود",
-	PanelViewUsageData:         "مشاهده داده های مصرف پنل",
-	ChatViewAll:                "مشاهده تمامی مکالمات چت",
-	ChatSendMessage:            "ارسال پیام در چت",
-	SystemSettingsUpdate:       "به روزرسانی تنظیمات سیستم",
-	RepairViewAll:              "مشاهده تمامی درخواست های تعمیر",
-	RepairAssignExpert:         "اختصاص متخصص به درخواست تعمیر",
-	RepairAcceptRequest:        "پذیرش درخواست تعمیر",
-	RepairMarkComplete:         "علامت گذاری تعمیر به عنوان تکمیل شده",
-	RepairRequest:              "ثبت درخواست تعمیر",
-	RepairViewAssigned:         "مشاهده درخواست های تعمیر اختصاص داده شده",
-	AnalyticsViewAll:           "مشاهده تمامی تحلیل ها و آمار سیستم",
-	ProfileUpdate:              "به روزرسانی پروفایل کاربری",
-	CorporationViewAll:         "مشاهده تمامی فروشگاه ها",
-	CorporationManage:          "مدیریت کامل فروشگاه",
-	CorporationViewStats:       "مشاهده گزارشات فروشگاه",
-	CorporationUpdateSettings:  "به روزرسانی تنظیمات فروشگاه",
+	PermissionAll:     "دسترسی کامل به سیستم",
+	PermissionGeneral: "دسترسی عمومی",
+
+	// User Management
+	UserViewAll:               "مشاهده لیست کاربران وب‌سایت",
+	UserBanUnban:              "مسدود/رفع مسدودیت کاربران",
+	UserChangeRole:            "تغییر نقش کاربر",
+	UserViewRoles:             "مشاهده لیست نقش‌ها و مجوزها",
+	UserManageRolePermissions: "تغییر مجوزهای نقش",
+	UserRemoveRole:            "حذف نقش",
+	UserCreateRole:            "ایجاد نقش جدید",
+
+	// Corporation Management
+	CorporationViewAll:        "مشاهده لیست شرکت‌ها",
+	CorporationApproveDecline: "تایید/رد درخواست شرکت",
+
+	// Installation Request Management
+	InstallationRequestViewAll: "مشاهده لیست درخواست‌های نصب",
+	InstallationRequestEdit:    "ویرایش درخواست نصب",
+	InstallationRequestRemove:  "حذف درخواست نصب",
+
+	// Ticket Management
+	TicketViewAll: "مشاهده لیست تیکت‌ها",
+	TicketRespond: "پاسخ به تیکت",
+	TicketClose:   "بستن تیکت",
+	TicketComment: "افزودن نظر به تیکت",
+
+	// Report Management
+	ReportViewAll: "مشاهده لیست گزارش‌ها",
+	ReportRespond: "پاسخ به گزارش",
+
+	// Blog Management (Admin)
+	AdminBlogViewAll: "مشاهده لیست بلاگ‌ها",
+	AdminBlogCreate:  "ایجاد بلاگ جدید",
+	AdminBlogEdit:    "ویرایش بلاگ",
+	AdminBlogDelete:  "حذف بلاگ",
+
+	// News Management
+	NewsViewAll: "مشاهده لیست اخبار",
+	NewsCreate:  "ایجاد خبر جدید",
+	NewsEdit:    "ویرایش خبر",
+	NewsDelete:  "حذف خبر",
+
+	// Panel Management
+	PanelViewAll: "مشاهده لیست پنل‌ها",
+	PanelCreate:  "ایجاد پنل جدید",
+
+	// Bid Management
+	BidViewInstallationRequests: "مشاهده لیست درخواست‌های نصب",
+	BidViewAll:                  "مشاهده لیست پیشنهادات",
+	BidCreate:                   "ایجاد پیشنهاد جدید",
+	BidEdit:                     "ویرایش پیشنهاد",
+	BidCancel:                   "لغو پیشنهاد",
+
+	// Maintenance Management
+	MaintenanceViewAll:       "مشاهده لیست درخواست‌های تعمیر",
+	MaintenanceAcceptRequest: "پذیرش/لغو درخواست تعمیر",
+	MaintenanceCreateRecord:  "ایجاد سابقه تعمیر",
+	MaintenanceUpdateRecord:  "به‌روزرسانی سابقه تعمیر",
+
+	// Guarantee Management
+	GuaranteeViewAll:          "مشاهده لیست ضمانت‌ها",
+	GuaranteeCreate:           "ایجاد ضمانت جدید",
+	GuaranteeArchiveUnarchive: "آرشیو/رفع آرشیو ضمانت",
+
+	// Blog Management (Corporation)
+	CorpBlogViewAll: "مشاهده لیست بلاگ‌ها",
+	CorpBlogCreate:  "ایجاد بلاگ جدید",
+	CorpBlogEdit:    "ویرایش بلاگ",
+	CorpBlogDelete:  "حذف بلاگ",
+
+	// Profile Management
+	ProfileViewPrivate: "مشاهده اطلاعات خصوصی پروفایل",
+	ProfileUpdate:      "به‌روزرسانی پروفایل",
 }
 
 var permissionCategories = map[PermissionType]PermissionCategory{
 	PermissionAll:     CategoryGeneral,
 	PermissionGeneral: CategoryGeneral,
 
-	UserViewAll:                CategoryUser,
-	UserViewCustomers:          CategoryUser,
-	UserApproveCorporation:     CategoryUser,
-	UserRejectCorporation:      CategoryUser,
-	UserManageRolesPermissions: CategoryUser,
+	// User Management
+	UserViewAll:               CategoryUser,
+	UserBanUnban:              CategoryUser,
+	UserChangeRole:            CategoryUser,
+	UserViewRoles:             CategoryUser,
+	UserManageRolePermissions: CategoryUser,
+	UserRemoveRole:            CategoryUser,
+	UserCreateRole:            CategoryUser,
 
+	// Corporation Management
+	CorporationViewAll:        CategoryCorporation,
+	CorporationApproveDecline: CategoryCorporation,
+
+	// Installation Request Management
+	InstallationRequestViewAll: CategoryInstallationRequest,
+	InstallationRequestEdit:    CategoryInstallationRequest,
+	InstallationRequestRemove:  CategoryInstallationRequest,
+
+	// Ticket Management
 	TicketViewAll: CategoryTicket,
-	TicketCreate:  CategoryTicket,
-	TicketViewOwn: CategoryTicket,
 	TicketRespond: CategoryTicket,
+	TicketClose:   CategoryTicket,
+	TicketComment: CategoryTicket,
 
+	// Report Management
 	ReportViewAll: CategoryReport,
-	ReportManage:  CategoryReport,
-	ReportCreate:  CategoryReport,
-	ReportViewOwn: CategoryReport,
+	ReportRespond: CategoryReport,
 
-	BlogCreate:  CategoryBlog,
-	BlogEdit:    CategoryBlog,
-	BlogDelete:  CategoryBlog,
-	BlogView:    CategoryBlog,
-	BlogComment: CategoryBlog,
+	// Blog Management (Admin)
+	AdminBlogViewAll: CategoryBlog,
+	AdminBlogCreate:  CategoryBlog,
+	AdminBlogEdit:    CategoryBlog,
+	AdminBlogDelete:  CategoryBlog,
 
+	// News Management
+	NewsViewAll: CategoryNews,
 	NewsCreate:  CategoryNews,
 	NewsEdit:    CategoryNews,
 	NewsDelete:  CategoryNews,
-	NewsView:    CategoryNews,
-	NewsComment: CategoryNews,
 
-	PanelViewAll:          CategoryPanel,
-	PanelAssignToCustomer: CategoryPanel,
-	PanelRemove:           CategoryPanel,
-	PanelViewAssigned:     CategoryPanel,
-	PanelRequestPurchase:  CategoryPanel,
-	PanelViewOwned:        CategoryPanel,
-	PanelViewUsageData:    CategoryPanel,
+	// Panel Management
+	PanelViewAll: CategoryPanel,
+	PanelCreate:  CategoryPanel,
 
-	ChatViewAll:     CategoryChat,
-	ChatSendMessage: CategoryChat,
+	// Bid Management
+	BidViewInstallationRequests: CategoryBid,
+	BidViewAll:                  CategoryBid,
+	BidCreate:                   CategoryBid,
+	BidEdit:                     CategoryBid,
+	BidCancel:                   CategoryBid,
 
-	SystemSettingsUpdate: CategorySystem,
+	// Maintenance Management
+	MaintenanceViewAll:       CategoryMaintenance,
+	MaintenanceAcceptRequest: CategoryMaintenance,
+	MaintenanceCreateRecord:  CategoryMaintenance,
+	MaintenanceUpdateRecord:  CategoryMaintenance,
 
-	RepairViewAll:       CategoryRepair,
-	RepairAssignExpert:  CategoryRepair,
-	RepairAcceptRequest: CategoryRepair,
-	RepairMarkComplete:  CategoryRepair,
-	RepairRequest:       CategoryRepair,
-	RepairViewAssigned:  CategoryRepair,
+	// Guarantee Management
+	GuaranteeViewAll:          CategoryGuarantee,
+	GuaranteeCreate:           CategoryGuarantee,
+	GuaranteeArchiveUnarchive: CategoryGuarantee,
 
-	AnalyticsViewAll: CategoryAnalytics,
+	// Blog Management (Corporation)
+	CorpBlogViewAll: CategoryBlog,
+	CorpBlogCreate:  CategoryBlog,
+	CorpBlogEdit:    CategoryBlog,
+	CorpBlogDelete:  CategoryBlog,
 
-	ProfileUpdate: CategoryProfile,
-
-	CorporationViewAll:        CategoryCorporation,
-	CorporationManage:         CategoryCorporation,
-	CorporationViewStats:      CategoryCorporation,
-	CorporationUpdateSettings: CategoryCorporation,
+	// Profile Management
+	ProfileViewPrivate: CategoryProfile,
+	ProfileUpdate:      CategoryProfile,
 }
 
 func (perm PermissionType) String() string {
@@ -255,31 +353,31 @@ func (perm PermissionType) Category() PermissionCategory {
 func (category PermissionCategory) String() string {
 	switch category {
 	case CategoryGeneral:
-		return "general"
+		return "عمومی"
 	case CategoryUser:
-		return "user"
-	case CategoryTicket:
-		return "ticket"
-	case CategoryReport:
-		return "report"
-	case CategoryBlog:
-		return "blog"
-	case CategoryNews:
-		return "news"
-	case CategoryPanel:
-		return "panel"
-	case CategoryChat:
-		return "chat"
-	case CategorySystem:
-		return "system"
-	case CategoryRepair:
-		return "repair"
-	case CategoryAnalytics:
-		return "analytics"
-	case CategoryProfile:
-		return "profile"
+		return "مدیریت کاربران"
 	case CategoryCorporation:
-		return "corporation"
+		return "مدیریت شرکت‌ها"
+	case CategoryInstallationRequest:
+		return "مدیریت درخواست‌های نصب"
+	case CategoryTicket:
+		return "مدیریت تیکت"
+	case CategoryReport:
+		return "مدیریت گزارشات"
+	case CategoryBlog:
+		return "مدیریت بلاگ"
+	case CategoryNews:
+		return "مدیریت اخبار"
+	case CategoryPanel:
+		return "مدیریت پنل‌ها"
+	case CategoryBid:
+		return "مدیریت پیشنهادات"
+	case CategoryMaintenance:
+		return "مدیریت تعمیرات"
+	case CategoryGuarantee:
+		return "مدیریت ضمانت‌ها"
+	case CategoryProfile:
+		return "مدیریت پروفایل"
 	}
 	return "unknown"
 }
@@ -287,17 +385,67 @@ func (category PermissionCategory) String() string {
 func GetAllPermissionTypes() []PermissionType {
 	return []PermissionType{
 		PermissionAll, PermissionGeneral,
-		UserViewAll, UserViewCustomers, UserApproveCorporation, UserRejectCorporation, UserManageRolesPermissions,
-		TicketViewAll, TicketCreate, TicketViewOwn, TicketRespond,
-		ReportViewAll, ReportManage, ReportCreate, ReportViewOwn,
-		BlogCreate, BlogEdit, BlogDelete, BlogView, BlogComment,
-		NewsCreate, NewsEdit, NewsDelete, NewsView, NewsComment,
-		PanelViewAll, PanelAssignToCustomer, PanelRemove, PanelViewAssigned, PanelRequestPurchase, PanelViewOwned, PanelViewUsageData,
-		ChatViewAll, ChatSendMessage,
-		SystemSettingsUpdate,
-		RepairViewAll, RepairAssignExpert, RepairAcceptRequest, RepairMarkComplete, RepairRequest, RepairViewAssigned,
-		AnalyticsViewAll,
-		ProfileUpdate,
-		CorporationViewAll, CorporationManage, CorporationViewStats, CorporationUpdateSettings,
+
+		// User Management
+		UserViewAll, UserBanUnban, UserChangeRole, UserViewRoles,
+		UserManageRolePermissions, UserRemoveRole, UserCreateRole,
+
+		// Corporation Management
+		CorporationViewAll, CorporationApproveDecline,
+
+		// Installation Request Management
+		InstallationRequestViewAll, InstallationRequestEdit, InstallationRequestRemove,
+
+		// Ticket Management
+		TicketViewAll, TicketRespond, TicketClose, TicketComment,
+
+		// Report Management
+		ReportViewAll, ReportRespond,
+
+		// Blog Management (Admin)
+		AdminBlogViewAll, AdminBlogCreate, AdminBlogEdit, AdminBlogDelete,
+
+		// News Management
+		NewsViewAll, NewsCreate, NewsEdit, NewsDelete,
+
+		// Panel Management
+		PanelViewAll, PanelCreate,
+
+		// Bid Management
+		BidViewInstallationRequests, BidViewAll, BidCreate, BidEdit, BidCancel,
+
+		// Maintenance Management
+		MaintenanceViewAll, MaintenanceAcceptRequest, MaintenanceCreateRecord, MaintenanceUpdateRecord,
+
+		// Guarantee Management
+		GuaranteeViewAll, GuaranteeCreate, GuaranteeArchiveUnarchive,
+
+		// Blog Management (Corporation)
+		CorpBlogViewAll, CorpBlogCreate, CorpBlogEdit, CorpBlogDelete,
+
+		// Profile Management
+		ProfileViewPrivate, ProfileUpdate,
+	}
+}
+
+func GetCorporationPermissionTypes() []PermissionType {
+	return []PermissionType{
+		// Panel Management
+		PanelViewAll, PanelCreate,
+
+		// Bid Management
+		BidViewInstallationRequests, BidViewAll, BidCreate, BidEdit, BidCancel,
+
+		// Maintenance Management
+		MaintenanceViewAll, MaintenanceAcceptRequest, MaintenanceCreateRecord, MaintenanceUpdateRecord,
+
+		// Guarantee Management
+		GuaranteeViewAll, GuaranteeCreate, GuaranteeArchiveUnarchive,
+
+		// Blog Management (Corporation)
+		CorpBlogViewAll, CorpBlogCreate, CorpBlogEdit, CorpBlogDelete,
+
+		// Profile Management
+		ProfileViewPrivate, ProfileUpdate,
 	}
 }
