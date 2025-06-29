@@ -103,75 +103,75 @@ var permissionNames = map[PermissionType]string{
 	PermissionGeneral: "general.general",
 
 	// User Management
-	UserViewAll:               "user.view_all",
-	UserBanUnban:              "user.ban_unban",
-	UserChangeRole:            "user.change_role",
-	UserViewRoles:             "user.view_roles",
-	UserManageRolePermissions: "user.manage_role_permissions",
-	UserRemoveRole:            "user.remove_role",
-	UserCreateRole:            "user.create_role",
+	UserViewAll:               "user.viewAll",
+	UserBanUnban:              "user.banUnban",
+	UserChangeRole:            "user.changeRole",
+	UserViewRoles:             "user.viewRoles",
+	UserManageRolePermissions: "user.manageRolePermissions",
+	UserRemoveRole:            "user.removeRole",
+	UserCreateRole:            "user.createRole",
 
 	// Corporation Management
-	CorporationViewAll:        "corporation.view_all",
-	CorporationApproveDecline: "corporation.approve_decline",
+	CorporationViewAll:        "corporation.viewAll",
+	CorporationApproveDecline: "corporation.approveDecline",
 
 	// Installation Request Management
-	InstallationRequestViewAll: "installation_request.view_all",
-	InstallationRequestEdit:    "installation_request.edit",
-	InstallationRequestRemove:  "installation_request.remove",
+	InstallationRequestViewAll: "installationRequest.viewAll",
+	InstallationRequestEdit:    "installationRequest.edit",
+	InstallationRequestRemove:  "installationRequest.remove",
 
 	// Ticket Management
-	TicketViewAll: "ticket.view_all",
+	TicketViewAll: "ticket.viewAll",
 	TicketRespond: "ticket.respond",
 	TicketClose:   "ticket.close",
 	TicketComment: "ticket.comment",
 
 	// Report Management
-	ReportViewAll: "report.view_all",
+	ReportViewAll: "report.viewAll",
 	ReportRespond: "report.respond",
 
 	// Blog Management (Admin)
-	AdminBlogViewAll: "admin_blog.view_all",
-	AdminBlogCreate:  "admin_blog.create",
-	AdminBlogEdit:    "admin_blog.edit",
-	AdminBlogDelete:  "admin_blog.delete",
+	AdminBlogViewAll: "adminBlog.viewAll",
+	AdminBlogCreate:  "adminBlog.create",
+	AdminBlogEdit:    "adminBlog.edit",
+	AdminBlogDelete:  "adminBlog.delete",
 
 	// News Management
-	NewsViewAll: "news.view_all",
+	NewsViewAll: "news.viewAll",
 	NewsCreate:  "news.create",
 	NewsEdit:    "news.edit",
 	NewsDelete:  "news.delete",
 
 	// Panel Management
-	PanelViewAll: "panel.view_all",
+	PanelViewAll: "panel.viewAll",
 	PanelCreate:  "panel.create",
 
 	// Bid Management
-	BidViewInstallationRequests: "bid.view_installation_requests",
-	BidViewAll:                  "bid.view_all",
+	BidViewInstallationRequests: "bid.viewInstallationRequests",
+	BidViewAll:                  "bid.viewAll",
 	BidCreate:                   "bid.create",
 	BidEdit:                     "bid.edit",
 	BidCancel:                   "bid.cancel",
 
 	// Maintenance Management
-	MaintenanceViewAll:       "maintenance.view_all",
-	MaintenanceAcceptRequest: "maintenance.accept_request",
-	MaintenanceCreateRecord:  "maintenance.create_record",
-	MaintenanceUpdateRecord:  "maintenance.update_record",
+	MaintenanceViewAll:       "maintenance.viewAll",
+	MaintenanceAcceptRequest: "maintenance.acceptRequest",
+	MaintenanceCreateRecord:  "maintenance.createRecord",
+	MaintenanceUpdateRecord:  "maintenance.updateRecord",
 
 	// Guarantee Management
-	GuaranteeViewAll:          "guarantee.view_all",
+	GuaranteeViewAll:          "guarantee.viewAll",
 	GuaranteeCreate:           "guarantee.create",
-	GuaranteeArchiveUnarchive: "guarantee.archive_unarchive",
+	GuaranteeArchiveUnarchive: "guarantee.archiveUnarchive",
 
 	// Blog Management (Corporation)
-	CorpBlogViewAll: "corp_blog.view_all",
-	CorpBlogCreate:  "corp_blog.create",
-	CorpBlogEdit:    "corp_blog.edit",
-	CorpBlogDelete:  "corp_blog.delete",
+	CorpBlogViewAll: "corpBlog.viewAll",
+	CorpBlogCreate:  "corpBlog.create",
+	CorpBlogEdit:    "corpBlog.edit",
+	CorpBlogDelete:  "corpBlog.delete",
 
 	// Profile Management
-	ProfileViewPrivate: "profile.view_private",
+	ProfileViewPrivate: "profile.viewPrivate",
 	ProfileUpdate:      "profile.update",
 }
 
