@@ -20,8 +20,8 @@ jobs:
 
       - name: Write .pem files
         run: |
-          echo "${{ secrets.PRIVATE }}" > ./internal/application/adapter/jwt/privateKey.pem
-          echo "${{ secrets.PUBLIC }}" > ./internal/application/adapter/jwt/publicKey.pem
+          echo "${{ secrets.PRIVATE }}" > ./internal/infrastructure/jwt/privateKey.pem
+          echo "${{ secrets.PUBLIC }}" > ./internal/infrastructure/jwt/publicKey.pem
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2

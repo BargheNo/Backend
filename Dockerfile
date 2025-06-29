@@ -11,10 +11,10 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-COPY ./internal/application/adapter/jwt/privateKey.pem ./internal/application/adapter/jwt/
-COPY ./internal/application/adapter/jwt/publicKey.pem /internal/application/adapter/jwt/
+COPY ./internal/infrastructure/jwt/privateKey.pem ./internal/infrastructure/jwt/
+COPY ./internal/infrastructure/jwt/publicKey.pem /internal/infrastructure/jwt/
 
-COPY ./internal/application/service/communication/email/templates ./internal/application/service/communication/email/templates
+COPY ./internal/infrastructure/communication/email/templates ./internal/infrastructure/communication/email/templates
 
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o main ./cmd/app
@@ -27,11 +27,11 @@ WORKDIR /app
 
 COPY --from=builder /app/main .
 
-RUN mkdir -p /app/internal/application/adapter/jwt
-RUN mkdir -p /app/internal/application/service/communication/email/templates
-COPY ./internal/application/adapter/jwt/privateKey.pem ./internal/application/adapter/jwt/
-COPY ./internal/application/adapter/jwt/publicKey.pem ./internal/application/adapter/jwt/
-COPY ./internal/application/service/communication/email/templates ./internal/application/service/communication/email/templates
+RUN mkdir -p /app/internal/infrastructure/jwt
+RUN mkdir -p /app/internal/infrastructure/communication/email/templates
+COPY ./internal/infrastructure/jwt/privateKey.pem ./internal/infrastructure/jwt/
+COPY ./internal/infrastructure/jwt/publicKey.pem ./internal/infrastructure/jwt/
+COPY ./internal/infrastructure/communication/email/templates ./internal/infrastructure/communication/email/templates
 
 COPY .env .
 
