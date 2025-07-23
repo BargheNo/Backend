@@ -130,6 +130,18 @@ func (installationService *InstallationService) GetBuildingTypes() []installatio
 	return response
 }
 
+func (installationService *InstallationService) GetPanelStatuses() []installationdto.EnumStatusResponse {
+	statuses := enum.GetAllPanelStatuses()
+	response := make([]installationdto.EnumStatusResponse, len(statuses))
+	for i, status := range statuses {
+		response[i] = installationdto.EnumStatusResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return response
+}
+
 func (installationService *InstallationService) ValidateRequestOwnership(requestID, ownerID uint) (installationdto.PublicRequestDetailsResponse, error) {
 	request, err := installationService.getOwnerRequest(requestID, ownerID)
 	if err != nil {
