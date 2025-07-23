@@ -30,6 +30,7 @@ type InstallationService interface {
 	UpdatePanel(request installationdto.UpdatePanelRequest) error
 	DeletePanel(panelID uint) error
 	GetRequestStatuses() []installationdto.EnumStatusResponse
+	GetPanelStatuses() []installationdto.EnumStatusResponse
 	UpdateInstallationRequestByAdmin(newRequest installationdto.UpdateInstallationRequest) error
 	UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest) error
 	GetPanelStatus() []installationdto.EnumStatusResponse

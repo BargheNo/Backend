@@ -24,10 +24,15 @@ func NewGeneralInstallationController(
 
 func (installationController *GeneralInstallationController) GetRequestStatuses(ctx *gin.Context) {
 	statuses := installationController.installationService.GetRequestStatuses()
-	controller.Response(ctx, 201, "", statuses)
+	controller.Response(ctx, 200, "", statuses)
+}
+
+func (installationController *GeneralInstallationController) GetPanelStatuses(ctx *gin.Context) {
+	statuses := installationController.installationService.GetPanelStatuses()
+	controller.Response(ctx, 200, "", statuses)
 }
 
 func (installationController *GeneralInstallationController) GetBuildingTypes(ctx *gin.Context) {
 	types := installationController.installationService.GetBuildingTypes()
-	controller.Response(ctx, 201, "", types)
+	controller.Response(ctx, 200, "", types)
 }
