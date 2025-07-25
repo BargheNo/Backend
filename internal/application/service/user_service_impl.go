@@ -452,8 +452,20 @@ func (userService *UserService) ForgotPassword(forgotPasswordInfo userdto.Forgot
 	return nil
 }
 
+func (userService *UserService) FindUserByPhone(phone string) (*entity.User, error) {
+	user, err := userService.userRepository.FindUserByPhone(userService.db, phone)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		return nil, notFoundError
+	}
+	return user, nil
+}
+
 func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest) (userdto.UserInfoResponse, error) {
-	user, err := userService.FindActiveUserByPhone(verifyInfo.Phone)
+	user, err := userService.FindUserByPhone(verifyInfo.Phone)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
 	}
