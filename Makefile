@@ -11,3 +11,6 @@ test:
 
 cover:
 	go tool cover -html=coverage.out
+
+log:
+	git log --oneline -n 10
