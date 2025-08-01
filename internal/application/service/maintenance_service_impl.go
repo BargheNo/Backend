@@ -211,7 +211,7 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 	if err != nil {
 		return err
 	}
-	if currentActiveRequest != nil {
+	if len(currentActiveRequest) > 0 {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.Pending)
 		return conflictErrors
