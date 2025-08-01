@@ -372,9 +372,13 @@ func (userService *UserService) Register(registerInfo userdto.BasicRegisterReque
 }
 
 func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneRequest) error {
-	user, err := userService.FindActiveUserByPhone(verifyInfo.Phone)
+	user, err := userService.FindUserByPhone(verifyInfo.Phone)
 	if err != nil {
 		return err
+	}
+	if user == nil {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
+		return notFoundError
 	}
 
 	redisKey := userService.constants.RedisKey.GenerateOTPKey(verifyInfo.Phone)
