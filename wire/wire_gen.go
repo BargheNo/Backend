@@ -157,6 +157,9 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	blogService := service.NewBlogService(userService, corporationService, blogRepository, constants, s3Storage, postgresDatabase)
 	generalBlogController := blog.NewGeneralBlogController(constants, blogService, pagination)
 	generalPaymentController := payment.NewGeneralPaymentController(constants, paymentService)
+	ticketRepository := postgres.NewTicketRepository()
+	ticketService := service.NewTicketService(constants, ticketRepository, userService, s3Storage, postgresDatabase)
+	generalTicketController := ticket.NewGeneralTicketController(constants, ticketService, pagination)
 	generalControllers := &GeneralControllers{
 		UserController:         generalUserController,
 		AddressController:      generalAddressController,
@@ -166,6 +169,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		NewsController:         generalNewsController,
 		BlogController:         generalBlogController,
 		PaymentController:      generalPaymentController,
+		TicketController:       generalTicketController,
 	}
 	customerUserController := user.NewCustomerUserController(constants, userService)
 	customerInstallationController := installation.NewCustomerInstallationController(constants, pagination, installationService)
@@ -176,8 +180,6 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	customerChatController := chat.NewCustomerChatController(constants, pagination, websocketSetting, chatService, jwtService, userService, hub)
 	customerNotificationController := notification.NewCustomerNotificationController(constants, websocketSetting, pagination, notificationService, jwtService, userService, hub)
 	customerMaintenanceController := maintenance.NewCustomerMaintenanceController(constants, pagination, maintenanceService)
-	ticketRepository := postgres.NewTicketRepository()
-	ticketService := service.NewTicketService(constants, ticketRepository, userService, s3Storage, postgresDatabase)
 	customerTicketController := ticket.NewCustomerTicketController(constants, ticketService, pagination)
 	customerReportController := report.NewCustomerReportController(constants, reportService)
 	customerBlogController := blog.NewCustomerBlogController(constants, blogService, pagination)
@@ -294,7 +296,7 @@ var ServiceProviderSet = wire.NewSet(wire.Struct(new(service.UserServiceDeps), "
 
 var AdapterProviderSet = wire.NewSet(localization.NewTranslationService, logger.NewLogger, jwt.NewJWTKeyManager, metrics.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, wire.Bind(new(logger2.Logger), new(*logger.Logger)), wire.Bind(new(metrics2.MetricsClient), new(*metrics.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)))
 
-var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, installation.NewGeneralInstallationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, payment.NewGeneralPaymentController, wire.Struct(new(GeneralControllers), "*"))
+var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, installation.NewGeneralInstallationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, payment.NewGeneralPaymentController, ticket.NewGeneralTicketController, wire.Struct(new(GeneralControllers), "*"))
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, blog.NewCustomerBlogController, wire.Struct(new(CustomerControllers), "*"))
 
@@ -429,6 +431,7 @@ type GeneralControllers struct {
 	NewsController         *news.GeneralNewsController
 	BlogController         *blog.GeneralBlogController
 	PaymentController      *payment.GeneralPaymentController
+	TicketController       *ticket.GeneralTicketController
 }
 
 type CustomerControllers struct {

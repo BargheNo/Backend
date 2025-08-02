@@ -24,6 +24,7 @@ type CreateCorporationTicketRequest struct {
 
 type TicketListRequest struct {
 	OwnerID uint
+	Status  uint
 	Offset  int
 	Limit   int
 }

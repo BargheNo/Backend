@@ -81,4 +81,9 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		blogs.GET("/:postID", app.Controllers.General.BlogController.GetPost)
 		blogs.GET("/:postID/media/:mediaID", app.Controllers.General.BlogController.GetPostMedia)
 	}
+
+	tickets := routerGroup.Group("/ticket")
+	{
+		tickets.GET(status, app.Controllers.General.TicketController.GetTicketStatuses)
+	}
 }

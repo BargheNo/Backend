@@ -30,11 +30,16 @@ func NewAdminTicketController(
 }
 
 func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
+	type GetTicketsRequest struct {
+		Status uint `form:"status" validate:"required"`
+	}
+	params := controller.Validated[GetTicketsRequest](ctx)
 	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(ticketController.constant.Context.ID)
 	requestInfo := ticketdto.TicketListRequest{
 		OwnerID: ownerID.(uint),
+		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 	}

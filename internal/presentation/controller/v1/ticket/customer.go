@@ -61,11 +61,16 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 }
 
 func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
+	type GetTicketsRequest struct {
+		Status uint `form:"status" validate:"required"`
+	}
+	params := controller.Validated[GetTicketsRequest](ctx)
 	ownerID, _ := ctx.Get(ticketController.constants.Context.ID)
-	params := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
-	offset, limit := params.GetOffsetLimit()
+	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
 	listInfo := ticketdto.TicketListRequest{
 		OwnerID: ownerID.(uint),
+		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 	}
