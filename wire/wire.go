@@ -152,6 +152,7 @@ var GeneralControllerProviderSet = wire.NewSet(
 	news.NewGeneralNewsController,
 	blog.NewGeneralBlogController,
 	payment.NewGeneralPaymentController,
+	ticket.NewGeneralTicketController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -343,6 +344,7 @@ type GeneralControllers struct {
 	NewsController         *news.GeneralNewsController
 	BlogController         *blog.GeneralBlogController
 	PaymentController      *payment.GeneralPaymentController
+	TicketController       *ticket.GeneralTicketController
 }
 
 type CustomerControllers struct {

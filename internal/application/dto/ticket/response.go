@@ -22,3 +22,8 @@ type TicketCommentResponse struct {
 	Author     userdto.CredentialResponse `json:"author"`
 	Body       string                     `json:"body"`
 }
+
+type TicketStatusResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}

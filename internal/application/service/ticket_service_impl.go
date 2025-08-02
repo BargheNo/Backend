@@ -39,6 +39,31 @@ func NewTicketService(
 	}
 }
 
+func (ticketService *TicketService) mapToFilterStatuses(enumStatus uint) []enum.TicketStatus {
+	statuses := enum.GetAllTicketStatuses()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.TicketStatusAll {
+				return statuses
+			}
+			return []enum.TicketStatus{status}
+		}
+	}
+	return statuses
+}
+
+func (ticketService *TicketService) GetTicketStatuses() []ticketdto.TicketStatusResponse {
+	statuses := enum.GetAllTicketStatuses()
+	responses := make([]ticketdto.TicketStatusResponse, len(statuses))
+	for i, status := range statuses {
+		responses[i] = ticketdto.TicketStatusResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return responses
+}
+
 func (ticketService *TicketService) getTicket(ticketID uint) (*entity.Ticket, error) {
 	ticket, err := ticketService.ticketRepository.FindTicketByID(ticketService.db, ticketID)
 	if err != nil {
@@ -85,7 +110,9 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
-	tickets, err := ticketService.ticketRepository.GetCustomerTickets(ticketService.db, requestInfo.OwnerID, paginationModifier, sortingModifier)
+	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
+
+	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses, paginationModifier, sortingModifier)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +242,9 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
-	tickets, err := ticketService.ticketRepository.GetTickets(ticketService.db, paginationModifier, sortingModifier)
+	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
+
+	tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, statuses, paginationModifier, sortingModifier)
 	if err != nil {
 		return nil, err
 	}
