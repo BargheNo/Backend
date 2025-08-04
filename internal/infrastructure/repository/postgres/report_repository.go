@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
+	"github.com/BargheNo/Backend/internal/domain/enum"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
@@ -18,9 +19,9 @@ func (r *ReportRepository) CreateReport(db database.Database, report *entity.Rep
 	return db.GetDB().Create(report).Error
 }
 
-func (repo *ReportRepository) GetReportsByObjectType(db database.Database, objectType string, opts ...repository.QueryModifier) ([]*entity.Report, error) {
+func (repo *ReportRepository) GetReportsByObjectType(db database.Database, objectType string, statuses []enum.ReportStatus, opts ...repository.QueryModifier) ([]*entity.Report, error) {
 	var reports []*entity.Report
-	query := db.GetDB().Where("object_type = ?", objectType)
+	query := db.GetDB().Where("object_type = ? AND status IN ?", objectType, statuses)
 	for _, opt := range opts {
 		query = opt.Apply(query).(*gorm.DB)
 	}

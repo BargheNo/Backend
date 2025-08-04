@@ -27,12 +27,17 @@ func NewAdminReportController(
 }
 
 func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Context) {
+	type GetMaintenanceReportsRequest struct {
+		Status uint `form:"status" validate:"required"`
+	}
+	params := controller.Validated[GetMaintenanceReportsRequest](ctx)
 	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
 
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
+		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 	}
@@ -44,12 +49,17 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 }
 
 func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context) {
+	type GetPanelReportsRequest struct {
+		Status uint `form:"status" validate:"required"`
+	}
+	params := controller.Validated[GetPanelReportsRequest](ctx)
 	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 	offset, limit := pagination.GetOffsetLimit()
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
 
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
+		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 	}
