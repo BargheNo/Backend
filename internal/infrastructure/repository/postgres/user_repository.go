@@ -244,3 +244,20 @@ func (repo *UserRepository) ReplaceUserRoles(db database.Database, user *entity.
 	return db.GetDB().Model(&user).Association("Roles").Replace(roles)
 
 }
+
+func (repo *UserRepository) FindRolesByPermission(db database.Database, permissionID uint, opts ...repository.QueryModifier) ([]*entity.Role, error) {
+	var roles []*entity.Role
+	query := db.GetDB().
+		Joins("JOIN role_permissions ON roles.id = role_permissions.role_id").
+		Where("role_permissions.permission_id = ?", permissionID)
+
+	for _, opt := range opts {
+		query = opt.Apply(query).(*gorm.DB)
+	}
+
+	result := query.Find(&roles)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return roles, nil
+}

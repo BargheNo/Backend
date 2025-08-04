@@ -34,6 +34,27 @@ func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) 
 	controller.Response(ctx, 200, "", permissions)
 }
 
+func (userController *AdminUserController) GetPermissionRoles(ctx *gin.Context) {
+	type getPermissionRolesParams struct {
+		PermissionID uint `uri:"permissionID" validate:"required"`
+	}
+	params := controller.Validated[getPermissionRolesParams](ctx)
+	pagination := controller.GetPagination(ctx, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
+	offset, limit := pagination.GetOffsetLimit()
+
+	request := userdto.GetPermissionRolesRequest{
+		PermissionID: params.PermissionID,
+		Offset:       offset,
+		Limit:        limit,
+	}
+
+	roles, err := userController.userService.GetPermissionRoles(request)
+	if err != nil {
+		panic(err)
+	}
+	controller.Response(ctx, 200, "", roles)
+}
+
 func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
 	roles, err := userController.userService.GetAllRoles()
 	if err != nil {
