@@ -184,6 +184,13 @@ func (notificationService *NotificationService) SendNotification(notification *e
 		return err
 	}
 
+	if settings == nil {
+		err = notificationService.CreateNotificationSettings(notification.RecipientID)
+		if err != nil {
+			return err
+		}
+	}
+
 	if settings.IsPushEnabled {
 		msg := notificationdto.PushNotificationResponse{
 			ID:          notification.ID,
