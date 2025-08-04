@@ -17,6 +17,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -270,6 +271,32 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 		}
 	}
 	return usersResponse, nil
+}
+
+func (userService *UserService) GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, error) {
+	permission, err := userService.userRepository.FindPermissionByID(userService.db, request.PermissionID)
+	if err != nil {
+		return nil, err
+	}
+	if permission == nil {
+		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
+		return nil, notFoundError
+	}
+	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
+	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+
+	roles, err := userService.userRepository.FindRolesByPermission(userService.db, request.PermissionID, paginationModifier, sortingModifier)
+	if err != nil {
+		return nil, err
+	}
+	rolesResponse := make([]userdto.RoleResponse, len(roles))
+	for i, role := range roles {
+		rolesResponse[i] = userdto.RoleResponse{
+			ID:   role.ID,
+			Name: role.Name,
+		}
+	}
+	return rolesResponse, nil
 }
 
 func (userService *UserService) BanUser(userID uint) error {

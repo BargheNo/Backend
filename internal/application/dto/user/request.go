@@ -75,3 +75,9 @@ type GetUsersListRequest struct {
 	Offset   int
 	Limit    int
 }
+
+type GetPermissionRolesRequest struct {
+	PermissionID uint
+	Offset       int
+	Limit        int
+}

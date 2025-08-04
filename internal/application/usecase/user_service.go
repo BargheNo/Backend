@@ -33,4 +33,5 @@ type UserService interface {
 	DeleteRole(roleID uint) error
 	UpdateRole(newRoleRequest userdto.UpdateRoleRequest) error
 	UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) error
+	GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, error)
 }

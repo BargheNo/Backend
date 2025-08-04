@@ -60,7 +60,11 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	accessManagement := routerGroup.Group("")
 	// accessManagement.Use(app.Middlewares.Auth.RequirePermission([]enums.PermissionType{enums.ManageUsers, enums.ManageRoles}))
 	{
-		accessManagement.GET("/permissions", app.Controllers.Admin.UserController.GetPermissionsList)
+		permissions := accessManagement.Group("/permissions")
+		{
+			permissions.GET("", app.Controllers.Admin.UserController.GetPermissionsList)
+			permissions.GET("/:permissionID/roles", app.Controllers.Admin.UserController.GetPermissionRoles)
+		}
 
 		roles := accessManagement.Group("/roles")
 		{
