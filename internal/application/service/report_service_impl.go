@@ -104,6 +104,19 @@ func (reportService *ReportService) createReport(requestInfo reportdto.CreateRep
 	return report, nil
 }
 
+func (reportService *ReportService) mapToFilterStatuses(enumStatus uint) []enum.ReportStatus {
+	statuses := enum.GetAllReportStatuses()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.ReportStatusAll {
+				return statuses
+			}
+			return []enum.ReportStatus{status}
+		}
+	}
+	return statuses
+}
+
 func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest) error {
 	if err := reportService.maintenanceService.ValidateCustomerRecord(requestInfo.ObjectID, requestInfo.ReportedByID); err != nil {
 		return err
@@ -176,7 +189,9 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
-	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, paginationModifier, sortingModifier)
+	statuses := reportService.mapToFilterStatuses(requestInfo.Status)
+
+	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses, paginationModifier, sortingModifier)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +218,9 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
 	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
-	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, paginationModifier, sortingModifier)
+	statuses := reportService.mapToFilterStatuses(requestInfo.Status)
+
+	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, statuses, paginationModifier, sortingModifier)
 	if err != nil {
 		return nil, err
 	}
