@@ -1046,7 +1046,7 @@ func (installationService *InstallationService) ViolatePanelGuaranteeStatus(requ
 		return nil
 	})
 
-	return violationID, nil
+	return violationID, err
 }
 
 func (installationService *InstallationService) ClearPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) error {
