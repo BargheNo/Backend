@@ -306,7 +306,7 @@ func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) error 
 		return err
 	}
 
-	if request.Title != nil {
+	if request.Title != nil && *request.Title != news.Title {
 		if err := newsService.checkDuplicateNews(*request.Title); err != nil {
 			return err
 		}
@@ -327,17 +327,26 @@ func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) error 
 	}
 	news.Status = newStatus
 
+	prevCoverPath := news.CoverImage
 	if request.CoverImage != nil {
 		news.CoverImage = newsService.constants.S3BucketPath.GetNewsCoverImagePath(news.ID, request.CoverImage.Filename)
 		if err := newsService.s3Storage.UploadObject(enum.NewsMedia, news.CoverImage, request.CoverImage); err != nil {
 			return err
 		}
 	}
+	err = newsService.db.WithTransaction(func(tx database.Database) error {
+		if err := newsService.newsRepository.UpdateNews(tx, news); err != nil {
+			return err
+		}
+		if prevCoverPath != "" {
+			if err := newsService.s3Storage.DeleteObject(enum.NewsMedia, prevCoverPath); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 
-	if err := newsService.newsRepository.UpdateNews(newsService.db, news); err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (newsService *NewsService) UpdateNewsStatus(request newsdto.EditNewsStatusRequest) error {
