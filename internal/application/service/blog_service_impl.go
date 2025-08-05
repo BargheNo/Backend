@@ -393,7 +393,7 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error 
 		return err
 	}
 
-	if request.Title != nil {
+	if request.Title != nil && *request.Title != post.Title {
 		if err := blogService.checkDuplicateBlog(request.CorporationID, *request.Title); err != nil {
 			return err
 		}
@@ -411,7 +411,9 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error 
 	prevCoverPath := post.CoverImage
 	if request.CoverImage != nil {
 		post.CoverImage = blogService.constants.S3BucketPath.GetBlogCoverImagePath(request.CorporationID, request.CoverImage.Filename)
-		blogService.s3Storage.UploadObject(enum.BlogMedia, post.CoverImage, request.CoverImage)
+		if err := blogService.s3Storage.UploadObject(enum.BlogMedia, post.CoverImage, request.CoverImage); err != nil {
+			return err
+		}
 	}
 
 	post.Status = blogService.mapToOperationalStatuses(request.Status)
@@ -420,9 +422,10 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error 
 		if err = blogService.blogRepository.UpdatePost(tx, post); err != nil {
 			return err
 		}
-
-		if err := blogService.s3Storage.DeleteObject(enum.BlogMedia, prevCoverPath); err != nil {
-			return err
+		if prevCoverPath != "" {
+			if err := blogService.s3Storage.DeleteObject(enum.BlogMedia, prevCoverPath); err != nil {
+				return err
+			}
 		}
 
 		return err
