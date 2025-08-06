@@ -176,3 +176,8 @@ func (u *UserRepositoryMock) ReplaceUserRoles(db database.Database, user *entity
 	args := u.Called(db, user, roles)
 	return args.Error(0)
 }
+
+func (u *UserRepositoryMock) FindRolesByPermission(db database.Database, permissionID uint, opts ...repository.QueryModifier) ([]*entity.Role, error) {
+	args := u.Called(db, permissionID, opts)
+	return args.Get(0).([]*entity.Role), args.Error(1)
+}

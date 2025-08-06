@@ -147,3 +147,8 @@ func (s *UserServiceMock) UpdateUserRoles(userRolesRequest userdto.UpdateUserRol
 	args := s.Called(userRolesRequest)
 	return args.Error(0)
 }
+
+func (s *UserServiceMock) GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, error) {
+	args := s.Called(request)
+	return args.Get(0).([]userdto.RoleResponse), args.Error(1)
+}
