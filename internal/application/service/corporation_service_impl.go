@@ -45,11 +45,11 @@ func NewCorporationService(
 
 func (corporationService *CorporationService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetCorporationSortableColumns()
-	_, ok := allowed[sortby.CorporationSortBy(requested)]
-	if ok {
-		return sortby.CorporationSortByCreatedAt.DBColumn()
+	sortBy := sortby.CorporationSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.CorporationSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (corporationService *CorporationService) mapStatusIDToAllowedStatuses(statusID uint) []enum.CorporationStatus {

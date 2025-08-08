@@ -53,20 +53,20 @@ func NewInstallationService(deps InstallationServiceDeps) *InstallationService {
 
 func (installationService *InstallationService) getSortByColumnRequest(requested uint) string {
 	allowed := sortby.GetInstallationSortableColumns()
-	_, ok := allowed[sortby.InstallationSortBy(requested)]
-	if ok {
-		return sortby.InstallationSortByCreatedAt.DBColumn()
+	sortBy := sortby.InstallationSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.InstallationSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (installationService *InstallationService) getSortByColumnPanel(requested uint) string {
 	allowed := sortby.GetPanelSortableColumns()
-	_, ok := allowed[sortby.PanelSortBy(requested)]
-	if ok {
-		return sortby.PanelSortByCreatedAt.DBColumn()
+	sortBy := sortby.PanelSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.PanelSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (installationService *InstallationService) getOwnerRequest(requestID, ownerID uint) (*entity.InstallationRequest, error) {

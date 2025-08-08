@@ -64,11 +64,11 @@ func NewUserService(deps UserServiceDeps) *UserService {
 
 func (userService *UserService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetUserSortableColumns()
-	_, ok := allowed[sortby.UserSortBy(requested)]
-	if ok {
-		return sortby.UserSortByCreatedAt.DBColumn()
+	sortBy := sortby.UserSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.UserSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (userService *UserService) validatePasswordTests(errors *[]string, test string, password string, tag string) {
