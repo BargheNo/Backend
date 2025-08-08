@@ -18,3 +18,8 @@ type PanelReportResponse struct {
 	Panel       installationdto.AdminPanelResponse `json:"panel"`
 	Status      string                             `json:"status"`
 }
+
+type GetReportEnumResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}

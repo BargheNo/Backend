@@ -11,13 +11,13 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/communication"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -60,6 +60,15 @@ func NewUserService(deps UserServiceDeps) *UserService {
 		userCacheRepository: deps.UserCacheRepository,
 		db:                  deps.DB,
 	}
+}
+
+func (userService *UserService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetUserSortableColumns()
+	_, ok := allowed[sortby.UserSortBy(requested)]
+	if !ok {
+		return sortby.UserSortByCreatedAt.DBColumn()
+	}
+	return sortby.UserSortBy(requested).DBColumn()
 }
 
 func (userService *UserService) validatePasswordTests(errors *[]string, test string, password string, tag string) {
@@ -171,6 +180,20 @@ func (userService *UserService) enterNewEmail(firstName, lastName, email, emailS
 	return nil
 }
 
+func (userService *UserService) GetUserSortableColumns() []userdto.UserEnumResponse {
+	columns := sortby.GetUserSortableColumns()
+	response := make([]userdto.UserEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = userdto.UserEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
+}
+
 func (userService *UserService) IsUserActive(userID uint) error {
 	user, err := userService.GetUserByID(userID)
 	if err != nil {
@@ -246,7 +269,7 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 	for i, status := range request.Statuses {
 		statuses[i] = enum.UserStatus(status)
 	}
-	users, err := userService.userRepository.FindUserByStatus(userService.db, statuses)
+	users, err := userService.userRepository.FindUserByStatus(userService.db, statuses, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -273,21 +296,23 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 	return usersResponse, nil
 }
 
-func (userService *UserService) GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, error) {
+func (userService *UserService) GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, int64, error) {
 	permission, err := userService.userRepository.FindPermissionByID(userService.db, request.PermissionID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if permission == nil {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
-		return nil, notFoundError
+		return nil, 0, notFoundError
 	}
-	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
 
-	roles, err := userService.userRepository.FindRolesByPermission(userService.db, request.PermissionID, paginationModifier, sortingModifier)
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(userService.getSortByColumn(request.SortBy), request.Asc)
+
+	roles, err := userService.userRepository.FindRolesByPermission(userService.db, request.PermissionID, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	rolesResponse := make([]userdto.RoleResponse, len(roles))
 	for i, role := range roles {
@@ -296,7 +321,11 @@ func (userService *UserService) GetPermissionRoles(request userdto.GetPermission
 			Name: role.Name,
 		}
 	}
-	return rolesResponse, nil
+	count, err := userService.userRepository.CountRolesByPermission(userService.db, request.PermissionID)
+	if err != nil {
+		return nil, 0, err
+	}
+	return rolesResponse, count, nil
 }
 
 func (userService *UserService) BanUser(userID uint) error {

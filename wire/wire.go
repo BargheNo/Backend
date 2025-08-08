@@ -153,6 +153,9 @@ var GeneralControllerProviderSet = wire.NewSet(
 	blog.NewGeneralBlogController,
 	payment.NewGeneralPaymentController,
 	ticket.NewGeneralTicketController,
+	bid.NewGeneralBidController,
+	report.NewGeneralReportController,
+	maintenance.NewGeneralMaintenanceController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -168,6 +171,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 	ticket.NewCustomerTicketController,
 	report.NewCustomerReportController,
 	blog.NewCustomerBlogController,
+	news.NewCustomerNewsController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -345,6 +349,9 @@ type GeneralControllers struct {
 	BlogController         *blog.GeneralBlogController
 	PaymentController      *payment.GeneralPaymentController
 	TicketController       *ticket.GeneralTicketController
+	BidController          *bid.GeneralBidController
+	ReportController       *report.GeneralReportController
+	MaintenanceController  *maintenance.GeneralMaintenanceController
 }
 
 type CustomerControllers struct {
@@ -359,6 +366,7 @@ type CustomerControllers struct {
 	TicketController       *ticket.CustomerTicketController
 	ReportController       *report.CustomerReportController
 	BlogController         *blog.CustomerBlogController
+	NewsController         *news.CustomerNewsController
 }
 
 type CorporationControllers struct {

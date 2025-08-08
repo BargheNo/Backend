@@ -9,8 +9,6 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type ChatService struct {
@@ -242,27 +240,29 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 	}, nil
 }
 
-func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRequest) ([]chatdto.RoomMessagesResponse, error) {
+func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRequest) ([]chatdto.RoomMessagesResponse, int64, error) {
 	room, err := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if room == nil {
 		notFoundError := exception.NotFoundError{Item: chatService.constants.Field.Room}
-		return nil, notFoundError
+		return nil, 0, notFoundError
 	}
 	chatService.validateRoomParticipantAccess(request.UserID, room.CustomerID, room.CorporationID)
-	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
-	messages, err := chatService.chatRepository.GetRoomMessages(chatService.db, request.RoomID, paginationModifier, sortingModifier)
+
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset)
+
+	messages, err := chatService.chatRepository.GetRoomMessages(chatService.db, request.RoomID, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	messagesResponse := make([]chatdto.RoomMessagesResponse, len(messages))
 	for i, message := range messages {
 		sender, err := chatService.userService.GetUserCredential(message.SenderID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		messagesResponse[i] = chatdto.RoomMessagesResponse{
 			ID:        message.ID,
@@ -271,7 +271,12 @@ func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRe
 			TimeStamp: message.CreatedAt,
 		}
 	}
-	return messagesResponse, nil
+	count, err := chatService.chatRepository.CountRoomMessages(chatService.db, request.RoomID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return messagesResponse, count, nil
 }
 
 func (chatService *ChatService) BlockChatRoom(request chatdto.BlockServiceChatRequest) error {

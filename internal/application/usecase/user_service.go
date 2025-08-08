@@ -7,6 +7,7 @@ import (
 )
 
 type UserService interface {
+	GetUserSortableColumns() []userdto.UserEnumResponse
 	IsUserActive(userID uint) error
 	GetUserByID(userID uint) (*entity.User, error)
 	GetUserCredential(userID uint) (userdto.CredentialResponse, error)
@@ -33,5 +34,5 @@ type UserService interface {
 	DeleteRole(roleID uint) error
 	UpdateRole(newRoleRequest userdto.UpdateRoleRequest) error
 	UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) error
-	GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, error)
+	GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, int64, error)
 }

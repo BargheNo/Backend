@@ -27,13 +27,13 @@ type TicketListRequest struct {
 	Status  uint
 	Offset  int
 	Limit   int
+	SortBy  uint
+	Asc     bool
 }
 
 type TicketCommentListRequest struct {
 	TicketID uint
 	OwnerID  uint
-	Offset   int
-	Limit    int
 }
 
 type CreateTicketCommentRequest struct {

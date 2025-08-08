@@ -30,8 +30,9 @@ type CorporationRepository interface {
 	FindCorporationSignatories(db database.Database, corporationID uint) ([]*entity.Signatory, error)
 	FindUserCorporations(db database.Database, userID uint) ([]*entity.Corporation, error)
 	UpdateCorporation(db database.Database, corporation *entity.Corporation) error
-	FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...QueryModifier) ([]*entity.Corporation, error)
-	FindCorporationReviews(db database.Database, corporationID uint, opts ...QueryModifier) ([]*entity.CorporationReview, error)
+	FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, options *QueryOptions) ([]*entity.Corporation, error)
+	CountCorporationsByStatus(db database.Database, status []enum.CorporationStatus) (int64, error)
+	FindCorporationReviews(db database.Database, corporationID uint, options *QueryOptions) ([]*entity.CorporationReview, error)
 	FindContactInformation(db database.Database, corporationID uint) ([]*entity.ContactInformation, error)
 	DeleteCorporationSignatories(db database.Database, corporationID uint) error
 	DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error

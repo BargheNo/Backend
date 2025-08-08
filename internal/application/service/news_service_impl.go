@@ -8,11 +8,11 @@ import (
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type NewsService struct {
@@ -39,6 +39,15 @@ func NewNewsService(
 	}
 }
 
+func (newsService *NewsService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetNewsSortableColumns()
+	_, ok := allowed[sortby.NewsSortBy(requested)]
+	if !ok {
+		return sortby.NewsSortByCreatedAt.DBColumn()
+	}
+	return sortby.NewsSortBy(requested).DBColumn()
+}
+
 func (newsService *NewsService) mapToFilterStatuses(enumStatus uint) []enum.NewsStatus {
 	statuses := enum.GetAllNewsStatus()
 	for _, status := range statuses {
@@ -62,15 +71,29 @@ func (newsService *NewsService) mapToOperationalStatuses(enumStatus uint) enum.N
 	return enum.NewsStatusDraft
 }
 
-func (newsService *NewsService) GetAllNewsStatuses() []newsdto.NewsStatusesResponse {
+func (newsService *NewsService) GetNewsSortableColumns() []newsdto.NewsEnumResponse {
+	columns := sortby.GetNewsSortableColumns()
+	response := make([]newsdto.NewsEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = newsdto.NewsEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
+}
+
+func (newsService *NewsService) GetAllNewsStatuses() []newsdto.NewsEnumResponse {
 	allowedStatuses := []enum.NewsStatus{
 		enum.NewsStatusActive,
 		enum.NewsStatusDraft,
 	}
 
-	statuses := make([]newsdto.NewsStatusesResponse, len(allowedStatuses))
+	statuses := make([]newsdto.NewsEnumResponse, len(allowedStatuses))
 	for i, status := range allowedStatuses {
-		statuses[i] = newsdto.NewsStatusesResponse{
+		statuses[i] = newsdto.NewsEnumResponse{
 			ID:   uint(status),
 			Name: status.String(),
 		}
@@ -129,6 +152,7 @@ func (newsService *NewsService) GetAdminNews(newsID uint) (newsdto.AdminNewsResp
 		Status:      news.Status.String(),
 		CoverImage:  coverImage,
 		Author:      author,
+		TotalLike:   news.LikeCount,
 	}, nil
 }
 
@@ -157,17 +181,19 @@ func (newsService *NewsService) GetPublicNews(newsID uint) (newsdto.PublicNewsRe
 		Content:     news.Content,
 		Description: news.Description,
 		CoverImage:  coverImage,
+		TotalLike:   news.LikeCount,
 	}, nil
 }
 
-func (newsService *NewsService) GetAdminNewsList(request newsdto.GetAdminNewsListRequest) ([]newsdto.AdminNewsResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+func (newsService *NewsService) GetAdminNewsList(request newsdto.GetAdminNewsListRequest) ([]newsdto.AdminNewsResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(newsService.getSortByColumn(request.SortBy), request.Asc)
 
 	allowedStatuses := newsService.mapToFilterStatuses(request.Status)
-	news, err := newsService.newsRepository.FindNewsByStatus(newsService.db, allowedStatuses, paginationModifier, sortingModifier)
+	news, err := newsService.newsRepository.FindNewsByStatus(newsService.db, allowedStatuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	newsResponse := make([]newsdto.AdminNewsResponse, len(news))
 
@@ -176,13 +202,13 @@ func (newsService *NewsService) GetAdminNewsList(request newsdto.GetAdminNewsLis
 		if eachNews.CoverImage != "" {
 			coverImage, err = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, eachNews.CoverImage, 8*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 
 		author, err := newsService.userService.GetUserCredential(eachNews.AuthorID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		newsResponse[i] = newsdto.AdminNewsResponse{
@@ -193,19 +219,27 @@ func (newsService *NewsService) GetAdminNewsList(request newsdto.GetAdminNewsLis
 			Status:      eachNews.Status.String(),
 			CoverImage:  coverImage,
 			Author:      author,
+			TotalLike:   eachNews.LikeCount,
 		}
 	}
-	return newsResponse, nil
+
+	count, err := newsService.newsRepository.CountNewsByStatus(newsService.db, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return newsResponse, count, nil
 }
 
-func (newsService *NewsService) GetPublicNewsList(request newsdto.GetPublicNewsListRequest) ([]newsdto.PublicNewsResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+func (newsService *NewsService) GetPublicNewsList(request newsdto.GetPublicNewsListRequest) ([]newsdto.PublicNewsResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(newsService.getSortByColumn(request.SortBy), request.Asc)
 
 	allowedStatuses := []enum.NewsStatus{enum.NewsStatusActive}
-	news, err := newsService.newsRepository.FindNewsByStatus(newsService.db, allowedStatuses, paginationModifier, sortingModifier)
+	news, err := newsService.newsRepository.FindNewsByStatus(newsService.db, allowedStatuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	newsResponse := make([]newsdto.PublicNewsResponse, len(news))
 
@@ -214,7 +248,7 @@ func (newsService *NewsService) GetPublicNewsList(request newsdto.GetPublicNewsL
 		if eachNews.CoverImage != "" {
 			coverImage, err = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, eachNews.CoverImage, 8*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 
@@ -224,9 +258,16 @@ func (newsService *NewsService) GetPublicNewsList(request newsdto.GetPublicNewsL
 			Content:     eachNews.Content,
 			Description: eachNews.Description,
 			CoverImage:  coverImage,
+			TotalLike:   eachNews.LikeCount,
 		}
 	}
-	return newsResponse, nil
+
+	count, err := newsService.newsRepository.CountNewsByStatus(newsService.db, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return newsResponse, count, nil
 }
 
 func (newsService *NewsService) checkDuplicateNews(title string) error {
@@ -465,4 +506,102 @@ func (newsService *NewsService) GetNewsMedia(request newsdto.AccessMediaRequest)
 		return "", err
 	}
 	return presignedURL, nil
+}
+
+func (newsService *NewsService) LikeNews(request newsdto.GetNewsByCustomer) error {
+	news, err := newsService.getNewsByID(request.NewsID)
+	if err != nil {
+		return err
+	}
+
+	if news.Status == enum.NewsStatusDraft {
+		return exception.NotFoundError{Item: newsService.constants.Field.News}
+	}
+
+	like, err := newsService.newsRepository.FindNewsLikeByUser(newsService.db, request.UserID, request.NewsID)
+	if err != nil {
+		return err
+	}
+
+	if like != nil {
+		var conflictError exception.ConflictErrors
+		conflictError.Add(newsService.constants.Field.Like, newsService.constants.Tag.AlreadyExist)
+		return conflictError
+	}
+
+	news.LikeCount++
+
+	err = newsService.db.WithTransaction(func(tx database.Database) error {
+		if err := newsService.newsRepository.CreateLike(newsService.db, like.UserID, request.NewsID); err != nil {
+			return err
+		}
+
+		if err := newsService.newsRepository.UpdateNews(tx, news); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (newsService *NewsService) DislikeNews(request newsdto.GetNewsByCustomer) error {
+	news, err := newsService.getNewsByID(request.NewsID)
+	if err != nil {
+		return err
+	}
+
+	if news.Status == enum.NewsStatusDraft {
+		return exception.NotFoundError{Item: newsService.constants.Field.News}
+	}
+
+	like, err := newsService.newsRepository.FindNewsLikeByUser(newsService.db, request.UserID, request.NewsID)
+	if err != nil {
+		return err
+	}
+
+	if like == nil {
+		var conflictError exception.ConflictErrors
+		conflictError.Add(newsService.constants.Field.Like, newsService.constants.Tag.NotExist)
+		return conflictError
+	}
+
+	news.LikeCount--
+
+	err = newsService.db.WithTransaction(func(tx database.Database) error {
+		if err := newsService.newsRepository.DeleteLike(newsService.db, like); err != nil {
+			return err
+		}
+
+		if err := newsService.newsRepository.UpdateNews(tx, news); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (newsService *NewsService) IsNewsLiked(request newsdto.GetNewsByCustomer) (bool, error) {
+	news, err := newsService.getNewsByID(request.NewsID)
+	if err != nil {
+		return false, err
+	}
+
+	if news.Status == enum.NewsStatusDraft {
+		return false, exception.NotFoundError{Item: newsService.constants.Field.Media}
+	}
+
+	like, err := newsService.newsRepository.FindNewsLikeByUser(newsService.db, request.UserID, request.NewsID)
+	if err != nil {
+		return false, err
+	}
+
+	if like == nil {
+		return false, nil
+	}
+
+	return true, nil
 }

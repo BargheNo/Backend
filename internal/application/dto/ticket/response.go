@@ -23,7 +23,7 @@ type TicketCommentResponse struct {
 	Body       string                     `json:"body"`
 }
 
-type TicketStatusResponse struct {
+type TicketEnumResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }

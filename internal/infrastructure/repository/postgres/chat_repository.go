@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -57,17 +57,29 @@ func (repo *ChatRepository) GetUserAndCorpRoom(db database.Database, userID uint
 	return &room, nil
 }
 
-func (repo *ChatRepository) GetRoomMessages(db database.Database, roomID uint, opts ...repository.QueryModifier) ([]*entity.ChatMessage, error) {
+func (repo *ChatRepository) GetRoomMessages(db database.Database, roomID uint, options *postgres.QueryOptions) ([]*entity.ChatMessage, error) {
 	var messages []*entity.ChatMessage
 	query := db.GetDB().Where("room_id = ?", roomID)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&messages)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return messages, nil
+}
+
+func (repo *ChatRepository) CountRoomMessages(db database.Database, roomID uint) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.ChatMessage{}).
+		Where("room_id = ?", roomID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *ChatRepository) CreateRoom(db database.Database, room *entity.ChatRoom) error {

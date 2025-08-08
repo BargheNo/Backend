@@ -37,22 +37,30 @@ func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) 
 func (userController *AdminUserController) GetPermissionRoles(ctx *gin.Context) {
 	type getPermissionRolesParams struct {
 		PermissionID uint `uri:"permissionID" validate:"required"`
+		Page         int  `form:"page"`
+		PageSize     int  `form:"pageSize"`
+		SortBy       uint `form:"sortBy"`
+		Asc          bool `form:"asc"`
 	}
 	params := controller.Validated[getPermissionRolesParams](ctx)
-	pagination := controller.GetPagination(ctx, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
 
 	request := userdto.GetPermissionRolesRequest{
 		PermissionID: params.PermissionID,
 		Offset:       offset,
 		Limit:        limit,
+		SortBy:       params.SortBy,
+		Asc:          params.Asc,
 	}
 
-	roles, err := userController.userService.GetPermissionRoles(request)
+	roles, count, err := userController.userService.GetPermissionRoles(request)
 	if err != nil {
 		panic(err)
 	}
-	controller.Response(ctx, 200, "", roles)
+	data := controller.NewPaginatedResponse(roles, count, params.Page, params.PageSize)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
@@ -180,14 +188,21 @@ func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
 func (userController *AdminUserController) GetUsers(ctx *gin.Context) {
 	type usersParams struct {
 		Statuses []uint `form:"statuses"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[usersParams](ctx)
-	pagination := controller.GetPagination(ctx, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
+
 	request := userdto.GetUsersListRequest{
 		Statuses: params.Statuses,
 		Offset:   offset,
 		Limit:    limit,
+		SortBy:   params.SortBy,
+		Asc:      params.Asc,
 	}
 	users, err := userController.userService.GetUsersByStatus(request)
 	if err != nil {

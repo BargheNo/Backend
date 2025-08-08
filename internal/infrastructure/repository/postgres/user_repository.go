@@ -3,7 +3,7 @@ package postgres
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -35,13 +35,11 @@ func (repo *UserRepository) FindUserByID(db database.Database, id uint) (*entity
 	return &user, nil
 }
 
-func (repo *UserRepository) FindUserByStatus(db database.Database, statuses []enum.UserStatus, opts ...repository.QueryModifier) ([]*entity.User, error) {
+func (repo *UserRepository) FindUserByStatus(db database.Database, statuses []enum.UserStatus, options *postgres.QueryOptions) ([]*entity.User, error) {
 	var users []*entity.User
 	query := db.GetDB().Where("status IN ?", statuses)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&users)
 
@@ -245,19 +243,32 @@ func (repo *UserRepository) ReplaceUserRoles(db database.Database, user *entity.
 
 }
 
-func (repo *UserRepository) FindRolesByPermission(db database.Database, permissionID uint, opts ...repository.QueryModifier) ([]*entity.Role, error) {
+func (repo *UserRepository) FindRolesByPermission(db database.Database, permissionID uint, options *postgres.QueryOptions) ([]*entity.Role, error) {
 	var roles []*entity.Role
 	query := db.GetDB().
 		Joins("JOIN role_permissions ON roles.id = role_permissions.role_id").
 		Where("role_permissions.permission_id = ?", permissionID)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&roles)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return roles, nil
+}
+
+func (repo *UserRepository) CountRolesByPermission(db database.Database, permissionID uint) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Role{}).
+		Joins("JOIN role_permissions ON roles.id = role_permissions.role_id").
+		Where("role_permissions.permission_id = ?", permissionID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

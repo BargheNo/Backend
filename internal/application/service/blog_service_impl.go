@@ -8,11 +8,11 @@ import (
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type BlogService struct {
@@ -40,6 +40,15 @@ func NewBlogService(
 		s3Storage:          s3Storage,
 		db:                 db,
 	}
+}
+
+func (blogService *BlogService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetPostSortableColumns()
+	_, ok := allowed[sortby.PostSortBy(requested)]
+	if !ok {
+		return sortby.PostSortByCreatedAt.DBColumn()
+	}
+	return sortby.PostSortBy(requested).DBColumn()
 }
 
 func (blogService *BlogService) mapToFilterStatuses(enumStatus uint) []enum.PostStatus {
@@ -102,6 +111,20 @@ func (blogService *BlogService) getPostMediaByID(mediaID, postID uint) (*entity.
 	return media, nil
 }
 
+func (blogService *BlogService) GetBlogSortableColumns() []blogdto.GetBlogEnumResponse {
+	columns := sortby.GetPostSortableColumns()
+	response := make([]blogdto.GetBlogEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = blogdto.GetBlogEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
+}
+
 func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) (uint, error) {
 	if err := blogService.userService.IsUserActive(request.AuthorID); err != nil {
 		return 0, err
@@ -152,18 +175,19 @@ func (blogService *BlogService) CreatePost(request blogdto.CreatePostRequest) (u
 	return post.ID, nil
 }
 
-func (blogService *BlogService) GetCorporationPosts(request blogdto.GetCorporationPostsRequest) ([]blogdto.CorporationPostResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
-
+func (blogService *BlogService) GetCorporationPosts(request blogdto.GetCorporationPostsRequest) ([]blogdto.CorporationPostResponse, int64, error) {
 	if err := blogService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(blogService.getSortByColumn(request.SortBy), request.Asc)
+
 	allowedStatuses := blogService.mapToFilterStatuses(request.Status)
-	posts, err := blogService.blogRepository.FindCorporationPostsByStatus(blogService.db, request.CorporationID, allowedStatuses, paginationModifier, sortingModifier)
+	posts, err := blogService.blogRepository.FindCorporationPostsByStatus(blogService.db, request.CorporationID, allowedStatuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	response := make([]blogdto.CorporationPostResponse, len(posts))
 
@@ -172,18 +196,13 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetCorporati
 		if post.CoverImage != "" {
 			coverImage, err = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
-		}
-
-		likeCount, err := blogService.blogRepository.FindLikeCountByOwner(blogService.db, post.ID, "blog")
-		if err != nil {
-			return nil, err
 		}
 
 		author, err := blogService.userService.GetUserCredential(post.AuthorID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		response[i] = blogdto.CorporationPostResponse{
@@ -195,24 +214,30 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetCorporati
 			Author:      author,
 			CoverImage:  coverImage,
 			CreatedAt:   post.CreatedAt,
-			LikeCount:   likeCount,
+			LikeCount:   post.LikeCount,
 		}
 	}
-	return response, nil
+
+	count, err := blogService.blogRepository.CountCorporationPostsByStatus(blogService.db, request.CorporationID, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+	return response, count, nil
 }
 
-func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.GetPublicCorporationPostsRequest) ([]blogdto.GeneralPostResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
-
+func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.GetPublicCorporationPostsRequest) ([]blogdto.GeneralPostResponse, int64, error) {
 	if err := blogService.corporationService.DoesCorporationExist(request.CorporationID); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(blogService.getSortByColumn(request.SortBy), request.Asc)
+
 	allowedStatuses := []enum.PostStatus{enum.PostStatusPublished}
-	posts, err := blogService.blogRepository.FindCorporationPostsByStatus(blogService.db, request.CorporationID, allowedStatuses, paginationModifier, sortingModifier)
+	posts, err := blogService.blogRepository.FindCorporationPostsByStatus(blogService.db, request.CorporationID, allowedStatuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	response := make([]blogdto.GeneralPostResponse, len(posts))
 
@@ -221,18 +246,13 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 		if post.CoverImage != "" {
 			coverImage, err = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 
 		corporation, err := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
 		if err != nil {
-			return nil, err
-		}
-
-		likeCount, err := blogService.blogRepository.FindLikeCountByOwner(blogService.db, post.ID, "blog")
-		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		response[i] = blogdto.GeneralPostResponse{
@@ -243,40 +263,41 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 			Corporation: corporation,
 			CoverImage:  coverImage,
 			CreatedAt:   post.CreatedAt,
-			LikeCount:   likeCount,
+			LikeCount:   post.LikeCount,
 		}
 	}
-	return response, nil
+
+	count, err := blogService.blogRepository.CountCorporationPostsByStatus(blogService.db, request.CorporationID, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+	return response, count, nil
 }
 
-func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPublicPostsRequest) ([]blogdto.GeneralPostResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPublicPostsRequest) ([]blogdto.GeneralPostResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(blogService.getSortByColumn(request.SortBy), request.Asc)
 
 	allowedStatuses := []enum.PostStatus{enum.PostStatusPublished}
-	posts, err := blogService.blogRepository.FindPostsByStatus(blogService.db, allowedStatuses, paginationModifier, sortingModifier)
+	posts, err := blogService.blogRepository.FindPostsByStatus(blogService.db, allowedStatuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	response := make([]blogdto.GeneralPostResponse, len(posts))
 	for i, post := range posts {
 		corporation, err := blogService.corporationService.GetCorporationCredentials(post.CorporationID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		coverImage := ""
 		if post.CoverImage != "" {
 			coverImage, err = blogService.s3Storage.GetPresignedURL(enum.BlogMedia, post.CoverImage, 8*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
-		}
-
-		likeCount, err := blogService.blogRepository.FindLikeCountByOwner(blogService.db, post.ID, "blog")
-		if err != nil {
-			return nil, err
 		}
 
 		response[i] = blogdto.GeneralPostResponse{
@@ -287,10 +308,15 @@ func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPublicPostsRe
 			Corporation: corporation,
 			CoverImage:  coverImage,
 			CreatedAt:   post.CreatedAt,
-			LikeCount:   likeCount,
+			LikeCount:   post.LikeCount,
 		}
 	}
-	return response, nil
+	count, err := blogService.blogRepository.CountPostsByStatus(blogService.db, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
 }
 
 func (blogService *BlogService) GetCorporationPost(request blogdto.GetCorporationPostRequest) (blogdto.CorporationPostResponse, error) {
@@ -315,11 +341,6 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetCorporatio
 		}
 	}
 
-	likeCount, err := blogService.blogRepository.FindLikeCountByOwner(blogService.db, post.ID, "blog")
-	if err != nil {
-		return blogdto.CorporationPostResponse{}, err
-	}
-
 	author, err := blogService.userService.GetUserCredential(post.AuthorID)
 	if err != nil {
 		return blogdto.CorporationPostResponse{}, err
@@ -334,7 +355,7 @@ func (blogService *BlogService) GetCorporationPost(request blogdto.GetCorporatio
 		Author:      author,
 		CoverImage:  coverImage,
 		CreatedAt:   post.CreatedAt,
-		LikeCount:   likeCount,
+		LikeCount:   post.LikeCount,
 	}, nil
 }
 
@@ -362,11 +383,6 @@ func (blogService *BlogService) GetGeneralPost(postID uint) (blogdto.GeneralPost
 		}
 	}
 
-	likeCount, err := blogService.blogRepository.FindLikeCountByOwner(blogService.db, post.ID, "blog")
-	if err != nil {
-		return blogdto.GeneralPostResponse{}, err
-	}
-
 	return blogdto.GeneralPostResponse{
 		ID:          post.ID,
 		Title:       post.Title,
@@ -375,7 +391,7 @@ func (blogService *BlogService) GetGeneralPost(postID uint) (blogdto.GeneralPost
 		Corporation: corporation,
 		CoverImage:  coverImage,
 		CreatedAt:   post.CreatedAt,
-		LikeCount:   likeCount,
+		LikeCount:   post.LikeCount,
 	}, nil
 }
 
@@ -545,53 +561,100 @@ func (blogService *BlogService) GetPostMedia(request blogdto.AccessPostMediaRequ
 	return presignedURL, nil
 }
 
-func (blogService *BlogService) LikePost(request blogdto.LikePostRequest) error {
+func (blogService *BlogService) LikePost(request blogdto.GetPostRequest) error {
 	post, err := blogService.getPost(request.PostID)
 	if err != nil {
 		return err
 	}
 
 	if post.Status == enum.PostStatusDraft {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: blogService.constants.Field.Post,
-		}
-		return forbiddenError
+		return exception.NotFoundError{Item: blogService.constants.Field.Blog}
 	}
 
-	like, err := blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
+	like, err := blogService.blogRepository.FindLikeByUserAndBlogID(blogService.db, request.UserID, request.PostID)
 	if err != nil {
 		return err
 	}
+
 	if like != nil {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(blogService.constants.Field.Like, blogService.constants.Tag.AlreadyExist)
 		return conflictErrors
 	}
 
-	like = &entity.Like{
-		UserID:    request.UserID,
-		OwnerID:   request.PostID,
-		OwnerType: "blog",
-	}
-	if err := blogService.blogRepository.CreateLike(blogService.db, like); err != nil {
-		return err
-	}
-	return nil
+	post.LikeCount++
+
+	err = blogService.db.WithTransaction(func(tx database.Database) error {
+		if err := blogService.blogRepository.CreateLike(blogService.db, like.UserID, request.PostID); err != nil {
+			return err
+		}
+
+		if err := blogService.blogRepository.UpdatePost(tx, post); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }
 
-func (blogService *BlogService) UnlikePost(request blogdto.LikePostRequest) error {
-	like, err := blogService.blogRepository.FindLikeByUserAndOwner(blogService.db, request.UserID, request.PostID, "blog")
+func (blogService *BlogService) UnlikePost(request blogdto.GetPostRequest) error {
+	post, err := blogService.getPost(request.PostID)
 	if err != nil {
 		return err
 	}
-	if like == nil {
-		notFoundError := exception.NotFoundError{Item: blogService.constants.Field.Like}
-		return notFoundError
+
+	if post.Status == enum.PostStatusDraft {
+		return exception.NotFoundError{Item: blogService.constants.Field.Blog}
 	}
 
-	if err := blogService.blogRepository.DeleteLike(blogService.db, like.ID); err != nil {
+	like, err := blogService.blogRepository.FindLikeByUserAndBlogID(blogService.db, request.UserID, request.PostID)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	if like == nil {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(blogService.constants.Field.Like, blogService.constants.Tag.NotExist)
+		return conflictErrors
+	}
+
+	post.LikeCount--
+
+	err = blogService.db.WithTransaction(func(tx database.Database) error {
+		if err := blogService.blogRepository.DeleteLike(blogService.db, like.ID); err != nil {
+			return err
+		}
+
+		if err := blogService.blogRepository.UpdatePost(tx, post); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (blogService *BlogService) IsBlogLiked(request blogdto.GetPostRequest) (bool, error) {
+	post, err := blogService.getPost(request.PostID)
+	if err != nil {
+		return false, err
+	}
+
+	if post.Status == enum.PostStatusDraft {
+		return false, exception.NotFoundError{Item: blogService.constants.Field.Blog}
+	}
+
+	like, err := blogService.blogRepository.FindLikeByUserAndBlogID(blogService.db, request.UserID, request.PostID)
+	if err != nil {
+		return false, err
+	}
+
+	if like == nil {
+		return false, nil
+	}
+
+	return true, nil
 }

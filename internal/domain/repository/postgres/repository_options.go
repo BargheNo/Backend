@@ -1,5 +1,5 @@
 package postgres
 
-type QueryModifier interface {
+type QueryModifier2 interface {
 	Apply(query interface{}) interface{}
 }

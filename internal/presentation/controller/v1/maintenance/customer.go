@@ -71,38 +71,47 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 
 func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
-		Status uint `form:"status" validate:"required"`
+		Status   uint `form:"status" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[maintenanceRequestsParams](ctx)
 	ownerID, _ := ctx.Get(maintenanceController.constants.Context.ID)
 
-	pagination := controller.GetPagination(ctx, maintenanceController.pagination.DefaultPage, maintenanceController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, maintenanceController.pagination.DefaultPage, maintenanceController.pagination.DefaultPageSize)
 
 	listInfo := maintenancedto.CustomerMaintenanceListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
+		SortBy:  params.SortBy,
+		Asc:     params.Asc,
 	}
-	requests, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
+	requests, count, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(requests, count, params.Page, params.PageSize)
 
-	controller.Response(ctx, 200, "", requests)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
-		PanelID uint `uri:"panelID" validate:"required"`
-		Status  uint `form:"status" validate:"required"`
+		PanelID  uint `uri:"panelID" validate:"required"`
+		Status   uint `form:"status" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[maintenanceRequestsParams](ctx)
 	ownerID, _ := ctx.Get(maintenanceController.constants.Context.ID)
 
-	pagination := controller.GetPagination(ctx, maintenanceController.pagination.DefaultPage, maintenanceController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, maintenanceController.pagination.DefaultPage, maintenanceController.pagination.DefaultPageSize)
 
 	listInfo := maintenancedto.CustomerPanelMaintenanceListRequest{
 		OwnerID: ownerID.(uint),
@@ -110,13 +119,16 @@ func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceR
 		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
+		SortBy:  params.SortBy,
+		Asc:     params.Asc,
 	}
-	requests, err := maintenanceController.maintenanceService.GetCustomerPanelMaintenanceRequests(listInfo)
+	requests, count, err := maintenanceController.maintenanceService.GetCustomerPanelMaintenanceRequests(listInfo)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(requests, count, params.Page, params.PageSize)
 
-	controller.Response(ctx, 200, "", requests)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (maintenanceController *CustomerMaintenanceController) GetMaintenanceRequest(ctx *gin.Context) {

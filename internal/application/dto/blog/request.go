@@ -30,12 +30,16 @@ type EditPostRequest struct {
 type GetPublicPostsRequest struct {
 	Offset int
 	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
 type GetPublicCorporationPostsRequest struct {
 	CorporationID uint
 	Offset        int
 	Limit         int
+	SortBy        uint
+	Asc           bool
 }
 
 type GetCorporationPostsRequest struct {
@@ -44,6 +48,8 @@ type GetCorporationPostsRequest struct {
 	Status        uint
 	Offset        int
 	Limit         int
+	SortBy        uint
+	Asc           bool
 }
 
 type DeletePostRequest struct {
@@ -73,7 +79,7 @@ type GetCorporationPostRequest struct {
 	CorporationID uint
 }
 
-type LikePostRequest struct {
+type GetPostRequest struct {
 	UserID uint
 	PostID uint
 }

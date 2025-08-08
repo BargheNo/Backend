@@ -22,6 +22,8 @@ type CustomerMaintenanceListRequest struct {
 	OwnerID uint
 	Offset  int
 	Limit   int
+	SortBy  uint
+	Asc     bool
 }
 
 type CustomerPanelMaintenanceListRequest struct {
@@ -30,6 +32,8 @@ type CustomerPanelMaintenanceListRequest struct {
 	OwnerID uint
 	Offset  int
 	Limit   int
+	SortBy  uint
+	Asc     bool
 }
 
 type CustomerMaintenanceRequest struct {
@@ -52,6 +56,8 @@ type CorporationMaintenanceListRequest struct {
 	Status        uint
 	Offset        int
 	Limit         int
+	SortBy        uint
+	Asc           bool
 }
 
 type CorporationMaintenanceRequest struct {

@@ -73,24 +73,33 @@ func (installationController *CustomerInstallationController) CreateInstallation
 
 func (installationController *CustomerInstallationController) GetInstallationRequests(ctx *gin.Context) {
 	type getRequestsParams struct {
-		Status uint `form:"status" validate:"required"`
+		Status   uint `form:"status" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[getRequestsParams](ctx)
-	pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
 	ownerID, _ := ctx.Get(installationController.constants.Context.ID)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
 
 	listInfo := installationdto.CustomerRequestsListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
+		SortBy:  params.SortBy,
+		Asc:     params.Asc,
 	}
-	requests, err := installationController.installationService.GetOwnerInstallationRequests(listInfo)
+	requests, count, err := installationController.installationService.GetOwnerInstallationRequests(listInfo)
 	if err != nil {
 		panic(err)
 	}
-	controller.Response(ctx, 200, "", requests)
+	data := controller.NewPaginatedResponse(requests, count, params.Page, params.PageSize)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *CustomerInstallationController) GetInstallationRequest(ctx *gin.Context) {
@@ -135,25 +144,33 @@ func (installationController *CustomerInstallationController) CancelInstallation
 
 func (installationController *CustomerInstallationController) GetCustomerPanels(ctx *gin.Context) {
 	type getPanelsParams struct {
-		Status uint `form:"status" validate:"required"`
+		Status   uint `form:"status" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[getPanelsParams](ctx)
+
 	ownerId, _ := ctx.Get(installationController.constants.Context.ID)
-	pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
 
 	listInfo := installationdto.CustomerPanelListRequest{
 		OwnerID: ownerId.(uint),
 		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
+		SortBy:  params.SortBy,
+		Asc:     params.Asc,
 	}
-	panels, err := installationController.installationService.GetCustomerPanels(listInfo)
+	panels, count, err := installationController.installationService.GetCustomerPanels(listInfo)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(panels, count, params.Page, params.PageSize)
 
-	controller.Response(ctx, 200, "", panels)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *CustomerInstallationController) GetCustomerPanel(ctx *gin.Context) {

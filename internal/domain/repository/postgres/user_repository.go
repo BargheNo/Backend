@@ -27,10 +27,11 @@ type UserRepository interface {
 	FindAllPermissions(db database.Database) ([]*entity.Permission, error)
 	FindAllRoles(db database.Database) ([]*entity.Role, error)
 	FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, error)
-	FindRolesByPermission(db database.Database, permissionID uint, opts ...QueryModifier) ([]*entity.Role, error)
+	FindRolesByPermission(db database.Database, permissionID uint, options *QueryOptions) ([]*entity.Role, error)
+	CountRolesByPermission(db database.Database, permissionID uint) (int64, error)
 	FindRoleByID(db database.Database, roleID uint) (*entity.Role, error)
 	FindUsersByRoleID(db database.Database, roleID uint) ([]*entity.User, error)
-	FindUserByStatus(db database.Database, status []enum.UserStatus, opts ...QueryModifier) ([]*entity.User, error)
+	FindUserByStatus(db database.Database, status []enum.UserStatus, options *QueryOptions) ([]*entity.User, error)
 	FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) ([]*entity.User, error)
 	DeleteRole(db database.Database, roleID uint) error
 	UpdateRole(db database.Database, role *entity.Role) error

@@ -36,3 +36,13 @@ func (installationController *GeneralInstallationController) GetBuildingTypes(ct
 	types := installationController.installationService.GetBuildingTypes()
 	controller.Response(ctx, 200, "", types)
 }
+
+func (installationController *GeneralInstallationController) GetRequestSortableFields(ctx *gin.Context) {
+	columns := installationController.installationService.GetRequestSortableColumns()
+	controller.Response(ctx, 200, "", columns)
+}
+
+func (installationController *GeneralInstallationController) GetPanelSortableFields(ctx *gin.Context) {
+	columns := installationController.installationService.GetPanelSortableColumns()
+	controller.Response(ctx, 200, "", columns)
+}

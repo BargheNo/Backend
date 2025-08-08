@@ -3,7 +3,7 @@ package postgres
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -28,13 +28,11 @@ func (repo *MaintenanceRepository) FindRequestByID(db database.Database, request
 	return request, nil
 }
 
-func (repo *MaintenanceRepository) FindRequestsByPanelIDAndStatus(db database.Database, panelID uint, allowedStatus []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) ([]*entity.MaintenanceRequest, error) {
+func (repo *MaintenanceRepository) FindRequestsByPanelIDAndStatus(db database.Database, panelID uint, allowedStatus []enum.MaintenanceRequestStatus, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 	query := db.GetDB().Where("panel_id = ? AND status IN ?", panelID, allowedStatus)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&requests)
 	if result.Error != nil {
@@ -43,35 +41,61 @@ func (repo *MaintenanceRepository) FindRequestsByPanelIDAndStatus(db database.Da
 	return requests, nil
 }
 
-func (repo *MaintenanceRepository) FindRequestsByCustomerID(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) ([]*entity.MaintenanceRequest, error) {
+func (repo *MaintenanceRepository) CountRequestsByPanelIDAndStatus(db database.Database, panelID uint, allowedStatus []enum.MaintenanceRequestStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.MaintenanceRequest{}).
+		Where("panel_id = ? AND status IN ?", panelID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *MaintenanceRepository) FindRequestsByCustomerID(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 	query := db.GetDB().
 		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
 		Where("Panel.customer_id = ?", customerID).
 		Where("maintenance_requests.status IN ?", allowedStatus)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&requests)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return requests, nil
+}
+
+func (repo *MaintenanceRepository) CountRequestsByCustomerID(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.MaintenanceRequest{}).
+		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
+		Where("Panel.customer_id = ?", customerID).
+		Where("maintenance_requests.status IN ?", allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *MaintenanceRepository) CreateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error {
 	return db.GetDB().Create(maintenanceRequest).Error
 }
 
-func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.Database, ownerID uint, opts ...repository.QueryModifier) ([]*entity.MaintenanceRequest, error) {
+func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.Database, ownerID uint, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 	query := db.GetDB().Where("owner_id = ?", ownerID)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&requests)
 	if result.Error != nil {
@@ -80,19 +104,31 @@ func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.
 	return requests, nil
 }
 
-func (repo *MaintenanceRepository) FindCorporationRequestsByStatus(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, opts ...repository.QueryModifier) ([]*entity.MaintenanceRequest, error) {
+func (repo *MaintenanceRepository) FindCorporationRequestsByStatus(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 	query := db.GetDB().Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&requests)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return requests, nil
+}
+
+func (repo *MaintenanceRepository) CountCorporationRequestsByStatus(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.MaintenanceRequest{}).
+		Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *MaintenanceRepository) FindCorporationRequestByStatus(db database.Database, requestID, corporationID uint, allowedStatus []enum.MaintenanceRequestStatus) (*entity.MaintenanceRequest, error) {
@@ -148,12 +184,10 @@ func (repo *MaintenanceRepository) UpdateMaintenanceRecord(db database.Database,
 	return db.GetDB().Save(maintenanceRecord).Error
 }
 
-func (repo *MaintenanceRepository) FindMaintenanceRecordsByPanelAndCorporationID(db database.Database, panelID uint, corporationID uint, opts ...repository.QueryModifier) ([]*entity.MaintenanceRecord, error) {
+func (repo *MaintenanceRepository) FindMaintenanceRecordsByPanelAndCorporationID(db database.Database, panelID uint, corporationID uint, options *postgres.QueryOptions) ([]*entity.MaintenanceRecord, error) {
 	var records []*entity.MaintenanceRecord
 	query := db.GetDB().Where("panel_id = ? AND corporation_id = ?", panelID, corporationID)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&records)
 	if result.Error != nil {
 		return nil, result.Error

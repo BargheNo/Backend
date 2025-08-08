@@ -8,12 +8,14 @@ import (
 
 type TicketRepository interface {
 	CreateTicket(db database.Database, ticket *entity.Ticket) error
-	GetCustomerTickets(db database.Database, ownerID uint, opts ...QueryModifier) ([]*entity.Ticket, error)
+	GetCustomerTickets(db database.Database, ownerID uint, options *QueryOptions) ([]*entity.Ticket, error)
 	UpdateTicket(db database.Database, ticket *entity.Ticket) error
-	GetTicketComments(db database.Database, ticketID uint, opts ...QueryModifier) ([]*entity.TicketComment, error)
+	GetTicketComments(db database.Database, ticketID uint, options *QueryOptions) ([]*entity.TicketComment, error)
 	FindTicketByID(db database.Database, ticketID uint) (*entity.Ticket, error)
 	CreateTicketComment(db database.Database, comment *entity.TicketComment) error
-	GetTickets(db database.Database, opts ...QueryModifier) ([]*entity.Ticket, error)
-	FindTicketsByStatus(db database.Database, statuses []enum.TicketStatus, opts ...QueryModifier) ([]*entity.Ticket, error)
-	FindCustomerTicketsByStatus(db database.Database, ownerID uint, statuses []enum.TicketStatus, opts ...QueryModifier) ([]*entity.Ticket, error)
+	GetTickets(db database.Database, options *QueryOptions) ([]*entity.Ticket, error)
+	FindTicketsByStatus(db database.Database, statuses []enum.TicketStatus, options *QueryOptions) ([]*entity.Ticket, error)
+	CountTicketsByStatus(db database.Database, statuses []enum.TicketStatus) (int64, error)
+	FindCustomerTicketsByStatus(db database.Database, ownerID uint, statuses []enum.TicketStatus, options *QueryOptions) ([]*entity.Ticket, error)
+	CountCustomerTicketsByStatus(db database.Database, ownerID uint, statuses []enum.TicketStatus) (int64, error)
 }
