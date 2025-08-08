@@ -42,7 +42,7 @@ func NewTicketService(
 func (ticketService *TicketService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetTicketSortableColumns()
 	_, ok := allowed[sortby.TicketSortBy(requested)]
-	if !ok {
+	if ok {
 		return sortby.TicketSortByCreatedAt.DBColumn()
 	}
 	return sortby.TicketSortBy(requested).DBColumn()

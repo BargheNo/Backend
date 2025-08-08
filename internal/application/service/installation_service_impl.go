@@ -54,7 +54,7 @@ func NewInstallationService(deps InstallationServiceDeps) *InstallationService {
 func (installationService *InstallationService) getSortByColumnRequest(requested uint) string {
 	allowed := sortby.GetInstallationSortableColumns()
 	_, ok := allowed[sortby.InstallationSortBy(requested)]
-	if !ok {
+	if ok {
 		return sortby.InstallationSortByCreatedAt.DBColumn()
 	}
 	return sortby.InstallationSortBy(requested).DBColumn()
@@ -63,7 +63,7 @@ func (installationService *InstallationService) getSortByColumnRequest(requested
 func (installationService *InstallationService) getSortByColumnPanel(requested uint) string {
 	allowed := sortby.GetPanelSortableColumns()
 	_, ok := allowed[sortby.PanelSortBy(requested)]
-	if !ok {
+	if ok {
 		return sortby.PanelSortByCreatedAt.DBColumn()
 	}
 	return sortby.PanelSortBy(requested).DBColumn()

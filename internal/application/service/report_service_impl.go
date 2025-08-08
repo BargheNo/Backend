@@ -49,7 +49,7 @@ func NewReportService(
 func (reportService *ReportService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetReportSortableColumns()
 	_, ok := allowed[sortby.ReportSortBy(requested)]
-	if !ok {
+	if ok {
 		return sortby.ReportSortByCreatedAt.DBColumn()
 	}
 	return sortby.ReportSortBy(requested).DBColumn()

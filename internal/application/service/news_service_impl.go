@@ -42,7 +42,7 @@ func NewNewsService(
 func (newsService *NewsService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetNewsSortableColumns()
 	_, ok := allowed[sortby.NewsSortBy(requested)]
-	if !ok {
+	if ok {
 		return sortby.NewsSortByCreatedAt.DBColumn()
 	}
 	return sortby.NewsSortBy(requested).DBColumn()

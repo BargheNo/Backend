@@ -46,7 +46,7 @@ func NewMaintenanceService(
 func (maintenanceService *MaintenanceService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetMaintenanceSortableColumns()
 	_, ok := allowed[sortby.MaintenanceSortBy(requested)]
-	if !ok {
+	if ok {
 		return sortby.MaintenanceSortByCreatedAt.DBColumn()
 	}
 	return sortby.MaintenanceSortBy(requested).DBColumn()
