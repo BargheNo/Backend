@@ -32,25 +32,31 @@ func NewCorporationInstallationController(
 func (installationController *CorporationInstallationController) GetInstallationRequests(ctx *gin.Context) {
 	type getInstallationRequestParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
+		Page          int  `form:"page"`
+		PageSize      int  `form:"pageSize"`
+		SortBy        uint `form:"sortBy"`
+		Asc           bool `form:"asc"`
 	}
 	params := controller.Validated[getInstallationRequestParams](ctx)
 	operatorID, _ := ctx.Get(installationController.constants.Context.ID)
 
-	pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
 
 	listInfo := installationdto.CorporationPanelListRequest{
 		CorporationID: params.CorporationID,
 		OperatorID:    operatorID.(uint),
 		Offset:        offset,
 		Limit:         limit,
+		SortBy:        params.SortBy,
+		Asc:           params.Asc,
 	}
-	installationRequest, err := installationController.installationService.GetAnonymousInstallationRequests(listInfo)
+	installationRequests, count, err := installationController.installationService.GetAnonymousInstallationRequests(listInfo)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(installationRequests, count, params.Page, params.PageSize)
 
-	controller.Response(ctx, 200, "", installationRequest)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *CorporationInstallationController) GetInstallationRequest(ctx *gin.Context) {
@@ -159,12 +165,15 @@ func (installationController *CorporationInstallationController) GetCorporationP
 	type getInstallationRequestParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
 		Status        uint `form:"status" validate:"required"`
+		Page          int  `form:"page"`
+		PageSize      int  `form:"pageSize"`
+		SortBy        uint `form:"sortBy"`
+		Asc           bool `form:"asc"`
 	}
 	params := controller.Validated[getInstallationRequestParams](ctx)
 	operatorID, _ := ctx.Get(installationController.constants.Context.ID)
 
-	pagination := controller.GetPagination(ctx, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
 
 	listInfo := installationdto.CorporationPanelListRequest{
 		CorporationID: params.CorporationID,
@@ -172,13 +181,16 @@ func (installationController *CorporationInstallationController) GetCorporationP
 		Status:        params.Status,
 		Offset:        offset,
 		Limit:         limit,
+		SortBy:        params.SortBy,
+		Asc:           params.Asc,
 	}
-	panels, err := installationController.installationService.GetCorporationPanels(listInfo)
+	panels, count, err := installationController.installationService.GetCorporationPanels(listInfo)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(panels, count, params.Page, params.PageSize)
 
-	controller.Response(ctx, 200, "", panels)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *CorporationInstallationController) GetCorporationPanel(ctx *gin.Context) {

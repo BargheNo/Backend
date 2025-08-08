@@ -5,7 +5,8 @@ import (
 )
 
 type CorporationService interface {
-	GetCorporationStatuses() []corporationdto.GetStatusesResponse
+	GetCorporationSortableColumns() []corporationdto.GetEnumResponse
+	GetCorporationStatuses() []corporationdto.GetEnumResponse
 	DoesCorporationExist(corporationID uint) error
 	ISCorporationApproved(corporationID uint) error
 	GetCorporationCredentials(corporationID uint) (corporationdto.CorporationCredentialResponse, error)
@@ -22,9 +23,9 @@ type CorporationService interface {
 	ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest) error
 	GetUserCorporations(userID uint) ([]corporationdto.CorporationCredentialResponse, error)
 	GetAvailableCorporations() ([]corporationdto.CorporationCredentialResponse, error)
-	GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, error)
+	GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, int64, error)
 	GetCorporationByAdmin(corporationID uint) (corporationdto.CorporationPrivateInfoResponse, error)
-	GetReviewActions() []corporationdto.GetStatusesResponse
+	GetReviewActions() []corporationdto.GetEnumResponse
 	GetCorporationReviewsByAdmin(corporationID uint) ([]corporationdto.GetAdminCorporationReview, error)
 	ApproveCorporationRegistration(request corporationdto.HandleCorporationActionRequest) error
 	RejectCorporationRegistration(request corporationdto.HandleCorporationActionRequest) error

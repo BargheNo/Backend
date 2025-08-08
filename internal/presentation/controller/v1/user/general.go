@@ -147,3 +147,8 @@ func (userController *GeneralUserController) RefreshToken(ctx *gin.Context) {
 	message, _ := trans.Translate("successMessage.refreshToken")
 	controller.Response(ctx, 200, message, accessToken)
 }
+
+func (userController *GeneralUserController) GetSortableFields(ctx *gin.Context) {
+	columns := userController.userService.GetUserSortableColumns()
+	controller.Response(ctx, 200, "", columns)
+}

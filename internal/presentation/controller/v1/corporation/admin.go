@@ -34,24 +34,30 @@ func (corporationController *AdminCorporationController) GetCorporationStatus(ct
 
 func (corporationController *AdminCorporationController) GetCorporations(ctx *gin.Context) {
 	type getCorporationsParams struct {
-		Status uint `form:"status" validate:"required"`
+		Status   uint `form:"status" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[getCorporationsParams](ctx)
 
-	pagination := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
 
 	listInfo := corporationdto.GetCorporationsByAdminRequest{
 		Status: params.Status,
 		Limit:  limit,
 		Offset: offset,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
-	corporations, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
+	corporations, count, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(corporations, count, params.Page, params.PageSize)
 
-	controller.Response(ctx, 200, "", corporations)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (corporationController *AdminCorporationController) GetCorporation(ctx *gin.Context) {

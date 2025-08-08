@@ -50,7 +50,7 @@ type AdminBidResponse struct {
 	Guarantee        guaranteedto.GuaranteeResponse               `json:"guarantee"`
 }
 
-type GetBidStatusesResponse struct {
+type GetBidEnumResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }

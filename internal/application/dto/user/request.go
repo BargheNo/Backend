@@ -74,10 +74,14 @@ type GetUsersListRequest struct {
 	Statuses []uint
 	Offset   int
 	Limit    int
+	SortBy   uint
+	Asc      bool
 }
 
 type GetPermissionRolesRequest struct {
 	PermissionID uint
 	Offset       int
 	Limit        int
+	SortBy       uint
+	Asc          bool
 }

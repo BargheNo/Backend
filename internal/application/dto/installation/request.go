@@ -35,12 +35,16 @@ type CustomerRequestsListRequest struct {
 	Status  uint
 	Offset  int
 	Limit   int
+	SortBy  uint
+	Asc     bool
 }
 
 type AdminInstallationListRequest struct {
 	Status uint
 	Offset int
 	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
 type CorporationPanelListRequest struct {
@@ -49,6 +53,8 @@ type CorporationPanelListRequest struct {
 	Status        uint
 	Offset        int
 	Limit         int
+	SortBy        uint
+	Asc           bool
 }
 
 type CorporationPanelRequest struct {
@@ -62,6 +68,8 @@ type CustomerPanelListRequest struct {
 	Status  uint
 	Offset  int
 	Limit   int
+	SortBy  uint
+	Asc     bool
 }
 
 type GetOwnerRequest struct {

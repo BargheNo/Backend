@@ -29,3 +29,8 @@ func (notificationController *GeneralNotificationController) GetContactTypes(ctx
 	}
 	controller.Response(ctx, 200, "", notificationTypes)
 }
+
+func (notificationController *GeneralNotificationController) GetSortableFields(ctx *gin.Context) {
+	columns := notificationController.notificationService.GetNotificationSortableColumns()
+	controller.Response(ctx, 200, "", columns)
+}

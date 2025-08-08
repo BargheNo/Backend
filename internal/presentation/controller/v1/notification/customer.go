@@ -59,24 +59,32 @@ func (notificationController *CustomerNotificationController) MarkAsRead(ctx *gi
 
 func (notificationController *CustomerNotificationController) GetUserNotifications(ctx *gin.Context) {
 	type notificationsParams struct {
-		Types []uint `form:"notificationTypes" validate:"required"`
+		Types    []uint `form:"notificationTypes" validate:"required"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[notificationsParams](ctx)
 	userID, _ := ctx.Get(notificationController.constants.Context.ID)
-	pagination := controller.GetPagination(ctx, notificationController.pagination.DefaultPage, notificationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, notificationController.pagination.DefaultPage, notificationController.pagination.DefaultPageSize)
 
 	notificationsRequest := notificationdto.NotificationListRequest{
 		Types:  params.Types,
 		UserID: userID.(uint),
 		Offset: offset,
 		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
-	notificationsDetails, err := notificationController.notificationService.GetUserNotifications(notificationsRequest)
+	notificationsDetails, count, err := notificationController.notificationService.GetUserNotifications(notificationsRequest)
 	if err != nil {
 		panic(err)
 	}
-	controller.Response(ctx, 200, "", notificationsDetails)
+	data := controller.NewPaginatedResponse(notificationsDetails, count, params.Page, params.PageSize)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (notificationController *CustomerNotificationController) GetUserNotificationSettings(ctx *gin.Context) {

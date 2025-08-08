@@ -23,6 +23,8 @@ type GetRoomMessageRequest struct {
 	UserID uint
 	Offset int
 	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
 type BlockServiceChatRequest struct {

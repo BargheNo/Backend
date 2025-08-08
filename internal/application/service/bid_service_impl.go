@@ -13,11 +13,11 @@ import (
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type BidService struct {
@@ -58,6 +58,15 @@ func NewBidService(deps BidServiceDeps) *BidService {
 	}
 }
 
+func (bidService *BidService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetBidSortableColumns()
+	_, ok := allowed[sortby.BidSortBy(requested)]
+	if !ok {
+		return sortby.BidSortByCreatedAt.DBColumn()
+	}
+	return sortby.BidSortBy(requested).DBColumn()
+}
+
 func (bidService *BidService) getRequestBid(bidID, requestID uint) (*entity.Bid, error) {
 	bid, err := bidService.bidRepository.FindRequestBid(bidService.db, bidID, requestID)
 	if err != nil {
@@ -95,11 +104,25 @@ func (bidService *BidService) getCorporationBid(bidID, corporationID uint) (*ent
 	return bid, nil
 }
 
-func (bidService *BidService) GetBidStatuses() []biddto.GetBidStatusesResponse {
+func (bidService *BidService) GetBidSortableColumns() []biddto.GetBidEnumResponse {
+	columns := sortby.GetBidSortableColumns()
+	response := make([]biddto.GetBidEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = biddto.GetBidEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
+}
+
+func (bidService *BidService) GetBidStatuses() []biddto.GetBidEnumResponse {
 	statuses := enum.GetAllBidStatuses()
-	response := make([]biddto.GetBidStatusesResponse, len(statuses))
+	response := make([]biddto.GetBidEnumResponse, len(statuses))
 	for i, status := range statuses {
-		response[i] = biddto.GetBidStatusesResponse{
+		response[i] = biddto.GetBidEnumResponse{
 			ID:   uint(status),
 			Name: status.String(),
 		}
@@ -107,33 +130,34 @@ func (bidService *BidService) GetBidStatuses() []biddto.GetBidStatusesResponse {
 	return response
 }
 
-func (bidService *BidService) GetRequestAnonymousBids(requestInfo biddto.GetListRequestBidsRequest) ([]biddto.AnonymousBidResponse, error) {
+func (bidService *BidService) GetRequestAnonymousBids(requestInfo biddto.GetListRequestBidsRequest) ([]biddto.AnonymousBidResponse, int64, error) {
 	if _, err := bidService.installationService.ValidateRequestOwnership(requestInfo.RequestID, requestInfo.UserID); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(bidService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
 
 	allowedStatus := []enum.BidStatus{enum.BidStatusPending, enum.BidStatusAccepted, enum.BidStatusRejected}
 
-	bids, err := bidService.bidRepository.FindRequestBids(bidService.db, requestInfo.RequestID, allowedStatus, paginationModifier, sortingModifier)
+	bids, err := bidService.bidRepository.FindRequestBids(bidService.db, requestInfo.RequestID, allowedStatus, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	bidResponses := make([]biddto.AnonymousBidResponse, len(bids))
 
 	for i, bid := range bids {
 		paymentTerms, err := bidService.paymentService.GetPaymentTerms(bid.PaymentTermsID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		var guarantee guaranteedto.GuaranteeResponse
 		if bid.GuaranteeID != nil {
 			guarantee, err = bidService.guaranteeService.GetGuarantee(*bid.GuaranteeID)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 
@@ -150,42 +174,48 @@ func (bidService *BidService) GetRequestAnonymousBids(requestInfo biddto.GetList
 		}
 	}
 
-	return bidResponses, nil
+	count, err := bidService.bidRepository.CountRequestBids(bidService.db, requestInfo.RequestID, allowedStatus)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return bidResponses, count, nil
 }
 
-func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRequestBidsRequestByAdmin) ([]biddto.AdminBidResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
-
+func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRequestBidsRequestByAdmin) ([]biddto.AdminBidResponse, int64, error) {
 	allowedStatus := enum.GetAllBidStatuses()
 
-	bids, err := bidService.bidRepository.FindRequestBids(bidService.db, requestInfo.RequestID, allowedStatus, paginationModifier, sortingModifier)
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(bidService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
+
+	bids, err := bidService.bidRepository.FindRequestBids(bidService.db, requestInfo.RequestID, allowedStatus, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	bidResponses := make([]biddto.AdminBidResponse, len(bids))
 
 	for i, bid := range bids {
 		paymentTerms, err := bidService.paymentService.GetPaymentTerms(bid.PaymentTermsID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		var guarantee guaranteedto.GuaranteeResponse
 		if bid.GuaranteeID != nil {
 			guarantee, err = bidService.guaranteeService.GetGuarantee(*bid.GuaranteeID)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 
 		bidder, err := bidService.userService.GetUserCredential(bid.BidderID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		corporation, err := bidService.corporationService.GetCorporationCredentials(bid.CorporationID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		bidResponses[i] = biddto.AdminBidResponse{
@@ -203,7 +233,12 @@ func (bidService *BidService) GetRequestBidsByAdmin(requestInfo biddto.GetListRe
 		}
 	}
 
-	return bidResponses, nil
+	count, err := bidService.bidRepository.CountRequestBids(bidService.db, requestInfo.RequestID, allowedStatus)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return bidResponses, count, nil
 }
 
 func (bidService *BidService) GetRequestAnonymousBid(requestInfo biddto.GetCustomerBidRequest) (biddto.AnonymousBidResponse, error) {
@@ -444,22 +479,23 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 	return nil
 }
 
-func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBidsRequest) ([]biddto.CorporationBidResponse, error) {
+func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBidsRequest) ([]biddto.CorporationBidResponse, int64, error) {
 	if err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	paginationModifier := postgresImpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("updated_at", true)
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(bidService.getSortByColumn(request.SortBy), request.Asc)
 
 	allowedStatus := []enum.BidStatus{enum.BidStatus(request.Status)}
 	if enum.BidStatus(request.Status) == enum.BidStatusAll {
 		allowedStatus = enum.GetAllBidStatuses()
 	}
 
-	bids, err := bidService.bidRepository.FindCorporationBids(bidService.db, request.CorporationID, allowedStatus, paginationModifier, sortingModifier)
+	bids, err := bidService.bidRepository.FindCorporationBids(bidService.db, request.CorporationID, allowedStatus, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	bidResponses := make([]biddto.CorporationBidResponse, len(bids))
 
@@ -471,12 +507,12 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 		}
 		installationRequest, err := bidService.installationService.GetAnonymousInstallationRequest(request)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		bidder, err := bidService.userService.GetUserCredential(bid.BidderID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		payment, _ := bidService.paymentService.GetPaymentTerms(bid.PaymentTermsID)
@@ -501,7 +537,12 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 		}
 	}
 
-	return bidResponses, nil
+	count, err := bidService.bidRepository.CountCorporationBids(bidService.db, request.CorporationID, allowedStatus)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return bidResponses, count, nil
 }
 
 func (bidService *BidService) GetCorporationBid(request biddto.GetBidRequest) (biddto.CorporationBidResponse, error) {

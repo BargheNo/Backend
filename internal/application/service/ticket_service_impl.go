@@ -8,11 +8,11 @@ import (
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type TicketService struct {
@@ -39,6 +39,15 @@ func NewTicketService(
 	}
 }
 
+func (ticketService *TicketService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetTicketSortableColumns()
+	_, ok := allowed[sortby.TicketSortBy(requested)]
+	if !ok {
+		return sortby.TicketSortByCreatedAt.DBColumn()
+	}
+	return sortby.TicketSortBy(requested).DBColumn()
+}
+
 func (ticketService *TicketService) mapToFilterStatuses(enumStatus uint) []enum.TicketStatus {
 	statuses := enum.GetAllTicketStatuses()
 	for _, status := range statuses {
@@ -52,11 +61,25 @@ func (ticketService *TicketService) mapToFilterStatuses(enumStatus uint) []enum.
 	return statuses
 }
 
-func (ticketService *TicketService) GetTicketStatuses() []ticketdto.TicketStatusResponse {
+func (ticketService *TicketService) GetTicketSortableColumns() []ticketdto.TicketEnumResponse {
+	columns := sortby.GetTicketSortableColumns()
+	response := make([]ticketdto.TicketEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = ticketdto.TicketEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
+}
+
+func (ticketService *TicketService) GetTicketStatuses() []ticketdto.TicketEnumResponse {
 	statuses := enum.GetAllTicketStatuses()
-	responses := make([]ticketdto.TicketStatusResponse, len(statuses))
+	responses := make([]ticketdto.TicketEnumResponse, len(statuses))
 	for i, status := range statuses {
-		responses[i] = ticketdto.TicketStatusResponse{
+		responses[i] = ticketdto.TicketEnumResponse{
 			ID:   uint(status),
 			Name: status.String(),
 		}
@@ -106,22 +129,23 @@ func (ticketService *TicketService) CreateCustomerTicket(requestInfo ticketdto.C
 	return err
 }
 
-func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(ticketService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
 
 	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
 
-	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses, paginationModifier, sortingModifier)
+	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	responses := make([]ticketdto.TicketResponse, len(tickets))
 
 	for i, ticket := range tickets {
 		owner, err := ticketService.userService.GetUserCredential(ticket.OwnerID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		responses[i] = ticketdto.TicketResponse{
@@ -136,11 +160,17 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 		if ticket.Image != "" {
 			responses[i].Image, err = ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 	}
-	return responses, nil
+
+	count, err := ticketService.ticketRepository.CountCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return responses, count, nil
 }
 
 func (ticketService *TicketService) CreateCustomerTicketComment(requestInfo ticketdto.CreateTicketCommentRequest) error {
@@ -189,10 +219,7 @@ func (ticketService *TicketService) GetCustomerTicketComments(requestInfo ticket
 		return nil, forbiddenError
 	}
 
-	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
-
-	comments, err := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID, paginationModifier, sortingModifier)
+	comments, err := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -238,22 +265,23 @@ func (ticketService *TicketService) CreateAdminTicketComment(requestInfo ticketd
 	return nil
 }
 
-func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(ticketService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
 
 	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
 
-	tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, statuses, paginationModifier, sortingModifier)
+	tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, statuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	responses := make([]ticketdto.TicketResponse, len(tickets))
 
 	for i, ticket := range tickets {
 		owner, err := ticketService.userService.GetUserCredential(ticket.OwnerID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		responses[i] = ticketdto.TicketResponse{
@@ -268,12 +296,17 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 		if ticket.Image != "" {
 			image, err := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 			responses[i].Image = image
 		}
 	}
-	return responses, nil
+	count, err := ticketService.ticketRepository.CountTicketsByStatus(ticketService.db, statuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return responses, count, nil
 }
 
 func (ticketService *TicketService) GetAdminTicketComments(requestInfo ticketdto.TicketCommentListRequest) ([]ticketdto.TicketCommentResponse, error) {
@@ -281,10 +314,7 @@ func (ticketService *TicketService) GetAdminTicketComments(requestInfo ticketdto
 		return nil, err
 	}
 
-	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
-
-	comments, err := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID, paginationModifier, sortingModifier)
+	comments, err := ticketService.ticketRepository.GetTicketComments(ticketService.db, requestInfo.TicketID, nil)
 	if err != nil {
 		return nil, err
 	}

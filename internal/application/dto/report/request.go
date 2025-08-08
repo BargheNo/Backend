@@ -13,6 +13,8 @@ type ReportListRequest struct {
 	Status  uint
 	Offset  int
 	Limit   int
+	SortBy  uint
+	Asc     bool
 }
 
 type ResolveReportRequest struct {

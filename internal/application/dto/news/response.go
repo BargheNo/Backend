@@ -12,6 +12,7 @@ type AdminNewsResponse struct {
 	Status      string                     `json:"status"`
 	CoverImage  string                     `json:"coverImage"`
 	Author      userdto.CredentialResponse `json:"author"`
+	TotalLike   int                        `json:"totalLikes"`
 }
 
 type PublicNewsResponse struct {
@@ -20,9 +21,10 @@ type PublicNewsResponse struct {
 	Content     string `json:"content"`
 	Description string `json:"description"`
 	CoverImage  string `json:"coverImage"`
+	TotalLike   int    `json:"totalLikes"`
 }
 
-type NewsStatusesResponse struct {
+type NewsEnumResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }

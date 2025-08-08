@@ -9,11 +9,11 @@ import (
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type ReportService struct {
@@ -44,6 +44,15 @@ func NewReportService(
 		reportRepository:    reportRepository,
 		db:                  db,
 	}
+}
+
+func (reportService *ReportService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetReportSortableColumns()
+	_, ok := allowed[sortby.ReportSortBy(requested)]
+	if !ok {
+		return sortby.ReportSortByCreatedAt.DBColumn()
+	}
+	return sortby.ReportSortBy(requested).DBColumn()
 }
 
 func (reportService *ReportService) getReport(reportID uint) (*entity.Report, error) {
@@ -117,6 +126,20 @@ func (reportService *ReportService) mapToFilterStatuses(enumStatus uint) []enum.
 	return statuses
 }
 
+func (reportService *ReportService) GetReportSortableColumns() []reportdto.GetReportEnumResponse {
+	columns := sortby.GetReportSortableColumns()
+	response := make([]reportdto.GetReportEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = reportdto.GetReportEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
+}
+
 func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest) error {
 	if err := reportService.maintenanceService.ValidateCustomerRecord(requestInfo.ObjectID, requestInfo.ReportedByID); err != nil {
 		return err
@@ -185,22 +208,23 @@ func (reportService *ReportService) GetPanelReport(reportID uint) (reportdto.Pan
 	}, nil
 }
 
-func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(reportService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
 
 	statuses := reportService.mapToFilterStatuses(requestInfo.Status)
 
-	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses, paginationModifier, sortingModifier)
+	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	reportResponses := make([]reportdto.MaintenanceReportResponse, len(reports))
 
 	for i, report := range reports {
 		maintenanceRequest, err := reportService.maintenanceService.GetRequestByAdmin(report.ObjectID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		reportResponses[i] = reportdto.MaintenanceReportResponse{
@@ -211,25 +235,31 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 		}
 	}
 
-	return reportResponses, nil
+	count, err := reportService.reportRepository.CountReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return reportResponses, count, nil
 }
 
-func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, error) {
-	paginationModifier := postgresImpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(reportService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
 
 	statuses := reportService.mapToFilterStatuses(requestInfo.Status)
 
-	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, statuses, paginationModifier, sortingModifier)
+	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, statuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	reportResponses := make([]reportdto.PanelReportResponse, len(reports))
 
 	for i, report := range reports {
 		panel, err := reportService.installationService.GetPanelByAdmin(report.ObjectID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		reportResponses[i] = reportdto.PanelReportResponse{
@@ -240,7 +270,12 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 		}
 	}
 
-	return reportResponses, nil
+	count, err := reportService.reportRepository.CountReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return reportResponses, count, nil
 }
 
 func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveReportRequest) error {

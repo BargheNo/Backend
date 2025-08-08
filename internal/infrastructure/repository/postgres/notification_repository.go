@@ -3,7 +3,7 @@ package postgres
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -26,18 +26,30 @@ func (repo *NotificationRepository) GetNotificationByID(db database.Database, no
 	return notification, nil
 }
 
-func (repo *NotificationRepository) GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, opts ...repository.QueryModifier) ([]*entity.Notification, error) {
+func (repo *NotificationRepository) GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, options *postgres.QueryOptions) ([]*entity.Notification, error) {
 	var notifications []*entity.Notification
 	query := db.GetDB().Where("recipient_id = ? and type_id IN ?", userID, types)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&notifications)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return notifications, nil
+}
+
+func (repo *NotificationRepository) CountNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Notification{}).
+		Where("recipient_id = ? and type_id IN ?", userID, types).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *NotificationRepository) GetNotificationSettingByID(db database.Database, settingID uint) (*entity.NotificationSetting, error) {

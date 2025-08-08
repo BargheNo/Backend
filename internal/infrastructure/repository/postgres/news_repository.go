@@ -3,7 +3,7 @@ package postgres
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -39,17 +39,29 @@ func (repo *NewsRepository) FindNewsByTittle(db database.Database, title string)
 	return &news, nil
 }
 
-func (repo *NewsRepository) FindNewsByStatus(db database.Database, statuses []enum.NewsStatus, opts ...repository.QueryModifier) ([]*entity.News, error) {
+func (repo *NewsRepository) FindNewsByStatus(db database.Database, statuses []enum.NewsStatus, options *postgres.QueryOptions) ([]*entity.News, error) {
 	var news []*entity.News
 	query := db.GetDB().Where("status IN ?", statuses)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&news)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return news, nil
+}
+
+func (repo *NewsRepository) CountNewsByStatus(db database.Database, statuses []enum.NewsStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.News{}).
+		Where("status IN ?", statuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *NewsRepository) UpdateNews(db database.Database, news *entity.News) error {
@@ -82,4 +94,29 @@ func (repo *NewsRepository) CreateMedia(db database.Database, media *entity.Medi
 
 func (repo *NewsRepository) DeleteMedia(db database.Database, mediaID uint) error {
 	return db.GetDB().Delete(&entity.Media{}, mediaID).Error
+}
+
+func (repo *NewsRepository) FindNewsLikeByUser(db database.Database, userID, newsID uint) (*entity.Like, error) {
+	var like entity.Like
+	result := db.GetDB().Where("user_id = ? AND owner_id = ? AND owner_type = ?", userID, newsID, "news").First(&like)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &like, nil
+}
+
+func (repo *NewsRepository) CreateLike(db database.Database, userID uint, newsID uint) error {
+	like := &entity.Like{
+		UserID:    userID,
+		OwnerID:   newsID,
+		OwnerType: "news",
+	}
+	return db.GetDB().Create(&like).Error
+}
+
+func (repo *NewsRepository) DeleteLike(db database.Database, like *entity.Like) error {
+	return db.GetDB().Unscoped().Delete(like).Error
 }

@@ -3,7 +3,7 @@ package postgres
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -228,17 +228,29 @@ func (repo *CorporationRepository) UpdateCorporation(db database.Database, corpo
 	return db.GetDB().Save(&corporation).Error
 }
 
-func (repo *CorporationRepository) FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, opts ...repository.QueryModifier) ([]*entity.Corporation, error) {
+func (repo *CorporationRepository) FindCorporationsByStatus(db database.Database, status []enum.CorporationStatus, options *postgres.QueryOptions) ([]*entity.Corporation, error) {
 	var corporations []*entity.Corporation
 	query := db.GetDB().Where("status IN ?", status)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&corporations)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return corporations, nil
+}
+
+func (repo *CorporationRepository) CountCorporationsByStatus(db database.Database, status []enum.CorporationStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Corporation{}).
+		Where("status IN ?", status).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *CorporationRepository) FindUserCorporations(db database.Database, userID uint) ([]*entity.Corporation, error) {
@@ -271,13 +283,11 @@ func (repo *CorporationRepository) DeleteContactInfo(db database.Database, conta
 	return db.GetDB().Delete(contact).Error
 }
 
-func (repo *CorporationRepository) FindCorporationReviews(db database.Database, corporationID uint, opts ...repository.QueryModifier) ([]*entity.CorporationReview, error) {
+func (repo *CorporationRepository) FindCorporationReviews(db database.Database, corporationID uint, options *postgres.QueryOptions) ([]*entity.CorporationReview, error) {
 	var reviews []*entity.CorporationReview
 	query := db.GetDB().Where("corporation_id = ?", corporationID)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&reviews)
 	if result.Error != nil {

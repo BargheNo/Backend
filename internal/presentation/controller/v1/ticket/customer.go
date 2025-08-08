@@ -62,12 +62,18 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 
 func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 	type GetTicketsRequest struct {
-		Status uint `form:"status" validate:"required"`
+		Status   uint `form:"status" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[GetTicketsRequest](ctx)
+
 	ownerID, _ := ctx.Get(ticketController.constants.Context.ID)
-	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
+
 	listInfo := ticketdto.TicketListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
@@ -75,12 +81,13 @@ func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 		Limit:   limit,
 	}
 
-	tickets, err := ticketController.ticketService.GetCustomerTickets(listInfo)
+	tickets, count, err := ticketController.ticketService.GetCustomerTickets(listInfo)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(tickets, count, params.Page, params.PageSize)
 
-	controller.Response(ctx, 200, "", tickets)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) {
@@ -89,16 +96,11 @@ func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) 
 	}
 	params := controller.Validated[getCommentsParams](ctx)
 
-	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
-
 	ownerID, _ := ctx.Get(ticketController.constants.Context.ID)
 
 	listInfo := ticketdto.TicketCommentListRequest{
 		TicketID: params.TicketID,
 		OwnerID:  ownerID.(uint),
-		Offset:   offset,
-		Limit:    limit,
 	}
 	comments, err := ticketController.ticketService.GetCustomerTicketComments(listInfo)
 	if err != nil {

@@ -29,21 +29,28 @@ func NewAdminBidController(
 func (bidController *AdminBidController) GetBids(ctx *gin.Context) {
 	type getBidsParams struct {
 		RequestID uint `uri:"requestID" validate:"required"`
+		Page      int  `form:"page"`
+		PageSize  int  `form:"pageSize"`
+		SortBy    uint `form:"sortBy"`
+		Asc       bool `form:"asc"`
 	}
 	params := controller.Validated[getBidsParams](ctx)
 
-	pagination := controller.GetPagination(ctx, bidController.pagination.DefaultPage, bidController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, bidController.pagination.DefaultPage, bidController.pagination.DefaultPageSize)
 
 	bidsRequest := biddto.GetListRequestBidsRequestByAdmin{
 		RequestID: params.RequestID,
 		Offset:    offset,
 		Limit:     limit,
+		SortBy:    params.SortBy,
+		Asc:       params.Asc,
 	}
-	bids, err := bidController.BidService.GetRequestBidsByAdmin(bidsRequest)
+	bids, count, err := bidController.BidService.GetRequestBidsByAdmin(bidsRequest)
 	if err != nil {
 		panic(err)
 	}
 
-	controller.Response(ctx, 200, "", bids)
+	data := controller.NewPaginatedResponse(bids, count, params.Page, params.PageSize)
+
+	controller.Response(ctx, 200, "", data)
 }

@@ -45,9 +45,9 @@ type ContactTypeResponse struct {
 	Name string `json:"name"`
 }
 
-type GetStatusesResponse struct {
-	ID     uint   `json:"id"`
-	Status string `json:"status"`
+type GetEnumResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
 }
 
 type GetAdminCorporationReview struct {

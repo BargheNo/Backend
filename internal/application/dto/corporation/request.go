@@ -88,6 +88,8 @@ type GetCorporationsByAdminRequest struct {
 	Status uint
 	Limit  int
 	Offset int
+	SortBy uint
+	Asc    bool
 }
 
 type HandleCorporationActionRequest struct {
