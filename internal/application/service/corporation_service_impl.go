@@ -46,7 +46,7 @@ func NewCorporationService(
 func (corporationService *CorporationService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetCorporationSortableColumns()
 	_, ok := allowed[sortby.CorporationSortBy(requested)]
-	if !ok {
+	if ok {
 		return sortby.CorporationSortByCreatedAt.DBColumn()
 	}
 	return sortby.CorporationSortBy(requested).DBColumn()

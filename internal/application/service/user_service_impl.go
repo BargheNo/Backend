@@ -65,7 +65,7 @@ func NewUserService(deps UserServiceDeps) *UserService {
 func (userService *UserService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetUserSortableColumns()
 	_, ok := allowed[sortby.UserSortBy(requested)]
-	if !ok {
+	if ok {
 		return sortby.UserSortByCreatedAt.DBColumn()
 	}
 	return sortby.UserSortBy(requested).DBColumn()
