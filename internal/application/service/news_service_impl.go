@@ -41,11 +41,11 @@ func NewNewsService(
 
 func (newsService *NewsService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetNewsSortableColumns()
-	_, ok := allowed[sortby.NewsSortBy(requested)]
-	if ok {
-		return sortby.NewsSortByCreatedAt.DBColumn()
+	sortBy := sortby.NewsSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.NewsSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (newsService *NewsService) mapToFilterStatuses(enumStatus uint) []enum.NewsStatus {

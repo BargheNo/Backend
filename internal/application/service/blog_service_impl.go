@@ -44,11 +44,11 @@ func NewBlogService(
 
 func (blogService *BlogService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetPostSortableColumns()
-	_, ok := allowed[sortby.PostSortBy(requested)]
-	if ok {
-		return sortby.PostSortByCreatedAt.DBColumn()
+	sortBy := sortby.PostSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.PostSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (blogService *BlogService) mapToFilterStatuses(enumStatus uint) []enum.PostStatus {

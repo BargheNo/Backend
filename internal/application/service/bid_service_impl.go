@@ -60,11 +60,11 @@ func NewBidService(deps BidServiceDeps) *BidService {
 
 func (bidService *BidService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetBidSortableColumns()
-	_, ok := allowed[sortby.BidSortBy(requested)]
-	if ok {
-		return sortby.BidSortByCreatedAt.DBColumn()
+	sortBy := sortby.BidSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.BidSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (bidService *BidService) getRequestBid(bidID, requestID uint) (*entity.Bid, error) {

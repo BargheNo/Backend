@@ -59,11 +59,11 @@ func NewNotificationService(deps NotificationServiceDeps) *NotificationService {
 
 func (notificationService *NotificationService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetNotificationSortableColumns()
-	_, ok := allowed[sortby.NotificationSortBy(requested)]
-	if ok {
-		return sortby.NotificationSortByCreatedAt.DBColumn()
+	sortBy := sortby.NotificationSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.NotificationSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (notificationService *NotificationService) GetNotificationSortableColumns() []notificationdto.NotificationEnumResponse {

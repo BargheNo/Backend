@@ -41,11 +41,11 @@ func NewTicketService(
 
 func (ticketService *TicketService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetTicketSortableColumns()
-	_, ok := allowed[sortby.TicketSortBy(requested)]
-	if ok {
-		return sortby.TicketSortByCreatedAt.DBColumn()
+	sortBy := sortby.TicketSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
 	}
-	return sortby.TicketSortBy(requested).DBColumn()
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (ticketService *TicketService) mapToFilterStatuses(enumStatus uint) []enum.TicketStatus {
