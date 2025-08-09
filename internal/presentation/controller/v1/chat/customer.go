@@ -93,7 +93,7 @@ func (chatController *CustomerChatController) GetMessages(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(messages, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(messages, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

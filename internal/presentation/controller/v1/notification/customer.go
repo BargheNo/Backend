@@ -82,7 +82,7 @@ func (notificationController *CustomerNotificationController) GetUserNotificatio
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(notificationsDetails, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(notificationsDetails, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

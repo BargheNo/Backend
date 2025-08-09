@@ -264,7 +264,7 @@ func (userService *UserService) GetUsersByPermission(permissionTypes []enum.Perm
 	return userService.userRepository.FindUsersByPermission(userService.db, permissionTypes)
 }
 
-func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, error) {
+func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
 	statuses := make([]enum.UserStatus, len(request.Statuses))
 	for i, status := range request.Statuses {
 		statuses[i] = enum.UserStatus(status)
@@ -276,7 +276,7 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 
 	users, err := userService.userRepository.FindUserByStatus(userService.db, statuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	usersResponse := make([]userdto.CredentialResponse, len(users))
 	for i, user := range users {
@@ -284,7 +284,7 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 		if user.ProfilePicPath != "" {
 			profilePic, err = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 		usersResponse[i] = userdto.CredentialResponse{
@@ -298,7 +298,12 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 			Status:     user.Status.String(),
 		}
 	}
-	return usersResponse, nil
+	count, err := userService.userRepository.CountUserByStatus(userService.db, statuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return usersResponse, count, nil
 }
 
 func (userService *UserService) GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, int64, error) {

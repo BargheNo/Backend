@@ -50,7 +50,7 @@ func (bidController *AdminBidController) GetBids(ctx *gin.Context) {
 		panic(err)
 	}
 
-	data := controller.NewPaginatedResponse(bids, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(bids, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

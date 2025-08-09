@@ -62,7 +62,7 @@ func (maintenanceController *CorporationMaintenanceController) GetAllMaintenance
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(requests, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(requests, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

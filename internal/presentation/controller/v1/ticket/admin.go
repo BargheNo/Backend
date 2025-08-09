@@ -56,7 +56,7 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(tickets, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }
