@@ -272,11 +272,7 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 }
 
 func (installationService *InstallationService) GetOwnerInstallationRequests(request installationdto.CustomerRequestsListRequest) ([]installationdto.AnonymousRequestsResponse, int64, error) {
-	status := enum.InstallationRequestStatus(request.Status)
-	allowedStatus := []enum.InstallationRequestStatus{status}
-	if status == enum.InstallationRequestStatusAll {
-		allowedStatus = enum.GetAllInstallationRequestStatuses()
-	}
+	allowedStatus := installationService.mapToFilterStatusesForRequest(request.Status)
 
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
@@ -460,11 +456,20 @@ func (installationService *InstallationService) GetPublicInstallationRequest(req
 	return response, nil
 }
 
-func (installationService *InstallationService) GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) ([]installationdto.PublicRequestDetailsResponse, int64, error) {
-	allowedStatuses := []enum.InstallationRequestStatus{enum.InstallationRequestStatus(request.Status)}
-	if enum.InstallationRequestStatus(request.Status) == enum.InstallationRequestStatusAll {
-		allowedStatuses = enum.GetAllInstallationRequestStatuses()
+func (installationService *InstallationService) mapToFilterStatusesForRequest(enumStatus uint) []enum.InstallationRequestStatus {
+	statuses := enum.GetAllInstallationRequestStatuses()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.InstallationRequestStatusAll {
+				return statuses
+			}
+			return []enum.InstallationRequestStatus{status}
+		}
 	}
+	return statuses
+}
+func (installationService *InstallationService) GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) ([]installationdto.PublicRequestDetailsResponse, int64, error) {
+	allowedStatuses := installationService.mapToFilterStatusesForRequest(request.Status)
 
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
@@ -721,6 +726,19 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 	return err
 }
 
+func (installationService *InstallationService) mapToFilterStatusesForPanel(enumStatus uint) []enum.PanelStatus {
+	statuses := enum.GetAllPanelStatuses()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.PanelStatusAll {
+				return statuses
+			}
+			return []enum.PanelStatus{status}
+		}
+	}
+	return statuses
+}
+
 func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) ([]installationdto.CorporationPanelListResponse, int64, error) {
 	if err := installationService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID); err != nil {
 		return nil, 0, err
@@ -730,10 +748,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 		WithPagination(listInfo.Limit, listInfo.Offset).
 		WithSorting(installationService.getSortByColumnPanel(listInfo.SortBy), listInfo.Asc)
 
-	allowedStatus := []enum.PanelStatus{enum.PanelStatus(listInfo.Status)}
-	if enum.PanelStatus(listInfo.Status) == enum.PanelStatusAll {
-		allowedStatus = enum.GetAllPanelStatuses()
-	}
+	allowedStatus := installationService.mapToFilterStatusesForPanel(listInfo.Status)
 
 	panels, err := installationService.installationRepository.FindCorporationPanels(installationService.db, listInfo.CorporationID, allowedStatus, options)
 	if err != nil {
@@ -832,10 +847,7 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 		WithPagination(listInfo.Limit, listInfo.Offset).
 		WithSorting(installationService.getSortByColumnPanel(listInfo.SortBy), listInfo.Asc)
 
-	allowedStatus := []enum.PanelStatus{enum.PanelStatus(listInfo.Status)}
-	if enum.PanelStatus(listInfo.Status) == enum.PanelStatusAll {
-		allowedStatus = enum.GetAllPanelStatuses()
-	}
+	allowedStatus := installationService.mapToFilterStatusesForPanel(listInfo.Status)
 
 	panels, err := installationService.installationRepository.FindCustomerPanels(installationService.db, listInfo.OwnerID, allowedStatus, options)
 	if err != nil {
@@ -981,10 +993,7 @@ func (installationService *InstallationService) GetPanelsByAdmin(listInfo instal
 		WithPagination(listInfo.Limit, listInfo.Offset).
 		WithSorting(installationService.getSortByColumnPanel(listInfo.SortBy), listInfo.Asc)
 
-	allowedStatus := []enum.PanelStatus{enum.PanelStatus(listInfo.Status)}
-	if enum.PanelStatus(listInfo.Status) == enum.PanelStatusAll {
-		allowedStatus = enum.GetAllPanelStatuses()
-	}
+	allowedStatus := installationService.mapToFilterStatusesForPanel(listInfo.Status)
 
 	panels, err := installationService.installationRepository.FindPanelsByStatus(installationService.db, allowedStatus, options)
 	if err != nil {

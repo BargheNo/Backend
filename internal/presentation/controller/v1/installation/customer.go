@@ -73,7 +73,7 @@ func (installationController *CustomerInstallationController) CreateInstallation
 
 func (installationController *CustomerInstallationController) GetInstallationRequests(ctx *gin.Context) {
 	type getRequestsParams struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`
@@ -144,7 +144,7 @@ func (installationController *CustomerInstallationController) CancelInstallation
 
 func (installationController *CustomerInstallationController) GetCustomerPanels(ctx *gin.Context) {
 	type getPanelsParams struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`

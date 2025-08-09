@@ -28,7 +28,7 @@ func NewAdminReportController(
 
 func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Context) {
 	type GetMaintenanceReportsRequest struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`
@@ -59,7 +59,7 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 
 func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context) {
 	type GetPanelReportsRequest struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`

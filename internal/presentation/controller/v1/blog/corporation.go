@@ -213,7 +213,7 @@ func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Contex
 func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 	type getPostsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status" validate:"required"`
+		Status        uint `form:"status"`
 		Page          int  `form:"page"`
 		PageSize      int  `form:"pageSize"`
 		SortBy        uint `form:"sortBy"`

@@ -135,7 +135,7 @@ func (newsController *AdminNewsController) UnpublishNews(ctx *gin.Context) {
 
 func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 	type getNewsParams struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`

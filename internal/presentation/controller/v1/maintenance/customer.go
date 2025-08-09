@@ -71,7 +71,7 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 
 func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`
@@ -102,7 +102,7 @@ func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceReq
 func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
 		PanelID  uint `uri:"panelID" validate:"required"`
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`

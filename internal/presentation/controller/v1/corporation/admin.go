@@ -34,7 +34,7 @@ func (corporationController *AdminCorporationController) GetCorporationStatus(ct
 
 func (corporationController *AdminCorporationController) GetCorporations(ctx *gin.Context) {
 	type getCorporationsParams struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`

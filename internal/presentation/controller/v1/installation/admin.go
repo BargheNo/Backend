@@ -28,7 +28,7 @@ func NewAdminInstallationController(
 
 func (installationController *AdminInstallationController) GetInstallationRequests(ctx *gin.Context) {
 	type getRequestsParams struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`
@@ -117,7 +117,7 @@ func (installationController *AdminInstallationController) DeleteInstallationReq
 
 func (installationController *AdminInstallationController) GetPanels(ctx *gin.Context) {
 	type getPanelsParams struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`

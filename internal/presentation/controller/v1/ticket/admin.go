@@ -31,7 +31,7 @@ func NewAdminTicketController(
 
 func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 	type GetTicketsRequest struct {
-		Status   uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
 		Page     int  `form:"page"`
 		PageSize int  `form:"pageSize"`
 		SortBy   uint `form:"sortBy"`
