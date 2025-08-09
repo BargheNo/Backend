@@ -49,6 +49,19 @@ func (repo *UserRepository) FindUserByStatus(db database.Database, statuses []en
 	return users, nil
 }
 
+func (repo *UserRepository) CountUserByStatus(db database.Database, statuses []enum.UserStatus) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.User{}).
+		Where("status IN ?", statuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *UserRepository) FindUserByEmail(db database.Database, email string) (*entity.User, error) {
 	var user entity.User
 	result := db.GetDB().Where("email = ?", email).First(&user)
