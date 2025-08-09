@@ -58,7 +58,7 @@ func (userController *AdminUserController) GetPermissionRoles(ctx *gin.Context) 
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(roles, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(roles, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }
@@ -208,7 +208,7 @@ func (userController *AdminUserController) GetUsers(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(users, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(users, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

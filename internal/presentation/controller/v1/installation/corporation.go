@@ -54,7 +54,7 @@ func (installationController *CorporationInstallationController) GetInstallation
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(installationRequests, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(installationRequests, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }
@@ -188,7 +188,7 @@ func (installationController *CorporationInstallationController) GetCorporationP
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(panels, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(panels, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

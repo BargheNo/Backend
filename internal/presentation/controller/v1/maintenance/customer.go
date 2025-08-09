@@ -94,7 +94,7 @@ func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceReq
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(requests, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(requests, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }
@@ -126,7 +126,7 @@ func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceR
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(requests, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(requests, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

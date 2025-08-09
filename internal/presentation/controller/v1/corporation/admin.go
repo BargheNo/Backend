@@ -55,7 +55,7 @@ func (corporationController *AdminCorporationController) GetCorporations(ctx *gi
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(corporations, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(corporations, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

@@ -156,7 +156,7 @@ func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(news, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(news, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }
