@@ -185,13 +185,25 @@ func (repo *UserRepository) CountAllPermissions(db database.Database) (int64, er
 	return count, nil
 }
 
-func (repo *UserRepository) FindAllRoles(db database.Database) ([]*entity.Role, error) {
+func (repo *UserRepository) FindAllRoles(db database.Database, options *postgres.QueryOptions) ([]*entity.Role, error) {
 	var roles []*entity.Role
-	result := db.GetDB().Find(&roles)
+	query := db.GetDB().Find(&roles)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&roles)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return roles, nil
+}
+
+func (repo *UserRepository) CountAllRoles(db database.Database) (int64, error) {
+	var count int64
+	err := db.GetDB().Model(&entity.Role{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *UserRepository) FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, error) {

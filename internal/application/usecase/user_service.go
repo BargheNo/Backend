@@ -26,7 +26,7 @@ type UserService interface {
 	FindActiveUserByPhone(phone string) (*entity.User, error)
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest) error
 	GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error)
-	GetAllRoles() ([]userdto.RoleResponse, error)
+	GetAllRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error)
 	CreateRole(newRoleRequest userdto.NewRoleRequest) error
 	GetRoleDetails(roleID uint) (userdto.RoleResponse, error)
 	GetRoleOwners(request userdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error)

@@ -96,3 +96,8 @@ type GetRoleOwnersRequest struct {
 	Offset int
 	Limit  int
 }
+
+type GetRolesListRequest struct {
+	Offset int
+	Limit  int
+}
