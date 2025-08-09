@@ -25,7 +25,10 @@ type PaginatedResponse[T any] struct {
 	Pagination *PaginationMeta `json:"pagination"`
 }
 
-func NewPaginatedResponse[T any](data []T, totalItems int64, currentPage, pageSize int) *PaginatedResponse[T] {
+func NewPaginatedResponse[T any](data []T, totalItems int64, offset, limit int) *PaginatedResponse[T] {
+	pageSize := limit
+	currentPage := int(offset/limit) + 1
+
 	totalPages := 0
 	if pageSize > 0 {
 		totalPages = int((totalItems + int64(pageSize) - 1) / int64(pageSize))

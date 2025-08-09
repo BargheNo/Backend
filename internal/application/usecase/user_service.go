@@ -12,7 +12,7 @@ type UserService interface {
 	GetUserByID(userID uint) (*entity.User, error)
 	GetUserCredential(userID uint) (userdto.CredentialResponse, error)
 	GetUsersByPermission(permissionTypes []enum.PermissionType) ([]*entity.User, error)
-	GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, error)
+	GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error)
 	BanUser(userID uint) error
 	UnbanUser(userID uint) error
 	Register(registerInfo userdto.BasicRegisterRequest) error

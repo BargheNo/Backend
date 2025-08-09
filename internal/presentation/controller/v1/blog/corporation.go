@@ -238,7 +238,7 @@ func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(posts, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(posts, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

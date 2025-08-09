@@ -48,7 +48,7 @@ func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(posts, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(posts, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }
@@ -76,7 +76,7 @@ func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Contex
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(posts, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(posts, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }

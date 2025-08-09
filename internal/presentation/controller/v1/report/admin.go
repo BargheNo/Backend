@@ -52,7 +52,7 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(reports, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(reports, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }
@@ -83,7 +83,7 @@ func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context)
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(reports, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(reports, count, offset, limit)
 
 	controller.Response(ctx, 200, "", data)
 }
