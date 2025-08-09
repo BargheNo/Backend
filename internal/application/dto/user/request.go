@@ -85,3 +85,8 @@ type GetPermissionRolesRequest struct {
 	SortBy       uint
 	Asc          bool
 }
+
+type GetPermissionsListRequest struct {
+	Offset int
+	Limit  int
+}

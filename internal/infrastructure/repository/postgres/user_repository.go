@@ -151,13 +151,25 @@ func (repo *UserRepository) AssignRoleToUser(db database.Database, user *entity.
 	return db.GetDB().Model(user).Association("Roles").Append(role)
 }
 
-func (repo *UserRepository) FindAllPermissions(db database.Database) ([]*entity.Permission, error) {
+func (repo *UserRepository) FindAllPermissions(db database.Database, options *postgres.QueryOptions) ([]*entity.Permission, error) {
 	var permissions []*entity.Permission
-	result := db.GetDB().Find(&permissions)
+	query := db.GetDB().Find(&permissions)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&permissions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return permissions, nil
+}
+
+func (repo *UserRepository) CountAllPermissions(db database.Database) (int64, error) {
+	var count int64
+	err := db.GetDB().Model(&entity.Permission{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *UserRepository) FindAllRoles(db database.Database) ([]*entity.Role, error) {

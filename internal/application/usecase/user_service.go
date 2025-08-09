@@ -25,7 +25,7 @@ type UserService interface {
 	ResetPassword(resetPassInfo userdto.ResetPasswordRequest) error
 	FindActiveUserByPhone(phone string) (*entity.User, error)
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest) error
-	GetAllPermissions() ([]userdto.PermissionResponse, error)
+	GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error)
 	GetAllRoles() ([]userdto.RoleResponse, error)
 	CreateRole(newRoleRequest userdto.NewRoleRequest) error
 	GetRoleDetails(roleID uint) (userdto.RoleResponse, error)

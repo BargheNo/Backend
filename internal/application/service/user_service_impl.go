@@ -692,10 +692,14 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 	return err
 }
 
-func (userService *UserService) GetAllPermissions() ([]userdto.PermissionResponse, error) {
-	permissions, err := userService.userRepository.FindAllPermissions(userService.db)
+func (userService *UserService) GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error) {
+
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset)
+
+	permissions, err := userService.userRepository.FindAllPermissions(userService.db, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	permissionsResponse := make([]userdto.PermissionResponse, len(permissions))
 	for i, permission := range permissions {
@@ -706,7 +710,12 @@ func (userService *UserService) GetAllPermissions() ([]userdto.PermissionRespons
 			Category:    permission.Category.String(),
 		}
 	}
-	return permissionsResponse, nil
+
+	count, err := userService.userRepository.CountAllPermissions(userService.db)
+	if err != nil {
+		return nil, 0, err
+	}
+	return permissionsResponse, count, nil
 }
 
 func (userService *UserService) getRolePermissions(role *entity.Role) ([]userdto.PermissionResponse, error) {

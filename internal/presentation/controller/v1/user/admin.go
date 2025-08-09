@@ -27,11 +27,25 @@ func NewAdminUserController(
 }
 
 func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) {
-	permissions, err := userController.userService.GetAllPermissions()
+	type getPermissionsParams struct {
+		Page     int `form:"page"`
+		PageSize int `form:"pageSize"`
+	}
+	params := controller.Validated[getPermissionsParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
+
+	request := userdto.GetPermissionsListRequest{
+		Offset: offset,
+		Limit:  limit,
+	}
+
+	permissions, count, err := userController.userService.GetAllPermissions(request)
 	if err != nil {
 		panic(err)
 	}
-	controller.Response(ctx, 200, "", permissions)
+	data := controller.NewPaginatedResponse(permissions, count, params.Page, params.PageSize)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (userController *AdminUserController) GetPermissionRoles(ctx *gin.Context) {
