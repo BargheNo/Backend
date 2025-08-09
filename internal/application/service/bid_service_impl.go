@@ -479,6 +479,19 @@ func (bidService *BidService) SetBid(bidInfo biddto.SetBidRequest) error {
 	return nil
 }
 
+func (bidService *BidService) mapToFilterStatuses(enumStatus uint) []enum.BidStatus {
+	statuses := enum.GetAllBidStatuses()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.BidStatusAll {
+				return statuses
+			}
+			return []enum.BidStatus{status}
+		}
+	}
+	return statuses
+}
+
 func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBidsRequest) ([]biddto.CorporationBidResponse, int64, error) {
 	if err := bidService.corporationService.CheckApplicantAccess(request.CorporationID, request.UserID); err != nil {
 		return nil, 0, err
@@ -488,10 +501,7 @@ func (bidService *BidService) GetCorporationBids(request biddto.GetCorporationBi
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(bidService.getSortByColumn(request.SortBy), request.Asc)
 
-	allowedStatus := []enum.BidStatus{enum.BidStatus(request.Status)}
-	if enum.BidStatus(request.Status) == enum.BidStatusAll {
-		allowedStatus = enum.GetAllBidStatuses()
-	}
+	allowedStatus := bidService.mapToFilterStatuses(request.Status)
 
 	bids, err := bidService.bidRepository.FindCorporationBids(bidService.db, request.CorporationID, allowedStatus, options)
 	if err != nil {

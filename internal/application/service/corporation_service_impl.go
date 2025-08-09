@@ -160,7 +160,7 @@ func (corporationService *CorporationService) ISCorporationApproved(corporationI
 	}
 
 	if corporation.Status != enum.CorpStatusApproved {
-		exception.NewUnapprovedCorporationForbiddenError()
+		return exception.NewUnapprovedCorporationForbiddenError()
 	}
 	return nil
 }
