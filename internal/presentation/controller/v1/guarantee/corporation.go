@@ -83,7 +83,7 @@ func (guaranteeController *CorporationGuaranteeController) GetGuaranteeStatuses(
 func (guaranteeController *CorporationGuaranteeController) GetGuarantees(ctx *gin.Context) {
 	type getGuaranteesParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status" validate:"required"`
+		Status        uint `form:"status"`
 	}
 	params := controller.Validated[getGuaranteesParams](ctx)
 	userID, _ := ctx.Get(guaranteeController.constants.Context.ID)

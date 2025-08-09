@@ -38,7 +38,7 @@ func (maintenanceController *CorporationMaintenanceController) GetMaintenanceSta
 func (maintenanceController *CorporationMaintenanceController) GetAllMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status" validate:"required"`
+		Status        uint `form:"status"`
 		Page          int  `form:"page"`
 		PageSize      int  `form:"pageSize"`
 		SortBy        uint `form:"sortBy"`

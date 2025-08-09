@@ -99,7 +99,7 @@ func (bidController *CorporationBidController) SetBid(ctx *gin.Context) {
 func (bidController *CorporationBidController) GetBids(ctx *gin.Context) {
 	type getBidsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status" validate:"required"`
+		Status        uint `form:"status"`
 		Page          int  `form:"page"`
 		PageSize      int  `form:"pageSize"`
 		SortBy        uint `form:"sortBy"`

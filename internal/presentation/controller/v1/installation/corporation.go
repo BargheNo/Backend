@@ -164,7 +164,7 @@ func (installationController *CorporationInstallationController) AddPanel(ctx *g
 func (installationController *CorporationInstallationController) GetCorporationPanels(ctx *gin.Context) {
 	type getInstallationRequestParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status" validate:"required"`
+		Status        uint `form:"status"`
 		Page          int  `form:"page"`
 		PageSize      int  `form:"pageSize"`
 		SortBy        uint `form:"sortBy"`
