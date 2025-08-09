@@ -269,7 +269,12 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 	for i, status := range request.Statuses {
 		statuses[i] = enum.UserStatus(status)
 	}
-	users, err := userService.userRepository.FindUserByStatus(userService.db, statuses, nil)
+
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(userService.getSortByColumn(request.SortBy), request.Asc)
+
+	users, err := userService.userRepository.FindUserByStatus(userService.db, statuses, options)
 	if err != nil {
 		return nil, err
 	}
