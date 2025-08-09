@@ -227,22 +227,22 @@ func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
 
 func (userController *AdminUserController) GetUsers(ctx *gin.Context) {
 	type usersParams struct {
-		Statuses []uint `form:"statuses"`
-		Page     int    `form:"page"`
-		PageSize int    `form:"pageSize"`
-		SortBy   uint   `form:"sortBy"`
-		Asc      bool   `form:"asc"`
+		Status   uint `form:"status"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[usersParams](ctx)
 
 	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
 
 	request := userdto.GetUsersListRequest{
-		Statuses: params.Statuses,
-		Offset:   offset,
-		Limit:    limit,
-		SortBy:   params.SortBy,
-		Asc:      params.Asc,
+		Status: params.Status,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
 	users, count, err := userController.userService.GetUsersByStatus(request)
 	if err != nil {

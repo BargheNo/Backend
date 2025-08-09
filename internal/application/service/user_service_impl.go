@@ -264,11 +264,21 @@ func (userService *UserService) GetUsersByPermission(permissionTypes []enum.Perm
 	return userService.userRepository.FindUsersByPermission(userService.db, permissionTypes)
 }
 
-func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
-	statuses := make([]enum.UserStatus, len(request.Statuses))
-	for i, status := range request.Statuses {
-		statuses[i] = enum.UserStatus(status)
+func (userService *UserService) mapToFilterStatuses(enumStatus uint) []enum.UserStatus {
+	statuses := enum.GetAllUserStatus()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.UserStatusAll {
+				return statuses
+			}
+			return []enum.UserStatus{status}
+		}
 	}
+	return statuses
+}
+
+func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
+	statuses := userService.mapToFilterStatuses(request.Status)
 
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).

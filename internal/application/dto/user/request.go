@@ -71,11 +71,11 @@ type UpdateUserRolesRequest struct {
 }
 
 type GetUsersListRequest struct {
-	Statuses []uint
-	Offset   int
-	Limit    int
-	SortBy   uint
-	Asc      bool
+	Status uint
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
 type GetPermissionRolesRequest struct {
