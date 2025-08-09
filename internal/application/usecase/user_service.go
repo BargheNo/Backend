@@ -29,7 +29,7 @@ type UserService interface {
 	GetAllRoles() ([]userdto.RoleResponse, error)
 	CreateRole(newRoleRequest userdto.NewRoleRequest) error
 	GetRoleDetails(roleID uint) (userdto.RoleResponse, error)
-	GetRoleOwners(roleID uint) ([]userdto.CredentialResponse, error)
+	GetRoleOwners(request userdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error)
 	GetUserRoles(userID uint) ([]userdto.RoleResponse, error)
 	DeleteRole(roleID uint) error
 	UpdateRole(newRoleRequest userdto.UpdateRoleRequest) error

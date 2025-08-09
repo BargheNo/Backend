@@ -218,17 +218,34 @@ func (repo *UserRepository) FindRoleByID(db database.Database, roleID uint) (*en
 	return &role, nil
 }
 
-func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint) ([]*entity.User, error) {
+func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint, options *postgres.QueryOptions) ([]*entity.User, error) {
 	var users []*entity.User
-	result := db.GetDB().
+	query := db.GetDB().
 		Joins("JOIN user_roles ON user_roles.user_id = users.id").
 		Where("user_roles.role_id = ?", roleID).
 		Find(&users)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&users)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return users, nil
+}
+
+func (repo *UserRepository) CountUsersByRoleID(db database.Database, roleID uint) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.User{}).
+		Joins("JOIN user_roles ON user_roles.user_id = users.id").
+		Where("user_roles.role_id = ?", roleID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *UserRepository) FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) ([]*entity.User, error) {

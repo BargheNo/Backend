@@ -44,7 +44,7 @@ func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) 
 	if err != nil {
 		panic(err)
 	}
-	data := controller.NewPaginatedResponse(permissions, count, params.Page, params.PageSize)
+	data := controller.NewPaginatedResponse(permissions, count, offset, limit)
 	controller.Response(ctx, 200, "", data)
 }
 
@@ -120,14 +120,26 @@ func (userController *AdminUserController) GetRoleDetails(ctx *gin.Context) {
 
 func (userController *AdminUserController) GetRoleOwners(ctx *gin.Context) {
 	type getRoleParams struct {
-		RoleID uint `uri:"roleID" validate:"required"`
+		RoleID   uint `uri:"roleID" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
 	}
 	params := controller.Validated[getRoleParams](ctx)
-	roleOwners, err := userController.userService.GetRoleOwners(params.RoleID)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
+
+	request := userdto.GetRoleOwnersRequest{
+		RoleID: params.RoleID,
+		Offset: offset,
+		Limit:  limit,
+	}
+
+	roleOwners, count, err := userController.userService.GetRoleOwners(request)
 	if err != nil {
 		panic(err)
 	}
-	controller.Response(ctx, 200, "", roleOwners)
+	data := controller.NewPaginatedResponse(roleOwners, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (userController *AdminUserController) UpdateRole(ctx *gin.Context) {

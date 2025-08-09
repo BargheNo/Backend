@@ -842,15 +842,18 @@ func (userService *UserService) GetRoleDetails(roleID uint) (userdto.RoleRespons
 	}, nil
 }
 
-func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.CredentialResponse, error) {
-	_, err := userService.getRole(roleID)
+func (userService *UserService) GetRoleOwners(request userdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error) {
+	_, err := userService.getRole(request.RoleID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	users, err := userService.userRepository.FindUsersByRoleID(userService.db, roleID)
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset)
+
+	users, err := userService.userRepository.FindUsersByRoleID(userService.db, request.RoleID, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	userCreds := make([]userdto.CredentialResponse, len(users))
@@ -859,7 +862,7 @@ func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.Credential
 		if user.ProfilePicPath != "" {
 			profilePic, err = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 		userCreds[i] = userdto.CredentialResponse{
@@ -873,7 +876,12 @@ func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.Credential
 			Status:     user.Status.String(),
 		}
 	}
-	return userCreds, nil
+
+	count, err := userService.userRepository.CountUsersByRoleID(userService.db, request.RoleID)
+	if err != nil {
+		return nil, 0, err
+	}
+	return userCreds, count, nil
 }
 
 func (userService *UserService) GetUserRoles(userID uint) ([]userdto.RoleResponse, error) {

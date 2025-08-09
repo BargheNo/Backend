@@ -90,3 +90,9 @@ type GetPermissionsListRequest struct {
 	Offset int
 	Limit  int
 }
+
+type GetRoleOwnersRequest struct {
+	RoleID uint
+	Offset int
+	Limit  int
+}
