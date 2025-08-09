@@ -164,22 +164,46 @@ func (repo *UserRepository) AssignRoleToUser(db database.Database, user *entity.
 	return db.GetDB().Model(user).Association("Roles").Append(role)
 }
 
-func (repo *UserRepository) FindAllPermissions(db database.Database) ([]*entity.Permission, error) {
+func (repo *UserRepository) FindAllPermissions(db database.Database, options *postgres.QueryOptions) ([]*entity.Permission, error) {
 	var permissions []*entity.Permission
-	result := db.GetDB().Find(&permissions)
+	query := db.GetDB().Find(&permissions)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&permissions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return permissions, nil
 }
 
-func (repo *UserRepository) FindAllRoles(db database.Database) ([]*entity.Role, error) {
+func (repo *UserRepository) CountAllPermissions(db database.Database) (int64, error) {
+	var count int64
+	err := db.GetDB().Model(&entity.Permission{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *UserRepository) FindAllRoles(db database.Database, options *postgres.QueryOptions) ([]*entity.Role, error) {
 	var roles []*entity.Role
-	result := db.GetDB().Find(&roles)
+	query := db.GetDB().Find(&roles)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&roles)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return roles, nil
+}
+
+func (repo *UserRepository) CountAllRoles(db database.Database) (int64, error) {
+	var count int64
+	err := db.GetDB().Model(&entity.Role{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *UserRepository) FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, error) {
@@ -206,17 +230,34 @@ func (repo *UserRepository) FindRoleByID(db database.Database, roleID uint) (*en
 	return &role, nil
 }
 
-func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint) ([]*entity.User, error) {
+func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint, options *postgres.QueryOptions) ([]*entity.User, error) {
 	var users []*entity.User
-	result := db.GetDB().
+	query := db.GetDB().
 		Joins("JOIN user_roles ON user_roles.user_id = users.id").
 		Where("user_roles.role_id = ?", roleID).
 		Find(&users)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&users)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return users, nil
+}
+
+func (repo *UserRepository) CountUsersByRoleID(db database.Database, roleID uint) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.User{}).
+		Joins("JOIN user_roles ON user_roles.user_id = users.id").
+		Where("user_roles.role_id = ?", roleID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *UserRepository) FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) ([]*entity.User, error) {

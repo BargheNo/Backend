@@ -264,11 +264,21 @@ func (userService *UserService) GetUsersByPermission(permissionTypes []enum.Perm
 	return userService.userRepository.FindUsersByPermission(userService.db, permissionTypes)
 }
 
-func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
-	statuses := make([]enum.UserStatus, len(request.Statuses))
-	for i, status := range request.Statuses {
-		statuses[i] = enum.UserStatus(status)
+func (userService *UserService) mapToFilterStatuses(enumStatus uint) []enum.UserStatus {
+	statuses := enum.GetAllUserStatus()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.UserStatusAll {
+				return statuses
+			}
+			return []enum.UserStatus{status}
+		}
 	}
+	return statuses
+}
+
+func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
+	statuses := userService.mapToFilterStatuses(request.Status)
 
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
@@ -697,10 +707,14 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 	return err
 }
 
-func (userService *UserService) GetAllPermissions() ([]userdto.PermissionResponse, error) {
-	permissions, err := userService.userRepository.FindAllPermissions(userService.db)
+func (userService *UserService) GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error) {
+
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset)
+
+	permissions, err := userService.userRepository.FindAllPermissions(userService.db, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	permissionsResponse := make([]userdto.PermissionResponse, len(permissions))
 	for i, permission := range permissions {
@@ -711,7 +725,12 @@ func (userService *UserService) GetAllPermissions() ([]userdto.PermissionRespons
 			Category:    permission.Category.String(),
 		}
 	}
-	return permissionsResponse, nil
+
+	count, err := userService.userRepository.CountAllPermissions(userService.db)
+	if err != nil {
+		return nil, 0, err
+	}
+	return permissionsResponse, count, nil
 }
 
 func (userService *UserService) getRolePermissions(role *entity.Role) ([]userdto.PermissionResponse, error) {
@@ -730,16 +749,19 @@ func (userService *UserService) getRolePermissions(role *entity.Role) ([]userdto
 	return permissions, nil
 }
 
-func (userService *UserService) GetAllRoles() ([]userdto.RoleResponse, error) {
-	roles, err := userService.userRepository.FindAllRoles(userService.db)
+func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset)
+
+	roles, err := userService.userRepository.FindAllRoles(userService.db, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	rolesResponse := make([]userdto.RoleResponse, len(roles))
 	for i, role := range roles {
 		permissions, err := userService.getRolePermissions(role)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		rolesResponse[i] = userdto.RoleResponse{
 			ID:          role.ID,
@@ -747,7 +769,12 @@ func (userService *UserService) GetAllRoles() ([]userdto.RoleResponse, error) {
 			Permissions: permissions,
 		}
 	}
-	return rolesResponse, nil
+
+	count, err := userService.userRepository.CountAllRoles(userService.db)
+	if err != nil {
+		return nil, 0, err
+	}
+	return rolesResponse, count, nil
 }
 
 func (userService *UserService) getPermission(permissionID uint) (*entity.Permission, error) {
@@ -833,15 +860,18 @@ func (userService *UserService) GetRoleDetails(roleID uint) (userdto.RoleRespons
 	}, nil
 }
 
-func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.CredentialResponse, error) {
-	_, err := userService.getRole(roleID)
+func (userService *UserService) GetRoleOwners(request userdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error) {
+	_, err := userService.getRole(request.RoleID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	users, err := userService.userRepository.FindUsersByRoleID(userService.db, roleID)
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset)
+
+	users, err := userService.userRepository.FindUsersByRoleID(userService.db, request.RoleID, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	userCreds := make([]userdto.CredentialResponse, len(users))
@@ -850,7 +880,7 @@ func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.Credential
 		if user.ProfilePicPath != "" {
 			profilePic, err = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 		userCreds[i] = userdto.CredentialResponse{
@@ -864,7 +894,12 @@ func (userService *UserService) GetRoleOwners(roleID uint) ([]userdto.Credential
 			Status:     user.Status.String(),
 		}
 	}
-	return userCreds, nil
+
+	count, err := userService.userRepository.CountUsersByRoleID(userService.db, request.RoleID)
+	if err != nil {
+		return nil, 0, err
+	}
+	return userCreds, count, nil
 }
 
 func (userService *UserService) GetUserRoles(userID uint) ([]userdto.RoleResponse, error) {
