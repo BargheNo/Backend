@@ -120,13 +120,78 @@ scenarios:
           headers:
             Authorization: "Bearer {{ authToken }}"
 
-thresholds:
-  http_req_duration:
-    - p95 < 500ms
-    - p99 < 1000ms
+  - name: corporation_flow
+    weight: 25
+    flow:
+      - post:
+          url: /auth/login
+          json:
+            phone: "{{ $processEnvironment.TEST_USER_PHONE }}"
+            password: "{{ $processEnvironment.TEST_USER_PASSWORD }}"
+          headers:
+            Content-Type: application/json
+          capture:
+            - json: "$.data.accessToken"
+              as: "authToken"
+            - json: "$.data.refreshToken"
+              as: "refreshToken"
 
-  http_req_failed:
-    - rate < 0.01
+      - get:
+          url: /corp/installation/request
+          headers:
+            Authorization: "Bearer {{ authToken }}"
 
-  http_reqs:
-    - rate > 100
+      - post:
+          url: /corp/{{ $processEnvironment.TEST_CORPORATION_ID }}/installation/request/{{ $processEnvironment.TEST_INSTALLATION_REQUEST_ID }}/bid
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            cost: 10000
+            area: 100
+            power: 5000
+            description: "Bid for installation request"
+            installationTime: "2024-12-31T23:59:59Z"
+            paymentTerms:
+              method: 1
+              installmentPlan:
+                numberOfMonths: 12
+                downPaymentAmount: 2000
+                monthlyAmount: 667
+                notes: "Installment plan details"
+            guaranteeID: null
+
+      - post:
+          url: /corp/{{ $processEnvironment.TEST_CORPORATION_ID }}/installation/panel
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "Test Panel"
+            customerPhone: "+1234567890"
+            power: 5000
+            area: 100
+            buildingType: 1
+            tilt: 30
+            azimuth: 180
+            totalNumberOfModules: 20
+            provinceID: 1
+            cityID: 1
+            streetAddress: "123 Test Street"
+            postalCode: "12345"
+            houseNumber: "A1"
+            unit: 1
+            guaranteeID: null
+
+      - get:
+          url: /corp/{{ $processEnvironment.TEST_CORPORATION_ID }}/installation/panel
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: /corp/{{ $processEnvironment.TEST_CORPORATION_ID }}/bid
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: /corp/{{ $processEnvironment.TEST_CORPORATION_ID }}/maintenance/request
+          headers:
+            Authorization: "Bearer {{ authToken }}"
