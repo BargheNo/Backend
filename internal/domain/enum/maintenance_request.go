@@ -7,26 +7,52 @@ const (
 	MaintenanceRequestStatusAccepted
 	MaintenanceRequestStatusRejected
 	MaintenanceRequestStatusCompleted
+	MaintenanceRequestStatusExpired
+	MaintenanceRequestStatusCanceled
+	MaintenanceRequestStatusAll
 )
 
 func (s MaintenanceRequestStatus) String() string {
 	switch s {
 	case MaintenanceRequestStatusPending:
-		return "pending"
+		return "در انتظار تایید"
 	case MaintenanceRequestStatusAccepted:
-		return "accepted"
+		return "تایید شده"
 	case MaintenanceRequestStatusRejected:
-		return "rejected"
+		return "رد شده"
 	case MaintenanceRequestStatusCompleted:
-		return "completed"
+		return "تمام شده"
+	case MaintenanceRequestStatusExpired:
+		return "منقضی"
+	case MaintenanceRequestStatusCanceled:
+		return "لغو شده"
+	case MaintenanceRequestStatusAll:
+		return "همه"
 	}
 	return "unknown"
 }
-func GetAllMaintenanceRequestStatuses() []MaintenanceRequestStatus {
-	return []MaintenanceRequestStatus{
-		MaintenanceRequestStatusPending,
-		MaintenanceRequestStatusAccepted,
-		MaintenanceRequestStatusRejected,
-		MaintenanceRequestStatusCompleted,
+
+func GetAllowedMaintenanceRequestStatuses(role AgentType) []MaintenanceRequestStatus {
+	switch role {
+	case AgentTypeAdmin, AgentTypeCustomer:
+		return []MaintenanceRequestStatus{
+			MaintenanceRequestStatusPending,
+			MaintenanceRequestStatusAccepted,
+			MaintenanceRequestStatusRejected,
+			MaintenanceRequestStatusCompleted,
+			MaintenanceRequestStatusExpired,
+			MaintenanceRequestStatusCanceled,
+			MaintenanceRequestStatusAll,
+		}
+	case AgentTypeCorporation:
+		return []MaintenanceRequestStatus{
+			MaintenanceRequestStatusPending,
+			MaintenanceRequestStatusAccepted,
+			MaintenanceRequestStatusRejected,
+			MaintenanceRequestStatusCompleted,
+			MaintenanceRequestStatusAll,
+		}
+	default:
+		return []MaintenanceRequestStatus{}
 	}
 }

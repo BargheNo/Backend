@@ -40,3 +40,8 @@ type PermissionResponse struct {
 	Description string `json:"description"`
 	Category    string `json:"category"`
 }
+
+type UserEnumResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}

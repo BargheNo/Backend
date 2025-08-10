@@ -7,18 +7,22 @@ import (
 )
 
 type CreateNewsRequest struct {
-	Title    string
-	Content  string
-	AuthorID uint
-	Status   enum.NewsStatus
+	Title       string
+	Content     string
+	Description string
+	AuthorID    uint
+	Status      enum.NewsStatus
+	CoverImage  *multipart.FileHeader
 }
 
 type EditNewsRequest struct {
-	NewsID   uint
-	AuthorID uint
-	Title    *string
-	Content  *string
-	Status   uint
+	NewsID      uint
+	AuthorID    uint
+	Title       *string
+	Content     *string
+	Description *string
+	Status      uint
+	CoverImage  *multipart.FileHeader
 }
 
 type EditNewsStatusRequest struct {
@@ -32,15 +36,19 @@ type DeleteNewsRequest struct {
 	AuthorID uint
 }
 
-type GetNewsListRequest struct {
-	Statuses []uint
-	Offset   int
-	Limit    int
+type GetAdminNewsListRequest struct {
+	Status uint
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
-type GetNewsRequest struct {
-	NewsID   uint
-	UserType enum.UserType
+type GetPublicNewsListRequest struct {
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
 type AddNewsMediaRequest struct {
@@ -54,4 +62,9 @@ type AccessMediaRequest struct {
 	AuthorID uint
 	MediaID  uint
 	UserType enum.UserType
+}
+
+type GetNewsByCustomer struct {
+	NewsID uint
+	UserID uint
 }

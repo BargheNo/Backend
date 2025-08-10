@@ -1,30 +1,29 @@
-package serviceimpl
+package service
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	chatdto "github.com/BargheNo/Backend/internal/application/dto/chat"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/domain/exception"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type ChatService struct {
 	constants          *bootstrap.Constants
-	userService        service.UserService
-	corporationService service.CorporationService
-	chatRepository     repository.ChatRepository
+	userService        usecase.UserService
+	corporationService usecase.CorporationService
+	chatRepository     postgres.ChatRepository
 	db                 database.Database
 }
 
 func NewChatService(
 	constants *bootstrap.Constants,
-	userService service.UserService,
-	corporationService service.CorporationService,
-	chatRepository repository.ChatRepository,
+	userService usecase.UserService,
+	corporationService usecase.CorporationService,
+	chatRepository postgres.ChatRepository,
 	db database.Database,
 ) *ChatService {
 	return &ChatService{
@@ -36,7 +35,7 @@ func NewChatService(
 	}
 }
 
-func (chatService *ChatService) CreateChatRoom(request chatdto.CreateOrGetUserRoomRequest) *entity.ChatRoom {
+func (chatService *ChatService) CreateChatRoom(request chatdto.CreateOrGetUserRoomRequest) (*entity.ChatRoom, error) {
 	room := &entity.ChatRoom{
 		CorporationID: request.CorporationID,
 		CustomerID:    request.UserID,
@@ -44,19 +43,30 @@ func (chatService *ChatService) CreateChatRoom(request chatdto.CreateOrGetUserRo
 	}
 	err := chatService.chatRepository.CreateRoom(chatService.db, room)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return room
+	return room, nil
 }
 
-func (chatService *ChatService) CreateOrGetRoom(request chatdto.CreateOrGetUserRoomRequest) chatdto.ChatRoomDetailsResponse {
-	customer := chatService.userService.GetUserCredential(request.UserID)
-	corporation := chatService.corporationService.GetCorporationCredentials(request.CorporationID)
+func (chatService *ChatService) CreateOrGetRoom(request chatdto.CreateOrGetUserRoomRequest) (chatdto.ChatRoomDetailsResponse, error) {
+	customer, err := chatService.userService.GetUserCredential(request.UserID)
+	if err != nil {
+		return chatdto.ChatRoomDetailsResponse{}, err
+	}
+	corporation, err := chatService.corporationService.GetCorporationCredentials(request.CorporationID)
+	if err != nil {
+		return chatdto.ChatRoomDetailsResponse{}, err
+	}
 	var room *entity.ChatRoom
-	var exist bool
-	room, exist = chatService.chatRepository.GetUserAndCorpRoom(chatService.db, request.UserID, request.CorporationID)
-	if !exist {
-		room = chatService.CreateChatRoom(request)
+	room, err = chatService.chatRepository.GetUserAndCorpRoom(chatService.db, request.UserID, request.CorporationID)
+	if err != nil {
+		return chatdto.ChatRoomDetailsResponse{}, err
+	}
+	if room == nil {
+		room, err = chatService.CreateChatRoom(request)
+		if err != nil {
+			return chatdto.ChatRoomDetailsResponse{}, err
+		}
 	}
 
 	blockedBy := ""
@@ -71,22 +81,33 @@ func (chatService *ChatService) CreateOrGetRoom(request chatdto.CreateOrGetUserR
 		BlockedBy:             blockedBy,
 	}
 
-	return roomDetails
+	return roomDetails, nil
 }
 
-func (chatService *ChatService) GetCorporationRoom(request chatdto.GetCorporationRoomRequest) chatdto.ChatRoomDetailsResponse {
-	customerModel := chatService.userService.FindUserByPhone(request.UserPhone)
-	customerCred := chatService.userService.GetUserCredential(customerModel.ID)
-	corporation := chatService.corporationService.GetCorporationCredentials(request.CorporationID)
+func (chatService *ChatService) GetCorporationRoom(request chatdto.GetCorporationRoomRequest) (chatdto.ChatRoomDetailsResponse, error) {
+	customerModel, err := chatService.userService.FindActiveUserByPhone(request.UserPhone)
+	if err != nil {
+		return chatdto.ChatRoomDetailsResponse{}, err
+	}
+	customerCred, err := chatService.userService.GetUserCredential(customerModel.ID)
+	if err != nil {
+		return chatdto.ChatRoomDetailsResponse{}, err
+	}
+	corporation, err := chatService.corporationService.GetCorporationCredentials(request.CorporationID)
+	if err != nil {
+		return chatdto.ChatRoomDetailsResponse{}, err
+	}
 	var room *entity.ChatRoom
-	var exist bool
-	room, exist = chatService.chatRepository.GetUserAndCorpRoom(chatService.db, customerModel.ID, request.CorporationID)
-	if !exist {
+	room, err = chatService.chatRepository.GetUserAndCorpRoom(chatService.db, customerModel.ID, request.CorporationID)
+	if err != nil {
+		return chatdto.ChatRoomDetailsResponse{}, err
+	}
+	if room == nil {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: chatService.constants.Field.Room,
 		}
-		panic(forbiddenError)
+		return chatdto.ChatRoomDetailsResponse{}, forbiddenError
 	}
 	blockedBy := ""
 	if room.Status == enum.ChatStatusBlocked {
@@ -100,15 +121,24 @@ func (chatService *ChatService) GetCorporationRoom(request chatdto.GetCorporatio
 		BlockedBy:             blockedBy,
 	}
 
-	return roomDetails
+	return roomDetails, nil
 }
 
-func (chatService *ChatService) GetUserRooms(userID uint) []chatdto.ChatRoomDetailsResponse {
-	customer := chatService.userService.GetUserCredential(userID)
-	rooms := chatService.chatRepository.GetUserRooms(chatService.db, userID)
+func (chatService *ChatService) GetUserRooms(userID uint) ([]chatdto.ChatRoomDetailsResponse, error) {
+	customer, err := chatService.userService.GetUserCredential(userID)
+	if err != nil {
+		return nil, err
+	}
+	rooms, err := chatService.chatRepository.GetUserRooms(chatService.db, userID)
+	if err != nil {
+		return nil, err
+	}
 	roomsDetails := make([]chatdto.ChatRoomDetailsResponse, len(rooms))
 	for i, room := range rooms {
-		corporation := chatService.corporationService.GetCorporationCredentials(room.CorporationID)
+		corporation, err := chatService.corporationService.GetCorporationCredentials(room.CorporationID)
+		if err != nil {
+			return nil, err
+		}
 		blockedBy := ""
 		if room.Status == enum.ChatStatusBlocked {
 			blockedBy = room.BlockedBy.String()
@@ -121,17 +151,28 @@ func (chatService *ChatService) GetUserRooms(userID uint) []chatdto.ChatRoomDeta
 			BlockedBy:             blockedBy,
 		}
 	}
-	return roomsDetails
+	return roomsDetails, nil
 }
 
-func (chatService *ChatService) GetCorporationRooms(request chatdto.GetCorporationRoomsRequest) []chatdto.ChatRoomDetailsResponse {
-	corporation := chatService.corporationService.GetCorporationCredentials(request.CorporationID)
-	chatService.userService.DoesUserExist(request.ApplicantID)
-	chatService.corporationService.CheckApplicantAccess(request.CorporationID, request.ApplicantID)
-	rooms := chatService.chatRepository.GetCorporationRooms(chatService.db, request.CorporationID)
+func (chatService *ChatService) GetCorporationRooms(request chatdto.GetCorporationRoomsRequest) ([]chatdto.ChatRoomDetailsResponse, error) {
+	corporation, err := chatService.corporationService.GetCorporationCredentials(request.CorporationID)
+	if err != nil {
+		return nil, err
+	}
+	err = chatService.corporationService.CheckApplicantAccess(request.CorporationID, request.ApplicantID)
+	if err != nil {
+		return nil, err
+	}
+	rooms, err := chatService.chatRepository.GetCorporationRooms(chatService.db, request.CorporationID)
+	if err != nil {
+		return nil, err
+	}
 	roomsDetails := make([]chatdto.ChatRoomDetailsResponse, len(rooms))
 	for i, room := range rooms {
-		customer := chatService.userService.GetUserCredential(room.CustomerID)
+		customer, err := chatService.userService.GetUserCredential(room.CustomerID)
+		if err != nil {
+			return nil, err
+		}
 		blockedBy := ""
 		if room.Status == enum.ChatStatusBlocked {
 			blockedBy = room.BlockedBy.String()
@@ -144,36 +185,37 @@ func (chatService *ChatService) GetCorporationRooms(request chatdto.GetCorporati
 			BlockedBy:             blockedBy,
 		}
 	}
-	return roomsDetails
+	return roomsDetails, nil
 }
 
 func (chatService *ChatService) validateRoomParticipantAccess(senderID, memberID, corporationID uint) {
 	if senderID != memberID {
-		chatService.corporationService.CheckApplicantAccess(corporationID, senderID)
+		err := chatService.corporationService.CheckApplicantAccess(corporationID, senderID)
+		if err != nil {
+			return
+		}
 	}
 }
 
-func (chatService *ChatService) SaveMessage(roomID, senderID uint, content string) chatdto.RoomMessagesResponse {
-	exist := chatService.userService.IsUserActive(senderID)
-	if !exist {
-		forbiddenError := exception.ForbiddenError{
-			Message:  "",
-			Resource: chatService.constants.Field.Room,
-		}
-		panic(forbiddenError)
+func (chatService *ChatService) SaveMessage(roomID, senderID uint, content string) (chatdto.RoomMessagesResponse, error) {
+	if err := chatService.userService.IsUserActive(senderID); err != nil {
+		return chatdto.RoomMessagesResponse{}, err
 	}
 
-	room, exist := chatService.chatRepository.GetRoomByID(chatService.db, roomID)
-	if !exist {
+	room, err := chatService.chatRepository.GetRoomByID(chatService.db, roomID)
+	if err != nil {
+		return chatdto.RoomMessagesResponse{}, err
+	}
+	if room == nil {
 		notFoundError := exception.NotFoundError{Item: chatService.constants.Field.Room}
-		panic(notFoundError)
+		return chatdto.RoomMessagesResponse{}, notFoundError
 	}
 	if room.Status == enum.ChatStatusBlocked {
 		forbiddenError := exception.ForbiddenError{
 			Message:  "",
 			Resource: chatService.constants.Field.Room,
 		}
-		panic(forbiddenError)
+		return chatdto.RoomMessagesResponse{}, forbiddenError
 	}
 	chatService.validateRoomParticipantAccess(senderID, room.CustomerID, room.CorporationID)
 
@@ -183,32 +225,45 @@ func (chatService *ChatService) SaveMessage(roomID, senderID uint, content strin
 		Content:  content,
 	}
 	if err := chatService.chatRepository.CreateMessage(chatService.db, message); err != nil {
-		panic(err)
+		return chatdto.RoomMessagesResponse{}, err
 	}
 
-	sender := chatService.userService.GetUserCredential(message.SenderID)
+	sender, err := chatService.userService.GetUserCredential(message.SenderID)
+	if err != nil {
+		return chatdto.RoomMessagesResponse{}, err
+	}
 	return chatdto.RoomMessagesResponse{
 		ID:        message.ID,
 		Sender:    sender,
 		Content:   message.Content,
 		TimeStamp: message.CreatedAt,
-	}
+	}, nil
 }
 
-func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRequest) []chatdto.RoomMessagesResponse {
-	chatService.userService.DoesUserExist(request.UserID)
-	room, exist := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
-	if !exist {
+func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRequest) ([]chatdto.RoomMessagesResponse, int64, error) {
+	room, err := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if room == nil {
 		notFoundError := exception.NotFoundError{Item: chatService.constants.Field.Room}
-		panic(notFoundError)
+		return nil, 0, notFoundError
 	}
 	chatService.validateRoomParticipantAccess(request.UserID, room.CustomerID, room.CorporationID)
-	paginationModifier := repositoryimpl.NewPaginationModifier(request.Limit, request.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	messages := chatService.chatRepository.GetRoomMessages(chatService.db, request.RoomID, paginationModifier, sortingModifier)
+
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset)
+
+	messages, err := chatService.chatRepository.GetRoomMessages(chatService.db, request.RoomID, options)
+	if err != nil {
+		return nil, 0, err
+	}
 	messagesResponse := make([]chatdto.RoomMessagesResponse, len(messages))
 	for i, message := range messages {
-		sender := chatService.userService.GetUserCredential(message.SenderID)
+		sender, err := chatService.userService.GetUserCredential(message.SenderID)
+		if err != nil {
+			return nil, 0, err
+		}
 		messagesResponse[i] = chatdto.RoomMessagesResponse{
 			ID:        message.ID,
 			Sender:    sender,
@@ -216,42 +271,52 @@ func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRe
 			TimeStamp: message.CreatedAt,
 		}
 	}
-	return messagesResponse
+	count, err := chatService.chatRepository.CountRoomMessages(chatService.db, request.RoomID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return messagesResponse, count, nil
 }
 
-func (chatService *ChatService) BlockChatRoom(request chatdto.BlockServiceChatRequest) {
-	chatService.userService.DoesUserExist(request.UserID)
-	room, exist := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
-	if !exist {
+func (chatService *ChatService) BlockChatRoom(request chatdto.BlockServiceChatRequest) error {
+	room, err := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
+	if err != nil {
+		return err
+	}
+	if room == nil {
 		notFoundError := exception.NotFoundError{Item: chatService.constants.Field.Room}
-		panic(notFoundError)
+		return notFoundError
 	}
 	if room.Status == enum.ChatStatusBlocked {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(chatService.constants.Field.Room, chatService.constants.Tag.AlreadyBlocked)
-		panic(conflictErrors)
+		return conflictErrors
 	}
 	chatService.validateRoomParticipantAccess(request.UserID, room.CustomerID, room.CorporationID)
 
 	room.BlockedBy = &request.BlockedBy
 	room.Status = request.ChatStatus
-	err := chatService.chatRepository.UpdateRoom(chatService.db, room)
+	err = chatService.chatRepository.UpdateRoom(chatService.db, room)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-func (chatService *ChatService) UnBlockChatRoom(request chatdto.BlockServiceChatRequest) {
-	chatService.userService.DoesUserExist(request.UserID)
-	room, exist := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
-	if !exist {
+func (chatService *ChatService) UnBlockChatRoom(request chatdto.BlockServiceChatRequest) error {
+	room, err := chatService.chatRepository.GetRoomByID(chatService.db, request.RoomID)
+	if err != nil {
+		return err
+	}
+	if room == nil {
 		notFoundError := exception.NotFoundError{Item: chatService.constants.Field.Room}
-		panic(notFoundError)
+		return notFoundError
 	}
 	if room.Status == enum.ChatStatusActive {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(chatService.constants.Field.Room, chatService.constants.Tag.AlreadyActive)
-		panic(conflictErrors)
+		return conflictErrors
 	}
 	chatService.validateRoomParticipantAccess(request.UserID, room.CustomerID, room.CorporationID)
 
@@ -260,12 +325,13 @@ func (chatService *ChatService) UnBlockChatRoom(request chatdto.BlockServiceChat
 			Message:  "",
 			Resource: chatService.constants.Field.Room,
 		}
-		panic(forbiddenError)
+		return forbiddenError
 	}
 	room.BlockedBy = nil
 	room.Status = request.ChatStatus
-	err := chatService.chatRepository.UpdateRoom(chatService.db, room)
+	err = chatService.chatRepository.UpdateRoom(chatService.db, room)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }

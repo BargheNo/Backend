@@ -17,6 +17,13 @@ type Bid struct {
 	Request          InstallationRequest `gorm:"constraint:OnDelete:CASCADE;"`
 	Status           enum.BidStatus      `gorm:"not null;index"`
 	Cost             uint                `gorm:"not null"`
+	Area             uint                `gorm:"not null"`
+	Power            uint                `gorm:"not null"`
 	Description      string              `gorm:"type:text"`
 	InstallationTime time.Time           `gorm:"not null"`
+	PaymentTermsID   uint                `gorm:"index"`
+	PaymentTerms     PaymentTerm         `gorm:"foreignKey:PaymentTermsID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	GuaranteeID      *uint               `gorm:"index"`
+	Guarantee        *Guarantee          `gorm:"foreignKey:GuaranteeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
+	// AvailableTimes   []AvailableTime     `gorm:"foreignKey:BidID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

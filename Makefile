@@ -4,10 +4,13 @@ up:
 	docker image prune -f
 
 ps:
-	docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+	docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
 
 test:
 	go test ./internal/application/service -coverprofile=coverage.out 
 
 cover:
 	go tool cover -html=coverage.out
+
+log:
+	git log --oneline -n 10

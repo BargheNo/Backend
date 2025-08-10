@@ -5,10 +5,16 @@ import (
 
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
+	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
-type OwnerRequestsResponse struct {
+type EnumStatusResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+type AnonymousRequestsResponse struct {
 	ID           uint                       `json:"id"`
 	Name         string                     `json:"name"`
 	CreatedTime  time.Time                  `json:"createdTime"`
@@ -19,57 +25,97 @@ type OwnerRequestsResponse struct {
 	Address      addressdto.AddressResponse `json:"address"`
 }
 
-type RequestDetailsResponse struct {
+type PublicRequestDetailsResponse struct {
 	ID           uint                       `json:"id"`
 	Name         string                     `json:"name"`
-	CreatedTime  time.Time                  `json:"createdTime"`
 	Status       string                     `json:"status"`
 	PowerRequest uint                       `json:"powerRequest"`
-	MaxCost      float64                    `json:"maxCost"`
+	Description  string                     `json:"description"`
 	BuildingType string                     `json:"buildingType"`
-	Address      addressdto.AddressResponse `json:"address"`
+	Area         uint                       `json:"area"`
+	MaxCost      float64                    `json:"maxCost"`
 	Customer     userdto.CredentialResponse `json:"customer"`
+	Address      addressdto.AddressResponse `json:"address"`
 }
 
-type CorporationPanelResponse struct {
+type CorporationPanelListResponse struct {
 	ID                   uint                       `json:"id"`
-	PanelName            string                     `json:"panelName"`
-	Customer             userdto.CredentialResponse `json:"customer"`
-	Operator             userdto.CredentialResponse `json:"operator"`
-	Power                uint                       `json:"power"`
-	Area                 uint                       `json:"area"`
+	Name                 string                     `json:"name"`
+	Status               string                     `json:"status"`
 	BuildingType         string                     `json:"buildingType"`
+	Area                 uint                       `json:"area"`
+	Power                uint                       `json:"power"`
 	Tilt                 uint                       `json:"tilt"`
 	Azimuth              uint                       `json:"azimuth"`
 	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
+	GuaranteeStatus      string                     `json:"guaranteeStatus"`
+	Operator             userdto.CredentialResponse `json:"operator"`
+	Customer             userdto.CredentialResponse `json:"customer"`
 	Address              addressdto.AddressResponse `json:"address"`
 }
 
-type PanelResponse struct {
+type CorporationPanelResponse struct {
+	ID                   uint                           `json:"id"`
+	Name                 string                         `json:"name"`
+	Status               string                         `json:"status"`
+	BuildingType         string                         `json:"buildingType"`
+	Area                 uint                           `json:"area"`
+	Power                uint                           `json:"power"`
+	Tilt                 uint                           `json:"tilt"`
+	Azimuth              uint                           `json:"azimuth"`
+	TotalNumberOfModules uint                           `json:"totalNumberOfModules"`
+	GuaranteeStatus      string                         `json:"guaranteeStatus"`
+	Operator             userdto.CredentialResponse     `json:"operator"`
+	Customer             userdto.CredentialResponse     `json:"customer"`
+	Address              addressdto.AddressResponse     `json:"address"`
+	Guarantee            guaranteedto.GuaranteeResponse `json:"guarantee"`
+}
+
+type AdminPanelResponse struct {
 	ID                   uint                                         `json:"id"`
 	Name                 string                                       `json:"name"`
-	Customer             userdto.CredentialResponse                   `json:"customer"`
-	Operator             userdto.CredentialResponse                   `json:"operator"`
-	Corporation          corporationdto.CorporationCredentialResponse `json:"corporation"`
-	Address              addressdto.AddressResponse                   `json:"address"`
-	PanelName            string                                       `json:"panelName"`
-	Power                uint                                         `json:"power"`
-	Area                 uint                                         `json:"area"`
+	Status               string                                       `json:"status"`
 	BuildingType         string                                       `json:"buildingType"`
+	Area                 uint                                         `json:"area"`
+	Power                uint                                         `json:"power"`
 	Tilt                 uint                                         `json:"tilt"`
 	Azimuth              uint                                         `json:"azimuth"`
 	TotalNumberOfModules uint                                         `json:"totalNumberOfModules"`
+	GuaranteeStatus      string                                       `json:"guaranteeStatus"`
+	Operator             userdto.CredentialResponse                   `json:"operator"`
+	Customer             userdto.CredentialResponse                   `json:"customer"`
+	Corporation          corporationdto.CorporationCredentialResponse `json:"corporation"`
+	Address              addressdto.AddressResponse                   `json:"address"`
+	Guarantee            guaranteedto.GuaranteeResponse               `json:"guarantee"`
+}
+
+type CustomerPanelListResponse struct {
+	ID                   uint                                         `json:"id"`
+	Name                 string                                       `json:"name"`
+	Status               string                                       `json:"status"`
+	BuildingType         string                                       `json:"buildingType"`
+	Area                 uint                                         `json:"area"`
+	Power                uint                                         `json:"power"`
+	Tilt                 uint                                         `json:"tilt"`
+	Azimuth              uint                                         `json:"azimuth"`
+	TotalNumberOfModules uint                                         `json:"totalNumberOfModules"`
+	GuaranteeStatus      string                                       `json:"guaranteeStatus"`
+	Corporation          corporationdto.CorporationCredentialResponse `json:"corporation"`
+	Address              addressdto.AddressResponse                   `json:"address"`
 }
 
 type CustomerPanelResponse struct {
 	ID                   uint                                         `json:"id"`
-	PanelName            string                                       `json:"name"`
-	Corporation          corporationdto.CorporationCredentialResponse `json:"corporation"`
-	Power                uint                                         `json:"power"`
-	Area                 uint                                         `json:"area"`
+	Name                 string                                       `json:"name"`
+	Status               string                                       `json:"status"`
 	BuildingType         string                                       `json:"buildingType"`
-	TotalNumberOfModules uint                                         `json:"totalNumberOfModules"`
+	Area                 uint                                         `json:"area"`
+	Power                uint                                         `json:"power"`
 	Tilt                 uint                                         `json:"tilt"`
 	Azimuth              uint                                         `json:"azimuth"`
+	TotalNumberOfModules uint                                         `json:"totalNumberOfModules"`
+	GuaranteeStatus      string                                       `json:"guaranteeStatus"`
+	Corporation          corporationdto.CorporationCredentialResponse `json:"corporation"`
 	Address              addressdto.AddressResponse                   `json:"address"`
+	Guarantee            guaranteedto.GuaranteeResponse               `json:"guarantee"`
 }

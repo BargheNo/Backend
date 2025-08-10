@@ -5,20 +5,20 @@ import (
 	"log"
 
 	"github.com/BargheNo/Backend/bootstrap"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 )
 
 type RegisterConsumer struct {
 	constants           *bootstrap.RabbitMQConstants
 	rabbitMQ            *rabbitmq.RabbitMQ
-	notificationService service.NotificationService
+	notificationService usecase.NotificationService
 }
 
 func NewRegisterConsumer(
 	constants *bootstrap.RabbitMQConstants,
 	rabbitMQ *rabbitmq.RabbitMQ,
-	notificationService service.NotificationService,
+	notificationService usecase.NotificationService,
 ) *RegisterConsumer {
 	return &RegisterConsumer{
 		constants:           constants,

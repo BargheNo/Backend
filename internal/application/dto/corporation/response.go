@@ -2,6 +2,7 @@ package corporationdto
 
 import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
 type CorporationCredentialResponse struct {
@@ -34,7 +35,7 @@ type SignatoryResponse struct {
 }
 
 type ContactInformationResponse struct {
-	ID          uint
+	ID          uint                `json:"id"`
 	ContactType ContactTypeResponse `json:"contactType"`
 	Value       string              `json:"value"`
 }
@@ -42,4 +43,22 @@ type ContactInformationResponse struct {
 type ContactTypeResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
+}
+
+type GetEnumResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+type GetAdminCorporationReview struct {
+	Reviewer userdto.CredentialResponse `json:"reviewer"`
+	Action   string                     `json:"action"`
+	Reason   *string                    `json:"reason"`
+	Notes    *string                    `json:"notes"`
+}
+
+type GetCustomerCorporationReview struct {
+	Action string  `json:"action"`
+	Reason *string `json:"reason"`
+	Notes  *string `json:"notes"`
 }

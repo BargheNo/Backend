@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"errors"
@@ -31,7 +31,7 @@ func NewJWTService(
 	return service
 }
 
-func (jwtService *JWTService) GenerateToken(userID uint) (string, string) {
+func (jwtService *JWTService) GenerateToken(userID uint) (string, string, error) {
 	accessTokenClaims := jwt.MapClaims{
 		"sub": userID,
 		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
@@ -40,7 +40,7 @@ func (jwtService *JWTService) GenerateToken(userID uint) (string, string) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessTokenClaims)
 	accessTokenString, err := accessToken.SignedString(jwtService.keyManager.GetPrivateKey())
 	if err != nil {
-		panic(err)
+		return "", "", err
 	}
 
 	refreshTokenClaims := jwt.MapClaims{
@@ -51,10 +51,10 @@ func (jwtService *JWTService) GenerateToken(userID uint) (string, string) {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, refreshTokenClaims)
 	refreshTokenString, err := refreshToken.SignedString(jwtService.keyManager.GetPrivateKey())
 	if err != nil {
-		panic(err)
+		return "", "", err
 	}
 
-	return accessTokenString, refreshTokenString
+	return accessTokenString, refreshTokenString, nil
 }
 
 func (jwtService *JWTService) ValidateToken(tokenString string) (jwt.MapClaims, error) {

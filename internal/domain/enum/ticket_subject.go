@@ -13,15 +13,15 @@ const (
 func (s TicketSubject) String() string {
 	switch s {
 	case TicketSubjectGeneral:
-		return "general"
+		return "عمومی"
 	case TicketSubjectPanel:
-		return "panel"
+		return "پنل"
 	case TicketSubjectInstallation:
-		return "installation"
+		return "درخواست نصب"
 	case TicketSubjectMaintenance:
-		return "maintenance"
+		return "تعمیرات"
 	case TicketSubjectOther:
-		return "other"
+		return "سایر"
 	}
 	return "unknown"
 }

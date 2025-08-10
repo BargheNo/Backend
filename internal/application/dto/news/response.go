@@ -1,15 +1,30 @@
 package newsdto
 
-import "github.com/BargheNo/Backend/internal/domain/enum"
+import (
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
+)
 
-type NewsResponse struct {
-	ID      uint            `json:"id"`
-	Title   string          `json:"title"`
-	Content string          `json:"content"`
-	Status  enum.NewsStatus `json:"status"`
+type AdminNewsResponse struct {
+	ID          uint                       `json:"id"`
+	Title       string                     `json:"title"`
+	Content     string                     `json:"content"`
+	Description string                     `json:"description"`
+	Status      string                     `json:"status"`
+	CoverImage  string                     `json:"coverImage"`
+	Author      userdto.CredentialResponse `json:"author"`
+	TotalLike   int                        `json:"totalLikes"`
 }
 
-type NewsStatusesResponse struct {
+type PublicNewsResponse struct {
+	ID          uint   `json:"id"`
+	Title       string `json:"title"`
+	Content     string `json:"content"`
+	Description string `json:"description"`
+	CoverImage  string `json:"coverImage"`
+	TotalLike   int    `json:"totalLikes"`
+}
+
+type NewsEnumResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }

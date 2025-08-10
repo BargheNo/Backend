@@ -1,8 +1,9 @@
-package repositoryimpl
+package postgres
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -13,64 +14,122 @@ func NewBidRepository() *BidRepository {
 	return &BidRepository{}
 }
 
-func (repo *BidRepository) CreateBid(db database.Database, bid *entity.Bid) error {
-	return db.GetDB().Create(&bid).Error
-}
-
-func (repo *BidRepository) FindBidByID(db database.Database, id uint) (*entity.Bid, bool) {
+func (repo *BidRepository) FindBidByID(db database.Database, id uint) (*entity.Bid, error) {
 	var bid entity.Bid
 	result := db.GetDB().First(&bid, id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &bid, true
+	return &bid, nil
 }
 
-func (repo *BidRepository) FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint, status []enum.BidStatus) (*entity.Bid, bool) {
+func (repo *BidRepository) FindRequestBid(db database.Database, bidID, requestID uint) (*entity.Bid, error) {
+	var bid entity.Bid
+	result := db.GetDB().Where("id = ? AND request_id = ?", bidID, requestID).First(&bid)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &bid, nil
+}
+
+func (repo *BidRepository) FindCorporationBid(db database.Database, bidID, corporationID uint) (*entity.Bid, error) {
+	var bid entity.Bid
+	result := db.GetDB().Where("id = ? AND corporation_id = ?", bidID, corporationID).First(&bid)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &bid, nil
+}
+
+func (repo *BidRepository) FindBidByCorporationAndRequestID(db database.Database, requestID uint, corporationID uint, status []enum.BidStatus) (*entity.Bid, error) {
 	var bid entity.Bid
 	result := db.GetDB().Where("request_id = ? AND corporation_id = ? AND status IN ?", requestID, corporationID, status).First(&bid)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &bid, true
+	return &bid, nil
 }
 
 func (repo *BidRepository) DeleteBidByID(db database.Database, id uint) error {
 	return db.GetDB().Where("id = ?", id).Delete(&entity.Bid{}).Error
 }
 
-func (repo *BidRepository) FindCorporationBids(db database.Database, corporationID uint, offset int, pageSize int) []*entity.Bid {
-	var bids []*entity.Bid
-
-	result := db.GetDB().Model(&entity.Bid{}).
-		Where("corporation_id = ?", corporationID).
-		Offset(offset).
-		Limit(pageSize).
-		Find(&bids)
-
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil
-		}
-		panic(result.Error)
-	}
-	return bids
+func (repo *BidRepository) CreateBid(db database.Database, bid *entity.Bid) error {
+	return db.GetDB().Create(&bid).Error
 }
 
-func (repo *BidRepository) FindRequestBids(db database.Database, requestID uint) []*entity.Bid {
+func (repo *BidRepository) UpdateBid(db database.Database, bid *entity.Bid) error {
+	return db.GetDB().Save(&bid).Error
+}
+
+func (repo *BidRepository) FindCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, options *postgres.QueryOptions) ([]*entity.Bid, error) {
 	var bids []*entity.Bid
-	result := db.GetDB().Model(&entity.Bid{}).Where("request_id = ?", requestID).Find(&bids)
+
+	query := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus)
+
+	query = applyQueryOptions(query, options)
+	result := query.Find(&bids)
+
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil
-		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return bids
+	return bids, nil
+}
+
+func (repo *BidRepository) CountCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Bid{}).
+		Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *BidRepository) FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, options *postgres.QueryOptions) ([]*entity.Bid, error) {
+	var bids []*entity.Bid
+
+	query := db.GetDB().Where("request_id = ? AND status IN ?", requestID, allowedStatus)
+	query = applyQueryOptions(query, options)
+	result := query.Find(&bids)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return bids, nil
+}
+
+func (repo *BidRepository) CountRequestBids(
+	db database.Database,
+	requestID uint,
+	allowedStatus []enum.BidStatus,
+) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Bid{}).
+		Where("request_id = ? AND status IN ?", requestID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/BargheNo/Backend/bootstrap"
-	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/logger"
+	loggerImpl "github.com/BargheNo/Backend/internal/infrastructure/logger"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -153,7 +153,7 @@ func handleForbiddenError(ctx *gin.Context, forbiddenError exception.ForbiddenEr
 }
 
 func unhandledErrors(ctx *gin.Context, err error, transKey string) {
-	loggerimpl.GetLogger().Error("unhandled error recovery middleware", logger.Error("error:", err))
+	loggerImpl.GetLogger().Error("unhandled error recovery middleware", logger.Error("error:", err))
 	trans := controller.GetTranslator(ctx, transKey)
 	errorMessage, _ := trans.Translate(genericError)
 

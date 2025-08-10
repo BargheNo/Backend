@@ -20,6 +20,8 @@ services:
       - ${SERVER_PORT}:${SERVER_PORT}
     depends_on:
       - db
+      - rdb
+      - rabbitmq
 
   db:
     image: postgres:latest
@@ -190,8 +192,8 @@ services:
     container_name: rabbitmq
     restart: unless-stopped
     ports:
-      - "${AMQP_PORT}:5672" 
-      - "15672:15672"       
+      - "${AMQP_PORT}:5672"
+      - "15672:15672"
     environment:
       - RABBITMQ_DEFAULT_USER=${AMQP_USER}
       - RABBITMQ_DEFAULT_PASS=${AMQP_PASSWORD}

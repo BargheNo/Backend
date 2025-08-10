@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/gorilla/websocket"
 )
 
@@ -21,15 +21,15 @@ type Client struct {
 	mu                  sync.Mutex
 	done                chan struct{}
 	closeOnce           sync.Once
-	chatService         service.ChatService
-	notificationService service.NotificationService
+	chatService         usecase.ChatService
+	notificationService usecase.NotificationService
 }
 
 func NewClient(
 	hub *Hub, conn any, roomID, userID uint,
 	websocketSetting *bootstrap.WebsocketSetting,
-	chatService service.ChatService,
-	notificationService service.NotificationService,
+	chatService usecase.ChatService,
+	notificationService usecase.NotificationService,
 ) *Client {
 	wsConn, _ := conn.(*websocket.Conn)
 	return &Client{
@@ -141,7 +141,11 @@ func (client *Client) processAndSaveChatMessage(message *Message) {
 	if err := json.Unmarshal(message.Content, &content); err != nil {
 		return
 	}
-	savedMessage := client.chatService.SaveMessage(client.roomID, client.userID, content)
+	savedMessage, err := client.chatService.SaveMessage(client.roomID, client.userID, content)
+	if err != nil {
+		return
+	}
+
 	message.MessageID = savedMessage.ID
 	message.Sender = savedMessage.Sender
 }

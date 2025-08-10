@@ -1,8 +1,9 @@
-package repositoryimpl
+package postgres
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -22,62 +23,114 @@ func (ticketRepo *TicketRepository) UpdateTicket(db database.Database, ticket *e
 	return db.GetDB().Save(ticket).Error
 }
 
-func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, ownerID uint, opts ...repository.QueryModifier) []*entity.Ticket {
+func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, ownerID uint, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
 	var tickets []*entity.Ticket
 	query := db.GetDB().Where("owner_id = ?", ownerID)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&tickets)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return tickets
+	return tickets, nil
 }
 
-func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, ticketID uint, opts ...repository.QueryModifier) []*entity.TicketComment {
+func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, ticketID uint, options *postgres.QueryOptions) ([]*entity.TicketComment, error) {
 	var comments []*entity.TicketComment
 	query := db.GetDB().Where("ticket_id = ?", ticketID)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&comments)
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return comments
+	return comments, nil
 }
 
-func (ticketRepo *TicketRepository) GetTicketByID(db database.Database, ticketID uint) (*entity.Ticket, bool) {
+func (ticketRepo *TicketRepository) FindTicketByID(db database.Database, ticketID uint) (*entity.Ticket, error) {
 	var ticket entity.Ticket
 	result := db.GetDB().Where("id = ?", ticketID).First(&ticket)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &ticket, true
+	return &ticket, nil
 }
 
 func (ticketRepo *TicketRepository) CreateTicketComment(db database.Database, comment *entity.TicketComment) error {
 	return db.GetDB().Create(comment).Error
 }
 
-func (ticketRepo *TicketRepository) GetTickets(db database.Database, opts ...repository.QueryModifier) []*entity.Ticket {
+func (ticketRepo *TicketRepository) GetTickets(db database.Database, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
 	var tickets []*entity.Ticket
 	query := db.GetDB()
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&tickets)
 
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return tickets
+	return tickets, nil
+}
+
+func (ticketRepo TicketRepository) FindTicketsByStatus(db database.Database, statuses []enum.TicketStatus, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
+	var tickets []*entity.Ticket
+	query := db.GetDB().Where("status IN (?)", statuses)
+
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&tickets)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return tickets, nil
+}
+
+func (ticketRepo TicketRepository) CountTicketsByStatus(db database.Database, statuses []enum.TicketStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Ticket{}).
+		Where("status IN (?)", statuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (ticketRepo TicketRepository) FindCustomerTicketsByStatus(db database.Database, ownerID uint, statuses []enum.TicketStatus, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
+	var tickets []*entity.Ticket
+	query := db.GetDB().Where("owner_id = ? AND status IN (?)", ownerID, statuses)
+
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&tickets)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return tickets, nil
+}
+
+func (ticketRepo TicketRepository) CountCustomerTicketsByStatus(db database.Database, ownerID uint, statuses []enum.TicketStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Ticket{}).
+		Where("owner_id = ? AND status IN (?)", ownerID, statuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

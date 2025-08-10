@@ -1,9 +1,9 @@
-package repositoryimpl
+package postgres
 
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -14,80 +14,88 @@ func NewUserRepository() *UserRepository {
 	return &UserRepository{}
 }
 
-func (repo *UserRepository) FindUsers(db database.Database) []*entity.User {
+func (repo *UserRepository) FindUsers(db database.Database) ([]*entity.User, error) {
 	var users []*entity.User
 	result := db.GetDB().Find(&users)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil
-		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return users
+	return users, nil
 }
 
-func (repo *UserRepository) FindUserByID(db database.Database, id uint) (*entity.User, bool) {
+func (repo *UserRepository) FindUserByID(db database.Database, id uint) (*entity.User, error) {
 	var user entity.User
 	result := db.GetDB().First(&user, id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &user, true
+	return &user, nil
 }
 
-func (repo *UserRepository) FindUserByStatus(db database.Database, statuses []enum.UserStatus, opts ...repository.QueryModifier) []*entity.User {
+func (repo *UserRepository) FindUserByStatus(db database.Database, statuses []enum.UserStatus, options *postgres.QueryOptions) ([]*entity.User, error) {
 	var users []*entity.User
 	query := db.GetDB().Where("status IN ?", statuses)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&users)
 
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return users
+	return users, nil
 }
 
-func (repo *UserRepository) FindUserByEmail(db database.Database, email string) (*entity.User, bool) {
+func (repo *UserRepository) CountUserByStatus(db database.Database, statuses []enum.UserStatus) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.User{}).
+		Where("status IN ?", statuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *UserRepository) FindUserByEmail(db database.Database, email string) (*entity.User, error) {
 	var user entity.User
 	result := db.GetDB().Where("email = ?", email).First(&user)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &user, true
+	return &user, nil
 }
 
-func (repo *UserRepository) FindUserByPhone(db database.Database, phone string) (*entity.User, bool) {
+func (repo *UserRepository) FindUserByPhone(db database.Database, phone string) (*entity.User, error) {
 	var user entity.User
 	result := db.GetDB().Where("phone = ?", phone).First(&user)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &user, true
+	return &user, nil
 }
 
-func (repo *UserRepository) FindRoleByName(db database.Database, name string) (*entity.Role, bool) {
+func (repo *UserRepository) FindRoleByName(db database.Database, name string) (*entity.Role, error) {
 	var role entity.Role
 	result := db.GetDB().Where("name = ?", name).First(&role)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &role, true
+	return &role, nil
 }
 
 func (repo *UserRepository) CreateUser(db database.Database, user *entity.User) error {
@@ -110,16 +118,16 @@ func (repo *UserRepository) FindRolePermissions(db database.Database, role *enti
 	return db.GetDB().Preload("Permissions").First(&role).Error
 }
 
-func (repo *UserRepository) FindPermissionByType(db database.Database, permissionType enum.PermissionType) (*entity.Permission, bool) {
+func (repo *UserRepository) FindPermissionByType(db database.Database, permissionType enum.PermissionType) (*entity.Permission, error) {
 	var permission entity.Permission
 	result := db.GetDB().Where("type = ?", permissionType).First(&permission)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &permission, true
+	return &permission, nil
 }
 
 func (repo *UserRepository) RoleHasPermission(db database.Database, roleID uint, permissionID uint) bool {
@@ -156,71 +164,103 @@ func (repo *UserRepository) AssignRoleToUser(db database.Database, user *entity.
 	return db.GetDB().Model(user).Association("Roles").Append(role)
 }
 
-func (repo *UserRepository) FindAllPermissions(db database.Database) []*entity.Permission {
+func (repo *UserRepository) FindAllPermissions(db database.Database, options *postgres.QueryOptions) ([]*entity.Permission, error) {
 	var permissions []*entity.Permission
-	result := db.GetDB().Find(&permissions)
+	query := db.GetDB().Find(&permissions)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&permissions)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil
-		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return permissions
+	return permissions, nil
 }
 
-func (repo *UserRepository) FindAllRoles(db database.Database) []*entity.Role {
+func (repo *UserRepository) CountAllPermissions(db database.Database) (int64, error) {
+	var count int64
+	err := db.GetDB().Model(&entity.Permission{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *UserRepository) FindAllRoles(db database.Database, options *postgres.QueryOptions) ([]*entity.Role, error) {
 	var roles []*entity.Role
-	result := db.GetDB().Find(&roles)
+	query := db.GetDB().Find(&roles)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&roles)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil
-		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return roles
+	return roles, nil
 }
 
-func (repo *UserRepository) FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, bool) {
+func (repo *UserRepository) CountAllRoles(db database.Database) (int64, error) {
+	var count int64
+	err := db.GetDB().Model(&entity.Role{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *UserRepository) FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, error) {
 	var permission entity.Permission
 	result := db.GetDB().First(&permission, permissionID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &permission, true
+	return &permission, nil
 }
 
-func (repo *UserRepository) FindRoleByID(db database.Database, roleID uint) (*entity.Role, bool) {
+func (repo *UserRepository) FindRoleByID(db database.Database, roleID uint) (*entity.Role, error) {
 	var role entity.Role
 	result := db.GetDB().First(&role, roleID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, false
+			return nil, nil
 		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return &role, true
+	return &role, nil
 }
 
-func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint) []*entity.User {
+func (repo *UserRepository) FindUsersByRoleID(db database.Database, roleID uint, options *postgres.QueryOptions) ([]*entity.User, error) {
 	var users []*entity.User
-	result := db.GetDB().
+	query := db.GetDB().
 		Joins("JOIN user_roles ON user_roles.user_id = users.id").
 		Where("user_roles.role_id = ?", roleID).
 		Find(&users)
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&users)
 
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil
-		}
-		panic(result.Error)
+		return nil, result.Error
 	}
-	return users
+	return users, nil
 }
 
-func (repo *UserRepository) FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) []*entity.User {
+func (repo *UserRepository) CountUsersByRoleID(db database.Database, roleID uint) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.User{}).
+		Joins("JOIN user_roles ON user_roles.user_id = users.id").
+		Where("user_roles.role_id = ?", roleID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *UserRepository) FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) ([]*entity.User, error) {
 	var users []*entity.User
 
 	result := db.GetDB().
@@ -233,10 +273,10 @@ func (repo *UserRepository) FindUsersByPermission(db database.Database, permissi
 		Find(&users)
 
 	if result.Error != nil {
-		panic(result.Error)
+		return nil, result.Error
 	}
 
-	return users
+	return users, nil
 }
 
 func (repo *UserRepository) DeleteRole(db database.Database, roleID uint) error {
@@ -255,4 +295,34 @@ func (repo *UserRepository) ReplaceRolePermissions(db database.Database, role *e
 func (repo *UserRepository) ReplaceUserRoles(db database.Database, user *entity.User, roles []entity.Role) error {
 	return db.GetDB().Model(&user).Association("Roles").Replace(roles)
 
+}
+
+func (repo *UserRepository) FindRolesByPermission(db database.Database, permissionID uint, options *postgres.QueryOptions) ([]*entity.Role, error) {
+	var roles []*entity.Role
+	query := db.GetDB().
+		Joins("JOIN role_permissions ON roles.id = role_permissions.role_id").
+		Where("role_permissions.permission_id = ?", permissionID)
+
+	query = applyQueryOptions(query, options)
+
+	result := query.Find(&roles)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return roles, nil
+}
+
+func (repo *UserRepository) CountRolesByPermission(db database.Database, permissionID uint) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Role{}).
+		Joins("JOIN role_permissions ON roles.id = role_permissions.role_id").
+		Where("role_permissions.permission_id = ?", permissionID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

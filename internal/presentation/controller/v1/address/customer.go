@@ -3,19 +3,19 @@ package address
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type CustomerAddressController struct {
 	constants      *bootstrap.Constants
-	addressService service.AddressService
+	addressService usecase.AddressService
 }
 
 func NewCustomerAddressController(
 	constants *bootstrap.Constants,
-	addressService service.AddressService,
+	addressService usecase.AddressService,
 ) *CustomerAddressController {
 	return &CustomerAddressController{
 		constants:      constants,
@@ -45,7 +45,10 @@ func (addressController *CustomerAddressController) CreateUserAddress(ctx *gin.C
 		OwnerID:       ownerID.(uint),
 		OwnerType:     addressController.constants.AddressOwners.User,
 	}
-	createdAddress := addressController.addressService.CreateAddress(addressRequestInfo)
+	createdAddress, err := addressController.addressService.CreateAddress(addressRequestInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, addressController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createAddress")
@@ -58,7 +61,10 @@ func (addressController *CustomerAddressController) GetCustomerAddresses(ctx *gi
 		OwnerID:   ownerID.(uint),
 		OwnerType: addressController.constants.AddressOwners.User,
 	}
-	addresses := addressController.addressService.GetAddresses(ownerInfo)
+	addresses, err := addressController.addressService.GetAddresses(ownerInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", addresses)
 }

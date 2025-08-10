@@ -1,4 +1,4 @@
-package cacherepositoryimpl
+package redis
 
 import (
 	"context"
@@ -20,21 +20,21 @@ func NewUserCacheRepository(rdb database.Cache) *UserCacheRepository {
 	}
 }
 
-func (userCache *UserCacheRepository) Get(ctx context.Context, key string) (*userdto.OTPData, bool) {
+func (userCache *UserCacheRepository) Get(ctx context.Context, key string) (*userdto.OTPData, error) {
 	value, err := userCache.rdb.GetRDB().Get(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
-			return nil, false
+			return nil, nil
 		}
-		panic(err)
+		return nil, err
 	}
 
 	var otpData userdto.OTPData
 	if err = json.Unmarshal([]byte(value), &otpData); err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return &otpData, true
+	return &otpData, nil
 
 }
 

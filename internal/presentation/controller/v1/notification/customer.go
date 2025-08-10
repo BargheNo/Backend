@@ -3,7 +3,7 @@ package notification
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	notificationdto "github.com/BargheNo/Backend/internal/application/dto/notification"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -13,9 +13,9 @@ type CustomerNotificationController struct {
 	constants           *bootstrap.Constants
 	websocketSetting    *bootstrap.WebsocketSetting
 	pagination          *bootstrap.Pagination
-	notificationService service.NotificationService
-	jwtService          service.JWTService
-	userService         service.UserService
+	notificationService usecase.NotificationService
+	jwtService          usecase.JWTService
+	userService         usecase.UserService
 	hub                 *websocket.Hub
 }
 
@@ -23,9 +23,9 @@ func NewCustomerNotificationController(
 	constants *bootstrap.Constants,
 	websocketSetting *bootstrap.WebsocketSetting,
 	pagination *bootstrap.Pagination,
-	notificationService service.NotificationService,
-	jwtService service.JWTService,
-	userService service.UserService,
+	notificationService usecase.NotificationService,
+	jwtService usecase.JWTService,
+	userService usecase.UserService,
 	hub *websocket.Hub,
 ) *CustomerNotificationController {
 	return &CustomerNotificationController{
@@ -50,33 +50,49 @@ func (notificationController *CustomerNotificationController) MarkAsRead(ctx *gi
 		NotificationID: params.NotificationID,
 		UserID:         userID.(uint),
 	}
-	notificationController.notificationService.MarkAsRead(notificationInfo)
+	if err := notificationController.notificationService.MarkAsRead(notificationInfo); err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "successMessage.readNotification", nil)
 }
 
 func (notificationController *CustomerNotificationController) GetUserNotifications(ctx *gin.Context) {
 	type notificationsParams struct {
-		Types []uint `form:"notificationTypes" validate:"required"`
+		Types    []uint `form:"notificationTypes" validate:"required"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[notificationsParams](ctx)
 	userID, _ := ctx.Get(notificationController.constants.Context.ID)
-	pagination := controller.GetPagination(ctx, notificationController.pagination.DefaultPage, notificationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, notificationController.pagination.DefaultPage, notificationController.pagination.DefaultPageSize)
 
 	notificationsRequest := notificationdto.NotificationListRequest{
 		Types:  params.Types,
 		UserID: userID.(uint),
 		Offset: offset,
 		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
-	notificationsDetails := notificationController.notificationService.GetUserNotifications(notificationsRequest)
-	controller.Response(ctx, 200, "", notificationsDetails)
+	notificationsDetails, count, err := notificationController.notificationService.GetUserNotifications(notificationsRequest)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(notificationsDetails, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (notificationController *CustomerNotificationController) GetUserNotificationSettings(ctx *gin.Context) {
 	userID, _ := ctx.Get(notificationController.constants.Context.ID)
-	settingsDetails := notificationController.notificationService.GetUserNotificationSettings(userID.(uint))
+	settingsDetails, err := notificationController.notificationService.GetUserNotificationSettings(userID.(uint))
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", settingsDetails)
 }
 
@@ -95,7 +111,9 @@ func (notificationController *CustomerNotificationController) UpdateSettings(ctx
 		IsEmailEnabled: params.IsEmailEnabled,
 		IsPushEnabled:  params.IsPushEnabled,
 	}
-	notificationController.notificationService.UpdateNotificationSettings(settingInfo)
+	if err := notificationController.notificationService.UpdateNotificationSettings(settingInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, notificationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateNotificationSetting")

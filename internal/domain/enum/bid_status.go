@@ -7,18 +7,24 @@ const (
 	BidStatusAccepted
 	BidStatusExpired
 	BidStatusRejected
+	BidStatusCanceled
+	BidStatusAll
 )
 
 func (s BidStatus) String() string {
 	switch s {
 	case BidStatusPending:
-		return "pending"
+		return "در انتظار تایید"
 	case BidStatusAccepted:
-		return "accepted"
+		return "تایید شده"
 	case BidStatusExpired:
-		return "expired"
+		return "منقضی"
 	case BidStatusRejected:
-		return "rejected"
+		return "رد شده"
+	case BidStatusCanceled:
+		return "لغو شده"
+	case BidStatusAll:
+		return "همه"
 	}
 	return "unknown"
 }
@@ -29,5 +35,7 @@ func GetAllBidStatuses() []BidStatus {
 		BidStatusAccepted,
 		BidStatusExpired,
 		BidStatusRejected,
+		BidStatusCanceled,
+		BidStatusAll,
 	}
 }

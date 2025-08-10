@@ -6,7 +6,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -15,19 +15,29 @@ import (
 type CustomerCorporationController struct {
 	constants          *bootstrap.Constants
 	pagination         *bootstrap.Pagination
-	corporationService service.CorporationService
+	corporationService usecase.CorporationService
 }
 
 func NewCustomerCorporationController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	corporationService service.CorporationService,
+	corporationService usecase.CorporationService,
 ) *CustomerCorporationController {
 	return &CustomerCorporationController{
 		constants:          constants,
 		pagination:         pagination,
 		corporationService: corporationService,
 	}
+}
+
+func (corporationController *CustomerCorporationController) GetUserCorporations(ctx *gin.Context) {
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+	corporationInfo, err := corporationController.corporationService.GetUserCorporations(userID.(uint))
+	if err != nil {
+		panic(err)
+	}
+
+	controller.Response(ctx, 200, "", corporationInfo)
 }
 
 func (corporationController *CustomerCorporationController) Register(ctx *gin.Context) {
@@ -62,7 +72,10 @@ func (corporationController *CustomerCorporationController) Register(ctx *gin.Co
 		Signatories:        signatories,
 	}
 
-	corporationInfo := corporationController.corporationService.Register(registerInfo)
+	corporationInfo, err := corporationController.corporationService.Register(registerInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.corporationRegister")
@@ -105,7 +118,9 @@ func (corporationController *CustomerCorporationController) UpdateRegister(ctx *
 		Signatories:        signatories,
 	}
 
-	corporationController.corporationService.UpdateRegister(updateRegisterInfo)
+	if err := corporationController.corporationService.UpdateRegister(updateRegisterInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateCorporation")
@@ -113,10 +128,10 @@ func (corporationController *CustomerCorporationController) UpdateRegister(ctx *
 }
 
 func (corporationController *CustomerCorporationController) GetCorporationPrivateDetails(ctx *gin.Context) {
-	type GetCorporationParamsParams struct {
+	type getCorporationParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
 	}
-	params := controller.Validated[GetCorporationParamsParams](ctx)
+	params := controller.Validated[getCorporationParams](ctx)
 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
 	corporationRequest := corporationdto.CorporationDetailsRequest{
 		UserID:        userID.(uint),
@@ -124,7 +139,10 @@ func (corporationController *CustomerCorporationController) GetCorporationPrivat
 		Status:        enum.CorpStatusAwaitingApproval,
 	}
 
-	corporationDetails := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	corporationDetails, err := corporationController.corporationService.GetCorporationDetails(corporationRequest)
+	if err != nil {
+		panic(err)
+	}
 	controller.Response(ctx, 200, "", corporationDetails)
 }
 
@@ -164,8 +182,9 @@ func (corporationController *CustomerCorporationController) AddAddress(ctx *gin.
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 		Addresses:         addresses,
 	}
-
-	corporationController.corporationService.AddAddress(addressInfo)
+	if err := corporationController.corporationService.AddAddress(addressInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addAddress")
@@ -186,7 +205,9 @@ func (corporationController *CustomerCorporationController) DeleteAddress(ctx *g
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 		AddressID:         params.AddressID,
 	}
-	corporationController.corporationService.DeleteAddress(addressInfo)
+	if err := corporationController.corporationService.DeleteAddress(addressInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteAddress")
@@ -218,7 +239,9 @@ func (corporationController *CustomerCorporationController) AddContactInformatio
 		CorporationStatus:  enum.CorpStatusAwaitingApproval,
 		ContactInformation: contacts,
 	}
-	corporationController.corporationService.AddContactInfo(contactInfo)
+	if err := corporationController.corporationService.AddContactInfo(contactInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateContactInfo")
@@ -239,8 +262,9 @@ func (corporationController *CustomerCorporationController) DeleteContactInforma
 		CorporationID:     params.CorporationID,
 		CorporationStatus: enum.CorpStatusAwaitingApproval,
 	}
-
-	corporationController.corporationService.DeleteContactInfo(contactInfo)
+	if err := corporationController.corporationService.DeleteContactInfo(contactInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteContactInfo")
@@ -262,24 +286,11 @@ func (corporationController *CustomerCorporationController) SubmitCertificateFil
 		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
 		OfficialNewspaperAD:    params.OfficialNewspaperAD,
 	}
-	corporationController.corporationService.AddCertificateFiles(requestInfo)
+	if err := corporationController.corporationService.AddCertificateFiles(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addCorporationCertificate")
 	controller.Response(ctx, 200, message, nil)
-}
-
-func (corporationController *CustomerCorporationController) GetCorporations(ctx *gin.Context) {
-	userID, _ := ctx.Get(corporationController.constants.Context.ID)
-
-	pagination := controller.GetPagination(ctx, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
-	corporationRequest := corporationdto.CorporationListRequest{
-		UserID: userID.(uint),
-		Offset: offset,
-		Limit:  limit,
-	}
-
-	corporations := corporationController.corporationService.GetCorporations(corporationRequest)
-	controller.Response(ctx, 200, "", corporations)
 }

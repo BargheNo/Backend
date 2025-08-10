@@ -64,7 +64,6 @@ type ErrorField struct {
 	NotificationType    string
 	Notification        string
 	NotificationSetting string
-	PanelName           string
 	Panel               string
 	MaintenanceRequest  string
 	MaintenanceRecord   string
@@ -74,8 +73,15 @@ type ErrorField struct {
 	TicketComment       string
 	Report              string
 	ContactInformation  string
+	PaymentTerm         string
+	Guarantee           string
+	GuaranteeViolation  string
 	News                string
 	Media               string
+	Blog                string
+	Post                string
+	Like                string
+	CorporationReview   string
 }
 
 type ErrorTag struct {
@@ -89,6 +95,7 @@ type ErrorTag struct {
 	Invalid                string
 	NotRegistered          string
 	NotVerified            string
+	NotActive              string
 	InvalidAuthCredentials string
 	ExpiredAuthToken       string
 	InvalidAuthToken       string
@@ -102,6 +109,11 @@ type ErrorTag struct {
 	AlreadyBlocked         string
 	AlreadyActive          string
 	AlreadyResolved        string
+	AlreadyArchived        string
+	StatusNotChange        string
+	AlreadyCanceled        string
+	AlreadyRejected        string
+	AlreadyAccepted        string
 	AlreadyDraft           string
 }
 
@@ -225,7 +237,6 @@ func NewConstants() *Constants {
 			Room:                "room",
 			NotificationType:    "notificationType",
 			Notification:        "notification",
-			PanelName:           "panelName",
 			Panel:               "panel",
 			MaintenanceRequest:  "maintenanceRequest",
 			MaintenanceRecord:   "maintenanceRecord",
@@ -236,8 +247,15 @@ func NewConstants() *Constants {
 			Report:              "report",
 			ContactInformation:  "contactInformation",
 			NotificationSetting: "notificationSetting",
+			PaymentTerm:         "paymentTerm",
+			Guarantee:           "guarantee",
+			GuaranteeViolation:  "guaranteeViolation",
 			News:                "news",
 			Media:               "media",
+			Blog:                "blog",
+			Post:                "post",
+			Like:                "like",
+			CorporationReview:   "corporationReview",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -250,6 +268,7 @@ func NewConstants() *Constants {
 			Invalid:                "invalid",
 			NotRegistered:          "notRegistered",
 			NotVerified:            "notVerified",
+			NotActive:              "notActive",
 			InvalidAuthCredentials: "invalidAuthCredentials",
 			ExpiredAuthToken:       "expiredAuthToken",
 			InvalidAuthToken:       "invalidAuthToken",
@@ -263,17 +282,22 @@ func NewConstants() *Constants {
 			AlreadyBlocked:         "alreadyBlocked",
 			AlreadyActive:          "alreadyActive",
 			AlreadyResolved:        "alreadyResolved",
+			AlreadyArchived:        "alreadyArchived",
+			StatusNotChange:        "statusNotChange",
+			AlreadyCanceled:        "alreadyCanceled",
+			AlreadyRejected:        "alreadyRejected",
+			AlreadyAccepted:        "alreadyAccepted",
 			AlreadyDraft:           "alreadyDraft",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
 		},
 		JWTKeysPath: JWTKeysPath{
-			PublicKey:  "./internal/application/adapter/jwt/publicKey.pem",
-			PrivateKey: "./internal/application/adapter/jwt/privateKey.pem",
+			PublicKey:  "./internal/infrastructure/jwt/publicKey.pem",
+			PrivateKey: "./internal/infrastructure/jwt/privateKey.pem",
 		},
 		EmailTemplates: EmailTemplates{
-			Path:            "./internal/application/service/communication/email/templates/",
+			Path:            "./internal/infrastructure/communication/email/templates/",
 			PersianFileName: "fa.html",
 			EnglishFileName: "en.html",
 		},
@@ -361,4 +385,16 @@ func (path *BucketPath) GetCorporationLogoPath(corporationID uint, logoFileName 
 
 func (path *BucketPath) GetNewsMediaPath(newsID uint, MediaFileName string) string {
 	return fmt.Sprintf("news/%d/media/%s", newsID, MediaFileName)
+}
+
+func (path *BucketPath) GetNewsCoverImagePath(newsID uint, mediaFileName string) string {
+	return fmt.Sprintf("news/%d/cover-image/%s", newsID, mediaFileName)
+}
+
+func (path *BucketPath) GetBlogMediaPath(corporationID uint, mediaFileName string) string {
+	return fmt.Sprintf("corporation/%d/blog/media/%s", corporationID, mediaFileName)
+}
+
+func (path *BucketPath) GetBlogCoverImagePath(corporationID uint, mediaFileName string) string {
+	return fmt.Sprintf("corporation/%d/blog/cover-image/%s", corporationID, mediaFileName)
 }

@@ -3,19 +3,19 @@ package address
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type GeneralAddressController struct {
 	constants      *bootstrap.Constants
-	addressService service.AddressService
+	addressService usecase.AddressService
 }
 
 func NewGeneralAddressController(
 	constants *bootstrap.Constants,
-	addressService service.AddressService,
+	addressService usecase.AddressService,
 ) *GeneralAddressController {
 	return &GeneralAddressController{
 		constants:      constants,
@@ -24,7 +24,10 @@ func NewGeneralAddressController(
 }
 
 func (addressController *GeneralAddressController) GetProvince(ctx *gin.Context) {
-	provinceList := addressController.addressService.GetProvinceList()
+	provinceList, err := addressController.addressService.GetProvinceList()
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", provinceList)
 }
@@ -37,7 +40,10 @@ func (addressController *GeneralAddressController) GetProvinceCities(ctx *gin.Co
 	provinceInfo := addressdto.GetProvinceCitiesRequest{
 		ProvinceID: params.ProvinceID,
 	}
-	citiesList := addressController.addressService.GetCityProvinceCities(provinceInfo)
+	citiesList, err := addressController.addressService.GetCityProvinceCities(provinceInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", citiesList)
 }

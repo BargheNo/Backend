@@ -1,4 +1,4 @@
-package cacherepository
+package redis
 
 import (
 	"context"
@@ -8,6 +8,6 @@ import (
 )
 
 type UserCacheRepository interface {
-	Get(ctx context.Context, key string) (*userdto.OTPData, bool)
+	Get(ctx context.Context, key string) (*userdto.OTPData, error)
 	Set(ctx context.Context, key, otp string, expiration time.Duration) error
 }

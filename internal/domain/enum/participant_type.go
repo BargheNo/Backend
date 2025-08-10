@@ -1,25 +1,10 @@
 package enum
 
-type ParticipantType uint
+type AgentType uint
 
 const (
-	ParticipantTypeUser ParticipantType = iota + 1
-	ParticipantTypeAdmin
+	AgentTypeGeneral AgentType = iota + 1
+	AgentTypeCustomer
+	AgentTypeCorporation
+	AgentTypeAdmin
 )
-
-func (participantType ParticipantType) String() string {
-	switch participantType {
-	case ParticipantTypeUser:
-		return "user"
-	case ParticipantTypeAdmin:
-		return "admin"
-	}
-	return ""
-}
-
-func GetAllParticipantTypes() []ParticipantType {
-	return []ParticipantType{
-		ParticipantTypeUser,
-		ParticipantTypeAdmin,
-	}
-}

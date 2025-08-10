@@ -11,6 +11,7 @@ import (
 
 type Database interface {
 	GetDB() *gorm.DB
+	WithTransaction(fn func(Database) error) error
 }
 
 type PostgresDatabase struct {
@@ -45,4 +46,11 @@ func NewPostgresDatabase(dbConfig *bootstrap.Database) *PostgresDatabase {
 
 func (pgx *PostgresDatabase) GetDB() *gorm.DB {
 	return dbInstance.DB
+}
+
+func (pgx *PostgresDatabase) WithTransaction(fn func(Database) error) error {
+	return pgx.DB.Transaction(func(tx *gorm.DB) error {
+		txWrapper := &PostgresDatabase{DB: tx}
+		return fn(txWrapper)
+	})
 }

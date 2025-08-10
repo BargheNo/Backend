@@ -17,7 +17,7 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	corps := routerGroup.Group("/corps")
 	{
-		corps.GET("/list", app.Controllers.Customer.CorporationController.GetCorporations)
+		corps.GET("", app.Controllers.Customer.CorporationController.GetUserCorporations)
 		registration := corps.Group("/registration")
 		{
 			registration.POST("/basic", app.Controllers.Customer.CorporationController.Register)
@@ -34,14 +34,53 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		}
 	}
 
-	orders := routerGroup.Group("/installation")
+	installations := routerGroup.Group("/installation")
 	{
-		requests := orders.Group("/request")
+		requests := installations.Group("/request")
 		{
 			requests.POST("", app.Controllers.Customer.InstallationController.CreateInstallationRequest)
-			requests.GET("", app.Controllers.Customer.InstallationController.GetOwnerInstallationRequests)
-			requests.GET("/:requestID", app.Controllers.Customer.InstallationController.GetInstallationRequest)
-			requests.GET("/:requestID/bids", app.Controllers.Customer.BidController.GetBids)
+			requests.GET("", app.Controllers.Customer.InstallationController.GetInstallationRequests)
+			requestSubGroup := requests.Group("/:requestID")
+			{
+				requestSubGroup.GET("", app.Controllers.Customer.InstallationController.GetInstallationRequest)
+				requestSubGroup.PUT("/cancel", app.Controllers.Customer.InstallationController.CancelInstallationRequest)
+
+				bids := requestSubGroup.Group("/bid")
+				{
+					bids.GET("", app.Controllers.Customer.BidController.GetBids)
+					bidsSubGroup := bids.Group("/:bidID")
+					{
+						bidsSubGroup.GET("", app.Controllers.Customer.BidController.GetBid)
+						bidsSubGroup.POST("/accept", app.Controllers.Customer.BidController.AcceptBid)
+						bidsSubGroup.POST("/reject", app.Controllers.Customer.BidController.RejectBid)
+					}
+				}
+			}
+		}
+
+		panels := installations.Group("/panel")
+		{
+			panels.GET("", app.Controllers.Customer.InstallationController.GetCustomerPanels)
+			panelsSubGroup := panels.Group("/:panelID")
+			{
+				panelsSubGroup.GET("", app.Controllers.Customer.InstallationController.GetCustomerPanel)
+				panelsSubGroup.GET("/guarantee/violation", app.Controllers.Customer.InstallationController.GetPanelGuaranteeViolation)
+				panelsSubGroup.GET("/maintenance", app.Controllers.Customer.MaintenanceController.GetPanelMaintenanceRequests)
+			}
+		}
+	}
+
+	maintenances := routerGroup.Group("/maintenance/request")
+	{
+		maintenances.GET("/level", app.Controllers.Customer.MaintenanceController.GetMaintenanceUrgencyLevels)
+		maintenances.POST("", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
+		maintenances.GET("", app.Controllers.Customer.MaintenanceController.GetAllMaintenanceRequests)
+		requestsSubGroup := maintenances.Group("/:requestID")
+		{
+			requestsSubGroup.GET("", app.Controllers.Customer.MaintenanceController.GetMaintenanceRequest)
+			requestsSubGroup.PUT("", app.Controllers.Customer.MaintenanceController.UpdateMaintenanceRequest)
+			requestsSubGroup.PUT("/cancel", app.Controllers.Customer.MaintenanceController.CancelMaintenanceRequest)
+			requestsSubGroup.PUT("record/approve", app.Controllers.Customer.MaintenanceController.ApproveMaintenanceRecord)
 		}
 	}
 
@@ -68,37 +107,40 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		notification.PUT("/setting/:settingID", app.Controllers.Customer.NotificationController.UpdateSettings)
 	}
 
-	panels := routerGroup.Group("/panels")
+	tickets := routerGroup.Group("/ticket")
 	{
-		panels.GET("/list", app.Controllers.Customer.InstallationController.GetCustomerPanels)
-	}
-
-	maintenance := routerGroup.Group("/maintenance")
-	{
-		requests := maintenance.Group("/request")
+		tickets.POST("", app.Controllers.Customer.TicketController.CreateTicket)
+		tickets.GET("/list", app.Controllers.Customer.TicketController.GetTickets)
+		ticketSubGroup := tickets.Group("/:ticketID/comments")
 		{
-			requests.POST("", app.Controllers.Customer.MaintenanceController.CreateMaintenanceRequest)
-			requests.GET("/list", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequests)
-		}
-
-		records := maintenance.Group("/record")
-		{
-			records.GET("/list", app.Controllers.Customer.MaintenanceController.GetMaintenanceRecords)
-			records.GET("/list/:panelID", app.Controllers.Customer.MaintenanceController.GetCustomerMaintenanceRequestsByPanelID)
+			ticketSubGroup.GET("", app.Controllers.Customer.TicketController.GetComments)
+			ticketSubGroup.POST("", app.Controllers.Customer.TicketController.CreateComment)
 		}
 	}
 
-	ticket := routerGroup.Group("/ticket")
+	reports := routerGroup.Group("/report")
 	{
-		ticket.POST("", app.Controllers.Customer.TicketController.CreateTicket)
-		ticket.GET("/list", app.Controllers.Customer.TicketController.GetTickets)
-		ticket.GET("/:ticketID/comments", app.Controllers.Customer.TicketController.GetComments)
-		ticket.POST("/:ticketID/comments", app.Controllers.Customer.TicketController.CreateComment)
+		maintenanceReports := reports.Group("/maintenance")
+		{
+			maintenanceReports.POST("/:recordID", app.Controllers.Customer.ReportController.CreateMaintenanceReport)
+		}
+		panelReports := reports.Group("/panel")
+		{
+			panelReports.POST("/:panelID", app.Controllers.Customer.ReportController.CreatePanelReport)
+		}
 	}
 
-	report := routerGroup.Group("/report")
+	news := routerGroup.Group("/news/:newsID/like")
 	{
-		report.POST("maintenance/:recordID", app.Controllers.Customer.ReportController.CreateMaintenanceReport)
-		report.POST("panel/:panelID", app.Controllers.Customer.ReportController.CreatePanelReport)
+		news.POST("", app.Controllers.Customer.NewsController.LikeNews)
+		news.DELETE("", app.Controllers.Customer.NewsController.DislikeNews)
+		news.GET("", app.Controllers.Customer.NewsController.IsUserLikedNews)
+	}
+
+	blog := routerGroup.Group("/blog/:postID/like")
+	{
+		blog.POST("", app.Controllers.Customer.BlogController.LikePost)
+		blog.DELETE("", app.Controllers.Customer.BlogController.UnlikePost)
+		blog.GET("", app.Controllers.Customer.BlogController.IsUserLikedBlog)
 	}
 }

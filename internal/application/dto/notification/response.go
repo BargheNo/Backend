@@ -35,3 +35,8 @@ type PushNotificationResponse struct {
 	IsRead      bool                   `json:"isRead"`
 	RecipientID uint                   `json:"recipientID"`
 }
+
+type NotificationEnumResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}

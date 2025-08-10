@@ -6,7 +6,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -14,13 +14,13 @@ import (
 
 type CustomerTicketController struct {
 	constants     *bootstrap.Constants
-	ticketService service.TicketService
+	ticketService usecase.TicketService
 	pagination    *bootstrap.Pagination
 }
 
 func NewCustomerTicketController(
 	constants *bootstrap.Constants,
-	ticketService service.TicketService,
+	ticketService usecase.TicketService,
 	pagination *bootstrap.Pagination,
 ) *CustomerTicketController {
 	return &CustomerTicketController{
@@ -36,8 +36,8 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 		Description string                `form:"description" validate:"required"`
 		Image       *multipart.FileHeader `form:"image"`
 	}
-
 	params := controller.Validated[createTicketParams](ctx)
+	// TODO: what? why? :)
 	subject, err := strconv.Atoi(params.Subject)
 	if err != nil {
 		subject = 2
@@ -51,7 +51,9 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 		Image:       params.Image,
 	}
 
-	ticketController.ticketService.CreateCustomerTicket(requestInfo)
+	if err := ticketController.ticketService.CreateCustomerTicket(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicket")
@@ -59,18 +61,33 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 }
 
 func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
+	type GetTicketsRequest struct {
+		Status   uint `form:"status"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
+	}
+	params := controller.Validated[GetTicketsRequest](ctx)
+
 	ownerID, _ := ctx.Get(ticketController.constants.Context.ID)
-	params := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
-	offset, limit := params.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
+
 	listInfo := ticketdto.TicketListRequest{
 		OwnerID: ownerID.(uint),
+		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 	}
 
-	tickets := ticketController.ticketService.GetCustomerTickets(listInfo)
+	tickets, count, err := ticketController.ticketService.GetCustomerTickets(listInfo)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
 
-	controller.Response(ctx, 200, "success", tickets)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) {
@@ -78,16 +95,17 @@ func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) 
 		TicketID uint `uri:"ticketID" binding:"required"`
 	}
 	params := controller.Validated[getCommentsParams](ctx)
-	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
 	ownerID, _ := ctx.Get(ticketController.constants.Context.ID)
+
 	listInfo := ticketdto.TicketCommentListRequest{
 		TicketID: params.TicketID,
 		OwnerID:  ownerID.(uint),
-		Offset:   offset,
-		Limit:    limit,
 	}
-	comments := ticketController.ticketService.GetCustomerTicketComments(listInfo)
+	comments, err := ticketController.ticketService.GetCustomerTicketComments(listInfo)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", comments)
 }
@@ -97,17 +115,18 @@ func (ticketController *CustomerTicketController) CreateComment(ctx *gin.Context
 		TicketID uint   `uri:"ticketID" validate:"required"`
 		Body     string `json:"body" validate:"required"`
 	}
-
 	params := controller.Validated[createCommentParams](ctx)
 	userID, _ := ctx.Get(ticketController.constants.Context.ID)
+
 	requestInfo := ticketdto.CreateTicketCommentRequest{
 		TicketID:  params.TicketID,
 		OwnerID:   userID.(uint),
 		OwnerType: ticketController.constants.TicketCommentOwners.User,
 		Body:      params.Body,
 	}
-
-	ticketController.ticketService.CreateCustomerTicketComment(requestInfo)
+	if err := ticketController.ticketService.CreateCustomerTicketComment(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicketComment")

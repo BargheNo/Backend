@@ -5,7 +5,7 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	newsdto "github.com/BargheNo/Backend/internal/application/dto/news"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -14,13 +14,13 @@ import (
 type AdminNewsController struct {
 	constants   *bootstrap.Constants
 	pagination  *bootstrap.Pagination
-	newsService service.NewsService
+	newsService usecase.NewsService
 }
 
 func NewAdminNewsController(
 	constants *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	newsService service.NewsService,
+	newsService usecase.NewsService,
 ) *AdminNewsController {
 	return &AdminNewsController{
 		constants:   constants,
@@ -29,21 +29,33 @@ func NewAdminNewsController(
 	}
 }
 
+func (newsController *AdminNewsController) GetAllNewsStatuses(ctx *gin.Context) {
+	statuses := newsController.newsService.GetAllNewsStatuses()
+	controller.Response(ctx, 200, "", statuses)
+}
+
 func (newsController *AdminNewsController) CreateDraftNews(ctx *gin.Context) {
 	type createNewsParams struct {
-		Title   string `json:"title" validate:"required"`
-		Content string `json:"content"`
+		Title       string                `json:"title" validate:"required"`
+		Content     string                `json:"content"`
+		Description string                `json:"description"`
+		CoverImage  *multipart.FileHeader `form:"cover_image"`
 	}
 	params := controller.Validated[createNewsParams](ctx)
 	authorID, _ := ctx.Get(newsController.constants.Context.ID)
 
 	draftNewsParams := newsdto.CreateNewsRequest{
-		Title:    params.Title,
-		Content:  params.Content,
-		AuthorID: authorID.(uint),
-		Status:   enum.NewsStatusDraft,
+		Title:       params.Title,
+		Content:     params.Content,
+		Description: params.Description,
+		AuthorID:    authorID.(uint),
+		Status:      enum.NewsStatusDraft,
+		CoverImage:  params.CoverImage,
 	}
-	news := newsController.newsService.CreateNews(draftNewsParams)
+	news, err := newsController.newsService.CreateNews(draftNewsParams)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.createDraftNews")
@@ -52,22 +64,28 @@ func (newsController *AdminNewsController) CreateDraftNews(ctx *gin.Context) {
 
 func (newsController *AdminNewsController) EditNews(ctx *gin.Context) {
 	type editNewsParams struct {
-		NewsID  uint    `uri:"newsID" validate:"required"`
-		Title   *string `json:"title"`
-		Content *string `json:"content"`
-		Status  uint    `json:"status" validate:"required"`
+		NewsID      uint                  `uri:"newsID" validate:"required"`
+		Title       *string               `json:"title"`
+		Content     *string               `json:"content"`
+		Description *string               `json:"description"`
+		CoverImage  *multipart.FileHeader `form:"cover_image"`
+		Status      uint                  `json:"status"`
 	}
 	params := controller.Validated[editNewsParams](ctx)
 	authorID, _ := ctx.Get(newsController.constants.Context.ID)
 
 	finalizeNewsParams := newsdto.EditNewsRequest{
-		NewsID:   params.NewsID,
-		AuthorID: authorID.(uint),
-		Title:    params.Title,
-		Content:  params.Content,
-		Status:   params.Status,
+		NewsID:      params.NewsID,
+		AuthorID:    authorID.(uint),
+		Title:       params.Title,
+		Content:     params.Content,
+		Description: params.Description,
+		CoverImage:  params.CoverImage,
+		Status:      params.Status,
 	}
-	newsController.newsService.EditNews(finalizeNewsParams)
+	if err := newsController.newsService.EditNews(finalizeNewsParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.editNews")
@@ -85,7 +103,9 @@ func (newsController *AdminNewsController) PublishNews(ctx *gin.Context) {
 		AuthorID: authorID.(uint),
 		Status:   uint(enum.NewsStatusActive),
 	}
-	newsController.newsService.UpdateNewsStatus(publishParams)
+	if err := newsController.newsService.UpdateNewsStatus(publishParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.publishNews")
@@ -104,34 +124,41 @@ func (newsController *AdminNewsController) UnpublishNews(ctx *gin.Context) {
 		AuthorID: authorID.(uint),
 		Status:   uint(enum.NewsStatusDraft),
 	}
-	newsController.newsService.UpdateNewsStatus(unpublishParams)
+	if err := newsController.newsService.UpdateNewsStatus(unpublishParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.unpublishNews")
 	controller.Response(ctx, 200, message, nil)
 }
 
-func (newsController *AdminNewsController) GetAllNewsStatuses(ctx *gin.Context) {
-	statuses := newsController.newsService.GetAllNewsStatuses()
-	controller.Response(ctx, 200, "", statuses)
-}
-
 func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 	type getNewsParams struct {
-		Statuses []uint `form:"statuses" validate:"required"`
+		Status   uint `form:"status"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[getNewsParams](ctx)
-	pagination := controller.GetPagination(ctx, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
 
-	getNewsRequest := newsdto.GetNewsListRequest{
-		Statuses: params.Statuses,
-		Offset:   offset,
-		Limit:    limit,
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
+
+	getNewsRequest := newsdto.GetAdminNewsListRequest{
+		Status: params.Status,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
-	news := newsController.newsService.GetNewsList(getNewsRequest)
+	news, count, err := newsController.newsService.GetAdminNewsList(getNewsRequest)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(news, count, offset, limit)
 
-	controller.Response(ctx, 200, "", news)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (newsController *AdminNewsController) GetNews(ctx *gin.Context) {
@@ -140,11 +167,10 @@ func (newsController *AdminNewsController) GetNews(ctx *gin.Context) {
 	}
 	params := controller.Validated[getNewsParams](ctx)
 
-	getNewsRequest := newsdto.GetNewsRequest{
-		NewsID:   params.NewsID,
-		UserType: enum.UserTypeAdmin,
+	news, err := newsController.newsService.GetAdminNews(params.NewsID)
+	if err != nil {
+		panic(err)
 	}
-	news := newsController.newsService.GetNews(getNewsRequest)
 
 	controller.Response(ctx, 200, "", news)
 }
@@ -160,7 +186,9 @@ func (newsController *AdminNewsController) DeleteNews(ctx *gin.Context) {
 		NewsIDs:  params.NewsIDs,
 		AuthorID: userID.(uint),
 	}
-	newsController.newsService.DeleteNewsStatus(deleteParams)
+	if err := newsController.newsService.DeleteNewsStatus(deleteParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteNews")
@@ -180,7 +208,10 @@ func (newsController *AdminNewsController) AddNewsMedia(ctx *gin.Context) {
 		AuthorID: userID.(uint),
 		Media:    params.Media,
 	}
-	media := newsController.newsService.AddNewsMedia(mediaParams)
+	media, err := newsController.newsService.AddNewsMedia(mediaParams)
+	if err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.addMedia")
@@ -200,7 +231,9 @@ func (newsController *AdminNewsController) DeleteNewsMedia(ctx *gin.Context) {
 		AuthorID: userID.(uint),
 		MediaID:  params.MediaID,
 	}
-	newsController.newsService.DeleteNewsMedia(mediaParams)
+	if err := newsController.newsService.DeleteNewsMedia(mediaParams); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, newsController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.deleteMedia")
@@ -219,7 +252,10 @@ func (newsController *AdminNewsController) GetNewsMedia(ctx *gin.Context) {
 		MediaID:  params.MediaID,
 		UserType: enum.UserTypeAdmin,
 	}
-	media := newsController.newsService.GetNewsMedia(mediaParams)
+	media, err := newsController.newsService.GetNewsMedia(mediaParams)
+	if err != nil {
+		panic(err)
+	}
 
 	controller.Response(ctx, 200, "", media)
 }

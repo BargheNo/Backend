@@ -3,7 +3,7 @@ package ticket
 import (
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -11,15 +11,15 @@ import (
 type AdminTicketController struct {
 	constant      *bootstrap.Constants
 	pagination    *bootstrap.Pagination
-	userService   service.UserService
-	ticketService service.TicketService
+	userService   usecase.UserService
+	ticketService usecase.TicketService
 }
 
 func NewAdminTicketController(
 	constant *bootstrap.Constants,
 	pagination *bootstrap.Pagination,
-	userService service.UserService,
-	ticketService service.TicketService,
+	userService usecase.UserService,
+	ticketService usecase.TicketService,
 ) *AdminTicketController {
 	return &AdminTicketController{
 		constant:      constant,
@@ -30,18 +30,35 @@ func NewAdminTicketController(
 }
 
 func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
-	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	type GetTicketsRequest struct {
+		Status   uint `form:"status"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
+	}
+	params := controller.Validated[GetTicketsRequest](ctx)
+
 	ownerID, _ := ctx.Get(ticketController.constant.Context.ID)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
+
 	requestInfo := ticketdto.TicketListRequest{
 		OwnerID: ownerID.(uint),
+		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
+		SortBy:  params.SortBy,
+		Asc:     params.Asc,
 	}
 
-	tickets := ticketController.ticketService.GetAdminTickets(requestInfo)
+	tickets, count, err := ticketController.ticketService.GetAdminTickets(requestInfo)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
 
-	controller.Response(ctx, 200, "success", tickets)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {
@@ -49,19 +66,20 @@ func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {
 		TicketID uint `uri:"ticketID" validate:"required"`
 	}
 	params := controller.Validated[GetCommentsRequest](ctx)
-	pagination := controller.GetPagination(ctx, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
 	ownerID, _ := ctx.Get(ticketController.constant.Context.ID)
+
 	requestInfo := ticketdto.TicketCommentListRequest{
 		TicketID: params.TicketID,
 		OwnerID:  ownerID.(uint),
-		Offset:   offset,
-		Limit:    limit,
 	}
 
-	tickets := ticketController.ticketService.GetAdminTicketComments(requestInfo)
+	tickets, err := ticketController.ticketService.GetAdminTicketComments(requestInfo)
+	if err != nil {
+		panic(err)
+	}
 
-	controller.Response(ctx, 200, "success", tickets)
+	controller.Response(ctx, 200, "", tickets)
 }
 
 func (ticketController *AdminTicketController) CreateComment(ctx *gin.Context) {
@@ -77,7 +95,9 @@ func (ticketController *AdminTicketController) CreateComment(ctx *gin.Context) {
 		OwnerType: ticketController.constant.TicketCommentOwners.Admin,
 		Body:      params.Body,
 	}
-	ticketController.ticketService.CreateAdminTicketComment(requestInfo)
+	if err := ticketController.ticketService.CreateAdminTicketComment(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constant.Context.Translator)
 	message, _ := trans.Translate("successMessage.createTicketComment")
@@ -94,7 +114,9 @@ func (ticketController *AdminTicketController) ResolveTicket(ctx *gin.Context) {
 		TicketID: params.TicketID,
 		OwnerID:  ownerID.(uint),
 	}
-	ticketController.ticketService.ResolveTicket(requestInfo)
+	if err := ticketController.ticketService.ResolveTicket(requestInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, ticketController.constant.Context.Translator)
 	message, _ := trans.Translate("successMessage.ticketResolved")

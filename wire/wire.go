@@ -5,40 +5,53 @@ package wire
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	jwtimpl "github.com/BargheNo/Backend/internal/application/adapter/jwt"
-	localizationimpl "github.com/BargheNo/Backend/internal/application/adapter/localization"
-	loggerimpl "github.com/BargheNo/Backend/internal/application/adapter/logger"
-	metricsimpl "github.com/BargheNo/Backend/internal/application/adapter/metrics"
-	serviceimpl "github.com/BargheNo/Backend/internal/application/service"
-	"github.com/BargheNo/Backend/internal/application/service/communication/email"
-	"github.com/BargheNo/Backend/internal/application/service/communication/sms"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
-	"github.com/BargheNo/Backend/internal/domain/logger"
+	"github.com/BargheNo/Backend/internal/application/service"
+	"github.com/BargheNo/Backend/internal/application/usecase"
+	"github.com/BargheNo/Backend/internal/domain/communication"
+	domainLogger "github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
+<<<<<<< HEAD
 	"github.com/BargheNo/Backend/internal/domain/metrics"
 	"github.com/BargheNo/Backend/internal/domain/mqtt"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
+=======
+	domainMetrics "github.com/BargheNo/Backend/internal/domain/metrics"
+	domainPostgres "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	domainRedis "github.com/BargheNo/Backend/internal/domain/repository/redis"
+>>>>>>> develop
 	"github.com/BargheNo/Backend/internal/domain/s3"
-	cinimpl "github.com/BargheNo/Backend/internal/infrastructure/cin"
+	"github.com/BargheNo/Backend/internal/infrastructure/communication/email"
+	"github.com/BargheNo/Backend/internal/infrastructure/communication/sms"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
+<<<<<<< HEAD
 	mqttimpl "github.com/BargheNo/Backend/internal/infrastructure/mqtt"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
+=======
+	infraJWT "github.com/BargheNo/Backend/internal/infrastructure/jwt"
+	infraLocalization "github.com/BargheNo/Backend/internal/infrastructure/localization"
+	infraLogger "github.com/BargheNo/Backend/internal/infrastructure/logger"
+	infraMetrics "github.com/BargheNo/Backend/internal/infrastructure/metrics"
+	infraRabbitMQ "github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
+>>>>>>> develop
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
-	cacherepositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
+	infraPostgres "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
+	infraRedis "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
-	"github.com/BargheNo/Backend/internal/infrastructure/storage"
+	infraStorage "github.com/BargheNo/Backend/internal/infrastructure/storage"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/address"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/bid"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/blog"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/chat"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/corporation"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/guarantee"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/monitoring"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/news"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/payment"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/report"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/ticket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -55,39 +68,48 @@ var DatabaseProviderSet = wire.NewSet(
 )
 
 var RepositoryProviderSet = wire.NewSet(
-	repositoryimpl.NewUserRepository,
-	repositoryimpl.NewInstallationRepository,
-	repositoryimpl.NewAddressRepository,
-	cacherepositoryimpl.NewUserCacheRepository,
-	repositoryimpl.NewCorporationRepository,
-	repositoryimpl.NewBidRepository,
-	repositoryimpl.NewChatRepository,
-	repositoryimpl.NewNotificationRepository,
-	repositoryimpl.NewMaintenanceRepository,
-	repositoryimpl.NewTicketRepository,
-	repositoryimpl.NewReportRepository,
-	repositoryimpl.NewNewsRepository,
-	wire.Bind(new(repository.UserRepository), new(*repositoryimpl.UserRepository)),
-	wire.Bind(new(repository.InstallationRepository), new(*repositoryimpl.InstallationRepository)),
-	wire.Bind(new(repository.AddressRepository), new(*repositoryimpl.AddressRepository)),
-	wire.Bind(new(cacherepository.UserCacheRepository), new(*cacherepositoryimpl.UserCacheRepository)),
-	wire.Bind(new(repository.CorporationRepository), new(*repositoryimpl.CorporationRepository)),
-	wire.Bind(new(repository.BidRepository), new(*repositoryimpl.BidRepository)),
-	wire.Bind(new(repository.ChatRepository), new(*repositoryimpl.ChatRepository)),
-	wire.Bind(new(repository.NotificationRepository), new(*repositoryimpl.NotificationRepository)),
-	wire.Bind(new(repository.MaintenanceRepository), new(*repositoryimpl.MaintenanceRepository)),
-	wire.Bind(new(repository.TicketRepository), new(*repositoryimpl.TicketRepository)),
-	wire.Bind(new(repository.ReportRepository), new(*repositoryimpl.ReportRepository)),
-	wire.Bind(new(repository.NewsRepository), new(*repositoryimpl.NewsRepository)),
+	infraPostgres.NewUserRepository,
+	infraPostgres.NewInstallationRepository,
+	infraPostgres.NewAddressRepository,
+	infraRedis.NewUserCacheRepository,
+	infraPostgres.NewCorporationRepository,
+	infraPostgres.NewBidRepository,
+	infraPostgres.NewChatRepository,
+	infraPostgres.NewNotificationRepository,
+	infraPostgres.NewMaintenanceRepository,
+	infraPostgres.NewTicketRepository,
+	infraPostgres.NewReportRepository,
+	infraPostgres.NewGuaranteeRepository,
+	infraPostgres.NewPaymentRepository,
+	infraPostgres.NewNewsRepository,
+	infraPostgres.NewBlogRepository,
+	wire.Bind(new(domainPostgres.UserRepository), new(*infraPostgres.UserRepository)),
+	wire.Bind(new(domainPostgres.InstallationRepository), new(*infraPostgres.InstallationRepository)),
+	wire.Bind(new(domainPostgres.AddressRepository), new(*infraPostgres.AddressRepository)),
+	wire.Bind(new(domainRedis.UserCacheRepository), new(*infraRedis.UserCacheRepository)),
+	wire.Bind(new(domainPostgres.CorporationRepository), new(*infraPostgres.CorporationRepository)),
+	wire.Bind(new(domainPostgres.BidRepository), new(*infraPostgres.BidRepository)),
+	wire.Bind(new(domainPostgres.ChatRepository), new(*infraPostgres.ChatRepository)),
+	wire.Bind(new(domainPostgres.NotificationRepository), new(*infraPostgres.NotificationRepository)),
+	wire.Bind(new(domainPostgres.MaintenanceRepository), new(*infraPostgres.MaintenanceRepository)),
+	wire.Bind(new(domainPostgres.TicketRepository), new(*infraPostgres.TicketRepository)),
+	wire.Bind(new(domainPostgres.ReportRepository), new(*infraPostgres.ReportRepository)),
+	wire.Bind(new(domainPostgres.GuaranteeRepository), new(*infraPostgres.GuaranteeRepository)),
+	wire.Bind(new(domainPostgres.PaymentRepository), new(*infraPostgres.PaymentRepository)),
+	wire.Bind(new(domainPostgres.NewsRepository), new(*infraPostgres.NewsRepository)),
+	wire.Bind(new(domainPostgres.BlogRepository), new(*infraPostgres.BlogRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
-	wire.Struct(new(serviceimpl.UserServiceDeps), "*"),
-	wire.Struct(new(serviceimpl.NotificationServiceDeps), "*"),
-	serviceimpl.NewUserService,
-	serviceimpl.NewOTPService,
+	wire.Struct(new(service.UserServiceDeps), "*"),
+	wire.Struct(new(service.NotificationServiceDeps), "*"),
+	wire.Struct(new(service.InstallationServiceDeps), "*"),
+	wire.Struct(new(service.BidServiceDeps), "*"),
+	service.NewUserService,
+	service.NewOTPService,
 	sms.NewSMSService,
 	email.NewEmailService,
+<<<<<<< HEAD
 	serviceimpl.NewJWTService,
 	serviceimpl.NewInstallationService,
 	serviceimpl.NewAddressService,
@@ -133,6 +155,53 @@ var AdapterProviderSet = wire.NewSet(
 	wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)),
 	wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)),
 	wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)),
+=======
+	service.NewJWTService,
+	service.NewInstallationService,
+	service.NewAddressService,
+	service.NewCorporationService,
+	service.NewBidService,
+	service.NewChatService,
+	service.NewNotificationService,
+	service.NewMaintenanceService,
+	service.NewTicketService,
+	service.NewReportService,
+	service.NewGuaranteeService,
+	service.NewPaymentService,
+	service.NewNewsService,
+	service.NewBlogService,
+	wire.Bind(new(usecase.UserService), new(*service.UserService)),
+	wire.Bind(new(usecase.OTPService), new(*service.OTPService)),
+	wire.Bind(new(communication.SMSService), new(*sms.SMSService)),
+	wire.Bind(new(communication.EmailService), new(*email.EmailService)),
+	wire.Bind(new(usecase.JWTService), new(*service.JWTService)),
+	wire.Bind(new(usecase.InstallationService), new(*service.InstallationService)),
+	wire.Bind(new(usecase.AddressService), new(*service.AddressService)),
+	wire.Bind(new(usecase.CorporationService), new(*service.CorporationService)),
+	wire.Bind(new(usecase.BidService), new(*service.BidService)),
+	wire.Bind(new(usecase.ChatService), new(*service.ChatService)),
+	wire.Bind(new(usecase.NotificationService), new(*service.NotificationService)),
+	wire.Bind(new(usecase.MaintenanceService), new(*service.MaintenanceService)),
+	wire.Bind(new(usecase.TicketService), new(*service.TicketService)),
+	wire.Bind(new(usecase.ReportService), new(*service.ReportService)),
+	wire.Bind(new(usecase.GuaranteeService), new(*service.GuaranteeService)),
+	wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)),
+	wire.Bind(new(usecase.NewsService), new(*service.NewsService)),
+	wire.Bind(new(usecase.BlogService), new(*service.BlogService)),
+)
+
+var AdapterProviderSet = wire.NewSet(
+	infraLocalization.NewTranslationService,
+	infraLogger.NewLogger,
+	infraJWT.NewJWTKeyManager,
+	infraMetrics.NewPrometheusMetrics,
+	infraStorage.NewS3Storage,
+	infraRabbitMQ.NewRabbitMQ,
+	wire.Bind(new(domainLogger.Logger), new(*infraLogger.Logger)),
+	wire.Bind(new(domainMetrics.MetricsClient), new(*infraMetrics.PrometheusMetrics)),
+	wire.Bind(new(s3.S3Storage), new(*infraStorage.S3Storage)),
+	wire.Bind(new(message.Broker), new(*infraRabbitMQ.RabbitMQ)),
+>>>>>>> develop
 )
 
 var GeneralControllerProviderSet = wire.NewSet(
@@ -140,7 +209,14 @@ var GeneralControllerProviderSet = wire.NewSet(
 	address.NewGeneralAddressController,
 	corporation.NewGeneralCorporationController,
 	notification.NewGeneralNotificationController,
+	installation.NewGeneralInstallationController,
 	news.NewGeneralNewsController,
+	blog.NewGeneralBlogController,
+	payment.NewGeneralPaymentController,
+	ticket.NewGeneralTicketController,
+	bid.NewGeneralBidController,
+	report.NewGeneralReportController,
+	maintenance.NewGeneralMaintenanceController,
 	wire.Struct(new(GeneralControllers), "*"),
 )
 
@@ -155,7 +231,12 @@ var CustomerControllerProviderSet = wire.NewSet(
 	maintenance.NewCustomerMaintenanceController,
 	ticket.NewCustomerTicketController,
 	report.NewCustomerReportController,
+<<<<<<< HEAD
 	monitoring.NewCustomerMonitoringController,
+=======
+	blog.NewCustomerBlogController,
+	news.NewCustomerNewsController,
+>>>>>>> develop
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -165,6 +246,8 @@ var CorporationControllerProviderSet = wire.NewSet(
 	chat.NewCorporationChatController,
 	bid.NewCorporationBidController,
 	maintenance.NewCorporationMaintenanceController,
+	guarantee.NewCorporationGuaranteeController,
+	blog.NewCorporationBlogController,
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
@@ -173,7 +256,13 @@ var AdminControllerProviderSet = wire.NewSet(
 	user.NewAdminUserController,
 	report.NewAdminReportController,
 	news.NewAdminNewsController,
+<<<<<<< HEAD
 	monitoring.NewAdminMonitoringController,
+=======
+	corporation.NewAdminCorporationController,
+	installation.NewAdminInstallationController,
+	bid.NewAdminBidController,
+>>>>>>> develop
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -329,7 +418,14 @@ type GeneralControllers struct {
 	AddressController      *address.GeneralAddressController
 	CorporationController  *corporation.GeneralCorporationController
 	NotificationController *notification.GeneralNotificationController
+	InstallationController *installation.GeneralInstallationController
 	NewsController         *news.GeneralNewsController
+	BlogController         *blog.GeneralBlogController
+	PaymentController      *payment.GeneralPaymentController
+	TicketController       *ticket.GeneralTicketController
+	BidController          *bid.GeneralBidController
+	ReportController       *report.GeneralReportController
+	MaintenanceController  *maintenance.GeneralMaintenanceController
 }
 
 type CustomerControllers struct {
@@ -343,7 +439,12 @@ type CustomerControllers struct {
 	MaintenanceController  *maintenance.CustomerMaintenanceController
 	TicketController       *ticket.CustomerTicketController
 	ReportController       *report.CustomerReportController
+<<<<<<< HEAD
 	MonitoringController   *monitoring.CustomerMonitoringController
+=======
+	BlogController         *blog.CustomerBlogController
+	NewsController         *news.CustomerNewsController
+>>>>>>> develop
 }
 
 type CorporationControllers struct {
@@ -352,14 +453,26 @@ type CorporationControllers struct {
 	ChatController         *chat.CorporationChatController
 	BidController          *bid.CorporationBidController
 	MaintenanceController  *maintenance.CorporationMaintenanceController
+	GuaranteeController    *guarantee.CorporationGuaranteeController
+	BlogController         *blog.CorporationBlogController
 }
 
 type AdminControllers struct {
+<<<<<<< HEAD
 	TicketController     *ticket.AdminTicketController
 	UserController       *user.AdminUserController
 	ReportController     *report.AdminReportController
 	NewsController       *news.AdminNewsController
 	MonitoringController *monitoring.AdminMonitoringController
+=======
+	TicketController       *ticket.AdminTicketController
+	UserController         *user.AdminUserController
+	ReportController       *report.AdminReportController
+	NewsController         *news.AdminNewsController
+	CorporationController  *corporation.AdminCorporationController
+	InstallationController *installation.AdminInstallationController
+	BidController          *bid.AdminBidController
+>>>>>>> develop
 }
 
 type Controllers struct {

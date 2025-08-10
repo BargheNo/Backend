@@ -1,4 +1,4 @@
-package serviceimpl
+package service
 
 import (
 	"encoding/json"
@@ -6,33 +6,33 @@ import (
 
 	"github.com/BargheNo/Backend/bootstrap"
 	reportdto "github.com/BargheNo/Backend/internal/application/dto/report"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	repositoryimpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type ReportService struct {
 	constants           *bootstrap.Constants
-	userService         service.UserService
-	maintenanceService  service.MaintenanceService
-	installationService service.InstallationService
+	userService         usecase.UserService
+	maintenanceService  usecase.MaintenanceService
+	installationService usecase.InstallationService
 	rabbitMQ            message.Broker
-	reportRepository    repository.ReportRepository
+	reportRepository    postgres.ReportRepository
 	db                  database.Database
 }
 
 func NewReportService(
 	constants *bootstrap.Constants,
-	userService service.UserService,
-	maintenanceService service.MaintenanceService,
-	installationService service.InstallationService,
+	userService usecase.UserService,
+	maintenanceService usecase.MaintenanceService,
+	installationService usecase.InstallationService,
 	rabbitMQ message.Broker,
-	reportRepository repository.ReportRepository,
+	reportRepository postgres.ReportRepository,
 	db database.Database,
 ) *ReportService {
 	return &ReportService{
@@ -46,8 +46,31 @@ func NewReportService(
 	}
 }
 
+func (reportService *ReportService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetReportSortableColumns()
+	sortBy := sortby.ReportSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
+	}
+	return sortby.NewsSortByCreatedAt.DBColumn()
+}
+
+func (reportService *ReportService) getReport(reportID uint) (*entity.Report, error) {
+	report, err := reportService.reportRepository.FindReportByID(reportService.db, reportID)
+	if err != nil {
+		return nil, err
+	}
+	if report == nil {
+		return nil, exception.NotFoundError{Item: reportService.constants.Field.Report}
+	}
+	return report, nil
+}
+
 func (reportService *ReportService) sendReportNotification(acceptedPermissions []enum.PermissionType, reportID uint, notificationType enum.NotificationType) {
-	admins := reportService.userService.GetUsersByPermission(acceptedPermissions)
+	admins, err := reportService.userService.GetUsersByPermission(acceptedPermissions)
+	if err != nil {
+		log.Printf("error during send notification after bid: %v", err)
+	}
 	for _, admin := range admins {
 		additionalData := reportdto.ReportNotificationData{
 			ReportID: reportID,
@@ -73,9 +96,7 @@ func (reportService *ReportService) sendReportNotification(acceptedPermissions [
 	}
 }
 
-func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest) {
-	reportService.userService.GetUserCredential(requestInfo.ReportedByID)
-	reportService.maintenanceService.GetMaintenanceRecordByID(requestInfo.ObjectID)
+func (reportService *ReportService) createReport(requestInfo reportdto.CreateReportRequest) (*entity.Report, error) {
 	report := &entity.Report{
 		ObjectID:       requestInfo.ObjectID,
 		ObjectType:     requestInfo.ObjectType,
@@ -87,90 +108,160 @@ func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdt
 
 	err := reportService.reportRepository.CreateReport(reportService.db, report)
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+	return report, nil
+}
+
+func (reportService *ReportService) mapToFilterStatuses(enumStatus uint) []enum.ReportStatus {
+	statuses := enum.GetAllReportStatuses()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.ReportStatusAll {
+				return statuses
+			}
+			return []enum.ReportStatus{status}
+		}
+	}
+	return statuses
+}
+
+func (reportService *ReportService) GetReportSortableColumns() []reportdto.GetReportEnumResponse {
+	columns := sortby.GetReportSortableColumns()
+	response := make([]reportdto.GetReportEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = reportdto.GetReportEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
+}
+
+func (reportService *ReportService) CreateMaintenanceReport(requestInfo reportdto.CreateReportRequest) error {
+	if err := reportService.maintenanceService.ValidateCustomerRecord(requestInfo.ObjectID, requestInfo.ReportedByID); err != nil {
+		return err
+	}
+
+	report, err := reportService.createReport(requestInfo)
+	if err != nil {
+		return err
 	}
 
 	acceptedPermissions := []enum.PermissionType{enum.ReportViewAll, enum.PermissionAll}
 	reportService.sendReportNotification(acceptedPermissions, report.ID, enum.MaintenanceReportCreated)
+	return nil
 }
 
-func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) {
-	reportService.userService.GetUserCredential(requestInfo.ReportedByID)
-	reportService.installationService.GetPanelByID(requestInfo.ObjectID)
-	report := &entity.Report{
-		ObjectID:       requestInfo.ObjectID,
-		ObjectType:     requestInfo.ObjectType,
-		ReportedByID:   requestInfo.ReportedByID,
-		ReportedByType: requestInfo.ReportedByType,
-		Description:    requestInfo.Description,
-		Status:         enum.ReportStatusPending,
+func (reportService *ReportService) CreatePanelReport(requestInfo reportdto.CreateReportRequest) error {
+	if _, err := reportService.installationService.ValidatePanelOwnership(requestInfo.ObjectID, requestInfo.ReportedByID); err != nil {
+		return err
 	}
-	err := reportService.reportRepository.CreateReport(reportService.db, report)
+
+	report, err := reportService.createReport(requestInfo)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	acceptedPermissions := []enum.PermissionType{enum.ReportViewAll, enum.PermissionAll}
 	reportService.sendReportNotification(acceptedPermissions, report.ID, enum.PanelReportCreated)
+	return nil
 }
 
-func (reportService *ReportService) GetMaintenanceReport(reportID uint) reportdto.MaintenanceReportResponse {
-	report, exist := reportService.reportRepository.GetReportByID(reportService.db, reportID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
-		panic(notFoundError)
+func (reportService *ReportService) GetMaintenanceReport(reportID uint) (reportdto.MaintenanceReportResponse, error) {
+	report, err := reportService.getReport(reportID)
+	if err != nil {
+		return reportdto.MaintenanceReportResponse{}, err
 	}
-	maintenanceRecord := reportService.maintenanceService.GetMaintenanceRecordByID(report.ObjectID)
-	reportResponse := reportdto.MaintenanceReportResponse{
-		ID:                report.ID,
-		Description:       report.Description,
-		MaintenanceRecord: maintenanceRecord,
-		Status:            report.Status.String(),
+
+	maintenanceRequest, err := reportService.maintenanceService.GetRequestByAdmin(report.ObjectID)
+	if err != nil {
+		return reportdto.MaintenanceReportResponse{}, err
 	}
-	return reportResponse
+
+	return reportdto.MaintenanceReportResponse{
+		ID:                 report.ID,
+		Description:        report.Description,
+		MaintenanceRequest: maintenanceRequest,
+		Status:             report.Status.String(),
+	}, nil
 }
 
-func (reportService *ReportService) GetPanelReport(reportID uint) reportdto.PanelReportResponse {
-	report, exist := reportService.reportRepository.GetReportByID(reportService.db, reportID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
-		panic(notFoundError)
+func (reportService *ReportService) GetPanelReport(reportID uint) (reportdto.PanelReportResponse, error) {
+	report, err := reportService.getReport(reportID)
+	if err != nil {
+		return reportdto.PanelReportResponse{}, err
 	}
-	panel := reportService.installationService.GetPanelByID(report.ObjectID)
-	reportResponse := reportdto.PanelReportResponse{
+
+	panel, err := reportService.installationService.GetPanelByAdmin(report.ObjectID)
+	if err != nil {
+		return reportdto.PanelReportResponse{}, err
+	}
+
+	return reportdto.PanelReportResponse{
 		ID:          report.ID,
 		Panel:       panel,
 		Description: report.Description,
 		Status:      report.Status.String(),
-	}
-	return reportResponse
+	}, nil
 }
 
-func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) []reportdto.MaintenanceReportResponse {
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	reports := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, paginationModifier, sortingModifier)
+func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(reportService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
+
+	statuses := reportService.mapToFilterStatuses(requestInfo.Status)
+
+	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses, options)
+	if err != nil {
+		return nil, 0, err
+	}
 	reportResponses := make([]reportdto.MaintenanceReportResponse, len(reports))
+
 	for i, report := range reports {
-		maintenanceRecord := reportService.maintenanceService.GetMaintenanceRecordByID(report.ObjectID)
+		maintenanceRequest, err := reportService.maintenanceService.GetRequestByAdmin(report.ObjectID)
+		if err != nil {
+			return nil, 0, err
+		}
+
 		reportResponses[i] = reportdto.MaintenanceReportResponse{
-			ID:                report.ID,
-			Description:       report.Description,
-			MaintenanceRecord: maintenanceRecord,
-			Status:            report.Status.String(),
+			ID:                 report.ID,
+			Description:        report.Description,
+			MaintenanceRequest: maintenanceRequest,
+			Status:             report.Status.String(),
 		}
 	}
 
-	return reportResponses
+	count, err := reportService.reportRepository.CountReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return reportResponses, count, nil
 }
 
-func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) []reportdto.PanelReportResponse {
-	paginationModifier := repositoryimpl.NewPaginationModifier(requestInfo.Limit, requestInfo.Offset)
-	sortingModifier := repositoryimpl.NewSortingModifier("created_at", true)
-	reports := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, paginationModifier, sortingModifier)
+func (reportService *ReportService) GetPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(reportService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
+
+	statuses := reportService.mapToFilterStatuses(requestInfo.Status)
+
+	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, statuses, options)
+	if err != nil {
+		return nil, 0, err
+	}
 	reportResponses := make([]reportdto.PanelReportResponse, len(reports))
+
 	for i, report := range reports {
-		panel := reportService.installationService.GetPanelByID(report.ObjectID)
+		panel, err := reportService.installationService.GetPanelByAdmin(report.ObjectID)
+		if err != nil {
+			return nil, 0, err
+		}
+
 		reportResponses[i] = reportdto.PanelReportResponse{
 			ID:          report.ID,
 			Panel:       panel,
@@ -179,24 +270,29 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 		}
 	}
 
-	return reportResponses
+	count, err := reportService.reportRepository.CountReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return reportResponses, count, nil
 }
 
-func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveReportRequest) {
-	reportService.userService.GetUserCredential(requestInfo.UserID)
-	report, exist := reportService.reportRepository.GetReportByID(reportService.db, requestInfo.ReportID)
-	if !exist {
-		notFoundError := exception.NotFoundError{Item: reportService.constants.Field.Report}
-		panic(notFoundError)
+func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveReportRequest) error {
+	report, err := reportService.getReport(requestInfo.ReportID)
+	if err != nil {
+		return err
 	}
+
 	if report.Status == enum.ReportStatusResolved {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(reportService.constants.Field.Report, reportService.constants.Tag.AlreadyResolved)
-		panic(conflictErrors)
+		return conflictErrors
 	}
+
 	report.Status = enum.ReportStatusResolved
-	err := reportService.reportRepository.UpdateReport(reportService.db, report)
-	if err != nil {
-		panic(err)
+	if err = reportService.reportRepository.UpdateReport(reportService.db, report); err != nil {
+		return err
 	}
+	return nil
 }
