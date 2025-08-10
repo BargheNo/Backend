@@ -15,5 +15,6 @@ type News struct {
 	CoverImage  string  `gorm:"type:text;default:null"`
 	Media       []Media `gorm:"polymorphic:Owner;polymorphicValue:news"`
 	Likes       []Like  `gorm:"polymorphic:Owner;polymorphicValue:news"`
+	LikeCount   int     `gorm:"not null;default:0"`
 	Status      enum.NewsStatus
 }

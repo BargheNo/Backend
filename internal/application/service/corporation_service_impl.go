@@ -9,11 +9,11 @@ import (
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type CorporationService struct {
@@ -43,6 +43,15 @@ func NewCorporationService(
 	}
 }
 
+func (corporationService *CorporationService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetCorporationSortableColumns()
+	sortBy := sortby.CorporationSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
+	}
+	return sortby.NewsSortByCreatedAt.DBColumn()
+}
+
 func (corporationService *CorporationService) mapStatusIDToAllowedStatuses(statusID uint) []enum.CorporationStatus {
 	status := enum.CorporationStatus(statusID)
 
@@ -59,14 +68,28 @@ func (corporationService *CorporationService) mapStatusIDToAllowedStatuses(statu
 	return allowedStatuses
 }
 
-func (corporationService *CorporationService) GetCorporationStatuses() []corporationdto.GetStatusesResponse {
+func (corporationService *CorporationService) GetCorporationStatuses() []corporationdto.GetEnumResponse {
 	statuses := enum.GetAllCorporationStatuses()
-	response := make([]corporationdto.GetStatusesResponse, len(statuses))
+	response := make([]corporationdto.GetEnumResponse, len(statuses))
 	for i, status := range statuses {
-		response[i] = corporationdto.GetStatusesResponse{
-			ID:     uint(status),
-			Status: status.String(),
+		response[i] = corporationdto.GetEnumResponse{
+			ID:   uint(status),
+			Name: status.String(),
 		}
+	}
+	return response
+}
+
+func (corporationService *CorporationService) GetCorporationSortableColumns() []corporationdto.GetEnumResponse {
+	columns := sortby.GetCorporationSortableColumns()
+	response := make([]corporationdto.GetEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = corporationdto.GetEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
 	}
 	return response
 }
@@ -137,7 +160,7 @@ func (corporationService *CorporationService) ISCorporationApproved(corporationI
 	}
 
 	if corporation.Status != enum.CorpStatusApproved {
-		exception.NewUnapprovedCorporationForbiddenError()
+		return exception.NewUnapprovedCorporationForbiddenError()
 	}
 	return nil
 }
@@ -746,7 +769,7 @@ func (corporationService *CorporationService) GetUserCorporations(userID uint) (
 
 func (corporationService *CorporationService) GetAvailableCorporations() ([]corporationdto.CorporationCredentialResponse, error) {
 	allowedStatuses := []enum.CorporationStatus{enum.CorpStatusApproved}
-	corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses)
+	corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -762,26 +785,32 @@ func (corporationService *CorporationService) GetAvailableCorporations() ([]corp
 	return response, nil
 }
 
-func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, error) {
+func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, int64, error) {
 	allowedStatuses := corporationService.mapStatusIDToAllowedStatuses(listInfo.Status)
 
-	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+	options := postgres.NewQueryOptions().
+		WithPagination(listInfo.Limit, listInfo.Offset).
+		WithSorting(corporationService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
 
-	corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, sortingModifier, paginationModifier)
+	corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
 	for i, corporation := range corporations {
 		credentials, err := corporationService.GetCorporationCredentials(corporation.ID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		response[i] = credentials
 	}
-	return response, nil
+
+	count, err := corporationService.corporationRepository.CountCorporationsByStatus(corporationService.db, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+	return response, count, nil
 }
 
 func (corporationService *CorporationService) GetCorporationByAdmin(corporationID uint) (corporationdto.CorporationPrivateInfoResponse, error) {
@@ -797,21 +826,20 @@ func (corporationService *CorporationService) GetCorporationByAdmin(corporationI
 	return details, nil
 }
 
-func (corporationService *CorporationService) GetReviewActions() []corporationdto.GetStatusesResponse {
+func (corporationService *CorporationService) GetReviewActions() []corporationdto.GetEnumResponse {
 	actions := enum.GetAllReviewActions()
-	response := make([]corporationdto.GetStatusesResponse, len(actions))
+	response := make([]corporationdto.GetEnumResponse, len(actions))
 	for i, action := range actions {
-		response[i] = corporationdto.GetStatusesResponse{
-			ID:     uint(action),
-			Status: action.String(),
+		response[i] = corporationdto.GetEnumResponse{
+			ID:   uint(action),
+			Name: action.String(),
 		}
 	}
 	return response
 }
 
 func (corporationService *CorporationService) GetCorporationReviewsByAdmin(corporationID uint) ([]corporationdto.GetAdminCorporationReview, error) {
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
-	reviews, err := corporationService.corporationRepository.FindCorporationReviews(corporationService.db, corporationID, sortingModifier)
+	reviews, err := corporationService.corporationRepository.FindCorporationReviews(corporationService.db, corporationID, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -17,5 +17,6 @@ type Post struct {
 	Corporation   Corporation `gorm:"foreignKey:CorporationID"`
 	Media         []Media     `gorm:"polymorphic:Owner;polymorphicValue:posts"`
 	Likes         []Like      `gorm:"polymorphic:Owner;polymorphicValue:posts"`
+	LikeCount     int         `gorm:"not null;default:0"`
 	Status        enum.PostStatus
 }

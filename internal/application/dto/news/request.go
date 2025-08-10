@@ -40,17 +40,16 @@ type GetAdminNewsListRequest struct {
 	Status uint
 	Offset int
 	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
 type GetPublicNewsListRequest struct {
 	Offset int
 	Limit  int
+	SortBy uint
+	Asc    bool
 }
-
-// type GetNewsRequest struct {
-// 	NewsID   uint
-// 	UserType enum.UserType
-// }
 
 type AddNewsMediaRequest struct {
 	NewsID   uint
@@ -63,4 +62,9 @@ type AccessMediaRequest struct {
 	AuthorID uint
 	MediaID  uint
 	UserType enum.UserType
+}
+
+type GetNewsByCustomer struct {
+	NewsID uint
+	UserID uint
 }

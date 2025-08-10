@@ -135,23 +135,30 @@ func (newsController *AdminNewsController) UnpublishNews(ctx *gin.Context) {
 
 func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 	type getNewsParams struct {
-		Status uint `form:"status" validate:"required"`
+		Status   uint `form:"status"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
 	params := controller.Validated[getNewsParams](ctx)
-	pagination := controller.GetPagination(ctx, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
 
 	getNewsRequest := newsdto.GetAdminNewsListRequest{
 		Status: params.Status,
 		Offset: offset,
 		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
-	news, err := newsController.newsService.GetAdminNewsList(getNewsRequest)
+	news, count, err := newsController.newsService.GetAdminNewsList(getNewsRequest)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(news, count, offset, limit)
 
-	controller.Response(ctx, 200, "", news)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (newsController *AdminNewsController) GetNews(ctx *gin.Context) {

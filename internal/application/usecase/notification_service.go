@@ -7,11 +7,12 @@ import (
 )
 
 type NotificationService interface {
+	GetNotificationSortableColumns() []notificationdto.NotificationEnumResponse
 	CreateAndSendNotification(typeName enum.NotificationType, recipientID uint, data []byte) error
 	CreateNotificationSettings(userID uint) error
 	GetNotificationsType() ([]notificationdto.NotificationTypeResponse, error)
 	GetUserNotificationSettings(userID uint) ([]notificationdto.NotificationSettingResponse, error)
-	GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) ([]notificationdto.NotificationListResponse, error)
+	GetUserNotifications(notificationsRequest notificationdto.NotificationListRequest) ([]notificationdto.NotificationListResponse, int64, error)
 	MarkAsRead(notificationInfo notificationdto.NotificationInfoRequest) error
 	SendNotification(notification *entity.Notification, notificationType *entity.NotificationType) error
 	UpdateNotificationSettings(newSettingInfo notificationdto.UpdateSettingsRequest) error

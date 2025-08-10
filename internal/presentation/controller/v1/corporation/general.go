@@ -37,3 +37,8 @@ func (corporationController *GeneralCorporationController) GetCorporations(ctx *
 	}
 	controller.Response(ctx, 200, "", corporations)
 }
+
+func (corporationController *GeneralCorporationController) GetSortableFields(ctx *gin.Context) {
+	columns := corporationController.corporationService.GetCorporationSortableColumns()
+	controller.Response(ctx, 200, "", columns)
+}

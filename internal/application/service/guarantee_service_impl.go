@@ -134,16 +134,26 @@ func (guaranteeService *GuaranteeService) GetCorporationGuarantee(request guaran
 	return guarantee, nil
 }
 
+func (guaranteeService *GuaranteeService) mapToFilterStatuses(enumStatus uint) []enum.GuaranteeStatus {
+	statuses := enum.GetAllGuaranteeStatuses()
+	for _, status := range statuses {
+		if uint(status) == enumStatus {
+			if status == enum.GuaranteeStatusAll {
+				return statuses
+			}
+			return []enum.GuaranteeStatus{status}
+		}
+	}
+	return statuses
+}
+
 func (guaranteeService *GuaranteeService) GetCorporationGuarantees(request guaranteedto.GetGuaranteesRequest) ([]guaranteedto.GuaranteeResponse, error) {
 	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
 	if err != nil {
 		return nil, err
 	}
 
-	allowedStatus := []enum.GuaranteeStatus{enum.GuaranteeStatus(request.Status)}
-	if enum.GuaranteeStatus(request.Status) == enum.GuaranteeStatusAll {
-		allowedStatus = enum.GetAllGuaranteeStatuses()
-	}
+	allowedStatus := guaranteeService.mapToFilterStatuses(request.Status)
 
 	guarantees, err := guaranteeService.guaranteeRepository.FindCorporationGuarantees(guaranteeService.db, request.CorporationID, allowedStatus)
 	if err != nil {

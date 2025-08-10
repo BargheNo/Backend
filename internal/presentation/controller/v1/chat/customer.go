@@ -70,37 +70,44 @@ func (chatController *CustomerChatController) GetUserRooms(ctx *gin.Context) {
 
 func (chatController *CustomerChatController) GetMessages(ctx *gin.Context) {
 	type getMessagesParams struct {
-		RoomID uint `uri:"roomID" validate:"required"`
+		RoomID   uint `uri:"roomID" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
 	}
-	param := controller.Validated[getMessagesParams](ctx)
+	params := controller.Validated[getMessagesParams](ctx)
 	userID, _ := ctx.Get(chatController.constants.Context.ID)
-	pagination := controller.GetPagination(ctx, chatController.pagination.DefaultPage, chatController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, chatController.pagination.DefaultPage, chatController.pagination.DefaultPageSize)
 
 	roomInfo := chatdto.GetRoomMessageRequest{
-		RoomID: param.RoomID,
+		RoomID: params.RoomID,
 		UserID: userID.(uint),
 		Offset: offset,
 		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
-	messages, err := chatController.chatService.GetRoomMessages(roomInfo)
+	messages, count, err := chatController.chatService.GetRoomMessages(roomInfo)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(messages, count, offset, limit)
 
-	controller.Response(ctx, 200, "", messages)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (chatController *CustomerChatController) BlockRoom(ctx *gin.Context) {
 	type getMessagesParams struct {
 		RoomID uint `uri:"roomID" validate:"required"`
 	}
-	param := controller.Validated[getMessagesParams](ctx)
+	params := controller.Validated[getMessagesParams](ctx)
 	userID, _ := ctx.Get(chatController.constants.Context.ID)
 
 	blockRequest := chatdto.BlockServiceChatRequest{
 		UserID:     userID.(uint),
-		RoomID:     param.RoomID,
+		RoomID:     params.RoomID,
 		BlockedBy:  enum.BlockedByUser,
 		ChatStatus: enum.ChatStatusBlocked,
 	}
@@ -117,12 +124,12 @@ func (chatController *CustomerChatController) UnBlockRoom(ctx *gin.Context) {
 	type getMessagesParams struct {
 		RoomID uint `uri:"roomID" validate:"required"`
 	}
-	param := controller.Validated[getMessagesParams](ctx)
+	params := controller.Validated[getMessagesParams](ctx)
 	userID, _ := ctx.Get(chatController.constants.Context.ID)
 
 	blockRequest := chatdto.BlockServiceChatRequest{
 		UserID:     userID.(uint),
-		RoomID:     param.RoomID,
+		RoomID:     params.RoomID,
 		BlockedBy:  enum.BlockedByUser,
 		ChatStatus: enum.ChatStatusActive,
 	}
@@ -140,16 +147,16 @@ func (chatController *CustomerChatController) HandleWebsocket(ctx *gin.Context) 
 		RoomID uint   `uri:"roomID" validate:"required"`
 		Token  string `uri:"token" validate:"required"`
 	}
-	param := controller.Validated[roomConnectionParams](ctx)
+	params := controller.Validated[roomConnectionParams](ctx)
 
-	claims, err := chatController.jwtService.ValidateToken(param.Token)
+	claims, err := chatController.jwtService.ValidateToken(params.Token)
 	if err != nil {
 		panic(err)
 	}
 	userID := uint(claims["sub"].(float64))
 	conn, _ := ctx.Get(chatController.constants.Context.WebsocketConnection)
 
-	client := websocket.NewClient(chatController.hub, conn, param.RoomID, userID, chatController.websocketSetting, chatController.chatService, nil)
+	client := websocket.NewClient(chatController.hub, conn, params.RoomID, userID, chatController.websocketSetting, chatController.chatService, nil)
 	client.Hub.Register <- client
 
 	go client.ReadPump()

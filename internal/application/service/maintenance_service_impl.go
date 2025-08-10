@@ -7,10 +7,10 @@ import (
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-	postgresImpl "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 )
 
 type MaintenanceService struct {
@@ -41,6 +41,15 @@ func NewMaintenanceService(
 		maintenanceRepository: maintenanceRepository,
 		db:                    db,
 	}
+}
+
+func (maintenanceService *MaintenanceService) getSortByColumn(requested uint) string {
+	allowed := sortby.GetMaintenanceSortableColumns()
+	sortBy := sortby.MaintenanceSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
+	}
+	return sortby.NewsSortByCreatedAt.DBColumn()
 }
 
 func (maintenanceService *MaintenanceService) getRequest(requestID uint) (*entity.MaintenanceRequest, error) {
@@ -90,6 +99,20 @@ func (maintenanceService *MaintenanceService) getRequestRecord(requestID uint) (
 		return nil, notFoundError
 	}
 	return maintenanceRecord, nil
+}
+
+func (maintenanceService *MaintenanceService) GetMaintenanceSortableColumns() []maintenancedto.MaintenanceEnumResponse {
+	columns := sortby.GetMaintenanceSortableColumns()
+	response := make([]maintenancedto.MaintenanceEnumResponse, len(columns))
+	i := 0
+	for col, _ := range columns {
+		response[i] = maintenancedto.MaintenanceEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
 }
 
 func (maintenanceService *MaintenanceService) ValidateCustomerRecord(recordID, userID uint) error {
@@ -169,11 +192,11 @@ func (maintenanceService *MaintenanceService) mapStatusForRole(statusID uint, ag
 	return allowedStatuses
 }
 
-func (maintenanceService *MaintenanceService) GetMaintenanceUrgencyLevels() []maintenancedto.MaintenanceStatusesResponse {
+func (maintenanceService *MaintenanceService) GetMaintenanceUrgencyLevels() []maintenancedto.MaintenanceEnumResponse {
 	levels := enum.GetAllUrgencyLevels()
-	response := make([]maintenancedto.MaintenanceStatusesResponse, len(levels))
+	response := make([]maintenancedto.MaintenanceEnumResponse, len(levels))
 	for i, level := range levels {
-		response[i] = maintenancedto.MaintenanceStatusesResponse{
+		response[i] = maintenancedto.MaintenanceEnumResponse{
 			ID:   uint(level),
 			Name: level.String(),
 		}
@@ -181,11 +204,11 @@ func (maintenanceService *MaintenanceService) GetMaintenanceUrgencyLevels() []ma
 	return response
 }
 
-func (maintenanceService *MaintenanceService) GetMaintenanceRequestStatuses(agent enum.AgentType) []maintenancedto.MaintenanceStatusesResponse {
+func (maintenanceService *MaintenanceService) GetMaintenanceRequestStatuses(agent enum.AgentType) []maintenancedto.MaintenanceEnumResponse {
 	statuses := enum.GetAllowedMaintenanceRequestStatuses(agent)
-	response := make([]maintenancedto.MaintenanceStatusesResponse, len(statuses))
+	response := make([]maintenancedto.MaintenanceEnumResponse, len(statuses))
 	for i, status := range statuses {
-		response[i] = maintenancedto.MaintenanceStatusesResponse{
+		response[i] = maintenancedto.MaintenanceEnumResponse{
 			ID:   uint(status),
 			Name: status.String(),
 		}
@@ -207,11 +230,11 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 	}
 
 	allowedStatus := []enum.MaintenanceRequestStatus{enum.MaintenanceRequestStatusPending}
-	currentActiveRequest, err := maintenanceService.maintenanceRepository.FindRequestsByPanelIDAndStatus(maintenanceService.db, request.PanelID, allowedStatus)
+	currentActiveRequest, err := maintenanceService.maintenanceRepository.FindRequestsByPanelIDAndStatus(maintenanceService.db, request.PanelID, allowedStatus, nil)
 	if err != nil {
 		return err
 	}
-	if currentActiveRequest != nil {
+	if len(currentActiveRequest) > 0 {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.Pending)
 		return conflictErrors
@@ -239,15 +262,16 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 	return nil
 }
 
-func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, error) {
+func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error) {
 	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
 
-	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+	options := postgres.NewQueryOptions().
+		WithPagination(listInfo.Limit, listInfo.Offset).
+		WithSorting(maintenanceService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
 
-	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByCustomerID(maintenanceService.db, listInfo.OwnerID, allowedStatus, paginationModifier, sortingModifier)
+	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByCustomerID(maintenanceService.db, listInfo.OwnerID, allowedStatus, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
 
@@ -258,12 +282,12 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 		}
 		panel, err := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		corporation, err := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
@@ -278,22 +302,28 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
 		}
 	}
-	return response, nil
+	count, err := maintenanceService.maintenanceRepository.CountRequestsByCustomerID(maintenanceService.db, listInfo.OwnerID, allowedStatus)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
 }
 
-func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequests(listInfo maintenancedto.CustomerPanelMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, error) {
+func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequests(listInfo maintenancedto.CustomerPanelMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error) {
 	if _, err := maintenanceService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
 
-	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+	options := postgres.NewQueryOptions().
+		WithPagination(listInfo.Limit, listInfo.Offset).
+		WithSorting(maintenanceService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
 
-	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByPanelIDAndStatus(maintenanceService.db, listInfo.PanelID, allowedStatus, paginationModifier, sortingModifier)
+	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByPanelIDAndStatus(maintenanceService.db, listInfo.PanelID, allowedStatus, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
 
@@ -304,12 +334,12 @@ func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequest
 		}
 		panel, err := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		corporation, err := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
@@ -324,7 +354,12 @@ func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequest
 			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
 		}
 	}
-	return response, nil
+	count, err := maintenanceService.maintenanceRepository.CountRequestsByPanelIDAndStatus(maintenanceService.db, listInfo.PanelID, allowedStatus)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
 }
 
 func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) (maintenancedto.CustomerMaintenanceRequestResponse, error) {
@@ -495,20 +530,21 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 	return nil
 }
 
-func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) ([]maintenancedto.CorporationMaintenanceListResponse, error) {
+func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) ([]maintenancedto.CorporationMaintenanceListResponse, int64, error) {
 	err := maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCorporation)
 
-	paginationModifier := postgresImpl.NewPaginationModifier(listInfo.Limit, listInfo.Offset)
-	sortingModifier := postgresImpl.NewSortingModifier("created_at", true)
+	options := postgres.NewQueryOptions().
+		WithPagination(listInfo.Limit, listInfo.Offset).
+		WithSorting(maintenanceService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
 
-	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatus(maintenanceService.db, listInfo.CorporationID, allowedStatus, paginationModifier, sortingModifier)
+	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatus(maintenanceService.db, listInfo.CorporationID, allowedStatus, options)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	response := make([]maintenancedto.CorporationMaintenanceListResponse, len(maintenanceRequests))
 
@@ -520,7 +556,7 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 		}
 		panel, err := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		response[i] = maintenancedto.CorporationMaintenanceListResponse{
@@ -534,7 +570,12 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
 		}
 	}
-	return response, nil
+	count, err := maintenanceService.maintenanceRepository.CountCorporationRequestsByStatus(maintenanceService.db, listInfo.CorporationID, allowedStatus)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
 }
 
 func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) (maintenancedto.CorporationMaintenanceResponse, error) {

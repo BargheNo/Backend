@@ -130,9 +130,17 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		}
 	}
 
-	blog := routerGroup.Group("/blog")
+	news := routerGroup.Group("/news/:newsID/like")
 	{
-		blog.POST("/:postID/like", app.Controllers.Customer.BlogController.LikePost)
-		blog.DELETE("/:postID/like", app.Controllers.Customer.BlogController.UnlikePost)
+		news.POST("", app.Controllers.Customer.NewsController.LikeNews)
+		news.DELETE("", app.Controllers.Customer.NewsController.DislikeNews)
+		news.GET("", app.Controllers.Customer.NewsController.IsUserLikedNews)
+	}
+
+	blog := routerGroup.Group("/blog/:postID/like")
+	{
+		blog.POST("", app.Controllers.Customer.BlogController.LikePost)
+		blog.DELETE("", app.Controllers.Customer.BlogController.UnlikePost)
+		blog.GET("", app.Controllers.Customer.BlogController.IsUserLikedBlog)
 	}
 }

@@ -99,12 +99,16 @@ func (bidController *CorporationBidController) SetBid(ctx *gin.Context) {
 func (bidController *CorporationBidController) GetBids(ctx *gin.Context) {
 	type getBidsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status" validate:"required"`
+		Status        uint `form:"status"`
+		Page          int  `form:"page"`
+		PageSize      int  `form:"pageSize"`
+		SortBy        uint `form:"sortBy"`
+		Asc           bool `form:"asc"`
 	}
 	params := controller.Validated[getBidsParams](ctx)
 	userID, _ := ctx.Get(bidController.constants.Context.ID)
-	pagination := controller.GetPagination(ctx, bidController.pagination.DefaultPage, bidController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, bidController.pagination.DefaultPage, bidController.pagination.DefaultPageSize)
 
 	bidsRequest := biddto.GetCorporationBidsRequest{
 		CorporationID: params.CorporationID,
@@ -112,13 +116,17 @@ func (bidController *CorporationBidController) GetBids(ctx *gin.Context) {
 		Status:        params.Status,
 		Offset:        offset,
 		Limit:         limit,
+		SortBy:        params.SortBy,
+		Asc:           params.Asc,
 	}
-	bids, err := bidController.bidService.GetCorporationBids(bidsRequest)
+	bids, count, err := bidController.bidService.GetCorporationBids(bidsRequest)
 	if err != nil {
 		panic(err)
 	}
 
-	controller.Response(ctx, 200, "", bids)
+	data := controller.NewPaginatedResponse(bids, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (bidController *CorporationBidController) GetBid(ctx *gin.Context) {

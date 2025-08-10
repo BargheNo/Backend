@@ -24,12 +24,18 @@ type UserRepository interface {
 	CreatePermission(db database.Database, permission *entity.Permission) error
 	AssignPermissionToRole(db database.Database, role *entity.Role, permission *entity.Permission) error
 	AssignRoleToUser(db database.Database, user *entity.User, role *entity.Role) error
-	FindAllPermissions(db database.Database) ([]*entity.Permission, error)
-	FindAllRoles(db database.Database) ([]*entity.Role, error)
+	FindAllPermissions(db database.Database, options *QueryOptions) ([]*entity.Permission, error)
+	CountAllPermissions(db database.Database) (int64, error)
+	FindAllRoles(db database.Database, options *QueryOptions) ([]*entity.Role, error)
+	CountAllRoles(db database.Database) (int64, error)
 	FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, error)
+	FindRolesByPermission(db database.Database, permissionID uint, options *QueryOptions) ([]*entity.Role, error)
+	CountRolesByPermission(db database.Database, permissionID uint) (int64, error)
 	FindRoleByID(db database.Database, roleID uint) (*entity.Role, error)
-	FindUsersByRoleID(db database.Database, roleID uint) ([]*entity.User, error)
-	FindUserByStatus(db database.Database, status []enum.UserStatus, opts ...QueryModifier) ([]*entity.User, error)
+	FindUsersByRoleID(db database.Database, roleID uint, options *QueryOptions) ([]*entity.User, error)
+	CountUsersByRoleID(db database.Database, roleID uint) (int64, error)
+	FindUserByStatus(db database.Database, status []enum.UserStatus, options *QueryOptions) ([]*entity.User, error)
+	CountUserByStatus(db database.Database, statuses []enum.UserStatus) (int64, error)
 	FindUsersByPermission(db database.Database, permissionTypes []enum.PermissionType) ([]*entity.User, error)
 	DeleteRole(db database.Database, roleID uint) error
 	UpdateRole(db database.Database, role *entity.Role) error

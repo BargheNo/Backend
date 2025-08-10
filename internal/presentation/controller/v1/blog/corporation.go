@@ -213,11 +213,15 @@ func (blogController *CorporationBlogController) DeletePostMedia(ctx *gin.Contex
 func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 	type getPostsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status" validate:"required"`
+		Status        uint `form:"status"`
+		Page          int  `form:"page"`
+		PageSize      int  `form:"pageSize"`
+		SortBy        uint `form:"sortBy"`
+		Asc           bool `form:"asc"`
 	}
 	params := controller.Validated[getPostsParams](ctx)
-	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
 
 	userID, _ := ctx.Get(blogController.constants.Context.ID)
 
@@ -227,13 +231,16 @@ func (blogController *CorporationBlogController) GetPosts(ctx *gin.Context) {
 		Status:        params.Status,
 		Offset:        offset,
 		Limit:         limit,
+		SortBy:        params.SortBy,
+		Asc:           params.Asc,
 	}
-	posts, err := blogController.blogService.GetCorporationPosts(getPostsRequest)
+	posts, count, err := blogController.blogService.GetCorporationPosts(getPostsRequest)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(posts, count, offset, limit)
 
-	controller.Response(ctx, 200, "", posts)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (blogController *CorporationBlogController) GetPost(ctx *gin.Context) {

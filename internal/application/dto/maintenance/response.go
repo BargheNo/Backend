@@ -9,7 +9,7 @@ import (
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
-type MaintenanceStatusesResponse struct {
+type MaintenanceEnumResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }

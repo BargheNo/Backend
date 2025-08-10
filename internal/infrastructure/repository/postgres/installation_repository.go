@@ -3,7 +3,7 @@ package postgres
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -13,6 +13,10 @@ type InstallationRepository struct{}
 func NewInstallationRepository() *InstallationRepository {
 	return &InstallationRepository{}
 }
+
+const (
+	queryByStatus = "status IN ?"
+)
 
 func (repo *InstallationRepository) FindRequestByID(db database.Database, requestID uint) (*entity.InstallationRequest, error) {
 	var request entity.InstallationRequest
@@ -38,13 +42,11 @@ func (repo *InstallationRepository) FindRequestByOwner(db database.Database, req
 	return request, nil
 }
 
-func (repo *InstallationRepository) FindRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) ([]*entity.InstallationRequest, error) {
+func (repo *InstallationRepository) FindRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus, options *postgres.QueryOptions) ([]*entity.InstallationRequest, error) {
 	var requests []*entity.InstallationRequest
-	query := db.GetDB().Where("status IN ?", status)
+	query := db.GetDB().Where(queryByStatus, status)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&requests)
 	if result.Error != nil {
@@ -53,19 +55,45 @@ func (repo *InstallationRepository) FindRequestsByStatus(db database.Database, s
 	return requests, nil
 }
 
-func (repo *InstallationRepository) FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, opts ...repository.QueryModifier) ([]*entity.InstallationRequest, error) {
+func (repo *InstallationRepository) CountRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.InstallationRequest{}).
+		Where(queryByStatus, status).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *InstallationRepository) FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, options *postgres.QueryOptions) ([]*entity.InstallationRequest, error) {
 	var requests []*entity.InstallationRequest
 	query := db.GetDB().Where("owner_id = ? and status IN ?", ownerID, status)
 
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 
 	result := query.Find(&requests)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return requests, nil
+}
+
+func (repo *InstallationRepository) CountOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.InstallationRequest{}).
+		Where("owner_id = ? and status IN ?", ownerID, status).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *InstallationRepository) FindOwnerRequestByName(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, name string) (*entity.InstallationRequest, error) {
@@ -116,12 +144,10 @@ func (repo *InstallationRepository) FindCustomerPanel(db database.Database, pane
 	return panel, nil
 }
 
-func (repo *InstallationRepository) FindCorporationPanels(db database.Database, corporationID uint, allowedStatus []enum.PanelStatus, opts ...repository.QueryModifier) ([]*entity.Panel, error) {
+func (repo *InstallationRepository) FindCorporationPanels(db database.Database, corporationID uint, allowedStatus []enum.PanelStatus, options *postgres.QueryOptions) ([]*entity.Panel, error) {
 	var panels []*entity.Panel
 	query := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&panels)
 	if result.Error != nil {
 		return nil, result.Error
@@ -129,12 +155,24 @@ func (repo *InstallationRepository) FindCorporationPanels(db database.Database, 
 	return panels, nil
 }
 
-func (repo *InstallationRepository) FindPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus, opts ...repository.QueryModifier) ([]*entity.Panel, error) {
-	var panels []*entity.Panel
-	query := db.GetDB().Where("status IN ?", allowedStatus)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
+func (repo *InstallationRepository) CountCorporationPanels(db database.Database, corporationID uint, allowedStatus []enum.PanelStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Panel{}).
+		Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
 	}
+	return count, nil
+}
+
+func (repo *InstallationRepository) FindPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus, options *postgres.QueryOptions) ([]*entity.Panel, error) {
+	var panels []*entity.Panel
+	query := db.GetDB().Where(queryByStatus, allowedStatus)
+	query = applyQueryOptions(query, options)
 	result := query.Find(&panels)
 	if result.Error != nil {
 		return nil, result.Error
@@ -142,17 +180,40 @@ func (repo *InstallationRepository) FindPanelsByStatus(db database.Database, all
 	return panels, nil
 }
 
-func (repo *InstallationRepository) FindCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, opts ...repository.QueryModifier) ([]*entity.Panel, error) {
-	var panels []*entity.Panel
-	query := db.GetDB().Where("customer_id = ? AND status = ?", customerID, allowedStatus)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
+func (repo *InstallationRepository) CountPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().Model(&entity.Panel{}).Where(queryByStatus, allowedStatus).Count(&count).Error
+
+	if err != nil {
+		return 0, err
 	}
+	return count, nil
+}
+
+func (repo *InstallationRepository) FindCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, options *postgres.QueryOptions) ([]*entity.Panel, error) {
+	var panels []*entity.Panel
+	query := db.GetDB().Where("customer_id = ? AND status IN ?", customerID, allowedStatus)
+	query = applyQueryOptions(query, options)
 	result := query.Find(&panels)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return panels, nil
+}
+
+func (repo *InstallationRepository) CountCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Panel{}).
+		Where("customer_id = ? AND status IN ?", customerID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (repo *InstallationRepository) FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, error) {

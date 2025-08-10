@@ -46,6 +46,8 @@ type GetCorporationBidsRequest struct {
 	Status        uint
 	Offset        int
 	Limit         int
+	SortBy        uint
+	Asc           bool
 }
 
 type GetListRequestBidsRequest struct {
@@ -53,12 +55,16 @@ type GetListRequestBidsRequest struct {
 	UserID    uint
 	Offset    int
 	Limit     int
+	SortBy    uint
+	Asc       bool
 }
 
 type GetListRequestBidsRequestByAdmin struct {
 	RequestID uint
 	Offset    int
 	Limit     int
+	SortBy    uint
+	Asc       bool
 }
 
 type GetCustomerBidRequest struct {

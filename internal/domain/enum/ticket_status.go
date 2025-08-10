@@ -6,16 +6,19 @@ const (
 	TicketStatusNotAnswered TicketStatus = iota + 1
 	TicketStatusAnswered
 	TicketStatusResolved
+	TicketStatusAll
 )
 
 func (ts TicketStatus) String() string {
 	switch ts {
 	case TicketStatusNotAnswered:
-		return "not answered"
+		return "در انتظار پاسخ"
 	case TicketStatusAnswered:
-		return "answered"
+		return "پاسخ داده شده"
 	case TicketStatusResolved:
-		return "resolved"
+		return "بسته شده"
+	case TicketStatusAll:
+		return "همه"
 	}
 	return "unknown"
 }
@@ -24,5 +27,6 @@ func GetAllTicketStatuses() []TicketStatus {
 		TicketStatusNotAnswered,
 		TicketStatusAnswered,
 		TicketStatusResolved,
+		TicketStatusAll,
 	}
 }

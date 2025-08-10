@@ -27,37 +27,65 @@ func NewAdminReportController(
 }
 
 func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Context) {
-	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	type GetMaintenanceReportsRequest struct {
+		Status   uint `form:"status"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
+	}
+	params := controller.Validated[GetMaintenanceReportsRequest](ctx)
+
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
+		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
+		SortBy:  params.SortBy,
+		Asc:     params.Asc,
 	}
-	reports, err := reportController.reportService.GetMaintenanceReports(requestInfo)
+	reports, count, err := reportController.reportService.GetMaintenanceReports(requestInfo)
 	if err != nil {
 		panic(err)
 	}
-	controller.Response(ctx, 200, "", reports)
+	data := controller.NewPaginatedResponse(reports, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context) {
-	pagination := controller.GetPagination(ctx, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	type GetPanelReportsRequest struct {
+		Status   uint `form:"status"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
+	}
+	params := controller.Validated[GetPanelReportsRequest](ctx)
+
 	ownerID, _ := ctx.Get(reportController.constants.Context.ID)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
 
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
+		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
+		SortBy:  params.SortBy,
+		Asc:     params.Asc,
 	}
-	reports, err := reportController.reportService.GetPanelReports(requestInfo)
+	reports, count, err := reportController.reportService.GetPanelReports(requestInfo)
 	if err != nil {
 		panic(err)
 	}
-	controller.Response(ctx, 200, "", reports)
+	data := controller.NewPaginatedResponse(reports, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {

@@ -28,19 +28,29 @@ func NewGeneralNewsController(
 }
 
 func (newsController *GeneralNewsController) GetNewsList(ctx *gin.Context) {
-	pagination := controller.GetPagination(ctx, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	type getNewsParams struct {
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
+	}
+	params := controller.Validated[getNewsParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
 
 	getNewsRequest := newsdto.GetPublicNewsListRequest{
 		Offset: offset,
 		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
-	news, err := newsController.newsService.GetPublicNewsList(getNewsRequest)
+	news, count, err := newsController.newsService.GetPublicNewsList(getNewsRequest)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(news, count, offset, limit)
 
-	controller.Response(ctx, 200, "", news)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (newsController *GeneralNewsController) GetNews(ctx *gin.Context) {
@@ -75,4 +85,9 @@ func (newsController *GeneralNewsController) GetNewsMedia(ctx *gin.Context) {
 	}
 
 	controller.Response(ctx, 200, "", media)
+}
+
+func (newsController *GeneralNewsController) GetSortableFields(ctx *gin.Context) {
+	columns := newsController.newsService.GetNewsSortableColumns()
+	controller.Response(ctx, 200, "", columns)
 }

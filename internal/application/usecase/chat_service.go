@@ -12,7 +12,7 @@ type ChatService interface {
 	GetUserRooms(userID uint) ([]chatdto.ChatRoomDetailsResponse, error)
 	GetCorporationRooms(request chatdto.GetCorporationRoomsRequest) ([]chatdto.ChatRoomDetailsResponse, error)
 	SaveMessage(roomID, senderID uint, content string) (chatdto.RoomMessagesResponse, error)
-	GetRoomMessages(request chatdto.GetRoomMessageRequest) ([]chatdto.RoomMessagesResponse, error)
+	GetRoomMessages(request chatdto.GetRoomMessageRequest) ([]chatdto.RoomMessagesResponse, int64, error)
 	BlockChatRoom(request chatdto.BlockServiceChatRequest) error
 	UnBlockChatRoom(request chatdto.BlockServiceChatRequest) error
 }

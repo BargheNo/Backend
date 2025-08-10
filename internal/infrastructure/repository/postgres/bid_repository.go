@@ -3,7 +3,7 @@ package postgres
 import (
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
+	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 	"gorm.io/gorm"
 )
@@ -74,13 +74,12 @@ func (repo *BidRepository) UpdateBid(db database.Database, bid *entity.Bid) erro
 	return db.GetDB().Save(&bid).Error
 }
 
-func (repo *BidRepository) FindCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, opts ...repository.QueryModifier) ([]*entity.Bid, error) {
+func (repo *BidRepository) FindCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, options *postgres.QueryOptions) ([]*entity.Bid, error) {
 	var bids []*entity.Bid
 
 	query := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+
+	query = applyQueryOptions(query, options)
 	result := query.Find(&bids)
 
 	if result.Error != nil {
@@ -89,17 +88,48 @@ func (repo *BidRepository) FindCorporationBids(db database.Database, corporation
 	return bids, nil
 }
 
-func (repo *BidRepository) FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, opts ...repository.QueryModifier) ([]*entity.Bid, error) {
+func (repo *BidRepository) CountCorporationBids(db database.Database, corporationID uint, allowedStatus []enum.BidStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Bid{}).
+		Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *BidRepository) FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, options *postgres.QueryOptions) ([]*entity.Bid, error) {
 	var bids []*entity.Bid
 
 	query := db.GetDB().Where("request_id = ? AND status IN ?", requestID, allowedStatus)
-	for _, opt := range opts {
-		query = opt.Apply(query).(*gorm.DB)
-	}
+	query = applyQueryOptions(query, options)
 	result := query.Find(&bids)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return bids, nil
+}
+
+func (repo *BidRepository) CountRequestBids(
+	db database.Database,
+	requestID uint,
+	allowedStatus []enum.BidStatus,
+) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Bid{}).
+		Where("request_id = ? AND status IN ?", requestID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

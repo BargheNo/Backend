@@ -28,40 +28,57 @@ func NewGeneralBlogController(
 }
 
 func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
-	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
+	type getPostsParams struct {
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+		SortBy   uint `form:"sortBy"`
+		Asc      bool `form:"asc"`
+	}
+	params := controller.Validated[getPostsParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
 
 	request := blogdto.GetPublicPostsRequest{
 		Offset: offset,
 		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
 	}
-	posts, err := blogController.blogService.GetGeneralPosts(request)
+	posts, count, err := blogController.blogService.GetGeneralPosts(request)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(posts, count, offset, limit)
 
-	controller.Response(ctx, 200, "", posts)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Context) {
 	type getCorporationPostsParams struct {
 		CorporationID uint `uri:"corporationID" validate:"required"`
+		Page          int  `form:"page"`
+		PageSize      int  `form:"pageSize"`
+		SortBy        uint `form:"sortBy"`
+		Asc           bool `form:"asc"`
 	}
-	pagination := controller.GetPagination(ctx, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
-	offset, limit := pagination.GetOffsetLimit()
 	params := controller.Validated[getCorporationPostsParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
 
 	request := blogdto.GetPublicCorporationPostsRequest{
 		CorporationID: params.CorporationID,
 		Offset:        offset,
 		Limit:         limit,
+		SortBy:        params.SortBy,
+		Asc:           params.Asc,
 	}
-	posts, err := blogController.blogService.GetCorporationPostsForGeneral(request)
+	posts, count, err := blogController.blogService.GetCorporationPostsForGeneral(request)
 	if err != nil {
 		panic(err)
 	}
+	data := controller.NewPaginatedResponse(posts, count, offset, limit)
 
-	controller.Response(ctx, 200, "", posts)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (blogController *GeneralBlogController) GetPost(ctx *gin.Context) {
@@ -96,4 +113,9 @@ func (blogController *GeneralBlogController) GetPostMedia(ctx *gin.Context) {
 	}
 
 	controller.Response(ctx, 200, "", media)
+}
+
+func (blogController *GeneralBlogController) GetSortableFields(ctx *gin.Context) {
+	columns := blogController.blogService.GetBlogSortableColumns()
+	controller.Response(ctx, 200, "", columns)
 }
