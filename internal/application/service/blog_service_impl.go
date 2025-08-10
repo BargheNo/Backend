@@ -424,29 +424,25 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error 
 		post.Description = *request.Description
 	}
 
-	prevCoverPath := post.CoverImage
+	post.Status = blogService.mapToOperationalStatuses(request.Status)
+
 	if request.CoverImage != nil {
-		post.CoverImage = blogService.constants.S3BucketPath.GetBlogCoverImagePath(request.CorporationID, request.CoverImage.Filename)
-		if err := blogService.s3Storage.UploadObject(enum.BlogMedia, post.CoverImage, request.CoverImage); err != nil {
-			return err
+		newCoverPath := blogService.constants.S3BucketPath.GetBlogCoverImagePath(request.CorporationID, request.CoverImage.Filename)
+		if post.CoverImage != newCoverPath {
+			oldCoverPath := post.CoverImage
+			post.CoverImage = newCoverPath
+			if err := blogService.s3Storage.UploadObject(enum.BlogMedia, post.CoverImage, request.CoverImage); err != nil {
+				return err
+			}
+			if oldCoverPath != "" {
+				if err := blogService.s3Storage.DeleteObject(enum.BlogMedia, oldCoverPath); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
-	post.Status = blogService.mapToOperationalStatuses(request.Status)
-
-	err = blogService.db.WithTransaction(func(tx database.Database) error {
-		if err = blogService.blogRepository.UpdatePost(tx, post); err != nil {
-			return err
-		}
-		if prevCoverPath != "" {
-			if err := blogService.s3Storage.DeleteObject(enum.BlogMedia, prevCoverPath); err != nil {
-				return err
-			}
-		}
-
-		return err
-	})
-
+	err = blogService.blogRepository.UpdatePost(blogService.db, post)
 	return err
 }
 
