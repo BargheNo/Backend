@@ -3,8 +3,8 @@ config:
   phases:
     - name: "Warm-up Phase"
       duration: 10s
-      arrivalRate: 5
-      rampTo: 10
+      arrivalRate: 2
+      rampTo: 5
 
     # - name: "Normal Load Phase"
     #   duration: 10s
@@ -23,7 +23,7 @@ config:
     #   arrivalRate: 10
 
 scenarios:
-  - name: auth_flow
+  - name: general_flow
     weight: 25
     flow:
       - post:
@@ -39,62 +39,86 @@ scenarios:
             - json: "$.data.refreshToken"
               as: "refreshToken"
 
-      # - post:
-      #     url: /auth/refresh
-      #     json:
-      #       refreshToken: "{{ $refreshToken }}"
-      #     headers:
-      #       Content-Type: application/json
-      # capture:
-      #   - json: "$.data.accessToken"
-      #     as: "authToken"
-      #   - json: "$.data.refreshToken"
-      #     as: "refreshToken"
+      - post:
+          url: /auth/refresh
+          json:
+            refreshToken: "{{ refreshToken }}"
+          headers:
+            Content-Type: application/json
 
-      # - name: business_operations
-      #   weight: 40
-      #   flow:
-      #     - get:
-      #         url: /corporation
+      - get:
+          url: /news
 
+      - get:
+          url: /blog
+
+      - get:
+          url: /address/province
+
+  - name: customer_flow
+    weight: 25
+    flow:
+      - post:
+          url: /auth/login
+          json:
+            phone: "{{ $processEnvironment.TEST_USER_PHONE }}"
+            password: "{{ $processEnvironment.TEST_USER_PASSWORD }}"
+          headers:
+            Content-Type: application/json
+          capture:
+            - json: "$.data.accessToken"
+              as: "authToken"
+            - json: "$.data.refreshToken"
+              as: "refreshToken"
+
+      - post:
+          url: /user/installation/request
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "{{ $randomString(10) }}"
+            area: 100
+            power: 5000
+            maxCost: 15000.00
+            buildingType: 1
+            description: "Residential solar panel installation for 5kW system"
+            provinceID: 1
+            cityID: 5
+            streetAddress: "123 Main Street"
+            postalCode: "12345"
+            houseNumber: "A-15"
+            unit: 2
       - get:
           url: /user/installation/request
           headers:
             Authorization: "Bearer {{ authToken }}"
 
-  #     - get:
-  #         url: /corp/{{ $processEnvironment.TEST_CORPORATION_ID }}/bid
-  #         headers:
-  #           Authorization: "Bearer {{ $authToken }}"
+      - get:
+          url: /user/installation/request/{{ $processEnvironment.TEST_INSTALLATION_REQUEST_ID }}/bid
+          headers:
+            Authorization: "Bearer {{ authToken }}"
 
-  # - name: content_retrieval
-  #   weight: 20
-  #   flow:
-  #     - get:
-  #         url: /news
-  #         headers:
-  #           Authorization: "Bearer {{ $authToken }}"
+      - get:
+          url: /user/installation/panel
+          headers:
+            Authorization: "Bearer {{ authToken }}"
 
-  #     - get:
-  #         url: /blog
-  #         headers:
-  #           Authorization: "Bearer {{ $authToken }}"
+      - post:
+          url: /user/maintenance/request
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            panelID: 1
+            corporationID: 1
+            subject: "{{ $randomString(20) }}"
+            description: "Maintenance request for solar panel installation - {{ $randomString(50) }}"
+            urgencyLevel: 1
+            isUsingGuarantee: false
 
-  #     - get:
-  #         url: /address/province
-
-  # - name: user_profile
-  #   weight: 15
-  #   flow:
-  #     - get:
-  #         url: /user/profile
-  #         headers:
-  #           Authorization: "Bearer {{ $authToken }}"
-
-  #     - get:
-  #         url: /user/corps
-  #         headers:
-  #           Authorization: "Bearer {{ $authToken }}"
+      - get:
+          url: /user/maintenance/request
+          headers:
+            Authorization: "Bearer {{ authToken }}"
 
 thresholds:
   http_req_duration:
