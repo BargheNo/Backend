@@ -1,15 +1,108 @@
 config:
-  target: http://localhost:8080
+  target: http://localhost:8080/v1
   phases:
-    - duration: 60
-      arrivalRate: 10
-      name: "Warmup"
-    - duration: 120
-      arrivalRate: 50
-      name: "Sustained load"
-    - duration: 60
-      arrivalRate: 100
-      name: "Peak load"
-    plugins:
-      
-         
+    - name: "Warm-up Phase"
+      duration: 10s
+      arrivalRate: 5
+      rampTo: 10
+
+    # - name: "Normal Load Phase"
+    #   duration: 10s
+    #   arrivalRate: 20
+
+    # - name: "Peak Load Phase"
+    #   duration: 10s
+    #   arrivalRate: 40
+
+    # - name: "Stress Test Phase"
+    #   duration: 10s
+    #   arrivalRate: 80
+
+    # - name: "Recovery Phase"
+    #   duration: 10s
+    #   arrivalRate: 10
+
+scenarios:
+  - name: auth_flow
+    weight: 25
+    flow:
+      - post:
+          url: /auth/login
+          json:
+            phone: "{{ $processEnvironment.TEST_USER_PHONE }}"
+            password: "{{ $processEnvironment.TEST_USER_PASSWORD }}"
+          headers:
+            Content-Type: application/json
+          capture:
+            - json: "$.data.accessToken"
+              as: "authToken"
+            - json: "$.data.refreshToken"
+              as: "refreshToken"
+
+      # - post:
+      #     url: /auth/refresh
+      #     json:
+      #       refreshToken: "{{ $refreshToken }}"
+      #     headers:
+      #       Content-Type: application/json
+      # capture:
+      #   - json: "$.data.accessToken"
+      #     as: "authToken"
+      #   - json: "$.data.refreshToken"
+      #     as: "refreshToken"
+
+      # - name: business_operations
+      #   weight: 40
+      #   flow:
+      #     - get:
+      #         url: /corporation
+
+      - get:
+          url: /user/installation/request
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+  #     - get:
+  #         url: /corp/{{ $processEnvironment.TEST_CORPORATION_ID }}/bid
+  #         headers:
+  #           Authorization: "Bearer {{ $authToken }}"
+
+  # - name: content_retrieval
+  #   weight: 20
+  #   flow:
+  #     - get:
+  #         url: /news
+  #         headers:
+  #           Authorization: "Bearer {{ $authToken }}"
+
+  #     - get:
+  #         url: /blog
+  #         headers:
+  #           Authorization: "Bearer {{ $authToken }}"
+
+  #     - get:
+  #         url: /address/province
+
+  # - name: user_profile
+  #   weight: 15
+  #   flow:
+  #     - get:
+  #         url: /user/profile
+  #         headers:
+  #           Authorization: "Bearer {{ $authToken }}"
+
+  #     - get:
+  #         url: /user/corps
+  #         headers:
+  #           Authorization: "Bearer {{ $authToken }}"
+
+thresholds:
+  http_req_duration:
+    - p95 < 500ms
+    - p99 < 1000ms
+
+  http_req_failed:
+    - rate < 0.01
+
+  http_reqs:
+    - rate > 100
