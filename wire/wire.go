@@ -10,30 +10,20 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/communication"
 	domainLogger "github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
-<<<<<<< HEAD
-	"github.com/BargheNo/Backend/internal/domain/metrics"
-	"github.com/BargheNo/Backend/internal/domain/mqtt"
-	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
-	cacherepository "github.com/BargheNo/Backend/internal/domain/repository/redis"
-=======
 	domainMetrics "github.com/BargheNo/Backend/internal/domain/metrics"
+	"github.com/BargheNo/Backend/internal/domain/mqtt"
 	domainPostgres "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	domainRedis "github.com/BargheNo/Backend/internal/domain/repository/redis"
->>>>>>> develop
 	"github.com/BargheNo/Backend/internal/domain/s3"
 	"github.com/BargheNo/Backend/internal/infrastructure/communication/email"
 	"github.com/BargheNo/Backend/internal/infrastructure/communication/sms"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
-<<<<<<< HEAD
-	mqttimpl "github.com/BargheNo/Backend/internal/infrastructure/mqtt"
-	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
-=======
 	infraJWT "github.com/BargheNo/Backend/internal/infrastructure/jwt"
 	infraLocalization "github.com/BargheNo/Backend/internal/infrastructure/localization"
 	infraLogger "github.com/BargheNo/Backend/internal/infrastructure/logger"
 	infraMetrics "github.com/BargheNo/Backend/internal/infrastructure/metrics"
+	mqttimpl "github.com/BargheNo/Backend/internal/infrastructure/mqtt"
 	infraRabbitMQ "github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
->>>>>>> develop
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
 	infraPostgres "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	infraRedis "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
@@ -109,53 +99,6 @@ var ServiceProviderSet = wire.NewSet(
 	service.NewOTPService,
 	sms.NewSMSService,
 	email.NewEmailService,
-<<<<<<< HEAD
-	serviceimpl.NewJWTService,
-	serviceimpl.NewInstallationService,
-	serviceimpl.NewAddressService,
-	serviceimpl.NewCorporationService,
-	cinimpl.NewCINService,
-	serviceimpl.NewBidService,
-	serviceimpl.NewChatService,
-	serviceimpl.NewNotificationService,
-	serviceimpl.NewMaintenanceService,
-	serviceimpl.NewTicketService,
-	serviceimpl.NewReportService,
-	serviceimpl.NewNewsService,
-	serviceimpl.NewMonitoringService,
-	wire.Bind(new(service.UserService), new(*serviceimpl.UserService)),
-	wire.Bind(new(service.OTPService), new(*serviceimpl.OTPService)),
-	wire.Bind(new(service.SMSService), new(*sms.SMSService)),
-	wire.Bind(new(service.EmailService), new(*email.EmailService)),
-	wire.Bind(new(service.JWTService), new(*serviceimpl.JWTService)),
-	wire.Bind(new(service.InstallationService), new(*serviceimpl.InstallationService)),
-	wire.Bind(new(service.AddressService), new(*serviceimpl.AddressService)),
-	wire.Bind(new(service.CorporationService), new(*serviceimpl.CorporationService)),
-	wire.Bind(new(service.CINService), new(*cinimpl.CINService)),
-	wire.Bind(new(service.BidService), new(*serviceimpl.BidService)),
-	wire.Bind(new(service.ChatService), new(*serviceimpl.ChatService)),
-	wire.Bind(new(service.NotificationService), new(*serviceimpl.NotificationService)),
-	wire.Bind(new(service.MaintenanceService), new(*serviceimpl.MaintenanceService)),
-	wire.Bind(new(service.TicketService), new(*serviceimpl.TicketService)),
-	wire.Bind(new(service.ReportService), new(*serviceimpl.ReportService)),
-	wire.Bind(new(service.NewsService), new(*serviceimpl.NewsService)),
-	wire.Bind(new(service.MonitoringService), new(*serviceimpl.MonitoringService)),
-)
-
-var AdapterProviderSet = wire.NewSet(
-	localizationimpl.NewTranslationService,
-	loggerimpl.NewLogger,
-	jwtimpl.NewJWTKeyManager,
-	metricsimpl.NewPrometheusMetrics,
-	storage.NewS3Storage,
-	rabbitmq.NewRabbitMQ,
-	mqttimpl.NewClient,
-	wire.Bind(new(logger.Logger), new(*loggerimpl.Logger)),
-	wire.Bind(new(metrics.MetricsClient), new(*metricsimpl.PrometheusMetrics)),
-	wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)),
-	wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)),
-	wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)),
-=======
 	service.NewJWTService,
 	service.NewInstallationService,
 	service.NewAddressService,
@@ -170,6 +113,7 @@ var AdapterProviderSet = wire.NewSet(
 	service.NewPaymentService,
 	service.NewNewsService,
 	service.NewBlogService,
+	serviceimpl.NewMonitoringService,
 	wire.Bind(new(usecase.UserService), new(*service.UserService)),
 	wire.Bind(new(usecase.OTPService), new(*service.OTPService)),
 	wire.Bind(new(communication.SMSService), new(*sms.SMSService)),
@@ -188,6 +132,7 @@ var AdapterProviderSet = wire.NewSet(
 	wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)),
 	wire.Bind(new(usecase.NewsService), new(*service.NewsService)),
 	wire.Bind(new(usecase.BlogService), new(*service.BlogService)),
+	wire.Bind(new(service.MonitoringService), new(*serviceimpl.MonitoringService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -197,11 +142,12 @@ var AdapterProviderSet = wire.NewSet(
 	infraMetrics.NewPrometheusMetrics,
 	infraStorage.NewS3Storage,
 	infraRabbitMQ.NewRabbitMQ,
+	mqttimpl.NewClient,
 	wire.Bind(new(domainLogger.Logger), new(*infraLogger.Logger)),
 	wire.Bind(new(domainMetrics.MetricsClient), new(*infraMetrics.PrometheusMetrics)),
 	wire.Bind(new(s3.S3Storage), new(*infraStorage.S3Storage)),
 	wire.Bind(new(message.Broker), new(*infraRabbitMQ.RabbitMQ)),
->>>>>>> develop
+	wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)),
 )
 
 var GeneralControllerProviderSet = wire.NewSet(
@@ -231,12 +177,9 @@ var CustomerControllerProviderSet = wire.NewSet(
 	maintenance.NewCustomerMaintenanceController,
 	ticket.NewCustomerTicketController,
 	report.NewCustomerReportController,
-<<<<<<< HEAD
-	monitoring.NewCustomerMonitoringController,
-=======
 	blog.NewCustomerBlogController,
 	news.NewCustomerNewsController,
->>>>>>> develop
+	monitoring.NewCustomerMonitoringController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -256,13 +199,10 @@ var AdminControllerProviderSet = wire.NewSet(
 	user.NewAdminUserController,
 	report.NewAdminReportController,
 	news.NewAdminNewsController,
-<<<<<<< HEAD
-	monitoring.NewAdminMonitoringController,
-=======
 	corporation.NewAdminCorporationController,
 	installation.NewAdminInstallationController,
 	bid.NewAdminBidController,
->>>>>>> develop
+	monitoring.NewAdminMonitoringController,
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -439,12 +379,9 @@ type CustomerControllers struct {
 	MaintenanceController  *maintenance.CustomerMaintenanceController
 	TicketController       *ticket.CustomerTicketController
 	ReportController       *report.CustomerReportController
-<<<<<<< HEAD
-	MonitoringController   *monitoring.CustomerMonitoringController
-=======
 	BlogController         *blog.CustomerBlogController
 	NewsController         *news.CustomerNewsController
->>>>>>> develop
+	MonitoringController   *monitoring.CustomerMonitoringController
 }
 
 type CorporationControllers struct {
@@ -458,13 +395,6 @@ type CorporationControllers struct {
 }
 
 type AdminControllers struct {
-<<<<<<< HEAD
-	TicketController     *ticket.AdminTicketController
-	UserController       *user.AdminUserController
-	ReportController     *report.AdminReportController
-	NewsController       *news.AdminNewsController
-	MonitoringController *monitoring.AdminMonitoringController
-=======
 	TicketController       *ticket.AdminTicketController
 	UserController         *user.AdminUserController
 	ReportController       *report.AdminReportController
@@ -472,7 +402,7 @@ type AdminControllers struct {
 	CorporationController  *corporation.AdminCorporationController
 	InstallationController *installation.AdminInstallationController
 	BidController          *bid.AdminBidController
->>>>>>> develop
+	MonitoringController   *monitoring.AdminMonitoringController
 }
 
 type Controllers struct {

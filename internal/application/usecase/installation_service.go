@@ -40,4 +40,5 @@ type InstallationService interface {
 	ValidatePanelOwnership(panelID uint, userID uint) (installationdto.AdminPanelResponse, error)
 	ValidateRequestOwnership(requestID uint, ownerID uint) (installationdto.PublicRequestDetailsResponse, error)
 	ViolatePanelGuaranteeStatus(request installationdto.CreateViolatePanelGuaranteeRequest) (uint, error)
+	GetPanelByID(panelID uint) (installationdto.AdminPanelResponse, error)
 }

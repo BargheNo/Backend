@@ -29,14 +29,7 @@ type InstallationRepository interface {
 	FindPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus, options *QueryOptions) ([]*entity.Panel, error)
 	CountPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus) (int64, error)
 	CreatePanel(db database.Database, panel *entity.Panel) error
-<<<<<<< HEAD
-	FindCorporationPanels(db database.Database, corporationID uint, opts ...QueryModifier) []*entity.Panel
-	FindCustomerPanels(db database.Database, customerID uint, opts ...QueryModifier) []*entity.Panel
-	FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, bool)
-	FindPanelByID(db database.Database, panelID uint) (*entity.Panel, bool)
-	FindAllPanelsID(db database.Database) []uint
-=======
 	UpdatePanel(db database.Database, panel *entity.Panel) error
 	DeletePanel(db database.Database, panel *entity.Panel) error
->>>>>>> develop
+	FindAllPanelsID(db database.Database) []uint
 }

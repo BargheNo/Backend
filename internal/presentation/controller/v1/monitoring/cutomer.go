@@ -2,7 +2,7 @@ package monitoring
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
@@ -11,17 +11,17 @@ import (
 type CustomerMonitoringController struct {
 	constants         *bootstrap.Constants
 	hub               *websocket.Hub
-	jwtService        service.JWTService
+	jwtService        usecase.JWTService
 	websocketSetting  *bootstrap.WebsocketSetting
-	monitoringService service.MonitoringService
+	monitoringService usecase.MonitoringService
 }
 
 func NewCustomerMonitoringController(
 	constants *bootstrap.Constants,
 	hub *websocket.Hub,
-	jwtService service.JWTService,
+	jwtService usecase.JWTService,
 	websocketSetting *bootstrap.WebsocketSetting,
-	monitoringService service.MonitoringService,
+	monitoringService usecase.MonitoringService,
 ) *CustomerMonitoringController {
 	return &CustomerMonitoringController{
 		constants:         constants,

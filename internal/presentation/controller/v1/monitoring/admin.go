@@ -1,15 +1,15 @@
 package monitoring
 
 import (
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/gin-gonic/gin"
 )
 
 type AdminMonitoringController struct {
-	monitoringService service.MonitoringService
+	monitoringService usecase.MonitoringService
 }
 
-func NewAdminMonitoringController(monitoringService service.MonitoringService) *AdminMonitoringController {
+func NewAdminMonitoringController(monitoringService usecase.MonitoringService) *AdminMonitoringController {
 	return &AdminMonitoringController{monitoringService: monitoringService}
 }
 

@@ -1,10 +1,10 @@
-package serviceimpl
+package service
 
 import (
 	"fmt"
 	"strconv"
 
-	service "github.com/BargheNo/Backend/internal/application/service/interfaces"
+	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/mqtt"
 	repository "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -13,7 +13,7 @@ import (
 
 type MonitoringService struct {
 	mqttClient             mqtt.Client
-	installationService    service.InstallationService
+	installationService    usecase.InstallationService
 	installationRepository repository.InstallationRepository
 
 	db  database.Database
@@ -25,7 +25,7 @@ func NewMonitoringService(
 	db database.Database,
 	installationRepository repository.InstallationRepository,
 	hub *websocket.Hub,
-	installationService service.InstallationService,
+	installationService usecase.InstallationService,
 ) *MonitoringService {
 	service := &MonitoringService{
 		mqttClient:             mqttClient,
@@ -49,7 +49,10 @@ func (s *MonitoringService) HandleMessage(topic string, payload []byte) {
 	if err != nil {
 		panic(err)
 	}
-	panel := s.installationService.GetPanelByID(uint(panelID))
+	panel, err := s.installationService.GetPanelByID(uint(panelID))
+	if err != nil {
+		panic(err)
+	}
 
 	s.hub.SendToUser(panel.Customer.ID, websocket.MessageTypeMonitoring, payload)
 }
