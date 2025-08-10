@@ -296,3 +296,15 @@ func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveR
 	}
 	return nil
 }
+
+func (reportService *ReportService) GetReportStatuses() []reportdto.GetReportEnumResponse {
+	statuses := enum.GetAllReportStatuses()
+	response := make([]reportdto.GetReportEnumResponse, len(statuses))
+	for i, status := range statuses {
+		response[i] = reportdto.GetReportEnumResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return response
+}

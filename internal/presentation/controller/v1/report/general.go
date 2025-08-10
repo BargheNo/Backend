@@ -26,3 +26,8 @@ func (reportController *GeneralReportController) GetSortableFields(ctx *gin.Cont
 	columns := reportController.reportService.GetReportSortableColumns()
 	controller.Response(ctx, 200, "", columns)
 }
+
+func (reportController *GeneralReportController) GetReportStatuses(ctx *gin.Context) {
+	reportStatuses := reportController.reportService.GetReportStatuses()
+	controller.Response(ctx, 200, "", reportStatuses)
+}
