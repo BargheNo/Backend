@@ -368,25 +368,23 @@ func (newsService *NewsService) EditNews(request newsdto.EditNewsRequest) error 
 	}
 	news.Status = newStatus
 
-	prevCoverPath := news.CoverImage
 	if request.CoverImage != nil {
-		news.CoverImage = newsService.constants.S3BucketPath.GetNewsCoverImagePath(news.ID, request.CoverImage.Filename)
-		if err := newsService.s3Storage.UploadObject(enum.NewsMedia, news.CoverImage, request.CoverImage); err != nil {
-			return err
-		}
-	}
-	err = newsService.db.WithTransaction(func(tx database.Database) error {
-		if err := newsService.newsRepository.UpdateNews(tx, news); err != nil {
-			return err
-		}
-		if prevCoverPath != "" {
-			if err := newsService.s3Storage.DeleteObject(enum.NewsMedia, prevCoverPath); err != nil {
+		newCoverPath := newsService.constants.S3BucketPath.GetNewsCoverImagePath(news.ID, request.CoverImage.Filename)
+		if news.CoverImage != newCoverPath {
+			oldCoverPath := news.CoverImage
+			news.CoverImage = newCoverPath
+			if err := newsService.s3Storage.UploadObject(enum.NewsMedia, news.CoverImage, request.CoverImage); err != nil {
 				return err
 			}
+			if oldCoverPath != "" {
+				if err := newsService.s3Storage.DeleteObject(enum.NewsMedia, oldCoverPath); err != nil {
+					return err
+				}
+			}
 		}
-		return nil
-	})
+	}
 
+	err = newsService.newsRepository.UpdateNews(newsService.db, news)
 	return err
 }
 
