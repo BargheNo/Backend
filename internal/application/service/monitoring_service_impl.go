@@ -15,9 +15,8 @@ type MonitoringService struct {
 	mqttClient             mqtt.Client
 	installationService    usecase.InstallationService
 	installationRepository repository.InstallationRepository
-
-	db  database.Database
-	hub *websocket.Hub
+	db                     database.Database
+	hub                    *websocket.Hub
 }
 
 func NewMonitoringService(

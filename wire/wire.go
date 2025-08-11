@@ -113,7 +113,7 @@ var ServiceProviderSet = wire.NewSet(
 	service.NewPaymentService,
 	service.NewNewsService,
 	service.NewBlogService,
-	serviceimpl.NewMonitoringService,
+	service.NewMonitoringService,
 	wire.Bind(new(usecase.UserService), new(*service.UserService)),
 	wire.Bind(new(usecase.OTPService), new(*service.OTPService)),
 	wire.Bind(new(communication.SMSService), new(*sms.SMSService)),
@@ -132,7 +132,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)),
 	wire.Bind(new(usecase.NewsService), new(*service.NewsService)),
 	wire.Bind(new(usecase.BlogService), new(*service.BlogService)),
-	wire.Bind(new(service.MonitoringService), new(*serviceimpl.MonitoringService)),
+	wire.Bind(new(usecase.MonitoringService), new(*service.MonitoringService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
