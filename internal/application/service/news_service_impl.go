@@ -146,6 +146,7 @@ func (newsService *NewsService) GetAdminNews(newsID uint) (newsdto.AdminNewsResp
 
 	return newsdto.AdminNewsResponse{
 		ID:          news.ID,
+		CreatedAt:   news.CreatedAt,
 		Title:       news.Title,
 		Content:     news.Content,
 		Description: news.Description,
@@ -177,6 +178,7 @@ func (newsService *NewsService) GetPublicNews(newsID uint) (newsdto.PublicNewsRe
 
 	return newsdto.PublicNewsResponse{
 		ID:          news.ID,
+		CreatedAt:   news.CreatedAt,
 		Title:       news.Title,
 		Content:     news.Content,
 		Description: news.Description,
@@ -213,6 +215,7 @@ func (newsService *NewsService) GetAdminNewsList(request newsdto.GetAdminNewsLis
 
 		newsResponse[i] = newsdto.AdminNewsResponse{
 			ID:          eachNews.ID,
+			CreatedAt:   eachNews.CreatedAt,
 			Title:       eachNews.Title,
 			Content:     eachNews.Content,
 			Description: eachNews.Description,
@@ -254,6 +257,7 @@ func (newsService *NewsService) GetPublicNewsList(request newsdto.GetPublicNewsL
 
 		newsResponse[i] = newsdto.PublicNewsResponse{
 			ID:          eachNews.ID,
+			CreatedAt:   eachNews.CreatedAt,
 			Title:       eachNews.Title,
 			Content:     eachNews.Content,
 			Description: eachNews.Description,
