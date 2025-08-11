@@ -1,11 +1,14 @@
 package newsdto
 
 import (
+	"time"
+
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
 type AdminNewsResponse struct {
 	ID          uint                       `json:"id"`
+	CreatedAt   time.Time                  `json:"createdAt"`
 	Title       string                     `json:"title"`
 	Content     string                     `json:"content"`
 	Description string                     `json:"description"`
@@ -16,12 +19,13 @@ type AdminNewsResponse struct {
 }
 
 type PublicNewsResponse struct {
-	ID          uint   `json:"id"`
-	Title       string `json:"title"`
-	Content     string `json:"content"`
-	Description string `json:"description"`
-	CoverImage  string `json:"coverImage"`
-	TotalLike   int    `json:"totalLikes"`
+	ID          uint      `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Title       string    `json:"title"`
+	Content     string    `json:"content"`
+	Description string    `json:"description"`
+	CoverImage  string    `json:"coverImage"`
+	TotalLike   int       `json:"totalLikes"`
 }
 
 type NewsEnumResponse struct {
