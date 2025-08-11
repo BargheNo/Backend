@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	monitoringdto "github.com/BargheNo/Backend/internal/application/dto/monitoring"
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
@@ -14,6 +15,7 @@ type CustomerMonitoringController struct {
 	jwtService        usecase.JWTService
 	websocketSetting  *bootstrap.WebsocketSetting
 	monitoringService usecase.MonitoringService
+	pagination        *bootstrap.Pagination
 }
 
 func NewCustomerMonitoringController(
@@ -22,6 +24,7 @@ func NewCustomerMonitoringController(
 	jwtService usecase.JWTService,
 	websocketSetting *bootstrap.WebsocketSetting,
 	monitoringService usecase.MonitoringService,
+	pagination *bootstrap.Pagination,
 ) *CustomerMonitoringController {
 	return &CustomerMonitoringController{
 		constants:         constants,
@@ -29,6 +32,7 @@ func NewCustomerMonitoringController(
 		jwtService:        jwtService,
 		websocketSetting:  websocketSetting,
 		monitoringService: monitoringService,
+		pagination:        pagination,
 	}
 }
 
@@ -59,4 +63,38 @@ func (monitoringController *CustomerMonitoringController) HandleWebsocket(ctx *g
 
 	go client.ReadPump()
 	go client.WritePump()
+}
+
+func (monitoringController *CustomerMonitoringController) GetPanelStatus(ctx *gin.Context) {
+	type getPanelStatusParams struct {
+		PanelID  uint `uri:"panelID" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+	}
+	param := controller.Validated[getPanelStatusParams](ctx)
+
+	ownerID, _ := ctx.Get(monitoringController.constants.Context.ID)
+
+	offset, limit := controller.GetOffsetLimit(param.Page, param.PageSize, monitoringController.pagination.DefaultPage, monitoringController.pagination.DefaultPageSize)
+
+	listInfo := monitoringdto.CustomerPanelStatusListRequest{
+		PanelID: param.PanelID,
+		OwnerID: ownerID.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+
+	response, count, err := monitoringController.monitoringService.GetPanelStatus(listInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	data := controller.NewPaginatedResponse(response, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}
+
+func (monitoringController *CustomerMonitoringController) GetPanelHistory(ctx *gin.Context) {
+}
+
+func (monitoringController *CustomerMonitoringController) GetPanelEvent(ctx *gin.Context) {
 }
