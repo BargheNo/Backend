@@ -28,7 +28,7 @@ type Config struct {
 type Device struct {
 	DatalogSerial string `json:"datalogserial"`
 	PVSerial      string `json:"pvserial"`
-	Model         string `json:"model,omitempty"`
+	DeviceModel   string `json:"device_model,omitempty"`
 	Firmware      string `json:"firmware,omitempty"`
 	Hardware      string `json:"hardware,omitempty"`
 	LoggerFW      string `json:"logger_fw,omitempty"`
@@ -118,7 +118,7 @@ func NewMQTTClient(config Config) *MQTTClient {
 		device: Device{
 			DatalogSerial: "YUZ081920C",
 			PVSerial:      "4FZG821037",
-			Model:         "SPH5000TL-BL",
+			DeviceModel:   "SPH5000TL-BL",
 			Firmware:      "01.20.07",
 			Hardware:      "H4.2",
 			LoggerFW:      "V2.05.15",
