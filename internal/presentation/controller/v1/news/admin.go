@@ -69,7 +69,7 @@ func (newsController *AdminNewsController) EditNews(ctx *gin.Context) {
 		Content     *string               `json:"content"`
 		Description *string               `json:"description"`
 		CoverImage  *multipart.FileHeader `form:"cover_image"`
-		Status      uint                  `json:"status"`
+		Status      *uint                  `json:"status"`
 	}
 	params := controller.Validated[editNewsParams](ctx)
 	authorID, _ := ctx.Get(newsController.constants.Context.ID)

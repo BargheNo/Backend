@@ -24,7 +24,7 @@ type EditPostRequest struct {
 	Content       *string
 	Description   *string
 	CoverImage    *multipart.FileHeader
-	Status        uint
+	Status        *uint
 }
 
 type GetPublicPostsRequest struct {

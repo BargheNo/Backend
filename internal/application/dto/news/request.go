@@ -21,7 +21,7 @@ type EditNewsRequest struct {
 	Title       *string
 	Content     *string
 	Description *string
-	Status      uint
+	Status      *uint
 	CoverImage  *multipart.FileHeader
 }
 

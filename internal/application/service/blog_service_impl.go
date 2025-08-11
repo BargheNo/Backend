@@ -424,26 +424,29 @@ func (blogService *BlogService) EditPost(request blogdto.EditPostRequest) error 
 		post.Description = *request.Description
 	}
 
-	post.Status = blogService.mapToOperationalStatuses(request.Status)
+	if request.Status != nil && *request.Status != uint(post.Status) {
+		post.Status = blogService.mapToOperationalStatuses(*request.Status)
+	}
 
+	oldCoverPath := post.CoverImage
 	if request.CoverImage != nil {
-		newCoverPath := blogService.constants.S3BucketPath.GetBlogCoverImagePath(request.CorporationID, request.CoverImage.Filename)
-		if post.CoverImage != newCoverPath {
-			oldCoverPath := post.CoverImage
-			post.CoverImage = newCoverPath
-			if err := blogService.s3Storage.UploadObject(enum.BlogMedia, post.CoverImage, request.CoverImage); err != nil {
-				return err
-			}
-			if oldCoverPath != "" {
-				if err := blogService.s3Storage.DeleteObject(enum.BlogMedia, oldCoverPath); err != nil {
-					return err
-				}
-			}
+		post.CoverImage = blogService.constants.S3BucketPath.GetBlogCoverImagePath(request.CorporationID, request.CoverImage.Filename)
+		if err := blogService.s3Storage.UploadObject(enum.BlogMedia, post.CoverImage, request.CoverImage); err != nil {
+			return err
 		}
 	}
 
-	err = blogService.blogRepository.UpdatePost(blogService.db, post)
-	return err
+	if err = blogService.blogRepository.UpdatePost(blogService.db, post); err != nil {
+		return err
+	}
+
+	if oldCoverPath != "" && request.CoverImage != nil {
+		if err := blogService.s3Storage.DeleteObject(enum.BlogMedia, oldCoverPath); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (blogService *BlogService) DeletePost(request blogdto.DeletePostRequest) error {
