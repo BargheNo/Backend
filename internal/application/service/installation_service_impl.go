@@ -1096,7 +1096,7 @@ func (installationService *InstallationService) GetPanelsByAdmin(listInfo instal
 	return response, count, nil
 }
 
-func (installationService *InstallationService) SearchPanels(request installationdto.SearchPanelsRequest) ([]installationdto.AdminPanelResponse, int64, error) {
+func (installationService *InstallationService) SearchPanels(request installationdto.AdminInstallationListRequest) ([]installationdto.AdminPanelResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(installationService.getSortByColumnPanel(request.SortBy), request.Asc)

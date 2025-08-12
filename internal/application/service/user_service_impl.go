@@ -707,7 +707,7 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 	return err
 }
 
-func (userService *UserService) SearchUsers(request userdto.SearchUsersRequest) ([]userdto.CredentialResponse, int64, error) {
+func (userService *UserService) SearchUsers(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(userService.getSortByColumn(request.SortBy), request.Asc)

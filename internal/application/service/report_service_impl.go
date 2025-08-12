@@ -309,7 +309,7 @@ func (reportService *ReportService) GetReportStatuses() []reportdto.GetReportEnu
 	return response
 }
 
-func (reportService *ReportService) SearchMaintenanceReports(requestInfo reportdto.SearchReportsRequest) ([]reportdto.MaintenanceReportResponse, int64, error) {
+func (reportService *ReportService) SearchMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
 		WithSorting(reportService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
@@ -343,7 +343,7 @@ func (reportService *ReportService) SearchMaintenanceReports(requestInfo reportd
 	return reportResponses, count, nil
 }
 
-func (reportService *ReportService) SearchPanelReports(requestInfo reportdto.SearchReportsRequest) ([]reportdto.PanelReportResponse, int64, error) {
+func (reportService *ReportService) SearchPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
 		WithSorting(reportService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)

@@ -813,7 +813,7 @@ func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo co
 	return response, count, nil
 }
 
-func (corporationService *CorporationService) SearchCorporations(request corporationdto.SearchCorporationsRequest) ([]corporationdto.CorporationCredentialResponse, int64, error) {
+func (corporationService *CorporationService) SearchCorporations(request corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(corporationService.getSortByColumn(request.SortBy), request.Asc)
