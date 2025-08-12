@@ -11,6 +11,7 @@ type MaintenanceService interface {
 	GetMaintenanceRequestStatuses(agent enum.AgentType) []maintenancedto.MaintenanceEnumResponse
 	CreateMaintenanceRequest(requestInfo maintenancedto.CreateMaintenanceRequest) error
 	GetCustomerMaintenanceRequests(requestInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error)
+	SearchCustomerMaintenanceRequests(requestInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error)
 	GetCustomerPanelMaintenanceRequests(listInfo maintenancedto.CustomerPanelMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error)
 	GetCustomerMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) (maintenancedto.CustomerMaintenanceRequestResponse, error)
 	UpdateMaintenanceRequest(updateRequest maintenancedto.UpdateCustomerRequest) error

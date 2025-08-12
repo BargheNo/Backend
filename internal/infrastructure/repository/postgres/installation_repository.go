@@ -316,6 +316,36 @@ func (repo *InstallationRepository) CountCustomerPanels(db database.Database, cu
 	return count, nil
 }
 
+func (repo *InstallationRepository) FindCustomerPanelsByQuery(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, query string, options *postgres.QueryOptions) ([]*entity.Panel, error) {
+	var panels []*entity.Panel
+	result := db.GetDB().
+		Where("customer_id = ? AND status IN ?", customerID, allowedStatus).
+		Where("name ILIKE ?", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&panels)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return panels, nil
+}
+
+func (repo *InstallationRepository) CountCustomerPanelsByQuery(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Panel{}).
+		Where("customer_id = ? AND status IN ?", customerID, allowedStatus).
+		Where("name ILIKE ?", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *InstallationRepository) FindPanelByNameAndCustomerID(db database.Database, panelName string, customerID uint) (*entity.Panel, error) {
 	var panel *entity.Panel
 	result := db.GetDB().Where("name = ? and customer_id = ?", panelName, customerID).First(&panel)

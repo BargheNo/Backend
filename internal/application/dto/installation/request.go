@@ -67,6 +67,7 @@ type CorporationPanelRequest struct {
 type CustomerPanelListRequest struct {
 	OwnerID uint
 	Status  uint
+	Query   string
 	Offset  int
 	Limit   int
 	SortBy  uint

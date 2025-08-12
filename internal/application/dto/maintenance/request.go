@@ -20,6 +20,7 @@ type CreateMaintenanceRequest struct {
 type CustomerMaintenanceListRequest struct {
 	Status  uint
 	OwnerID uint
+	Query   string
 	Offset  int
 	Limit   int
 	SortBy  uint
