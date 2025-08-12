@@ -25,3 +25,11 @@ type ResolveReportRequest struct {
 type ReportNotificationData struct {
 	ReportID uint
 }
+
+type SearchReportsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
+}

@@ -120,7 +120,9 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	report := routerGroup.Group("/report")
 	{
 		report.GET("/maintenance", app.Controllers.Admin.ReportController.GetMaintenanceReports)
+		report.GET("/maintenance/search", app.Controllers.Admin.ReportController.SearchMaintenanceReports)
 		report.GET("/panel", app.Controllers.Admin.ReportController.GetPanelReports)
+		report.GET("/panel/search", app.Controllers.Admin.ReportController.SearchPanelReports)
 		report.POST("/resolve/:reportID", app.Controllers.Admin.ReportController.ResolveReport)
 	}
 

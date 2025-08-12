@@ -14,4 +14,6 @@ type ReportService interface {
 	GetPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, int64, error)
 	ResolveReport(requestInfo reportdto.ResolveReportRequest) error
 	GetReportStatuses() []reportdto.GetReportEnumResponse
+	SearchMaintenanceReports(requestInfo reportdto.SearchReportsRequest) ([]reportdto.MaintenanceReportResponse, int64, error)
+	SearchPanelReports(requestInfo reportdto.SearchReportsRequest) ([]reportdto.PanelReportResponse, int64, error)
 }

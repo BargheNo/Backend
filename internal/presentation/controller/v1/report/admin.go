@@ -107,3 +107,62 @@ func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {
 	message, _ := trans.Translate("successMessage.reportResolved")
 	controller.Response(ctx, 200, message, nil)
 }
+
+func (reportController *AdminReportController) SearchMaintenanceReports(ctx *gin.Context) {
+	type SearchReportsRequest struct {
+		Query    string `form:"query" validate:"required"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
+	}
+	params := controller.Validated[SearchReportsRequest](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
+
+	requestInfo := reportdto.SearchReportsRequest{
+		Query:  params.Query,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
+	}
+
+	reports, count, err := reportController.reportService.SearchMaintenanceReports(requestInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	data := controller.NewPaginatedResponse(reports, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}
+
+func (reportController *AdminReportController) SearchPanelReports(ctx *gin.Context) {
+	type SearchReportsRequest struct {
+		Query    string `form:"query" validate:"required"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
+	}
+
+	params := controller.Validated[SearchReportsRequest](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
+
+	requestInfo := reportdto.SearchReportsRequest{
+		Query:  params.Query,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
+	}
+
+	reports, count, err := reportController.reportService.SearchPanelReports(requestInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	data := controller.NewPaginatedResponse(reports, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}
