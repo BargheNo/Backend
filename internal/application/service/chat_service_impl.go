@@ -6,6 +6,7 @@ import (
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
+	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
@@ -252,7 +253,8 @@ func (chatService *ChatService) GetRoomMessages(request chatdto.GetRoomMessageRe
 	chatService.validateRoomParticipantAccess(request.UserID, room.CustomerID, room.CorporationID)
 
 	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset)
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(sortby.ChatSortByCreatedAt.DBColumn(), false)
 
 	messages, err := chatService.chatRepository.GetRoomMessages(chatService.db, request.RoomID, options)
 	if err != nil {
