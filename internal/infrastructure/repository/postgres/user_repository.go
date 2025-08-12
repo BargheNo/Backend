@@ -330,7 +330,7 @@ func (repo *UserRepository) CountRolesByPermission(db database.Database, permiss
 func (repo *UserRepository) FindUsersByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.User, error) {
 	var users []*entity.User
 	result := db.GetDB().
-		Where("first_name LIKE ? OR last_name LIKE ? OR email LIKE ?",
+		Where("first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ?",
 			"%"+query+"%", "%"+query+"%", "%"+query+"%")
 
 	result = applyQueryOptions(result, options)
@@ -346,7 +346,7 @@ func (repo *UserRepository) CountUsersByQuery(db database.Database, query string
 	var count int64
 	err := db.GetDB().
 		Model(&entity.User{}).
-		Where("first_name LIKE ? OR last_name LIKE ? OR email LIKE ?",
+		Where("first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ?",
 			"%"+query+"%", "%"+query+"%", "%"+query+"%").
 		Count(&count).Error
 

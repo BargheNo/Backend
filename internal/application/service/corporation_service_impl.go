@@ -813,6 +813,33 @@ func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo co
 	return response, count, nil
 }
 
+func (corporationService *CorporationService) SearchCorporations(request corporationdto.SearchCorporationsRequest) ([]corporationdto.CorporationCredentialResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(corporationService.getSortByColumn(request.SortBy), request.Asc)
+
+	corporations, err := corporationService.corporationRepository.FindCorporationsByQuery(corporationService.db, request.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
+	for i, corporation := range corporations {
+		credentials, err := corporationService.GetCorporationCredentials(corporation.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		response[i] = credentials
+	}
+
+	count, err := corporationService.corporationRepository.CountCorporationsByQuery(corporationService.db, request.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
+}
+
 func (corporationService *CorporationService) GetCorporationByAdmin(corporationID uint) (corporationdto.CorporationPrivateInfoResponse, error) {
 	corporation, err := corporationService.getCorporationByID(corporationID)
 	if err != nil {

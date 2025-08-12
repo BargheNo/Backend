@@ -99,6 +99,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	// put some role here
 	{
 		corporationManagement.GET("", app.Controllers.Admin.CorporationController.GetCorporations)
+		corporationManagement.GET("/search", app.Controllers.Admin.CorporationController.SearchCorporations)
 		corporationManagement.GET(status, app.Controllers.Admin.CorporationController.GetCorporationStatus)
 		corporationSubGRoup := corporationManagement.Group("/:corporationID")
 		{

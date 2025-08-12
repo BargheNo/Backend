@@ -99,3 +99,11 @@ type HandleCorporationActionRequest struct {
 	Reason        *string
 	Notes         *string
 }
+
+type SearchCorporationsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
+}
