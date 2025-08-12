@@ -127,6 +127,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		news.POST("/draft", app.Controllers.Admin.NewsController.CreateDraftNews)
 		news.GET("", app.Controllers.Admin.NewsController.GetNewsList)
+		news.GET("/search", app.Controllers.Admin.NewsController.SearchNews)
 		news.GET(status, app.Controllers.Admin.NewsController.GetAllNewsStatuses)
 		news.DELETE("", app.Controllers.Admin.NewsController.DeleteNews)
 		newsSubgroup := news.Group("/:newsID")
