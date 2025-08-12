@@ -99,6 +99,7 @@ type GetRoleOwnersRequest struct {
 }
 
 type GetRolesListRequest struct {
+	Query  string
 	Offset int
 	Limit  int
 }
