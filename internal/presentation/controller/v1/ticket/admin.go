@@ -61,6 +61,37 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 	controller.Response(ctx, 200, "", data)
 }
 
+func (ticketController *AdminTicketController) SearchTickets(ctx *gin.Context) {
+	type SearchTicketsRequest struct {
+		Query    string `form:"query" validate:"required"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
+	}
+
+	params := controller.Validated[SearchTicketsRequest](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, ticketController.pagination.DefaultPage, ticketController.pagination.DefaultPageSize)
+
+	requestInfo := ticketdto.SearchTicketsRequest{
+		Status: params.Status,
+		Query:  params.Query,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
+	}
+
+	tickets, count, err := ticketController.ticketService.SearchTickets(requestInfo)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}
+
 func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {
 	type GetCommentsRequest struct {
 		TicketID uint `uri:"ticketID" validate:"required"`

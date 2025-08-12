@@ -11,6 +11,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	ticket := routerGroup.Group("/ticket")
 	{
 		ticket.GET("", app.Controllers.Admin.TicketController.GetTickets)
+		ticket.GET("/search", app.Controllers.Admin.TicketController.SearchTickets)
 		ticketsSubGroup := ticket.Group("/:ticketID")
 		{
 			ticketsSubGroup.GET("/comments", app.Controllers.Admin.TicketController.GetComments)
