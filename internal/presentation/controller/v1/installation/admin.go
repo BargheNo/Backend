@@ -54,6 +54,35 @@ func (installationController *AdminInstallationController) GetInstallationReques
 	controller.Response(ctx, 200, "", data)
 }
 
+func (installationController *AdminInstallationController) SearchInstallationRequests(ctx *gin.Context) {
+	type searchInstallationRequestsParams struct {
+		Query    string `form:"query" validate:"required"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
+	}
+	params := controller.Validated[searchInstallationRequestsParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
+
+	request := installationdto.SearchInstallationRequestsRequest{
+		Query:  params.Query,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
+	}
+
+	requests, count, err := installationController.installationService.SearchInstallationRequests(request)
+	if err != nil {
+		panic(err)
+	}
+
+	data := controller.NewPaginatedResponse(requests, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}
+
 func (installationController *AdminInstallationController) GetInstallationRequest(ctx *gin.Context) {
 	type installationRequestParams struct {
 		RequestID uint `uri:"requestID" validate:"required"`

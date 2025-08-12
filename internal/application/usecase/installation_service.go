@@ -30,6 +30,7 @@ type InstallationService interface {
 	SearchPanels(request installationdto.SearchPanelsRequest) ([]installationdto.AdminPanelResponse, int64, error)
 	GetPublicInstallationRequest(requestID uint) (installationdto.PublicRequestDetailsResponse, error)
 	GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) ([]installationdto.PublicRequestDetailsResponse, int64, error)
+	SearchInstallationRequests(request installationdto.SearchInstallationRequestsRequest) ([]installationdto.PublicRequestDetailsResponse, int64, error)
 	UpdatePanel(request installationdto.UpdatePanelRequest) error
 	DeletePanel(panelID uint) error
 	GetRequestStatuses() []installationdto.EnumStatusResponse

@@ -24,6 +24,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		requests := installations.Group("/request")
 		{
 			requests.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequests)
+			requests.GET("/search", app.Controllers.Admin.InstallationController.SearchInstallationRequests)
 			requestSubGroup := requests.Group("/:requestID")
 			{
 				requestSubGroup.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequest)

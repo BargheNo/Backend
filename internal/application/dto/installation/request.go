@@ -154,3 +154,11 @@ type SearchPanelsRequest struct {
 	SortBy uint
 	Asc    bool
 }
+
+type SearchInstallationRequestsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
+}
