@@ -1051,6 +1051,67 @@ func (installationService *InstallationService) GetPanelsByAdmin(listInfo instal
 	return response, count, nil
 }
 
+func (installationService *InstallationService) SearchPanels(request installationdto.SearchPanelsRequest) ([]installationdto.AdminPanelResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(installationService.getSortByColumnPanel(request.SortBy), request.Asc)
+
+	panels, err := installationService.installationRepository.FindPanelsByQuery(installationService.db, request.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	response := make([]installationdto.AdminPanelResponse, len(panels))
+	for i, panel := range panels {
+		customer, err := installationService.userService.GetUserCredential(panel.CustomerID)
+		if err != nil {
+			return nil, 0, err
+		}
+		operator, err := installationService.userService.GetUserCredential(panel.OperatorID)
+		if err != nil {
+			return nil, 0, err
+		}
+		corporation, err := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
+		if err != nil {
+			return nil, 0, err
+		}
+		address, err := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		var guarantee guaranteedto.GuaranteeResponse
+		if panel.Guarantee != nil {
+			guarantee, _ = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
+		}
+
+		response[i] = installationdto.AdminPanelResponse{
+			ID:                   panel.ID,
+			Name:                 panel.Name,
+			Status:               panel.Status.String(),
+			BuildingType:         panel.BuildingType.String(),
+			Area:                 panel.Area,
+			Power:                panel.Power,
+			Tilt:                 panel.Tilt,
+			Azimuth:              panel.Azimuth,
+			TotalNumberOfModules: panel.TotalNumberOfModules,
+			GuaranteeStatus:      panel.GuaranteeStatus.String(),
+			Operator:             operator,
+			Customer:             customer,
+			Corporation:          corporation,
+			Address:              address,
+			Guarantee:            guarantee,
+		}
+	}
+
+	count, err := installationService.installationRepository.CountPanelsByQuery(installationService.db, request.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
+}
+
 func (installationService *InstallationService) UpdatePanel(request installationdto.UpdatePanelRequest) error {
 	panel, err := installationService.getPanel(request.PanelID)
 	if err != nil {

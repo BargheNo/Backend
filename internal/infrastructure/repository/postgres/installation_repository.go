@@ -191,6 +191,59 @@ func (repo *InstallationRepository) CountPanelsByStatus(db database.Database, al
 	return count, nil
 }
 
+func (repo *InstallationRepository) FindPanelsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Panel, error) {
+	var panels []*entity.Panel
+
+	result := db.GetDB().
+		Joins("LEFT JOIN users AS customers ON panels.customer_id = customers.id").
+		Joins("LEFT JOIN corporations ON panels.corporation_id = corporations.id").
+		Where(`
+			panels.name ILIKE ? OR 
+			customers.first_name ILIKE ? OR 
+			customers.last_name ILIKE ? OR 
+			customers.email ILIKE ? OR
+			customers.phone ILIKE ? OR
+			corporations.name ILIKE ? OR
+			corporations.registration_number ILIKE ?
+		`,
+			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&panels)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return panels, nil
+}
+
+func (repo *InstallationRepository) CountPanelsByQuery(db database.Database, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Panel{}).
+		Joins("LEFT JOIN users AS customers ON panels.customer_id = customers.id").
+		Joins("LEFT JOIN corporations ON panels.corporation_id = corporations.id").
+		Where(`
+			panels.name ILIKE ? OR 
+			customers.first_name ILIKE ? OR 
+			customers.last_name ILIKE ? OR 
+			customers.email ILIKE ? OR
+			customers.phone ILIKE ? OR
+			corporations.name ILIKE ? OR
+			corporations.registration_number ILIKE ?
+		`,
+			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *InstallationRepository) FindCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, options *postgres.QueryOptions) ([]*entity.Panel, error) {
 	var panels []*entity.Panel
 	query := db.GetDB().Where("customer_id = ? AND status IN ?", customerID, allowedStatus)

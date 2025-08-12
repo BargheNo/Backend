@@ -146,3 +146,11 @@ type UpdatePanelRequest struct {
 	Azimuth              *uint
 	TotalNumberOfModules *uint
 }
+
+type SearchPanelsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
+}

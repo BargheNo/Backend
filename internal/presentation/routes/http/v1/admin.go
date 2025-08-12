@@ -36,6 +36,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		panels := installations.Group("/panel")
 		{
 			panels.GET("", app.Controllers.Admin.InstallationController.GetPanels)
+			panels.GET("/search", app.Controllers.Admin.InstallationController.SearchPanels)
 			panels.GET(status, app.Controllers.Admin.InstallationController.GetAllPanelStatuses)
 			panelsSubGroup := panels.Group("/:panelID")
 			{

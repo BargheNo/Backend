@@ -142,6 +142,36 @@ func (installationController *AdminInstallationController) GetPanels(ctx *gin.Co
 	controller.Response(ctx, 200, "", data)
 }
 
+func (installationController *AdminInstallationController) SearchPanels(ctx *gin.Context) {
+	type searchPanelsParams struct {
+		Query    string `form:"query" validate:"required"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
+	}
+
+	params := controller.Validated[searchPanelsParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
+
+	request := installationdto.SearchPanelsRequest{
+		Query:  params.Query,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
+	}
+
+	panels, count, err := installationController.installationService.SearchPanels(request)
+	if err != nil {
+		panic(err)
+	}
+
+	data := controller.NewPaginatedResponse(panels, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}
+
 func (installationController *AdminInstallationController) GetAllPanelStatuses(ctx *gin.Context) {
 	statuses := installationController.installationService.GetPanelStatus()
 	controller.Response(ctx, 200, "", statuses)

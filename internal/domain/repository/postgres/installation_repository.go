@@ -28,6 +28,8 @@ type InstallationRepository interface {
 	FindPanelByID(db database.Database, panelID uint) (*entity.Panel, error)
 	FindPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus, options *QueryOptions) ([]*entity.Panel, error)
 	CountPanelsByStatus(db database.Database, allowedStatus []enum.PanelStatus) (int64, error)
+	FindPanelsByQuery(db database.Database, query string, options *QueryOptions) ([]*entity.Panel, error)
+	CountPanelsByQuery(db database.Database, query string) (int64, error)
 	CreatePanel(db database.Database, panel *entity.Panel) error
 	UpdatePanel(db database.Database, panel *entity.Panel) error
 	DeletePanel(db database.Database, panel *entity.Panel) error
