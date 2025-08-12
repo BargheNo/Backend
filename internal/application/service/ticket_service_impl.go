@@ -309,6 +309,53 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 	return responses, count, nil
 }
 
+func (ticketService *TicketService) SearchTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(ticketService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
+
+	tickets, err := ticketService.ticketRepository.FindTicketsByQuery(ticketService.db, requestInfo.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	responses := make([]ticketdto.TicketResponse, len(tickets))
+
+	for i, ticket := range tickets {
+		owner, err := ticketService.userService.GetUserCredential(ticket.OwnerID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		responses[i] = ticketdto.TicketResponse{
+			ID:          ticket.ID,
+			Owner:       owner,
+			Subject:     ticket.Subject.String(),
+			Description: ticket.Description,
+			Status:      ticket.Status.String(),
+			CreatedAt:   ticket.CreatedAt,
+		}
+
+		if ticket.Image != "" {
+		}
+
+		if ticket.Image != "" {
+			image, err := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
+			if err != nil {
+				return nil, 0, err
+			}
+			responses[i].Image = image
+		}
+	}
+
+	count, err := ticketService.ticketRepository.CountTicketsByQuery(ticketService.db, requestInfo.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return responses, count, nil
+}
+
 func (ticketService *TicketService) GetAdminTicketComments(requestInfo ticketdto.TicketCommentListRequest) ([]ticketdto.TicketCommentResponse, error) {
 	if _, err := ticketService.getTicket(requestInfo.TicketID); err != nil {
 		return nil, err

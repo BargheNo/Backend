@@ -25,10 +25,20 @@ type CreateCorporationTicketRequest struct {
 type TicketListRequest struct {
 	OwnerID uint
 	Status  uint
+	Query   string
 	Offset  int
 	Limit   int
 	SortBy  uint
 	Asc     bool
+}
+
+type SearchTicketsRequest struct {
+	Status uint
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
 type TicketCommentListRequest struct {

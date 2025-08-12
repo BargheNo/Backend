@@ -11,6 +11,8 @@ type NewsRepository interface {
 	FindNewsByTittle(db database.Database, title string) (*entity.News, error)
 	FindNewsByStatus(db database.Database, statuses []enum.NewsStatus, options *QueryOptions) ([]*entity.News, error)
 	CountNewsByStatus(db database.Database, statuses []enum.NewsStatus) (int64, error)
+	FindNewsByQuery(db database.Database, query string, options *QueryOptions) ([]*entity.News, error)
+	CountNewsByQuery(db database.Database, query string) (int64, error)
 	UpdateNews(db database.Database, news *entity.News) error
 	CreateNews(db database.Database, news *entity.News) error
 	DeleteNews(db database.Database, newsID uint) error

@@ -86,8 +86,9 @@ type ChangeLogoRequest struct {
 
 type GetCorporationsByAdminRequest struct {
 	Status uint
-	Limit  int
+	Query  string
 	Offset int
+	Limit  int
 	SortBy uint
 	Asc    bool
 }
@@ -98,4 +99,12 @@ type HandleCorporationActionRequest struct {
 	ActionID      uint
 	Reason        *string
 	Notes         *string
+}
+
+type SearchCorporationsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }

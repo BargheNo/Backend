@@ -41,4 +41,6 @@ type UserRepository interface {
 	UpdateRole(db database.Database, role *entity.Role) error
 	ReplaceRolePermissions(db database.Database, role *entity.Role, permissions []entity.Permission) error
 	ReplaceUserRoles(db database.Database, user *entity.User, roles []entity.Role) error
+	FindUsersByQuery(db database.Database, query string, options *QueryOptions) ([]*entity.User, error)
+	CountUsersByQuery(db database.Database, query string) (int64, error)
 }

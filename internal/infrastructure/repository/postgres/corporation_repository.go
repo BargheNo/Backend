@@ -253,6 +253,32 @@ func (repo *CorporationRepository) CountCorporationsByStatus(db database.Databas
 	return count, nil
 }
 
+func (repo *CorporationRepository) FindCorporationsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Corporation, error) {
+	var corporations []*entity.Corporation
+	result := db.GetDB().
+		Where("name ILIKE ?", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+
+	result = result.Find(&corporations)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return corporations, nil
+}
+
+func (repo *CorporationRepository) CountCorporationsByQuery(db database.Database, query string) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.Corporation{}).
+		Where("name ILIKE ?", "%"+query+"%").
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *CorporationRepository) FindUserCorporations(db database.Database, userID uint) ([]*entity.Corporation, error) {
 	var corporations []*entity.Corporation
 	result := db.GetDB().

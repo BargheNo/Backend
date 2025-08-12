@@ -234,6 +234,52 @@ func (newsService *NewsService) GetAdminNewsList(request newsdto.GetAdminNewsLis
 	return newsResponse, count, nil
 }
 
+func (newsService *NewsService) SearchNews(request newsdto.SearchNewsRequest) ([]newsdto.AdminNewsResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(newsService.getSortByColumn(request.SortBy), request.Asc)
+
+	news, err := newsService.newsRepository.FindNewsByQuery(newsService.db, request.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	newsResponse := make([]newsdto.AdminNewsResponse, len(news))
+
+	for i, eachNews := range news {
+		coverImage := ""
+		if eachNews.CoverImage != "" {
+			coverImage, err = newsService.s3Storage.GetPresignedURL(enum.NewsMedia, eachNews.CoverImage, 8*time.Hour)
+			if err != nil {
+				return nil, 0, err
+			}
+		}
+
+		author, err := newsService.userService.GetUserCredential(eachNews.AuthorID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		newsResponse[i] = newsdto.AdminNewsResponse{
+			ID:          eachNews.ID,
+			Title:       eachNews.Title,
+			Content:     eachNews.Content,
+			Description: eachNews.Description,
+			Status:      eachNews.Status.String(),
+			CoverImage:  coverImage,
+			Author:      author,
+			TotalLike:   eachNews.LikeCount,
+		}
+	}
+
+	count, err := newsService.newsRepository.CountNewsByQuery(newsService.db, request.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return newsResponse, count, nil
+}
+
 func (newsService *NewsService) GetPublicNewsList(request newsdto.GetPublicNewsListRequest) ([]newsdto.PublicNewsResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).

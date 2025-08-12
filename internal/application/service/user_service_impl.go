@@ -707,6 +707,38 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 	return err
 }
 
+func (userService *UserService) SearchUsers(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(userService.getSortByColumn(request.SortBy), request.Asc)
+
+	users, err := userService.userRepository.FindUsersByQuery(userService.db, request.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	userResponses := make([]userdto.CredentialResponse, len(users))
+	for i, user := range users {
+		userResponses[i] = userdto.CredentialResponse{
+			ID:         user.ID,
+			FirstName:  user.FirstName,
+			LastName:   user.LastName,
+			Phone:      user.Phone,
+			Email:      user.Email,
+			NationalID: user.NationalCode,
+			ProfilePic: user.ProfilePicPath,
+			Status:     user.Status.String(),
+		}
+	}
+
+	count, err := userService.userRepository.CountUsersByQuery(userService.db, request.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return userResponses, count, nil
+}
+
 func (userService *UserService) GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error) {
 
 	options := postgres.NewQueryOptions().

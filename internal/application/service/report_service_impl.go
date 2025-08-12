@@ -308,3 +308,71 @@ func (reportService *ReportService) GetReportStatuses() []reportdto.GetReportEnu
 	}
 	return response
 }
+
+func (reportService *ReportService) SearchMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(reportService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
+
+	reports, err := reportService.reportRepository.FindMaintenanceReportsByQuery(reportService.db, requestInfo.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	reportResponses := make([]reportdto.MaintenanceReportResponse, len(reports))
+
+	for i, report := range reports {
+		maintenanceRequest, err := reportService.maintenanceService.GetRequestByAdmin(report.ObjectID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		reportResponses[i] = reportdto.MaintenanceReportResponse{
+			ID:                 report.ID,
+			Description:        report.Description,
+			MaintenanceRequest: maintenanceRequest,
+			Status:             report.Status.String(),
+		}
+	}
+
+	count, err := reportService.reportRepository.CountMaintenanceReportsByQuery(reportService.db, requestInfo.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return reportResponses, count, nil
+}
+
+func (reportService *ReportService) SearchPanelReports(requestInfo reportdto.ReportListRequest) ([]reportdto.PanelReportResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(reportService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
+
+	reports, err := reportService.reportRepository.FindPanelReportsByQuery(reportService.db, requestInfo.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	reportResponses := make([]reportdto.PanelReportResponse, len(reports))
+
+	for i, report := range reports {
+		panel, err := reportService.installationService.GetPanelByAdmin(report.ObjectID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		reportResponses[i] = reportdto.PanelReportResponse{
+			ID:          report.ID,
+			Panel:       panel,
+			Description: report.Description,
+			Status:      report.Status.String(),
+		}
+	}
+
+	count, err := reportService.reportRepository.CountPanelReportsByQuery(reportService.db, requestInfo.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return reportResponses, count, nil
+}

@@ -31,11 +31,12 @@ func NewAdminTicketController(
 
 func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 	type GetTicketsRequest struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[GetTicketsRequest](ctx)
 
@@ -46,19 +47,31 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 	requestInfo := ticketdto.TicketListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
+		Query:   params.Query,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
 
-	tickets, count, err := ticketController.ticketService.GetAdminTickets(requestInfo)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
+	if params.Query != "" {
+		tickets, count, err := ticketController.ticketService.SearchTickets(requestInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(tickets, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+		return
+	} else {
 
-	controller.Response(ctx, 200, "", data)
+		tickets, count, err := ticketController.ticketService.GetAdminTickets(requestInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(tickets, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	}
+
 }
 
 func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {

@@ -71,6 +71,7 @@ type UpdateUserRolesRequest struct {
 }
 
 type GetUsersListRequest struct {
+	Query  string
 	Status uint
 	Offset int
 	Limit  int
@@ -100,4 +101,13 @@ type GetRoleOwnersRequest struct {
 type GetRolesListRequest struct {
 	Offset int
 	Limit  int
+}
+
+type SearchUsersRequest struct {
+	Query  string
+	Status uint
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }

@@ -56,3 +56,53 @@ func (repo *ReportRepository) FindReportByID(db database.Database, id uint) (*en
 func (repo *ReportRepository) UpdateReport(db database.Database, report *entity.Report) error {
 	return db.GetDB().Save(report).Error
 }
+
+func (repo *ReportRepository) FindMaintenanceReportsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Report, error) {
+	var reports []*entity.Report
+	result := db.GetDB().
+		Where("description ILIKE ? OR object_type = ?", "%"+query+"%", "maintenance")
+	result = applyQueryOptions(result, options)
+	result = result.Find(&reports)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return reports, nil
+}
+
+func (repo *ReportRepository) CountMaintenanceReportsByQuery(db database.Database, query string) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.Report{}).
+		Where("description ILIKE ? OR object_type = ?", "%"+query+"%", "maintenance").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *ReportRepository) FindPanelReportsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Report, error) {
+	var reports []*entity.Report
+	result := db.GetDB().
+		Where("description ILIKE ? OR object_type = ?", "%"+query+"%", "panel")
+	result = applyQueryOptions(result, options)
+	result = result.Find(&reports)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return reports, nil
+}
+
+func (repo *ReportRepository) CountPanelReportsByQuery(db database.Database, query string) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.Report{}).
+		Where("description ILIKE ? OR object_type = ?", "%"+query+"%", "panel").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

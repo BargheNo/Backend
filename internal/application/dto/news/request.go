@@ -68,3 +68,11 @@ type GetNewsByCustomer struct {
 	NewsID uint
 	UserID uint
 }
+
+type SearchNewsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
+}
