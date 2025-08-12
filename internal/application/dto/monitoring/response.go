@@ -2,7 +2,7 @@ package monitoringdto
 
 import "time"
 
-type CustomerPanelStatusResponse struct {
+type PanelStatusResponse struct {
 	DatalogSerial string    `json:"datalog_serial"`
 	PVSerial      string    `json:"pv_serial"`
 	PVStatus      int       `json:"pv_status"`
@@ -23,5 +23,23 @@ type CustomerPanelStatusResponse struct {
 	GridImport    float64   `json:"grid_import"`
 	EnergyToday   float64   `json:"energy_today"`
 	EnergyTotal   float64   `json:"energy_total"`
+	Timestamp     time.Time `json:"timestamp"`
+}
+
+type PanelHistoryResponse struct {
+	DatalogSerial string    `json:"datalog_serial"`
+	PVSerial      string    `json:"pv_serial"`
+	Date          string    `json:"date"`
+	EnergyToday   float64   `json:"energy_today"`
+	EnergyTotal   float64   `json:"energy_total"`
+	Timestamp     time.Time `json:"timestamp"`
+}
+
+type PanelEventResponse struct {
+	DatalogSerial string    `json:"datalog_serial"`
+	PVSerial      string    `json:"pv_serial"`
+	EventCode     string    `json:"event_code"`
+	Description   string    `json:"description"`
+	Severity      string    `json:"severity"`
 	Timestamp     time.Time `json:"timestamp"`
 }

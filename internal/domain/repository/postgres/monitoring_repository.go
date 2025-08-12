@@ -6,5 +6,7 @@ import (
 )
 
 type MonitoringRepository interface {
-	FindPanelStatusByPanelID(db database.Database, panelID uint) ([]*entity.PanelStatus, error)
+	FindPanelStatusByPanelID(db database.Database, panelID uint, options *QueryOptions) ([]*entity.PanelStatus, error)
+	FindPanelHistoryByPanelID(db database.Database, panelID uint, options *QueryOptions) ([]*entity.PanelHistory, error)
+	FindPanelEventByPanelID(db database.Database, panelID uint, options *QueryOptions) ([]*entity.PanelEvent, error)
 }
