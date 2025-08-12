@@ -35,4 +35,5 @@ type UserService interface {
 	UpdateRole(newRoleRequest userdto.UpdateRoleRequest) error
 	UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) error
 	GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, int64, error)
+	SearchUsers(request userdto.SearchUsersRequest) ([]userdto.CredentialResponse, int64, error)
 }

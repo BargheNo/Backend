@@ -326,3 +326,32 @@ func (repo *UserRepository) CountRolesByPermission(db database.Database, permiss
 	}
 	return count, nil
 }
+
+func (repo *UserRepository) FindUsersByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.User, error) {
+	var users []*entity.User
+	result := db.GetDB().
+		Where("first_name LIKE ? OR last_name LIKE ? OR email LIKE ?",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+
+	result = result.Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
+}
+
+func (repo *UserRepository) CountUsersByQuery(db database.Database, query string) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.User{}).
+		Where("first_name LIKE ? OR last_name LIKE ? OR email LIKE ?",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

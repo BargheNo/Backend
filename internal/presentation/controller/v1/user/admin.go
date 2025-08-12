@@ -282,3 +282,34 @@ func (userController *AdminUserController) UnbanUser(ctx *gin.Context) {
 	message, _ := trans.Translate("successMessage.unbanUser")
 	controller.Response(ctx, 200, message, nil)
 }
+
+func (userController *AdminUserController) SearchUsers(ctx *gin.Context) {
+	type searchUsersParams struct {
+		Query    string `form:"query" validate:"required"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
+	}
+	params := controller.Validated[searchUsersParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
+
+	request := userdto.SearchUsersRequest{
+		Query:  params.Query,
+		Status: params.Status,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
+	}
+
+	users, count, err := userController.userService.SearchUsers(request)
+	if err != nil {
+		panic(err)
+	}
+
+	data := controller.NewPaginatedResponse(users, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}

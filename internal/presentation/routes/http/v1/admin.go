@@ -89,6 +89,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	userManagement := routerGroup.Group("/users")
 	{
+		userManagement.GET("/search", app.Controllers.Admin.UserController.SearchUsers)
 		userManagement.GET("", app.Controllers.Admin.UserController.GetUsers)
 		userManagement.PUT("/:userID/ban", app.Controllers.Admin.UserController.BanUser)
 		userManagement.PUT("/:userID/unban", app.Controllers.Admin.UserController.UnbanUser)
