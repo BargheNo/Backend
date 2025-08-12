@@ -28,11 +28,12 @@ func NewAdminInstallationController(
 
 func (installationController *AdminInstallationController) GetInstallationRequests(ctx *gin.Context) {
 	type getRequestsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getRequestsParams](ctx)
 
@@ -40,33 +41,6 @@ func (installationController *AdminInstallationController) GetInstallationReques
 
 	listInfo := installationdto.AdminInstallationListRequest{
 		Status: params.Status,
-		Offset: offset,
-		Limit:  limit,
-		SortBy: params.SortBy,
-		Asc:    params.Asc,
-	}
-	requests, count, err := installationController.installationService.GetInstallationRequestsByAdmin(listInfo)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(requests, count, offset, limit)
-
-	controller.Response(ctx, 200, "", data)
-}
-
-func (installationController *AdminInstallationController) SearchInstallationRequests(ctx *gin.Context) {
-	type searchInstallationRequestsParams struct {
-		Query    string `form:"query" validate:"required"`
-		Page     int    `form:"page"`
-		PageSize int    `form:"pageSize"`
-		SortBy   uint   `form:"sortBy"`
-		Asc      bool   `form:"asc"`
-	}
-	params := controller.Validated[searchInstallationRequestsParams](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
-
-	request := installationdto.SearchInstallationRequestsRequest{
 		Query:  params.Query,
 		Offset: offset,
 		Limit:  limit,
@@ -74,13 +48,21 @@ func (installationController *AdminInstallationController) SearchInstallationReq
 		Asc:    params.Asc,
 	}
 
-	requests, count, err := installationController.installationService.SearchInstallationRequests(request)
-	if err != nil {
-		panic(err)
+	if params.Query != "" {
+		requests, count, err := installationController.installationService.SearchInstallationRequests(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(requests, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	} else {
+		requests, count, err := installationController.installationService.GetInstallationRequestsByAdmin(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(requests, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
 	}
-
-	data := controller.NewPaginatedResponse(requests, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *AdminInstallationController) GetInstallationRequest(ctx *gin.Context) {
@@ -146,11 +128,12 @@ func (installationController *AdminInstallationController) DeleteInstallationReq
 
 func (installationController *AdminInstallationController) GetPanels(ctx *gin.Context) {
 	type getPanelsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getPanelsParams](ctx)
 
@@ -158,33 +141,6 @@ func (installationController *AdminInstallationController) GetPanels(ctx *gin.Co
 
 	listInfo := installationdto.AdminInstallationListRequest{
 		Status: params.Status,
-		Offset: offset,
-		Limit:  limit,
-		SortBy: params.SortBy,
-		Asc:    params.Asc,
-	}
-	requests, count, err := installationController.installationService.GetPanelsByAdmin(listInfo)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(requests, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
-}
-
-func (installationController *AdminInstallationController) SearchPanels(ctx *gin.Context) {
-	type searchPanelsParams struct {
-		Query    string `form:"query" validate:"required"`
-		Page     int    `form:"page"`
-		PageSize int    `form:"pageSize"`
-		SortBy   uint   `form:"sortBy"`
-		Asc      bool   `form:"asc"`
-	}
-
-	params := controller.Validated[searchPanelsParams](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, installationController.pagination.DefaultPage, installationController.pagination.DefaultPageSize)
-
-	request := installationdto.SearchPanelsRequest{
 		Query:  params.Query,
 		Offset: offset,
 		Limit:  limit,
@@ -192,13 +148,21 @@ func (installationController *AdminInstallationController) SearchPanels(ctx *gin
 		Asc:    params.Asc,
 	}
 
-	panels, count, err := installationController.installationService.SearchPanels(request)
-	if err != nil {
-		panic(err)
+	if params.Query != "" {
+		requests, count, err := installationController.installationService.SearchPanels(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(requests, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	} else {
+		requests, count, err := installationController.installationService.GetPanelsByAdmin(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(requests, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
 	}
-
-	data := controller.NewPaginatedResponse(panels, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *AdminInstallationController) GetAllPanelStatuses(ctx *gin.Context) {

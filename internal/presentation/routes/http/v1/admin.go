@@ -11,7 +11,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	ticket := routerGroup.Group("/ticket")
 	{
 		ticket.GET("", app.Controllers.Admin.TicketController.GetTickets)
-		ticket.GET("/search", app.Controllers.Admin.TicketController.SearchTickets)
 		ticketsSubGroup := ticket.Group("/:ticketID")
 		{
 			ticketsSubGroup.GET("/comments", app.Controllers.Admin.TicketController.GetComments)
@@ -25,7 +24,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		requests := installations.Group("/request")
 		{
 			requests.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequests)
-			requests.GET("/search", app.Controllers.Admin.InstallationController.SearchInstallationRequests)
 			requestSubGroup := requests.Group("/:requestID")
 			{
 				requestSubGroup.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequest)
@@ -38,7 +36,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		panels := installations.Group("/panel")
 		{
 			panels.GET("", app.Controllers.Admin.InstallationController.GetPanels)
-			panels.GET("/search", app.Controllers.Admin.InstallationController.SearchPanels)
 			panels.GET(status, app.Controllers.Admin.InstallationController.GetAllPanelStatuses)
 			panelsSubGroup := panels.Group("/:panelID")
 			{
@@ -92,7 +89,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 
 	userManagement := routerGroup.Group("/users")
 	{
-		userManagement.GET("/search", app.Controllers.Admin.UserController.SearchUsers)
 		userManagement.GET("", app.Controllers.Admin.UserController.GetUsers)
 		userManagement.PUT("/:userID/ban", app.Controllers.Admin.UserController.BanUser)
 		userManagement.PUT("/:userID/unban", app.Controllers.Admin.UserController.UnbanUser)
@@ -102,7 +98,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	// put some role here
 	{
 		corporationManagement.GET("", app.Controllers.Admin.CorporationController.GetCorporations)
-		corporationManagement.GET("/search", app.Controllers.Admin.CorporationController.SearchCorporations)
 		corporationManagement.GET(status, app.Controllers.Admin.CorporationController.GetCorporationStatus)
 		corporationSubGRoup := corporationManagement.Group("/:corporationID")
 		{
@@ -120,9 +115,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	report := routerGroup.Group("/report")
 	{
 		report.GET("/maintenance", app.Controllers.Admin.ReportController.GetMaintenanceReports)
-		report.GET("/maintenance/search", app.Controllers.Admin.ReportController.SearchMaintenanceReports)
 		report.GET("/panel", app.Controllers.Admin.ReportController.GetPanelReports)
-		report.GET("/panel/search", app.Controllers.Admin.ReportController.SearchPanelReports)
 		report.POST("/resolve/:reportID", app.Controllers.Admin.ReportController.ResolveReport)
 	}
 
@@ -130,7 +123,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		news.POST("/draft", app.Controllers.Admin.NewsController.CreateDraftNews)
 		news.GET("", app.Controllers.Admin.NewsController.GetNewsList)
-		news.GET("/search", app.Controllers.Admin.NewsController.SearchNews)
 		news.GET(status, app.Controllers.Admin.NewsController.GetAllNewsStatuses)
 		news.DELETE("", app.Controllers.Admin.NewsController.DeleteNews)
 		newsSubgroup := news.Group("/:newsID")

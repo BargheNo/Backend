@@ -41,6 +41,7 @@ type CustomerRequestsListRequest struct {
 
 type AdminInstallationListRequest struct {
 	Status uint
+	Query  string
 	Offset int
 	Limit  int
 	SortBy uint

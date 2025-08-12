@@ -28,11 +28,12 @@ func NewAdminReportController(
 
 func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Context) {
 	type GetMaintenanceReportsRequest struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[GetMaintenanceReportsRequest](ctx)
 
@@ -42,28 +43,39 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
+		Query:   params.Query,
 		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
-	reports, count, err := reportController.reportService.GetMaintenanceReports(requestInfo)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(reports, count, offset, limit)
 
-	controller.Response(ctx, 200, "", data)
+	if params.Query != "" {
+		reports, count, err := reportController.reportService.SearchMaintenanceReports(requestInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(reports, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	} else {
+		reports, count, err := reportController.reportService.GetMaintenanceReports(requestInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(reports, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	}
 }
 
 func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context) {
 	type GetPanelReportsRequest struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[GetPanelReportsRequest](ctx)
 
@@ -73,19 +85,29 @@ func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context)
 
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
+		Query:   params.Query,
 		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
-	reports, count, err := reportController.reportService.GetPanelReports(requestInfo)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(reports, count, offset, limit)
 
-	controller.Response(ctx, 200, "", data)
+	if params.Query != "" {
+		reports, count, err := reportController.reportService.SearchPanelReports(requestInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(reports, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	} else {
+		reports, count, err := reportController.reportService.GetPanelReports(requestInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(reports, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	}
 }
 
 func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {
@@ -106,63 +128,4 @@ func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {
 	trans := controller.GetTranslator(ctx, reportController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.reportResolved")
 	controller.Response(ctx, 200, message, nil)
-}
-
-func (reportController *AdminReportController) SearchMaintenanceReports(ctx *gin.Context) {
-	type SearchReportsRequest struct {
-		Query    string `form:"query" validate:"required"`
-		Page     int    `form:"page"`
-		PageSize int    `form:"pageSize"`
-		SortBy   uint   `form:"sortBy"`
-		Asc      bool   `form:"asc"`
-	}
-	params := controller.Validated[SearchReportsRequest](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
-
-	requestInfo := reportdto.SearchReportsRequest{
-		Query:  params.Query,
-		Offset: offset,
-		Limit:  limit,
-		SortBy: params.SortBy,
-		Asc:    params.Asc,
-	}
-
-	reports, count, err := reportController.reportService.SearchMaintenanceReports(requestInfo)
-	if err != nil {
-		panic(err)
-	}
-
-	data := controller.NewPaginatedResponse(reports, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
-}
-
-func (reportController *AdminReportController) SearchPanelReports(ctx *gin.Context) {
-	type SearchReportsRequest struct {
-		Query    string `form:"query" validate:"required"`
-		Page     int    `form:"page"`
-		PageSize int    `form:"pageSize"`
-		SortBy   uint   `form:"sortBy"`
-		Asc      bool   `form:"asc"`
-	}
-
-	params := controller.Validated[SearchReportsRequest](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, reportController.pagination.DefaultPage, reportController.pagination.DefaultPageSize)
-
-	requestInfo := reportdto.SearchReportsRequest{
-		Query:  params.Query,
-		Offset: offset,
-		Limit:  limit,
-		SortBy: params.SortBy,
-		Asc:    params.Asc,
-	}
-
-	reports, count, err := reportController.reportService.SearchPanelReports(requestInfo)
-	if err != nil {
-		panic(err)
-	}
-
-	data := controller.NewPaginatedResponse(reports, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
 }

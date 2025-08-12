@@ -309,7 +309,7 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 	return responses, count, nil
 }
 
-func (ticketService *TicketService) SearchTickets(requestInfo ticketdto.SearchTicketsRequest) ([]ticketdto.TicketResponse, int64, error) {
+func (ticketService *TicketService) SearchTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
 		WithSorting(ticketService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)

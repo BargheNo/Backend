@@ -514,7 +514,7 @@ func (installationService *InstallationService) GetInstallationRequestsByAdmin(r
 	return response, count, nil
 }
 
-func (installationService *InstallationService) SearchInstallationRequests(request installationdto.SearchInstallationRequestsRequest) ([]installationdto.PublicRequestDetailsResponse, int64, error) {
+func (installationService *InstallationService) SearchInstallationRequests(request installationdto.AdminInstallationListRequest) ([]installationdto.PublicRequestDetailsResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(installationService.getSortByColumnRequest(request.SortBy), request.Asc)

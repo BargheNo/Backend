@@ -34,11 +34,12 @@ func (corporationController *AdminCorporationController) GetCorporationStatus(ct
 
 func (corporationController *AdminCorporationController) GetCorporations(ctx *gin.Context) {
 	type getCorporationsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getCorporationsParams](ctx)
 
@@ -46,34 +47,6 @@ func (corporationController *AdminCorporationController) GetCorporations(ctx *gi
 
 	listInfo := corporationdto.GetCorporationsByAdminRequest{
 		Status: params.Status,
-		Limit:  limit,
-		Offset: offset,
-		SortBy: params.SortBy,
-		Asc:    params.Asc,
-	}
-	corporations, count, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(corporations, count, offset, limit)
-
-	controller.Response(ctx, 200, "", data)
-}
-
-func (corporationController *AdminCorporationController) SearchCorporations(ctx *gin.Context) {
-	type searchCorporationsParams struct {
-		Query    string `form:"query" validate:"required"`
-		Page     int    `form:"page"`
-		PageSize int    `form:"pageSize"`
-		SortBy   uint   `form:"sortBy"`
-		Asc      bool   `form:"asc"`
-	}
-
-	params := controller.Validated[searchCorporationsParams](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
-
-	request := corporationdto.SearchCorporationsRequest{
 		Query:  params.Query,
 		Offset: offset,
 		Limit:  limit,
@@ -81,13 +54,21 @@ func (corporationController *AdminCorporationController) SearchCorporations(ctx 
 		Asc:    params.Asc,
 	}
 
-	corporations, count, err := corporationController.corporationService.SearchCorporations(request)
-	if err != nil {
-		panic(err)
+	if params.Query != "" {
+		corporations, count, err := corporationController.corporationService.SearchCorporations(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(corporations, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	} else {
+		corporations, count, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(corporations, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
 	}
-
-	data := controller.NewPaginatedResponse(corporations, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
 }
 
 func (corporationController *AdminCorporationController) GetCorporation(ctx *gin.Context) {

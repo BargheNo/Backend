@@ -71,6 +71,7 @@ type UpdateUserRolesRequest struct {
 }
 
 type GetUsersListRequest struct {
+	Query  string
 	Status uint
 	Offset int
 	Limit  int

@@ -109,7 +109,7 @@ func (ticketRepo TicketRepository) CountTicketsByStatus(db database.Database, st
 func (ticketRepo TicketRepository) FindTicketsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
 	var tickets []*entity.Ticket
 	result := db.GetDB().
-		Where("title ILIKE ? OR description ILIKE ?", "%"+query+"%", "%"+query+"%")
+		Where("description ILIKE ?", "%"+query+"%")
 	result = applyQueryOptions(result, options)
 	result = result.Find(&tickets)
 	if result.Error != nil {
@@ -122,7 +122,7 @@ func (ticketRepo TicketRepository) CountTicketsByQuery(db database.Database, que
 	var count int64
 	err := db.GetDB().
 		Model(&entity.Ticket{}).
-		Where("title ILIKE ? OR description ILIKE ?", "%"+query+"%", "%"+query+"%").
+		Where("description ILIKE ?", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {

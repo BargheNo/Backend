@@ -10,6 +10,7 @@ type CreateReportRequest struct {
 
 type ReportListRequest struct {
 	OwnerID uint
+	Query   string
 	Status  uint
 	Offset  int
 	Limit   int
