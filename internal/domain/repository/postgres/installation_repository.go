@@ -21,6 +21,8 @@ type InstallationRepository interface {
 	CountCorporationPanels(db database.Database, corporationID uint, allowedStatus []enum.PanelStatus) (int64, error)
 	FindCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, options *QueryOptions) ([]*entity.Panel, error)
 	CountCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus) (int64, error)
+	FindCustomerPanelsByQuery(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, query string, options *QueryOptions) ([]*entity.Panel, error)
+	CountCustomerPanelsByQuery(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, query string) (int64, error)
 	FindCustomerPanel(db database.Database, panelID, customerID uint) (*entity.Panel, error)
 	CreateRequest(db database.Database, request *entity.InstallationRequest) error
 	UpdateRequest(db database.Database, request *entity.InstallationRequest) error

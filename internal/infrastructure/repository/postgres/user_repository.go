@@ -197,6 +197,27 @@ func (repo *UserRepository) FindAllRoles(db database.Database, options *postgres
 	return roles, nil
 }
 
+func (repo *UserRepository) FindRolesByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Role, error) {
+	var roles []*entity.Role
+	result := db.GetDB().Where("name ILIKE ?", "%"+query+"%")
+	result = applyQueryOptions(result, options)
+
+	result = result.Find(&roles)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return roles, nil
+}
+
+func (repo *UserRepository) CountRolesByQuery(db database.Database, query string) (int64, error) {
+	var count int64
+	err := db.GetDB().Model(&entity.Role{}).Where("name ILIKE ?", "%"+query+"%").Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *UserRepository) CountAllRoles(db database.Database) (int64, error) {
 	var count int64
 	err := db.GetDB().Model(&entity.Role{}).Count(&count).Error

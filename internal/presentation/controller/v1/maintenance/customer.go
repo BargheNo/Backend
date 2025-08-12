@@ -71,11 +71,12 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 
 func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[maintenanceRequestsParams](ctx)
 	ownerID, _ := ctx.Get(maintenanceController.constants.Context.ID)
@@ -85,18 +86,27 @@ func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceReq
 	listInfo := maintenancedto.CustomerMaintenanceListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
+		Query:   params.Query,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
-	requests, count, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
-	if err != nil {
-		panic(err)
+	if params.Query != "" {
+		requests, count, err := maintenanceController.maintenanceService.SearchCustomerMaintenanceRequests(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(requests, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	} else {
+		requests, count, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(requests, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
 	}
-	data := controller.NewPaginatedResponse(requests, count, offset, limit)
-
-	controller.Response(ctx, 200, "", data)
 }
 
 func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceRequests(ctx *gin.Context) {

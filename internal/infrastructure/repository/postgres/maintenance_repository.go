@@ -87,6 +87,40 @@ func (repo *MaintenanceRepository) CountRequestsByCustomerID(db database.Databas
 	return count, nil
 }
 
+func (repo *MaintenanceRepository) FindRequestsByCustomerIDAndQuery(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
+	var requests []*entity.MaintenanceRequest
+	result := db.GetDB().
+		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
+		Where("Panel.customer_id = ?", customerID).
+		Where("maintenance_requests.status IN ?", allowedStatus).
+		Where("maintenance_requests.subject ILIKE ?", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+
+	result = result.Find(&requests)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return requests, nil
+}
+
+func (repo *MaintenanceRepository) CountRequestsByCustomerIDAndQuery(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.MaintenanceRequest{}).
+		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
+		Where("Panel.customer_id = ?", customerID).
+		Where("maintenance_requests.status IN ?", allowedStatus).
+		Where("maintenance_requests.subject ILIKE ?", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *MaintenanceRepository) CreateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error {
 	return db.GetDB().Create(maintenanceRequest).Error
 }

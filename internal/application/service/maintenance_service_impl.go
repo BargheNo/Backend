@@ -310,6 +310,53 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(lis
 	return response, count, nil
 }
 
+func (maintenanceService *MaintenanceService) SearchCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error) {
+	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
+
+	options := postgres.NewQueryOptions().
+		WithPagination(listInfo.Limit, listInfo.Offset).
+		WithSorting(maintenanceService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
+
+	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByCustomerIDAndQuery(maintenanceService.db, listInfo.OwnerID, allowedStatus, listInfo.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
+	for i, maintenanceRequest := range maintenanceRequests {
+		panelInfoRequest := installationdto.GetOwnerRequest{
+			OwnerID:        listInfo.OwnerID,
+			InstallationID: maintenanceRequest.PanelID,
+		}
+		panel, err := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		corporation, err := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
+			ID:                   maintenanceRequest.ID,
+			CreatedAt:            maintenanceRequest.CreatedAt,
+			Panel:                panel,
+			Corporation:          corporation,
+			Subject:              maintenanceRequest.Subject,
+			Description:          maintenanceRequest.Description,
+			UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
+			Status:               maintenanceRequest.Status.String(),
+			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
+		}
+	}
+	count, err := maintenanceService.maintenanceRepository.CountRequestsByCustomerIDAndQuery(maintenanceService.db, listInfo.OwnerID, allowedStatus, listInfo.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
+}
+
 func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequests(listInfo maintenancedto.CustomerPanelMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error) {
 	if _, err := maintenanceService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID); err != nil {
 		return nil, 0, err

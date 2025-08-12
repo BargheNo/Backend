@@ -27,6 +27,8 @@ type UserRepository interface {
 	FindAllPermissions(db database.Database, options *QueryOptions) ([]*entity.Permission, error)
 	CountAllPermissions(db database.Database) (int64, error)
 	FindAllRoles(db database.Database, options *QueryOptions) ([]*entity.Role, error)
+	FindRolesByQuery(db database.Database, query string, options *QueryOptions) ([]*entity.Role, error)
+	CountRolesByQuery(db database.Database, query string) (int64, error)
 	CountAllRoles(db database.Database) (int64, error)
 	FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, error)
 	FindRolesByPermission(db database.Database, permissionID uint, options *QueryOptions) ([]*entity.Role, error)

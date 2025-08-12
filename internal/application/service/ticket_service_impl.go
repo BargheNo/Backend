@@ -173,6 +173,50 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 	return responses, count, nil
 }
 
+func (ticketService *TicketService) SearchCustomerTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
+	allowedStatus := ticketService.mapToFilterStatuses(requestInfo.Status)
+
+	options := postgres.NewQueryOptions().
+		WithPagination(requestInfo.Limit, requestInfo.Offset).
+		WithSorting(ticketService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
+
+	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByQuery(ticketService.db, requestInfo.OwnerID, allowedStatus, requestInfo.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	response := make([]ticketdto.TicketResponse, len(tickets))
+
+	for i, ticket := range tickets {
+		owner, err := ticketService.userService.GetUserCredential(ticket.OwnerID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		response[i] = ticketdto.TicketResponse{
+			ID:          ticket.ID,
+			Owner:       owner,
+			Subject:     ticket.Subject.String(),
+			Description: ticket.Description,
+			Status:      ticket.Status.String(),
+			CreatedAt:   ticket.CreatedAt,
+		}
+
+		if ticket.Image != "" {
+			response[i].Image, err = ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
+			if err != nil {
+				return nil, 0, err
+			}
+		}
+	}
+
+	count, err := ticketService.ticketRepository.CountCustomerTicketsByQuery(ticketService.db, requestInfo.OwnerID, allowedStatus, requestInfo.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
+}
+
 func (ticketService *TicketService) CreateCustomerTicketComment(requestInfo ticketdto.CreateTicketCommentRequest) error {
 	ticket, err := ticketService.getTicket(requestInfo.TicketID)
 	if err != nil {

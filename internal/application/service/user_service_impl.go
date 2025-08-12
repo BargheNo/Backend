@@ -809,6 +809,36 @@ func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest)
 	return rolesResponse, count, nil
 }
 
+func (userService *UserService) SearchRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error) {
+
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset)
+
+	roles, err := userService.userRepository.FindRolesByQuery(userService.db, request.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	rolesResponse := make([]userdto.RoleResponse, len(roles))
+	for i, role := range roles {
+		permissions, err := userService.getRolePermissions(role)
+		if err != nil {
+			return nil, 0, err
+		}
+		rolesResponse[i] = userdto.RoleResponse{
+			ID:          role.ID,
+			Name:        role.Name,
+			Permissions: permissions,
+		}
+	}
+
+	count, err := userService.userRepository.CountRolesByQuery(userService.db, request.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return rolesResponse, count, nil
+}
+
 func (userService *UserService) getPermission(permissionID uint) (*entity.Permission, error) {
 	permission, err := userService.userRepository.FindPermissionByID(userService.db, permissionID)
 	if err != nil {

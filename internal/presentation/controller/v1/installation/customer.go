@@ -144,11 +144,12 @@ func (installationController *CustomerInstallationController) CancelInstallation
 
 func (installationController *CustomerInstallationController) GetCustomerPanels(ctx *gin.Context) {
 	type getPanelsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		Query    string `form:"query"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getPanelsParams](ctx)
 
@@ -159,18 +160,27 @@ func (installationController *CustomerInstallationController) GetCustomerPanels(
 	listInfo := installationdto.CustomerPanelListRequest{
 		OwnerID: ownerId.(uint),
 		Status:  params.Status,
+		Query:   params.Query,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
-	panels, count, err := installationController.installationService.GetCustomerPanels(listInfo)
-	if err != nil {
-		panic(err)
+	if params.Query != "" {
+		panels, count, err := installationController.installationService.SearchCustomerPanels(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(panels, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
+	} else {
+		panels, count, err := installationController.installationService.GetCustomerPanels(listInfo)
+		if err != nil {
+			panic(err)
+		}
+		data := controller.NewPaginatedResponse(panels, count, offset, limit)
+		controller.Response(ctx, 200, "", data)
 	}
-	data := controller.NewPaginatedResponse(panels, count, offset, limit)
-
-	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *CustomerInstallationController) GetCustomerPanel(ctx *gin.Context) {
