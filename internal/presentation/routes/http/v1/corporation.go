@@ -58,6 +58,12 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 					guaranteeViolation.PUT("", app.Controllers.Corporation.InstallationController.UpdatePanelGuaranteeViolation)
 				}
 			}
+			monitoring := panels.Group("/monitoring")
+			{
+				monitoring.GET("/status", app.Controllers.Corporation.MonitoringController.GetPanelStatus)
+				monitoring.GET("/history", app.Controllers.Corporation.MonitoringController.GetPanelHistory)
+				monitoring.GET("/event", app.Controllers.Corporation.MonitoringController.GetPanelEvent)
+			}
 		}
 	}
 

@@ -196,7 +196,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	mqtt := ProvideMQTTConfig(container)
 	client := mqttimpl.NewClient(mqtt)
 	monitoringRepository := postgres.NewMonitoringRepository()
-	monitoringService := service.NewMonitoringService(client, postgresDatabase, installationRepository, monitoringRepository, hub, installationService)
+	monitoringService := service.NewMonitoringService(client, postgresDatabase, corporationService, installationRepository, monitoringRepository, hub, installationService)
 	customerMonitoringController := monitoring.NewCustomerMonitoringController(constants, hub, jwtService, websocketSetting, monitoringService, pagination)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
@@ -220,6 +220,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationMaintenanceController := maintenance.NewCorporationMaintenanceController(constants, pagination, maintenanceService)
 	corporationGuaranteeController := guarantee.NewCorporationGuaranteeController(constants, guaranteeService)
 	corporationBlogController := blog.NewCorporationBlogController(constants, blogService, pagination)
+	corporationMonitoringController := monitoring.NewCorporationMonitoringController(constants, monitoringService, pagination)
 	corporationControllers := &CorporationControllers{
 		CorporationController:  corporationCorporationController,
 		InstallationController: corporationInstallationController,
@@ -228,6 +229,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		MaintenanceController:  corporationMaintenanceController,
 		GuaranteeController:    corporationGuaranteeController,
 		BlogController:         corporationBlogController,
+		MonitoringController:   corporationMonitoringController,
 	}
 	adminTicketController := ticket.NewAdminTicketController(constants, pagination, userService, ticketService)
 	adminUserController := user.NewAdminUserController(constants, pagination, userService)
@@ -319,7 +321,7 @@ var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, ad
 
 var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, blog.NewCustomerBlogController, news.NewCustomerNewsController, monitoring.NewCustomerMonitoringController, wire.Struct(new(CustomerControllers), "*"))
 
-var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, chat.NewCorporationChatController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, guarantee.NewCorporationGuaranteeController, blog.NewCorporationBlogController, wire.Struct(new(CorporationControllers), "*"))
+var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, chat.NewCorporationChatController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, guarantee.NewCorporationGuaranteeController, blog.NewCorporationBlogController, monitoring.NewCorporationMonitoringController, wire.Struct(new(CorporationControllers), "*"))
 
 var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, user.NewAdminUserController, report.NewAdminReportController, news.NewAdminNewsController, corporation.NewAdminCorporationController, installation.NewAdminInstallationController, bid.NewAdminBidController, monitoring.NewAdminMonitoringController, wire.Struct(new(AdminControllers), "*"))
 
@@ -485,6 +487,7 @@ type CorporationControllers struct {
 	MaintenanceController  *maintenance.CorporationMaintenanceController
 	GuaranteeController    *guarantee.CorporationGuaranteeController
 	BlogController         *blog.CorporationBlogController
+	MonitoringController   *monitoring.CorporationMonitoringController
 }
 
 type AdminControllers struct {

@@ -66,12 +66,9 @@ func SetupCustomerRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 				panelsSubGroup.GET("", app.Controllers.Customer.InstallationController.GetCustomerPanel)
 				panelsSubGroup.GET("/guarantee/violation", app.Controllers.Customer.InstallationController.GetPanelGuaranteeViolation)
 				panelsSubGroup.GET("/maintenance", app.Controllers.Customer.MaintenanceController.GetPanelMaintenanceRequests)
-			}
-			monitoring := panels.Group("/monitoring")
-			{
-				monitoring.GET("/status", app.Controllers.Customer.MonitoringController.GetPanelStatus)
-				monitoring.GET("/history", app.Controllers.Customer.MonitoringController.GetPanelHistory)
-				monitoring.GET("/event", app.Controllers.Customer.MonitoringController.GetPanelEvent)
+				panelsSubGroup.GET("/status", app.Controllers.Customer.MonitoringController.GetPanelStatus)
+				panelsSubGroup.GET("/history", app.Controllers.Customer.MonitoringController.GetPanelHistory)
+				panelsSubGroup.GET("/event", app.Controllers.Customer.MonitoringController.GetPanelEvent)
 			}
 		}
 	}

@@ -60,6 +60,10 @@ func main() {
 		&entity.News{},
 		&entity.Post{},
 		&entity.Like{},
+		&entity.PanelStatus{},
+		&entity.PanelHistory{},
+		&entity.PanelEvent{},
+		&entity.PanelDeviceInfo{},
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()

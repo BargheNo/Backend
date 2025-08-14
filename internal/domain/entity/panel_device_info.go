@@ -3,7 +3,6 @@ package entity
 import (
 	"time"
 
-	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 
@@ -20,6 +19,6 @@ type PanelDeviceInfo struct {
 
 	LastUpdated time.Time `gorm:"not null"`
 
-	PanelID uint         `gorm:"not null;index"`
-	Panel   entity.Panel `gorm:"foreignKey:PanelID"`
+	PanelID uint  `gorm:"not null;index"`
+	Panel   Panel `gorm:"foreignKey:PanelID"`
 }

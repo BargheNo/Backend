@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	entity "github.com/BargheNo/Backend/internal/domain/entity/monitoring"
+	entity "github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/infrastructure/database"
 )
 

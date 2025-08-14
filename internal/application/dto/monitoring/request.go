@@ -6,3 +6,11 @@ type CustomerPanelStatusListRequest struct {
 	Offset  int
 	Limit   int
 }
+
+type CorporationPanelStatusListRequest struct {
+	CorporationID uint
+	UserID        uint
+	PanelID       uint
+	Offset        int
+	Limit         int
+}

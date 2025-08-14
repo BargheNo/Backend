@@ -84,7 +84,7 @@ func (monitoringController *CustomerMonitoringController) GetPanelStatus(ctx *gi
 		Limit:   limit,
 	}
 
-	response, count, err := monitoringController.monitoringService.GetPanelStatus(listInfo)
+	response, count, err := monitoringController.monitoringService.GetCustomerPanelStatus(listInfo)
 	if err != nil {
 		panic(err)
 	}
@@ -112,7 +112,7 @@ func (monitoringController *CustomerMonitoringController) GetPanelHistory(ctx *g
 		Limit:   limit,
 	}
 
-	response, count, err := monitoringController.monitoringService.GetPanelHistory(listInfo)
+	response, count, err := monitoringController.monitoringService.GetCustomerPanelHistory(listInfo)
 	if err != nil {
 		panic(err)
 	}
@@ -140,7 +140,7 @@ func (monitoringController *CustomerMonitoringController) GetPanelEvent(ctx *gin
 		Limit:   limit,
 	}
 
-	response, count, err := monitoringController.monitoringService.GetPanelEvent(listInfo)
+	response, count, err := monitoringController.monitoringService.GetCustomerPanelEvent(listInfo)
 	if err != nil {
 		panic(err)
 	}
