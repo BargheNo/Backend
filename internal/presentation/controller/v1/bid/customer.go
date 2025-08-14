@@ -29,6 +29,7 @@ func NewCustomerBidController(
 func (bidController *CustomerBidController) GetBids(ctx *gin.Context) {
 	type getBidsParams struct {
 		RequestID uint `uri:"requestID" validate:"required"`
+		Status    uint `form:"status"`
 		Page      int  `form:"page"`
 		PageSize  int  `form:"pageSize"`
 		SortBy    uint `form:"sortBy"`
@@ -42,6 +43,7 @@ func (bidController *CustomerBidController) GetBids(ctx *gin.Context) {
 	bidsRequest := biddto.GetListRequestBidsRequest{
 		RequestID: params.RequestID,
 		UserID:    userID.(uint),
+		Status:    params.Status,
 		Offset:    offset,
 		Limit:     limit,
 		SortBy:    params.SortBy,
@@ -90,8 +92,7 @@ func (bidController *CustomerBidController) AcceptBid(ctx *gin.Context) {
 		BidID:     params.BidID,
 		UserID:    userID.(uint),
 	}
-	err := bidController.BidService.AcceptBid(bidsRequest)
-	if err != nil {
+	if err := bidController.BidService.AcceptBid(bidsRequest); err != nil {
 		panic(err)
 	}
 
@@ -113,8 +114,7 @@ func (bidController *CustomerBidController) RejectBid(ctx *gin.Context) {
 		BidID:     params.BidID,
 		UserID:    userID.(uint),
 	}
-	err := bidController.BidService.RejectBid(bidsRequest)
-	if err != nil {
+	if err := bidController.BidService.RejectBid(bidsRequest); err != nil {
 		panic(err)
 	}
 

@@ -6,7 +6,8 @@ import (
 
 type BidService interface {
 	GetBidSortableColumns() []biddto.GetBidEnumResponse
-	GetBidStatuses() []biddto.GetBidEnumResponse
+	GetCorporationBidStatuses() []biddto.GetBidEnumResponse
+	GetUserBidStatuses() []biddto.GetBidEnumResponse
 	AcceptBid(request biddto.GetCustomerBidRequest) error
 	CancelBid(bidInfo biddto.GetBidRequest) error
 	GetCorporationBid(request biddto.GetBidRequest) (biddto.CorporationBidResponse, error)
@@ -17,4 +18,8 @@ type BidService interface {
 	RejectBid(request biddto.GetCustomerBidRequest) error
 	SetBid(bidInfo biddto.SetBidRequest) error
 	UpdateBid(request biddto.UpdateBidRequest) error
+	DeleteBidByAdmin(bidID uint) error
+	UpdateBidByAdmin(request biddto.UpdateBidRequest) error
+	GetBidsByAdmin(requestInfo biddto.GetListBidsRequestByAdmin) ([]biddto.AdminBidResponse, int64, error)
+	GetBidByAdmin(bidID uint) (biddto.AdminBidResponse, error)
 }

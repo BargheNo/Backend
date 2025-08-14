@@ -128,7 +128,7 @@ func (installationService *InstallationService) GetRequestSortableColumns() []in
 	columns := sortby.GetInstallationSortableColumns()
 	response := make([]installationdto.EnumStatusResponse, len(columns))
 	i := 0
-	for col, _ := range columns {
+	for col := range columns {
 		response[i] = installationdto.EnumStatusResponse{
 			ID:   uint(col),
 			Name: col.Name(),
@@ -142,7 +142,7 @@ func (installationService *InstallationService) GetPanelSortableColumns() []inst
 	columns := sortby.GetPanelSortableColumns()
 	response := make([]installationdto.EnumStatusResponse, len(columns))
 	i := 0
-	for col, _ := range columns {
+	for col := range columns {
 		response[i] = installationdto.EnumStatusResponse{
 			ID:   uint(col),
 			Name: col.Name(),
@@ -217,27 +217,46 @@ func (installationService *InstallationService) ValidateRequestOwnership(request
 	}, nil
 }
 
-func (installationService *InstallationService) CreateInstallationRequest(request installationdto.NewInstallationRequest) error {
-	// compare installed panels names to new request name
-	if err := installationService.userService.IsUserActive(request.OwnerID); err != nil {
-		return err
-	}
+func (installationService *InstallationService) duplicatePanelName(ownerID uint, name string) error {
+	var conflictErrors exception.ConflictErrors
 
-	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
-	existingRequest, err := installationService.installationRepository.FindOwnerRequestByName(installationService.db, request.OwnerID, allowedStatus, request.Name)
+	requestAllowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
+	existingRequest, err := installationService.installationRepository.FindOwnerRequestByName(installationService.db, ownerID, requestAllowedStatus, name)
 	if err != nil {
 		return err
 	}
 	if existingRequest != nil {
-		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(installationService.constants.Field.Name, installationService.constants.Tag.AlreadyRegistered)
 		return conflictErrors
 	}
-	inProgressReqs, err := installationService.installationRepository.FindOwnerRequests(installationService.db, request.OwnerID, allowedStatus, nil)
+
+	existingPanel, err := installationService.installationRepository.FindPanelByNameAndCustomerID(installationService.db, name, ownerID)
 	if err != nil {
 		return err
 	}
-	if len(inProgressReqs) >= 5 {
+	if existingPanel != nil {
+		conflictErrors.Add(installationService.constants.Field.Name, installationService.constants.Tag.AlreadyRegistered)
+		return conflictErrors
+	}
+
+	return nil
+}
+
+func (installationService *InstallationService) CreateInstallationRequest(request installationdto.NewInstallationRequest) error {
+	if err := installationService.userService.IsUserActive(request.OwnerID); err != nil {
+		return err
+	}
+
+	if err := installationService.duplicatePanelName(request.OwnerID, request.Name); err != nil {
+		return err
+	}
+
+	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
+	inProgressReqs, err := installationService.installationRepository.CountOwnerRequests(installationService.db, request.OwnerID, allowedStatus)
+	if err != nil {
+		return err
+	}
+	if inProgressReqs >= 5 {
 		rateLimitError := exception.NewConcurrentInstallLimitError("", 5, nil)
 		return rateLimitError
 	}
@@ -260,15 +279,10 @@ func (installationService *InstallationService) CreateInstallationRequest(reques
 			Unit:          request.Address.Unit,
 		},
 	}
-	err = installationService.db.WithTransaction(func(tx database.Database) error {
-		err = installationService.installationRepository.CreateRequest(installationService.db, installationRequest)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-
-	return err
+	if err = installationService.installationRepository.CreateRequest(installationService.db, installationRequest); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (installationService *InstallationService) GetOwnerInstallationRequests(request installationdto.CustomerRequestsListRequest) ([]installationdto.AnonymousRequestsResponse, int64, error) {
@@ -278,8 +292,7 @@ func (installationService *InstallationService) GetOwnerInstallationRequests(req
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(installationService.getSortByColumnRequest(request.SortBy), request.Asc)
 
-	requests, err := installationService.installationRepository.FindOwnerRequests(
-		installationService.db, request.OwnerID, allowedStatus, options)
+	requests, err := installationService.installationRepository.FindOwnerRequests(installationService.db, request.OwnerID, allowedStatus, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -334,23 +347,51 @@ func (installationService *InstallationService) GetOwnerInstallationRequest(requ
 }
 
 func (installationService *InstallationService) ChangeInstallationRequestStatus(request installationdto.ChangeRequestStatusRequest) error {
+	var conflictErrors exception.ConflictErrors
+
 	installationRequest, err := installationService.getOwnerRequest(request.RequestID, request.OwnerID)
 	if err != nil {
 		return err
 	}
 
 	if installationRequest.Status == enum.InstallationRequestStatusCancelled {
-		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(installationService.constants.Field.InstallationRequest, installationService.constants.Tag.AlreadyCanceled)
 		return conflictErrors
 	}
 
-	installationRequest.Status = request.Status
-	err = installationService.installationRepository.UpdateRequest(installationService.db, installationRequest)
-	if err != nil {
+	if installationRequest.Status == enum.InstallationRequestStatusDone {
+		conflictErrors.Add(installationService.constants.Field.InstallationRequest, installationService.constants.Tag.AlreadyAccepted)
+		return conflictErrors
+	}
+
+	if err = installationService.installationRepository.UpdateRequest(installationService.db, installationRequest); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (installationService *InstallationService) getRequestsWithQuery(allowedStatus []enum.InstallationRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.InstallationRequest, int64, error) {
+	if query == "" {
+		requests, err := installationService.installationRepository.FindRequestsByStatus(installationService.db, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := installationService.installationRepository.CountRequestsByStatus(installationService.db, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return requests, count, nil
+	}
+
+	requests, err := installationService.installationRepository.FindCorporationRequestsByQuery(installationService.db, allowedStatus, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := installationService.installationRepository.CountCorporationRequestsByQuery(installationService.db, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return requests, count, nil
 }
 
 func (installationService *InstallationService) GetAnonymousInstallationRequests(request installationdto.CorporationPanelListRequest) ([]installationdto.AnonymousRequestsResponse, int64, error) {
@@ -358,13 +399,12 @@ func (installationService *InstallationService) GetAnonymousInstallationRequests
 		return nil, 0, err
 	}
 
-	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
-
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(installationService.getSortByColumnRequest(request.SortBy), request.Asc)
 
-	installationRequests, err := installationService.installationRepository.FindRequestsByStatus(installationService.db, allowedStatus, options)
+	allowedStatus := []enum.InstallationRequestStatus{enum.InstallationRequestStatusActive}
+	installationRequests, count, err := installationService.getRequestsWithQuery(allowedStatus, request.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -387,10 +427,6 @@ func (installationService *InstallationService) GetAnonymousInstallationRequests
 		}
 	}
 
-	count, err := installationService.installationRepository.CountRequestsByStatus(installationService.db, allowedStatus)
-	if err != nil {
-		return nil, 0, err
-	}
 	return response, count, nil
 }
 
@@ -468,14 +504,14 @@ func (installationService *InstallationService) mapToFilterStatusesForRequest(en
 	}
 	return statuses
 }
+
 func (installationService *InstallationService) GetInstallationRequestsByAdmin(request installationdto.AdminInstallationListRequest) ([]installationdto.PublicRequestDetailsResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(installationService.getSortByColumnRequest(request.SortBy), request.Asc)
+
 	allowedStatuses := installationService.mapToFilterStatusesForRequest(request.Status)
-
-	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset).
-		WithSorting(installationService.getSortByColumnRequest(request.SortBy), request.Asc)
-
-	installationRequests, err := installationService.installationRepository.FindRequestsByStatus(installationService.db, allowedStatuses, options)
+	installationRequests, count, err := installationService.getRequestsWithQuery(allowedStatuses, request.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -504,62 +540,16 @@ func (installationService *InstallationService) GetInstallationRequestsByAdmin(r
 			Customer:     customer,
 			Address:      address,
 		}
-	}
-
-	count, err := installationService.installationRepository.CountRequestsByStatus(installationService.db, allowedStatuses)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return response, count, nil
-}
-
-func (installationService *InstallationService) SearchInstallationRequests(request installationdto.AdminInstallationListRequest) ([]installationdto.PublicRequestDetailsResponse, int64, error) {
-	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset).
-		WithSorting(installationService.getSortByColumnRequest(request.SortBy), request.Asc)
-
-	installationRequests, err := installationService.installationRepository.FindRequestsByQuery(installationService.db, request.Query, options)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	response := make([]installationdto.PublicRequestDetailsResponse, len(installationRequests))
-
-	for i, installationRequest := range installationRequests {
-		customer, err := installationService.userService.GetUserCredential(installationRequest.OwnerID)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		address, err := installationService.addressService.GetAddress(installationRequest.ID, installationService.constants.AddressOwners.InstallationRequest)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		response[i] = installationdto.PublicRequestDetailsResponse{
-			ID:           installationRequest.ID,
-			Name:         installationRequest.Name,
-			Status:       installationRequest.Status.String(),
-			PowerRequest: installationRequest.PowerRequest,
-			Description:  installationRequest.Description,
-			BuildingType: installationRequest.BuildingType.String(),
-			Area:         installationRequest.Area,
-			MaxCost:      installationRequest.MaxCost,
-			Customer:     customer,
-			Address:      address,
-		}
-	}
-
-	count, err := installationService.installationRepository.CountRequestsByQuery(installationService.db, request.Query)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return response, count, nil
 }
 
 func (installationService *InstallationService) CompleteInstallationRequest(request installationdto.CompleteBidInstallationRequest) error {
+	if err := installationService.corporationService.ISCorporationApproved(request.CorporationID); err != nil {
+		return err
+	}
+
 	if err := installationService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID); err != nil {
 		return err
 	}
@@ -573,10 +563,15 @@ func (installationService *InstallationService) CompleteInstallationRequest(requ
 		return err
 	}
 
+	if panel.Status != enum.PanelStatusPending {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(installationService.constants.Field.InstallationRequest, installationService.constants.Tag.AlreadyActive)
+	}
+
 	panel.Tilt = request.Tilt
 	panel.Azimuth = request.Azimuth
 	panel.TotalNumberOfModules = request.NumberOfModules
-
+	panel.Status = enum.PanelStatusActive
 	if err := installationService.installationRepository.UpdatePanel(installationService.db, panel); err != nil {
 		return err
 	}
@@ -694,7 +689,6 @@ func (installationService *InstallationService) ValidatePanelGuarantee(panelID u
 	return nil
 }
 
-// TODO: nor done remain for the bid/bidID/request && maybe remove:FindPanelByNameAndCustomerID
 func (installationService *InstallationService) AddPanel(panelInfo installationdto.AddPanelRequest) error {
 	if err := installationService.corporationService.ISCorporationApproved(panelInfo.CorporationID); err != nil {
 		return err
@@ -713,25 +707,22 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 		return err
 	}
 
-	panel, err := installationService.installationRepository.FindPanelByNameAndCustomerID(installationService.db, panelInfo.Name, customer.ID)
-	if err != nil {
+	if err := installationService.duplicatePanelName(customer.ID, panelInfo.Name); err != nil {
 		return err
-	}
-	if panel != nil {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(installationService.constants.Field.Name, installationService.constants.Tag.AlreadyExist)
-		return conflictErrors
 	}
 
 	panelGuaranteeStatus := enum.PanelGuaranteeStatusEmpty
+	var guaranteeID *uint = nil
+
 	if panelInfo.GuaranteeID != nil {
 		if err := installationService.guaranteeService.ValidateActiveGuaranteeOwnerShip(*panelInfo.GuaranteeID, panelInfo.CorporationID); err != nil {
 			return err
 		}
 		panelGuaranteeStatus = enum.PanelGuaranteeStatusActive
+		guaranteeID = panelInfo.GuaranteeID
 	}
 
-	panel = &entity.Panel{
+	panel := &entity.Panel{
 		Name:                 panelInfo.Name,
 		Status:               panelInfo.Status,
 		BuildingType:         enum.BuildingType(panelInfo.BuildingType),
@@ -744,7 +735,7 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 		OperatorID:           panelInfo.OperatorID,
 		CustomerID:           customer.ID,
 		GuaranteeStatus:      panelGuaranteeStatus,
-		GuaranteeID:          panelInfo.GuaranteeID,
+		GuaranteeID:          guaranteeID,
 		Address: entity.Address{
 			ProvinceID:    panelInfo.Address.ProvinceID,
 			CityID:        panelInfo.Address.CityID,
@@ -755,9 +746,10 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 		},
 	}
 	err = installationService.db.WithTransaction(func(tx database.Database) error {
-		if err = installationService.installationRepository.CreatePanel(installationService.db, panel); err != nil {
+		if err := installationService.installationRepository.CreatePanel(installationService.db, panel); err != nil {
 			return err
 		}
+
 		request := chatdto.CreateOrGetUserRoomRequest{
 			CorporationID: panel.CorporationID,
 			UserID:        customer.ID,
@@ -765,9 +757,9 @@ func (installationService *InstallationService) AddPanel(panelInfo installationd
 		if _, err := installationService.chatService.CreateOrGetRoom(request); err != nil {
 			return err
 		}
+
 		return nil
 	})
-
 	return err
 }
 
@@ -784,6 +776,30 @@ func (installationService *InstallationService) mapToFilterStatusesForPanel(enum
 	return statuses
 }
 
+func (installationService *InstallationService) getCorporationPanelsWithQuery(corporationID uint, allowedStatus []enum.PanelStatus, query string, options *postgres.QueryOptions) ([]*entity.Panel, int64, error) {
+	if query == "" {
+		panels, err := installationService.installationRepository.FindCorporationPanels(installationService.db, corporationID, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := installationService.installationRepository.CountCorporationPanels(installationService.db, corporationID, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return panels, count, nil
+	}
+
+	panels, err := installationService.installationRepository.FindCorporationPanelsByQuery(installationService.db, corporationID, allowedStatus, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := installationService.installationRepository.CountCorporationPanelsByQuery(installationService.db, corporationID, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return panels, count, nil
+}
+
 func (installationService *InstallationService) GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) ([]installationdto.CorporationPanelListResponse, int64, error) {
 	if err := installationService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID); err != nil {
 		return nil, 0, err
@@ -794,8 +810,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 		WithSorting(installationService.getSortByColumnPanel(listInfo.SortBy), listInfo.Asc)
 
 	allowedStatus := installationService.mapToFilterStatusesForPanel(listInfo.Status)
-
-	panels, err := installationService.installationRepository.FindCorporationPanels(installationService.db, listInfo.CorporationID, allowedStatus, options)
+	panels, count, err := installationService.getCorporationPanelsWithQuery(listInfo.CorporationID, allowedStatus, listInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -830,10 +845,7 @@ func (installationService *InstallationService) GetCorporationPanels(listInfo in
 			Address:              address,
 		}
 	}
-	count, err := installationService.installationRepository.CountCorporationPanels(installationService.db, listInfo.CorporationID, allowedStatus)
-	if err != nil {
-		return nil, 0, err
-	}
+
 	return response, count, nil
 }
 
@@ -887,14 +899,37 @@ func (installationService *InstallationService) GetCorporationPanel(request inst
 	return response, nil
 }
 
+func (installationService *InstallationService) getCustomerPanelsWithQuery(ownerID uint, allowedStatus []enum.PanelStatus, query string, options *postgres.QueryOptions) ([]*entity.Panel, int64, error) {
+	if query == "" {
+		panels, err := installationService.installationRepository.FindCustomerPanels(installationService.db, ownerID, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := installationService.installationRepository.CountCustomerPanels(installationService.db, ownerID, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return panels, count, nil
+	}
+
+	panels, err := installationService.installationRepository.FindCustomerPanelsByQuery(installationService.db, ownerID, allowedStatus, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := installationService.installationRepository.CountCustomerPanelsByQuery(installationService.db, ownerID, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return panels, count, nil
+}
+
 func (installationService *InstallationService) GetCustomerPanels(listInfo installationdto.CustomerPanelListRequest) ([]installationdto.CustomerPanelListResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(listInfo.Limit, listInfo.Offset).
 		WithSorting(installationService.getSortByColumnPanel(listInfo.SortBy), listInfo.Asc)
 
 	allowedStatus := installationService.mapToFilterStatusesForPanel(listInfo.Status)
-
-	panels, err := installationService.installationRepository.FindCustomerPanels(installationService.db, listInfo.OwnerID, allowedStatus, options)
+	panels, count, err := installationService.getCustomerPanelsWithQuery(listInfo.OwnerID, allowedStatus, listInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -924,57 +959,6 @@ func (installationService *InstallationService) GetCustomerPanels(listInfo insta
 			Corporation:          corporation,
 			Address:              address,
 		}
-	}
-	count, err := installationService.installationRepository.CountCustomerPanels(installationService.db, listInfo.OwnerID, allowedStatus)
-	if err != nil {
-		return nil, 0, err
-	}
-	return response, count, nil
-}
-
-func (installationService *InstallationService) SearchCustomerPanels(listInfo installationdto.CustomerPanelListRequest) ([]installationdto.CustomerPanelListResponse, int64, error) {
-	options := postgres.NewQueryOptions().
-		WithPagination(listInfo.Limit, listInfo.Offset).
-		WithSorting(installationService.getSortByColumnPanel(listInfo.SortBy), listInfo.Asc)
-
-	allowedStatus := installationService.mapToFilterStatusesForPanel(listInfo.Status)
-
-	panels, err := installationService.installationRepository.FindCustomerPanelsByQuery(installationService.db, listInfo.OwnerID, allowedStatus, listInfo.Query, options)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	response := make([]installationdto.CustomerPanelListResponse, len(panels))
-
-	for i, panel := range panels {
-		address, err := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
-		if err != nil {
-			return nil, 0, err
-		}
-		corporation, err := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		response[i] = installationdto.CustomerPanelListResponse{
-			ID:                   panel.ID,
-			Name:                 panel.Name,
-			Status:               panel.Status.String(),
-			BuildingType:         panel.BuildingType.String(),
-			Area:                 panel.Area,
-			Power:                panel.Power,
-			Tilt:                 panel.Tilt,
-			Azimuth:              panel.Azimuth,
-			TotalNumberOfModules: panel.TotalNumberOfModules,
-			GuaranteeStatus:      panel.GuaranteeStatus.String(),
-			Corporation:          corporation,
-			Address:              address,
-		}
-	}
-
-	count, err := installationService.installationRepository.CountCustomerPanelsByQuery(installationService.db, listInfo.OwnerID, allowedStatus, listInfo.Query)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return response, count, nil
@@ -1081,6 +1065,30 @@ func (installationService *InstallationService) GetPanelStatus() []installationd
 	return response
 }
 
+func (installationService *InstallationService) getPanelsWithQuery(allowedStatus []enum.PanelStatus, query string, options *postgres.QueryOptions) ([]*entity.Panel, int64, error) {
+	if query == "" {
+		panels, err := installationService.installationRepository.FindPanelsByStatus(installationService.db, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := installationService.installationRepository.CountPanelsByStatus(installationService.db, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return panels, count, nil
+	}
+
+	panels, err := installationService.installationRepository.FindPanelsByQuery(installationService.db, allowedStatus, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := installationService.installationRepository.CountPanelsByQuery(installationService.db, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return panels, count, nil
+}
+
 func (installationService *InstallationService) GetPanelsByAdmin(listInfo installationdto.AdminInstallationListRequest) ([]installationdto.AdminPanelResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(listInfo.Limit, listInfo.Offset).
@@ -1088,7 +1096,7 @@ func (installationService *InstallationService) GetPanelsByAdmin(listInfo instal
 
 	allowedStatus := installationService.mapToFilterStatusesForPanel(listInfo.Status)
 
-	panels, err := installationService.installationRepository.FindPanelsByStatus(installationService.db, allowedStatus, options)
+	panels, count, err := installationService.getPanelsWithQuery(allowedStatus, listInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -1134,72 +1142,6 @@ func (installationService *InstallationService) GetPanelsByAdmin(listInfo instal
 			Address:              address,
 			Guarantee:            guarantee,
 		}
-	}
-
-	count, err := installationService.installationRepository.CountPanelsByStatus(installationService.db, allowedStatus)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return response, count, nil
-}
-
-func (installationService *InstallationService) SearchPanels(request installationdto.AdminInstallationListRequest) ([]installationdto.AdminPanelResponse, int64, error) {
-	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset).
-		WithSorting(installationService.getSortByColumnPanel(request.SortBy), request.Asc)
-
-	panels, err := installationService.installationRepository.FindPanelsByQuery(installationService.db, request.Query, options)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	response := make([]installationdto.AdminPanelResponse, len(panels))
-	for i, panel := range panels {
-		customer, err := installationService.userService.GetUserCredential(panel.CustomerID)
-		if err != nil {
-			return nil, 0, err
-		}
-		operator, err := installationService.userService.GetUserCredential(panel.OperatorID)
-		if err != nil {
-			return nil, 0, err
-		}
-		corporation, err := installationService.corporationService.GetCorporationCredentials(panel.CorporationID)
-		if err != nil {
-			return nil, 0, err
-		}
-		address, err := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		var guarantee guaranteedto.GuaranteeResponse
-		if panel.Guarantee != nil {
-			guarantee, _ = installationService.guaranteeService.GetGuarantee(*panel.GuaranteeID)
-		}
-
-		response[i] = installationdto.AdminPanelResponse{
-			ID:                   panel.ID,
-			Name:                 panel.Name,
-			Status:               panel.Status.String(),
-			BuildingType:         panel.BuildingType.String(),
-			Area:                 panel.Area,
-			Power:                panel.Power,
-			Tilt:                 panel.Tilt,
-			Azimuth:              panel.Azimuth,
-			TotalNumberOfModules: panel.TotalNumberOfModules,
-			GuaranteeStatus:      panel.GuaranteeStatus.String(),
-			Operator:             operator,
-			Customer:             customer,
-			Corporation:          corporation,
-			Address:              address,
-			Guarantee:            guarantee,
-		}
-	}
-
-	count, err := installationService.installationRepository.CountPanelsByQuery(installationService.db, request.Query)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return response, count, nil
@@ -1275,6 +1217,8 @@ func (installationService *InstallationService) ViolatePanelGuaranteeStatus(requ
 		return 0, conflictErrors
 	}
 
+	panel.GuaranteeStatus = enum.PanelGuaranteeStatusVoided
+
 	var violationID uint
 	err = installationService.db.WithTransaction(func(tx database.Database) error {
 		var err error
@@ -1282,7 +1226,6 @@ func (installationService *InstallationService) ViolatePanelGuaranteeStatus(requ
 		if err != nil {
 			return err
 		}
-		panel.GuaranteeStatus = enum.PanelGuaranteeStatusVoided
 
 		if err := installationService.installationRepository.UpdatePanel(tx, panel); err != nil {
 			return err
@@ -1294,8 +1237,7 @@ func (installationService *InstallationService) ViolatePanelGuaranteeStatus(requ
 }
 
 func (installationService *InstallationService) ClearPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) error {
-	err := installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
-	if err != nil {
+	if err := installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID); err != nil {
 		return err
 	}
 
@@ -1312,15 +1254,15 @@ func (installationService *InstallationService) ClearPanelGuaranteeViolation(vio
 		return exception.NotFoundError{Item: installationService.constants.Field.GuaranteeViolation}
 	}
 
+	if panel.GuaranteeEndDate.Before(time.Now()) {
+		panel.GuaranteeStatus = enum.PanelGuaranteeStatusExpired
+	} else {
+		panel.GuaranteeStatus = enum.PanelGuaranteeStatusActive
+	}
+
 	err = installationService.db.WithTransaction(func(tx database.Database) error {
 		if err := installationService.guaranteeService.RemovePanelGuaranteeViolation(violationInfo.PanelID); err != nil {
 			return err
-		}
-
-		if panel.GuaranteeEndDate.Before(time.Now()) {
-			panel.GuaranteeStatus = enum.PanelGuaranteeStatusExpired
-		} else {
-			panel.GuaranteeStatus = enum.PanelGuaranteeStatusActive
 		}
 
 		if err := installationService.installationRepository.UpdatePanel(tx, panel); err != nil {
@@ -1386,8 +1328,7 @@ func (installationService *InstallationService) GetCustomerPanelGuaranteeViolati
 }
 
 func (installationService *InstallationService) UpdatePanelGuaranteeViolation(violationInfo installationdto.UpdateGuaranteeViolationRequest) error {
-	err := installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID)
-	if err != nil {
+	if err := installationService.corporationService.CheckApplicantAccess(violationInfo.CorporationID, violationInfo.OperatorID); err != nil {
 		return err
 	}
 
