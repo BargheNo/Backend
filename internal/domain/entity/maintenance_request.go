@@ -8,7 +8,7 @@ import (
 type MaintenanceRequest struct {
 	database.Model
 	PanelID              uint                          `gorm:"index"`
-	Panel                Panel                         `gorm:"foreignKey:PanelID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Panel                Panel                         `gorm:"foreignKey:PanelID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CorporationID        uint                          `gorm:"index"`
 	Corporation          Corporation                   `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Status               enum.MaintenanceRequestStatus `gorm:"not null"`

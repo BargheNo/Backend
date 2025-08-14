@@ -119,3 +119,17 @@ type CustomerPanelResponse struct {
 	Address              addressdto.AddressResponse                   `json:"address"`
 	Guarantee            guaranteedto.GuaranteeResponse               `json:"guarantee"`
 }
+
+type GeneralPanelResponse struct {
+	ID                   uint                       `json:"id"`
+	Name                 string                     `json:"name"`
+	Status               string                     `json:"status"`
+	BuildingType         string                     `json:"buildingType"`
+	Area                 uint                       `json:"area"`
+	Power                uint                       `json:"power"`
+	Tilt                 uint                       `json:"tilt"`
+	Azimuth              uint                       `json:"azimuth"`
+	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
+	Customer             userdto.CredentialResponse `json:"customer"`
+	Address              addressdto.AddressResponse `json:"address"`
+}
