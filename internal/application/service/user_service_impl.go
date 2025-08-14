@@ -333,9 +333,14 @@ func (userService *UserService) GetPermissionRoles(request userdto.GetPermission
 	}
 	rolesResponse := make([]userdto.RoleResponse, len(roles))
 	for i, role := range roles {
+		permissions, err := userService.getRolePermissions(role)
+		if err != nil {
+			return nil, 0, err
+		}
 		rolesResponse[i] = userdto.RoleResponse{
-			ID:   role.ID,
-			Name: role.Name,
+			ID:          role.ID,
+			Name:        role.Name,
+			Permissions: permissions,
 		}
 	}
 	count, err := userService.userRepository.CountRolesByPermission(userService.db, request.PermissionID)
