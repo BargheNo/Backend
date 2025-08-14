@@ -31,11 +31,12 @@ func NewCorporationInstallationController(
 
 func (installationController *CorporationInstallationController) GetInstallationRequests(ctx *gin.Context) {
 	type getInstallationRequestParams struct {
-		CorporationID uint `uri:"corporationID" validate:"required"`
-		Page          int  `form:"page"`
-		PageSize      int  `form:"pageSize"`
-		SortBy        uint `form:"sortBy"`
-		Asc           bool `form:"asc"`
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Query         string `form:"query"`
+		Page          int    `form:"page"`
+		PageSize      int    `form:"pageSize"`
+		SortBy        uint   `form:"sortBy"`
+		Asc           bool   `form:"asc"`
 	}
 	params := controller.Validated[getInstallationRequestParams](ctx)
 	operatorID, _ := ctx.Get(installationController.constants.Context.ID)
@@ -45,6 +46,7 @@ func (installationController *CorporationInstallationController) GetInstallation
 	listInfo := installationdto.CorporationPanelListRequest{
 		CorporationID: params.CorporationID,
 		OperatorID:    operatorID.(uint),
+		Query:         params.Query,
 		Offset:        offset,
 		Limit:         limit,
 		SortBy:        params.SortBy,
@@ -84,9 +86,9 @@ func (installationController *CorporationInstallationController) CompleteInstall
 	type completeBidParams struct {
 		CorporationID   uint `uri:"corporationID" validate:"required"`
 		PanelID         uint `uri:"panelID" validate:"required"`
-		Tilt            uint `json:"tilt" validate:"required"`
-		Azimuth         uint `json:"area" validate:"required"`
-		NumberOfModules uint `json:"numberOfModules" validate:"required"`
+		Tilt            uint `json:"tilt" validate:"required,min=0,max=180"`
+		Azimuth         uint `json:"azimuth" validate:"required,min=0,max=360"`
+		NumberOfModules uint `json:"numberOfModules" validate:"required,min=1"`
 	}
 	params := controller.Validated[completeBidParams](ctx)
 	userID, _ := ctx.Get(installationController.constants.Context.ID)
@@ -111,13 +113,13 @@ func (installationController *CorporationInstallationController) CompleteInstall
 func (installationController *CorporationInstallationController) AddPanel(ctx *gin.Context) {
 	type addPanelParams struct {
 		CorporationID        uint   `uri:"corporationID" validate:"required"`
-		Name                 string `json:"name" validate:"required"`
-		CustomerPhone        string `json:"customerPhone" validate:"required"`
+		Name                 string `json:"name" validate:"required,max=50"`
+		CustomerPhone        string `json:"customerPhone" validate:"required,e164"`
 		Power                uint   `json:"power" validate:"required"`
 		Area                 uint   `json:"area" validate:"required"`
 		BuildingType         uint   `json:"buildingType" validate:"required"`
-		Tilt                 uint   `json:"tilt" validate:"required"`
-		Azimuth              uint   `json:"azimuth" validate:"required"`
+		Tilt                 uint   `json:"tilt" validate:"required,min=0,max=180"`
+		Azimuth              uint   `json:"azimuth" validate:"required,min=0,max=360"`
 		TotalNumberOfModules uint   `json:"totalNumberOfModules" validate:"required"`
 		ProvinceID           uint   `json:"provinceID" validate:"required"`
 		CityID               uint   `json:"cityID" validate:"required"`
@@ -163,12 +165,13 @@ func (installationController *CorporationInstallationController) AddPanel(ctx *g
 
 func (installationController *CorporationInstallationController) GetCorporationPanels(ctx *gin.Context) {
 	type getInstallationRequestParams struct {
-		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status"`
-		Page          int  `form:"page"`
-		PageSize      int  `form:"pageSize"`
-		SortBy        uint `form:"sortBy"`
-		Asc           bool `form:"asc"`
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Status        uint   `form:"status"`
+		Query         string `form:"query"`
+		Page          int    `form:"page"`
+		PageSize      int    `form:"pageSize"`
+		SortBy        uint   `form:"sortBy"`
+		Asc           bool   `form:"asc"`
 	}
 	params := controller.Validated[getInstallationRequestParams](ctx)
 	operatorID, _ := ctx.Get(installationController.constants.Context.ID)
@@ -179,6 +182,7 @@ func (installationController *CorporationInstallationController) GetCorporationP
 		CorporationID: params.CorporationID,
 		OperatorID:    operatorID.(uint),
 		Status:        params.Status,
+		Query:         params.Query,
 		Offset:        offset,
 		Limit:         limit,
 		SortBy:        params.SortBy,
@@ -212,6 +216,27 @@ func (installationController *CorporationInstallationController) GetCorporationP
 	}
 
 	controller.Response(ctx, 200, "", panel)
+}
+
+func (installationController *CorporationInstallationController) GetPanelGuaranteeViolation(ctx *gin.Context) {
+	type updateGuaranteeParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+		PanelID       uint `uri:"panelID" validate:"required"`
+	}
+	params := controller.Validated[updateGuaranteeParams](ctx)
+	userID, _ := ctx.Get(installationController.constants.Context.ID)
+
+	request := installationdto.GetCorporationGuaranteeViolationRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    userID.(uint),
+		PanelID:       params.PanelID,
+	}
+	violation, err := installationController.installationService.GetCorporationPanelGuaranteeViolation(request)
+	if err != nil {
+		panic(err)
+	}
+
+	controller.Response(ctx, 200, "", violation)
 }
 
 func (installationController *CorporationInstallationController) ViolatePanelGuarantee(ctx *gin.Context) {
@@ -265,27 +290,6 @@ func (installationController *CorporationInstallationController) ClearPanelGuara
 	trans := controller.GetTranslator(ctx, installationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.clearGuaranteeViolation")
 	controller.Response(ctx, 200, message, nil)
-}
-
-func (installationController *CorporationInstallationController) GetPanelGuaranteeViolation(ctx *gin.Context) {
-	type updateGuaranteeParams struct {
-		CorporationID uint `uri:"corporationID" validate:"required"`
-		PanelID       uint `uri:"panelID" validate:"required"`
-	}
-	params := controller.Validated[updateGuaranteeParams](ctx)
-	userID, _ := ctx.Get(installationController.constants.Context.ID)
-
-	request := installationdto.GetCorporationGuaranteeViolationRequest{
-		CorporationID: params.CorporationID,
-		OperatorID:    userID.(uint),
-		PanelID:       params.PanelID,
-	}
-	violation, err := installationController.installationService.GetCorporationPanelGuaranteeViolation(request)
-	if err != nil {
-		panic(err)
-	}
-
-	controller.Response(ctx, 200, "", violation)
 }
 
 func (installationController *CorporationInstallationController) UpdatePanelGuaranteeViolation(ctx *gin.Context) {

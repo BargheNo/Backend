@@ -226,8 +226,11 @@ func (guaranteeService *GuaranteeService) addGuaranteeTerm(terms guaranteedto.Gu
 }
 
 func (guaranteeService *GuaranteeService) UpdateGuaranteeStatus(request guaranteedto.ChangeStatusRequest) error {
-	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
-	if err != nil {
+	if err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID); err != nil {
+		return err
+	}
+
+	if err := guaranteeService.userService.IsUserActive(request.OperatorID); err != nil {
 		return err
 	}
 
@@ -270,8 +273,11 @@ func (guaranteeService *GuaranteeService) UpdateGuaranteeStatus(request guarante
 }
 
 func (guaranteeService *GuaranteeService) CreateGuaranteeViolation(request guaranteedto.CreateGuaranteeViolationRequest) (uint, error) {
-	err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID)
-	if err != nil {
+	if err := guaranteeService.corporationService.CheckApplicantAccess(request.CorporationID, request.OperatorID); err != nil {
+		return 0, err
+	}
+
+	if err := guaranteeService.userService.IsUserActive(request.OperatorID); err != nil {
 		return 0, err
 	}
 
@@ -303,7 +309,7 @@ func (guaranteeService *GuaranteeService) GetCorporationPanelGuaranteeViolation(
 
 	violation, err := guaranteeService.guaranteeRepository.FindPanelGuaranteeViolation(guaranteeService.db, panelID)
 	if err != nil {
-		return guaranteedto.CorporationGuaranteeViolationResponse{}, err
+		return response, err
 	}
 	if violation == nil {
 		notFoundError := exception.NotFoundError{Item: guaranteeService.constants.Field.GuaranteeViolation}
@@ -312,7 +318,7 @@ func (guaranteeService *GuaranteeService) GetCorporationPanelGuaranteeViolation(
 
 	operator, err := guaranteeService.userService.GetUserCredential(violation.ViolatedByID)
 	if err != nil {
-		return guaranteedto.CorporationGuaranteeViolationResponse{}, err
+		return response, err
 	}
 
 	response = guaranteedto.CorporationGuaranteeViolationResponse{

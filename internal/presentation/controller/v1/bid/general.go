@@ -23,6 +23,12 @@ func NewGeneralBidController(
 	}
 }
 
+func (bidController *GeneralBidController) UserBidStatuses(ctx *gin.Context) {
+	statuses := bidController.bidService.GetUserBidStatuses()
+
+	controller.Response(ctx, 200, "", statuses)
+}
+
 func (bidController *GeneralBidController) GetSortableFields(ctx *gin.Context) {
 	columns := bidController.bidService.GetBidSortableColumns()
 	controller.Response(ctx, 200, "", columns)

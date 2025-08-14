@@ -793,11 +793,11 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo
 			Details:              recordInfo.Details,
 			GuaranteeViolationID: guaranteeViolationID,
 		}
+		maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
 		if err := maintenanceService.maintenanceRepository.CreateMaintenanceRecord(tx, record); err != nil {
 			return err
 		}
 
-		maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
 		if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(tx, maintenanceRequest); err != nil {
 			return err
 		}

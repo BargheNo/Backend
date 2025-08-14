@@ -222,14 +222,9 @@ func (userService *UserService) FindActiveUserByPhone(phone string) (*entity.Use
 	if err != nil {
 		return nil, err
 	}
-	if user == nil {
+	if user == nil || !user.PhoneVerified {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
 		return nil, notFoundError
-	}
-	if !user.PhoneVerified {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
-		return nil, conflictErrors
 	}
 
 	return user, nil

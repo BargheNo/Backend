@@ -48,21 +48,13 @@ func (installationController *AdminInstallationController) GetInstallationReques
 		Asc:    params.Asc,
 	}
 
-	if params.Query != "" {
-		requests, count, err := installationController.installationService.SearchInstallationRequests(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(requests, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		requests, count, err := installationController.installationService.GetInstallationRequestsByAdmin(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(requests, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	requests, count, err := installationController.installationService.GetInstallationRequestsByAdmin(listInfo)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(requests, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *AdminInstallationController) GetInstallationRequest(ctx *gin.Context) {
@@ -148,21 +140,13 @@ func (installationController *AdminInstallationController) GetPanels(ctx *gin.Co
 		Asc:    params.Asc,
 	}
 
-	if params.Query != "" {
-		requests, count, err := installationController.installationService.SearchPanels(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(requests, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		requests, count, err := installationController.installationService.GetPanelsByAdmin(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(requests, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	requests, count, err := installationController.installationService.GetPanelsByAdmin(listInfo)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(requests, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (installationController *AdminInstallationController) GetAllPanelStatuses(ctx *gin.Context) {
