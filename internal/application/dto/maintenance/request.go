@@ -4,7 +4,6 @@ import (
 	"time"
 
 	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
-	"github.com/BargheNo/Backend/internal/domain/enum"
 )
 
 type CreateMaintenanceRequest struct {
@@ -13,7 +12,7 @@ type CreateMaintenanceRequest struct {
 	CorporationID    uint
 	Subject          string
 	Description      string
-	UrgencyLevel     enum.UrgencyLevel
+	UrgencyLevel     uint
 	IsUsingGuarantee bool
 }
 
@@ -55,6 +54,7 @@ type CorporationMaintenanceListRequest struct {
 	CorporationID uint
 	OperatorID    uint
 	Status        uint
+	Query         string
 	Offset        int
 	Limit         int
 	SortBy        uint

@@ -57,7 +57,7 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 		CorporationID:    params.CorporationID,
 		Subject:          params.Subject,
 		Description:      params.Description,
-		UrgencyLevel:     enum.UrgencyLevel(params.UrgencyLevel),
+		UrgencyLevel:     params.UrgencyLevel,
 		IsUsingGuarantee: params.IsUsingGuarantee,
 	}
 	if err := maintenanceController.maintenanceService.CreateMaintenanceRequest(requestInfo); err != nil {
@@ -92,21 +92,14 @@ func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceReq
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
-	if params.Query != "" {
-		requests, count, err := maintenanceController.maintenanceService.SearchCustomerMaintenanceRequests(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(requests, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		requests, count, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(requests, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+
+	requests, count, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(requests, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
 }
 
 func (maintenanceController *CustomerMaintenanceController) GetPanelMaintenanceRequests(ctx *gin.Context) {

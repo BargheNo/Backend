@@ -453,5 +453,5 @@ func (repo *InstallationRepository) UpdatePanel(db database.Database, panel *ent
 }
 
 func (repo *InstallationRepository) DeletePanel(db database.Database, panel *entity.Panel) error {
-	return db.GetDB().Delete(&panel).Error
+	return db.GetDB().Unscoped().Delete(&panel).Error
 }
