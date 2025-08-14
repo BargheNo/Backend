@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	guaranteedto "github.com/BargheNo/Backend/internal/application/dto/guarantee"
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	maintenancedto "github.com/BargheNo/Backend/internal/application/dto/maintenance"
 	"github.com/BargheNo/Backend/internal/application/usecase"
@@ -101,11 +102,21 @@ func (maintenanceService *MaintenanceService) getRequestRecord(requestID uint) (
 	return maintenanceRecord, nil
 }
 
+func (maintenanceService *MaintenanceService) mapToUrgencyLevel(requested uint) enum.UrgencyLevel {
+	defaultLevel := enum.Medium
+	for _, level := range enum.GetAllUrgencyLevels() {
+		if requested == uint(level) {
+			return level
+		}
+	}
+	return defaultLevel
+}
+
 func (maintenanceService *MaintenanceService) GetMaintenanceSortableColumns() []maintenancedto.MaintenanceEnumResponse {
 	columns := sortby.GetMaintenanceSortableColumns()
 	response := make([]maintenancedto.MaintenanceEnumResponse, len(columns))
 	i := 0
-	for col, _ := range columns {
+	for col := range columns {
 		response[i] = maintenancedto.MaintenanceEnumResponse{
 			ID:   uint(col),
 			Name: col.Name(),
@@ -221,7 +232,7 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 		return err
 	}
 
-	if err := maintenanceService.corporationService.DoesCorporationExist(request.CorporationID); err != nil {
+	if err := maintenanceService.corporationService.ISCorporationApproved(request.CorporationID); err != nil {
 		return err
 	}
 
@@ -230,11 +241,12 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 	}
 
 	allowedStatus := []enum.MaintenanceRequestStatus{enum.MaintenanceRequestStatusPending}
-	currentActiveRequest, err := maintenanceService.maintenanceRepository.FindRequestsByPanelIDAndStatus(maintenanceService.db, request.PanelID, allowedStatus, nil)
+
+	currentActiveRequest, err := maintenanceService.maintenanceRepository.CountRequestsByPanelIDAndStatus(maintenanceService.db, request.PanelID, allowedStatus)
 	if err != nil {
 		return err
 	}
-	if len(currentActiveRequest) > 0 {
+	if currentActiveRequest > 0 {
 		var conflictErrors exception.ConflictErrors
 		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.Pending)
 		return conflictErrors
@@ -246,82 +258,59 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRequest(request m
 		}
 	}
 
+	urgencyLevel := maintenanceService.mapToUrgencyLevel(request.UrgencyLevel)
+
 	maintenanceRequest := &entity.MaintenanceRequest{
 		CorporationID:        request.CorporationID,
 		PanelID:              request.PanelID,
 		Subject:              request.Subject,
 		Description:          request.Description,
 		Status:               enum.MaintenanceRequestStatusPending,
-		UrgencyLevel:         request.UrgencyLevel,
+		UrgencyLevel:         urgencyLevel,
 		IsGuaranteeRequested: request.IsUsingGuarantee,
 	}
-	err = maintenanceService.maintenanceRepository.CreateMaintenanceRequest(maintenanceService.db, maintenanceRequest)
-	if err != nil {
+	if err = maintenanceService.maintenanceRepository.CreateMaintenanceRequest(maintenanceService.db, maintenanceRequest); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error) {
-	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
-
-	options := postgres.NewQueryOptions().
-		WithPagination(listInfo.Limit, listInfo.Offset).
-		WithSorting(maintenanceService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
-
-	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByCustomerID(maintenanceService.db, listInfo.OwnerID, allowedStatus, options)
-	if err != nil {
-		return nil, 0, err
-	}
-	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
-
-	for i, maintenanceRequest := range maintenanceRequests {
-		panelInfoRequest := installationdto.GetOwnerRequest{
-			OwnerID:        listInfo.OwnerID,
-			InstallationID: maintenanceRequest.PanelID,
-		}
-		panel, err := maintenanceService.installationService.GetCustomerPanel(panelInfoRequest)
+func (maintenanceService *MaintenanceService) getCustomerRequestsByQuery(ownerID uint, allowedStatus []enum.MaintenanceRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, int64, error) {
+	if query == "" {
+		maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByCustomerID(maintenanceService.db, ownerID, allowedStatus, options)
 		if err != nil {
 			return nil, 0, err
 		}
-
-		corporation, err := maintenanceService.corporationService.GetCorporationCredentials(maintenanceRequest.CorporationID)
+		count, err := maintenanceService.maintenanceRepository.CountRequestsByCustomerID(maintenanceService.db, ownerID, allowedStatus)
 		if err != nil {
 			return nil, 0, err
 		}
-
-		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
-			ID:                   maintenanceRequest.ID,
-			CreatedAt:            maintenanceRequest.CreatedAt,
-			Panel:                panel,
-			Corporation:          corporation,
-			Subject:              maintenanceRequest.Subject,
-			Description:          maintenanceRequest.Description,
-			UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
-			Status:               maintenanceRequest.Status.String(),
-			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
-		}
+		return maintenanceRequests, count, nil
 	}
-	count, err := maintenanceService.maintenanceRepository.CountRequestsByCustomerID(maintenanceService.db, listInfo.OwnerID, allowedStatus)
+
+	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByCustomerIDAndQuery(maintenanceService.db, ownerID, allowedStatus, query, options)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	return response, count, nil
+	count, err := maintenanceService.maintenanceRepository.CountRequestsByCustomerIDAndQuery(maintenanceService.db, ownerID, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return maintenanceRequests, count, nil
 }
 
-func (maintenanceService *MaintenanceService) SearchCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error) {
-	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
-
+func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequests(listInfo maintenancedto.CustomerMaintenanceListRequest) ([]maintenancedto.CustomerMaintenanceRequestResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(listInfo.Limit, listInfo.Offset).
 		WithSorting(maintenanceService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
 
-	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindRequestsByCustomerIDAndQuery(maintenanceService.db, listInfo.OwnerID, allowedStatus, listInfo.Query, options)
+	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCustomer)
+	maintenanceRequests, count, err := maintenanceService.getCustomerRequestsByQuery(listInfo.OwnerID, allowedStatus, listInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
 	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
+
 	for i, maintenanceRequest := range maintenanceRequests {
 		panelInfoRequest := installationdto.GetOwnerRequest{
 			OwnerID:        listInfo.OwnerID,
@@ -337,6 +326,11 @@ func (maintenanceService *MaintenanceService) SearchCustomerMaintenanceRequests(
 			return nil, 0, err
 		}
 
+		record, err := maintenanceService.getCustomerMaintenanceRecord(maintenanceRequest.ID, maintenanceRequest.PanelID)
+		if err != nil {
+			return nil, 0, err
+		}
+
 		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
 			ID:                   maintenanceRequest.ID,
 			CreatedAt:            maintenanceRequest.CreatedAt,
@@ -347,11 +341,8 @@ func (maintenanceService *MaintenanceService) SearchCustomerMaintenanceRequests(
 			UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
 			Status:               maintenanceRequest.Status.String(),
 			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
+			Record:               record,
 		}
-	}
-	count, err := maintenanceService.maintenanceRepository.CountRequestsByCustomerIDAndQuery(maintenanceService.db, listInfo.OwnerID, allowedStatus, listInfo.Query)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return response, count, nil
@@ -372,6 +363,10 @@ func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequest
 	if err != nil {
 		return nil, 0, err
 	}
+	count, err := maintenanceService.maintenanceRepository.CountRequestsByPanelIDAndStatus(maintenanceService.db, listInfo.PanelID, allowedStatus)
+	if err != nil {
+		return nil, 0, err
+	}
 	response := make([]maintenancedto.CustomerMaintenanceRequestResponse, len(maintenanceRequests))
 
 	for i, maintenanceRequest := range maintenanceRequests {
@@ -389,6 +384,11 @@ func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequest
 			return nil, 0, err
 		}
 
+		record, err := maintenanceService.getCustomerMaintenanceRecord(maintenanceRequest.ID, maintenanceRequest.PanelID)
+		if err != nil {
+			return nil, 0, err
+		}
+
 		response[i] = maintenancedto.CustomerMaintenanceRequestResponse{
 			ID:                   maintenanceRequest.ID,
 			CreatedAt:            maintenanceRequest.CreatedAt,
@@ -399,11 +399,8 @@ func (maintenanceService *MaintenanceService) GetCustomerPanelMaintenanceRequest
 			UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
 			Status:               maintenanceRequest.Status.String(),
 			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
+			Record:               record,
 		}
-	}
-	count, err := maintenanceService.maintenanceRepository.CountRequestsByPanelIDAndStatus(maintenanceService.db, listInfo.PanelID, allowedStatus)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return response, count, nil
@@ -429,7 +426,7 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequest(main
 		return maintenancedto.CustomerMaintenanceRequestResponse{}, err
 	}
 
-	record, err := maintenanceService.getCustomerMaintenanceRecord(maintenanceInfo.RequestID, maintenanceRequest.PanelID)
+	record, err := maintenanceService.getCustomerMaintenanceRecord(maintenanceRequest.ID, maintenanceRequest.PanelID)
 	if err != nil {
 		return maintenancedto.CustomerMaintenanceRequestResponse{}, err
 	}
@@ -450,14 +447,23 @@ func (maintenanceService *MaintenanceService) GetCustomerMaintenanceRequest(main
 }
 
 func (maintenanceService *MaintenanceService) getCustomerMaintenanceRecord(requestID, panelID uint) (maintenancedto.CustomerMaintenanceRecordResponse, error) {
-	record, err := maintenanceService.getRequestRecord(requestID)
+	record := maintenancedto.CustomerMaintenanceRecordResponse{}
+
+	recordModel, err := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, requestID)
 	if err != nil {
-		return maintenancedto.CustomerMaintenanceRecordResponse{}, err
+		return record, err
 	}
 
-	violation, err := maintenanceService.guaranteeService.GetCustomerPanelGuaranteeViolation(panelID)
-	if err != nil {
-		return maintenancedto.CustomerMaintenanceRecordResponse{}, err
+	if recordModel == nil {
+		return record, nil
+	}
+
+	violation := guaranteedto.CustomerGuaranteeViolationResponse{}
+	if recordModel.GuaranteeViolationID != nil {
+		violation, err = maintenanceService.guaranteeService.GetCustomerPanelGuaranteeViolation(panelID)
+		if err != nil {
+			return record, err
+		}
 	}
 
 	recordResponse := maintenancedto.CustomerMaintenanceRecordResponse{
@@ -497,7 +503,7 @@ func (maintenanceService *MaintenanceService) UpdateMaintenanceRequest(updateReq
 	}
 
 	if updateRequest.UrgencyLevel != nil {
-		maintenanceRequest.UrgencyLevel = enum.UrgencyLevel(*updateRequest.UrgencyLevel)
+		maintenanceRequest.UrgencyLevel = maintenanceService.mapToUrgencyLevel(*updateRequest.UrgencyLevel)
 	}
 
 	if updateRequest.IsUsingGuarantee != nil {
@@ -524,8 +530,7 @@ func (maintenanceService *MaintenanceService) CancelMaintenanceRequest(maintenan
 		return err
 	}
 
-	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID)
-	if err != nil {
+	if _, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID); err != nil {
 		return err
 	}
 
@@ -540,8 +545,7 @@ func (maintenanceService *MaintenanceService) CancelMaintenanceRequest(maintenan
 
 	maintenanceRequest.Status = enum.MaintenanceRequestStatusCanceled
 
-	err = maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest)
-	if err != nil {
+	if err = maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(maintenanceService.db, maintenanceRequest); err != nil {
 		return err
 	}
 	return nil
@@ -553,8 +557,7 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 		return err
 	}
 
-	_, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID)
-	if err != nil {
+	if _, err = maintenanceService.installationService.ValidatePanelOwnership(maintenanceRequest.PanelID, maintenanceInfo.OwnerID); err != nil {
 		return err
 	}
 
@@ -577,36 +580,58 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 	return nil
 }
 
-func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) ([]maintenancedto.CorporationMaintenanceListResponse, int64, error) {
-	err := maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID)
+func (maintenanceService *MaintenanceService) getMaintenanceByQuery(corporationID uint, allowedStatus []enum.MaintenanceRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, int64, error) {
+	if query == "" {
+		maintenanceRequests, err := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatus(maintenanceService.db, corporationID, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := maintenanceService.maintenanceRepository.CountCorporationRequestsByStatus(maintenanceService.db, corporationID, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return maintenanceRequests, count, nil
+	}
+
+	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatusAdnQuery(maintenanceService.db, corporationID, allowedStatus, query, options)
 	if err != nil {
 		return nil, 0, err
 	}
+	count, err := maintenanceService.maintenanceRepository.CountCorporationRequestsByStatusAdnQuery(maintenanceService.db, corporationID, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return maintenanceRequests, count, nil
+}
 
-	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCorporation)
+func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) ([]maintenancedto.CorporationMaintenanceResponse, int64, error) {
+	if err := maintenanceService.corporationService.CheckApplicantAccess(listInfo.CorporationID, listInfo.OperatorID); err != nil {
+		return nil, 0, err
+	}
 
 	options := postgres.NewQueryOptions().
 		WithPagination(listInfo.Limit, listInfo.Offset).
 		WithSorting(maintenanceService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
 
-	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatus(maintenanceService.db, listInfo.CorporationID, allowedStatus, options)
+	allowedStatus := maintenanceService.mapStatusForRole(listInfo.Status, enum.AgentTypeCorporation)
+	maintenanceRequests, count, err := maintenanceService.getMaintenanceByQuery(listInfo.CorporationID, allowedStatus, listInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
-	response := make([]maintenancedto.CorporationMaintenanceListResponse, len(maintenanceRequests))
+	response := make([]maintenancedto.CorporationMaintenanceResponse, len(maintenanceRequests))
 
 	for i, maintenanceRequest := range maintenanceRequests {
-		panelInfoRequest := installationdto.CorporationPanelRequest{
-			CorporationID:  listInfo.CorporationID,
-			OperatorID:     listInfo.OperatorID,
-			InstallationID: maintenanceRequest.PanelID,
-		}
-		panel, err := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
+		panel, err := maintenanceService.installationService.GetGeneralPanel(maintenanceRequest.PanelID)
 		if err != nil {
 			return nil, 0, err
 		}
 
-		response[i] = maintenancedto.CorporationMaintenanceListResponse{
+		record, err := maintenanceService.getCorporationMaintenanceRecord(maintenanceRequest.ID, maintenanceRequest.PanelID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		response[i] = maintenancedto.CorporationMaintenanceResponse{
 			ID:                   maintenanceRequest.ID,
 			CreatedAt:            maintenanceRequest.CreatedAt,
 			Panel:                panel,
@@ -615,11 +640,8 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequests(
 			UrgencyLevel:         maintenanceRequest.UrgencyLevel.String(),
 			Status:               maintenanceRequest.Status.String(),
 			IsGuaranteeRequested: maintenanceRequest.IsGuaranteeRequested,
+			Record:               record,
 		}
-	}
-	count, err := maintenanceService.maintenanceRepository.CountCorporationRequestsByStatus(maintenanceService.db, listInfo.CorporationID, allowedStatus)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return response, count, nil
@@ -635,12 +657,7 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(m
 		return maintenancedto.CorporationMaintenanceResponse{}, err
 	}
 
-	panelInfoRequest := installationdto.CorporationPanelRequest{
-		CorporationID:  maintenanceInfo.CorporationID,
-		OperatorID:     maintenanceInfo.OperatorID,
-		InstallationID: maintenanceRequest.PanelID,
-	}
-	panel, err := maintenanceService.installationService.GetCorporationPanel(panelInfoRequest)
+	panel, err := maintenanceService.installationService.GetGeneralPanel(maintenanceRequest.PanelID)
 	if err != nil {
 		return maintenancedto.CorporationMaintenanceResponse{}, err
 	}
@@ -665,17 +682,26 @@ func (maintenanceService *MaintenanceService) GetCorporationMaintenanceRequest(m
 }
 
 func (maintenanceService *MaintenanceService) getCorporationMaintenanceRecord(requestID, panelID uint) (maintenancedto.CorporationMaintenanceRecordResponse, error) {
-	record, err := maintenanceService.getRequestRecord(requestID)
+	record := maintenancedto.CorporationMaintenanceRecordResponse{}
+
+	recordModel, err := maintenanceService.maintenanceRepository.FindRecordByRequestID(maintenanceService.db, requestID)
 	if err != nil {
-		return maintenancedto.CorporationMaintenanceRecordResponse{}, err
+		return record, err
 	}
 
-	operator, err := maintenanceService.userService.GetUserCredential(record.OperatorID)
-	if err != nil {
-		return maintenancedto.CorporationMaintenanceRecordResponse{}, err
+	if recordModel == nil {
+		return record, nil
 	}
 
-	violation, err := maintenanceService.guaranteeService.GetCorporationPanelGuaranteeViolation(panelID)
+	violation := guaranteedto.CorporationGuaranteeViolationResponse{}
+	if recordModel.GuaranteeViolationID != nil {
+		violation, err = maintenanceService.guaranteeService.GetCorporationPanelGuaranteeViolation(panelID)
+		if err != nil {
+			return record, err
+		}
+	}
+
+	operator, err := maintenanceService.userService.GetUserCredential(recordModel.OperatorID)
 	if err != nil {
 		return maintenancedto.CorporationMaintenanceRecordResponse{}, err
 	}
@@ -692,8 +718,11 @@ func (maintenanceService *MaintenanceService) getCorporationMaintenanceRecord(re
 	return recordResponse, nil
 }
 
-// TODO: CHECKED COULD BE BETTER add timer
 func (maintenanceService *MaintenanceService) AcceptMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) error {
+	if err := maintenanceService.corporationService.ISCorporationApproved(maintenanceInfo.CorporationID); err != nil {
+		return err
+	}
+
 	if err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID); err != nil {
 		return err
 	}
@@ -720,8 +749,11 @@ func (maintenanceService *MaintenanceService) AcceptMaintenanceRequest(maintenan
 	return nil
 }
 
-// TODO: CHECKED COULD BE BETTER add reason
 func (maintenanceService *MaintenanceService) RejectMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) error {
+	if err := maintenanceService.corporationService.ISCorporationApproved(maintenanceInfo.CorporationID); err != nil {
+		return err
+	}
+
 	if err := maintenanceService.corporationService.CheckApplicantAccess(maintenanceInfo.CorporationID, maintenanceInfo.OperatorID); err != nil {
 		return err
 	}
@@ -793,11 +825,11 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo
 			Details:              recordInfo.Details,
 			GuaranteeViolationID: guaranteeViolationID,
 		}
-		maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
 		if err := maintenanceService.maintenanceRepository.CreateMaintenanceRecord(tx, record); err != nil {
 			return err
 		}
 
+		maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
 		if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(tx, maintenanceRequest); err != nil {
 			return err
 		}
@@ -807,6 +839,10 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo
 }
 
 func (maintenanceService *MaintenanceService) UpdateMaintenanceRecord(recordInfo maintenancedto.UpdateMaintenanceRecordRequest) error {
+	if err := maintenanceService.corporationService.ISCorporationApproved(recordInfo.CorporationID); err != nil {
+		return err
+	}
+
 	if err := maintenanceService.corporationService.CheckApplicantAccess(recordInfo.CorporationID, recordInfo.OperatorID); err != nil {
 		return err
 	}

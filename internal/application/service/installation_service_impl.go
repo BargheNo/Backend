@@ -124,6 +124,39 @@ func (installationService *InstallationService) getPanel(panelID uint) (*entity.
 	return panel, nil
 }
 
+func (installationService *InstallationService) GetGeneralPanel(panelID uint) (installationdto.GeneralPanelResponse, error) {
+	var response installationdto.GeneralPanelResponse
+
+	panel, err := installationService.getPanel(panelID)
+	if err != nil {
+		return response, err
+	}
+
+	address, err := installationService.addressService.GetAddress(panel.ID, installationService.constants.AddressOwners.Panel)
+	if err != nil {
+		return response, err
+	}
+	customer, err := installationService.userService.GetUserCredential(panel.CustomerID)
+	if err != nil {
+		return response, err
+	}
+
+	response = installationdto.GeneralPanelResponse{
+		ID:                   panel.ID,
+		Name:                 panel.Name,
+		Status:               panel.Status.String(),
+		BuildingType:         panel.BuildingType.String(),
+		Area:                 panel.Area,
+		Power:                panel.Power,
+		Tilt:                 panel.Tilt,
+		Azimuth:              panel.Azimuth,
+		TotalNumberOfModules: panel.TotalNumberOfModules,
+		Customer:             customer,
+		Address:              address,
+	}
+	return response, nil
+}
+
 func (installationService *InstallationService) GetRequestSortableColumns() []installationdto.EnumStatusResponse {
 	columns := sortby.GetInstallationSortableColumns()
 	response := make([]installationdto.EnumStatusResponse, len(columns))

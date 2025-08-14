@@ -16,6 +16,7 @@ type InstallationService interface {
 	GetAnonymousInstallationRequest(request installationdto.CorporationPanelRequest) (installationdto.AnonymousRequestsResponse, error)
 	GetAnonymousInstallationRequests(request installationdto.CorporationPanelListRequest) ([]installationdto.AnonymousRequestsResponse, int64, error)
 	GetBuildingTypes() []installationdto.EnumStatusResponse
+	GetGeneralPanel(panelID uint) (installationdto.GeneralPanelResponse, error)
 	GetCorporationPanel(request installationdto.CorporationPanelRequest) (installationdto.CorporationPanelResponse, error)
 	GetCorporationPanelGuaranteeViolation(violationInfo installationdto.GetCorporationGuaranteeViolationRequest) (guaranteedto.CorporationGuaranteeViolationResponse, error)
 	GetCorporationPanels(listInfo installationdto.CorporationPanelListRequest) ([]installationdto.CorporationPanelListResponse, int64, error)
