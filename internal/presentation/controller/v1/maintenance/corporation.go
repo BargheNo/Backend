@@ -145,7 +145,7 @@ func (maintenanceController *CorporationMaintenanceController) CreateMaintenance
 		CorporationID      uint                `uri:"corporationID" validate:"required"`
 		Title              string              `json:"title" validate:"required"`
 		Details            string              `json:"details" validate:"required"`
-		GuaranteeViolation *guaranteeViolation `json:"guaranteeViolation,omitempty" validate:"omitempty,dive"`
+		GuaranteeViolation *guaranteeViolation `json:"guaranteeViolation" validate:"omitempty,dive"`
 	}
 
 	params := controller.Validated[createRecordParams](ctx)
