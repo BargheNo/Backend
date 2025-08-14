@@ -812,7 +812,7 @@ func (bidService *BidService) checkUpdateBidStatus(status enum.BidStatus) error 
 	return nil
 }
 
-func (bidService *BidService) applyBidUpdates(bid *entity.Bid, cost, area, power, guaranteeID *uint, description *string, installationTime *time.Time) {
+func (bidService *BidService) applyBidUpdates(bid *entity.Bid, cost, area, power *uint, description *string, installationTime *time.Time) {
 	if cost != nil {
 		bid.Cost = *cost
 	}
@@ -831,10 +831,6 @@ func (bidService *BidService) applyBidUpdates(bid *entity.Bid, cost, area, power
 
 	if installationTime != nil {
 		bid.InstallationTime = *installationTime
-	}
-
-	if guaranteeID != nil {
-		bid.GuaranteeID = guaranteeID
 	}
 }
 
@@ -857,7 +853,14 @@ func (bidService *BidService) UpdateBid(request biddto.UpdateBidRequest) error {
 		return err
 	}
 
-	bidService.applyBidUpdates(bid, request.Cost, request.Area, request.Power, request.GuaranteeID, request.Description, request.InstallationTime)
+	bidService.applyBidUpdates(bid, request.Cost, request.Area, request.Power, request.Description, request.InstallationTime)
+
+	if request.GuaranteeID != nil {
+		if err := bidService.guaranteeService.ValidateActiveGuaranteeOwnerShip(*request.GuaranteeID, bid.CorporationID); err != nil {
+			return err
+		}
+		bid.GuaranteeID = request.GuaranteeID
+	}
 
 	err = bidService.db.WithTransaction(func(tx database.Database) error {
 		if request.PaymentTerms != nil {
@@ -938,7 +941,14 @@ func (bidService *BidService) UpdateBidByAdmin(request biddto.UpdateBidRequest) 
 		return err
 	}
 
-	bidService.applyBidUpdates(bid, request.Cost, request.Area, request.Power, request.GuaranteeID, request.Description, request.InstallationTime)
+	bidService.applyBidUpdates(bid, request.Cost, request.Area, request.Power, request.Description, request.InstallationTime)
+
+	if request.GuaranteeID != nil {
+		if err := bidService.guaranteeService.ValidateActiveGuaranteeOwnerShip(*request.GuaranteeID, bid.CorporationID); err != nil {
+			return err
+		}
+		bid.GuaranteeID = request.GuaranteeID
+	}
 
 	if err := bidService.bidRepository.UpdateBid(bidService.db, bid); err != nil {
 		return err
