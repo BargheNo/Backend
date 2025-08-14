@@ -99,18 +99,24 @@ func (s *MonitoringService) GetPanelStatus(listInfo monitoringdto.CustomerPanelS
 			Timestamp:     status.Timestamp,
 		}
 	}
-	return response, int64(len(response)), nil
+
+	count, err := s.monitoringRepository.CountPanelStatusByPanelID(s.db, listInfo.PanelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
 }
 
-func (s *MonitoringService) GetPanelHistory(listInfo monitoringdto.CustomerPanelStatusListRequest) ([]monitoringdto.PanelHistoryResponse, int64, error) {
-	_, err := s.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID)
+func (monitoringService *MonitoringService) GetPanelHistory(listInfo monitoringdto.CustomerPanelStatusListRequest) ([]monitoringdto.PanelHistoryResponse, int64, error) {
+	_, err := monitoringService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	options := postgres.NewQueryOptions().WithPagination(listInfo.Limit, listInfo.Offset)
 
-	panelHistory, err := s.monitoringRepository.FindPanelHistoryByPanelID(s.db, listInfo.PanelID, options)
+	panelHistory, err := monitoringService.monitoringRepository.FindPanelHistoryByPanelID(monitoringService.db, listInfo.PanelID, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -126,18 +132,23 @@ func (s *MonitoringService) GetPanelHistory(listInfo monitoringdto.CustomerPanel
 			Timestamp:     history.Timestamp,
 		}
 	}
-	return response, int64(len(response)), nil
+
+	count, err := monitoringService.monitoringRepository.CountPanelHistoryByPanelID(monitoringService.db, listInfo.PanelID)
+	if err != nil {
+		return nil, 0, err
+	}
+	return response, count, nil
 }
 
-func (s *MonitoringService) GetPanelEvent(listInfo monitoringdto.CustomerPanelStatusListRequest) ([]monitoringdto.PanelEventResponse, int64, error) {
-	_, err := s.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID)
+func (monitoringService *MonitoringService) GetPanelEvent(listInfo monitoringdto.CustomerPanelStatusListRequest) ([]monitoringdto.PanelEventResponse, int64, error) {
+	_, err := monitoringService.installationService.ValidatePanelOwnership(listInfo.PanelID, listInfo.OwnerID)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	options := postgres.NewQueryOptions().WithPagination(listInfo.Limit, listInfo.Offset)
 
-	panelEvent, err := s.monitoringRepository.FindPanelEventByPanelID(s.db, listInfo.PanelID, options)
+	panelEvent, err := monitoringService.monitoringRepository.FindPanelEventByPanelID(monitoringService.db, listInfo.PanelID, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -153,5 +164,11 @@ func (s *MonitoringService) GetPanelEvent(listInfo monitoringdto.CustomerPanelSt
 			Timestamp:     event.Timestamp,
 		}
 	}
-	return response, int64(len(response)), nil
+
+	count, err := monitoringService.monitoringRepository.CountPanelEventByPanelID(monitoringService.db, listInfo.PanelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
 }

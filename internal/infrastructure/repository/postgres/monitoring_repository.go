@@ -12,7 +12,7 @@ func NewMonitoringRepository() *MonitoringRepository {
 	return &MonitoringRepository{}
 }
 
-func (r *MonitoringRepository) FindPanelStatusByPanelID(db database.Database, panelID uint, options *postgres.QueryOptions) ([]*entity.PanelStatus, error) {
+func (repo *MonitoringRepository) FindPanelStatusByPanelID(db database.Database, panelID uint, options *postgres.QueryOptions) ([]*entity.PanelStatus, error) {
 	var panelStatus []*entity.PanelStatus
 	query := db.GetDB().Where("panel_id = ?", panelID)
 	query = applyQueryOptions(query, options)
@@ -24,7 +24,21 @@ func (r *MonitoringRepository) FindPanelStatusByPanelID(db database.Database, pa
 	return panelStatus, nil
 }
 
-func (r *MonitoringRepository) FindPanelHistoryByPanelID(db database.Database, panelID uint, options *postgres.QueryOptions) ([]*entity.PanelHistory, error) {
+func (repo *MonitoringRepository) CountPanelStatusByPanelID(db database.Database, panelID uint) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.PanelStatus{}).
+		Where("panel_id = ?", panelID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *MonitoringRepository) FindPanelHistoryByPanelID(db database.Database, panelID uint, options *postgres.QueryOptions) ([]*entity.PanelHistory, error) {
 	var panelHistory []*entity.PanelHistory
 	query := db.GetDB().Where("panel_id = ?", panelID)
 	query = applyQueryOptions(query, options)
@@ -36,7 +50,20 @@ func (r *MonitoringRepository) FindPanelHistoryByPanelID(db database.Database, p
 	return panelHistory, nil
 }
 
-func (r *MonitoringRepository) FindPanelEventByPanelID(db database.Database, panelID uint, options *postgres.QueryOptions) ([]*entity.PanelEvent, error) {
+func (repo *MonitoringRepository) CountPanelHistoryByPanelID(db database.Database, panelID uint) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.PanelHistory{}).
+		Where("panel_id = ?", panelID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *MonitoringRepository) FindPanelEventByPanelID(db database.Database, panelID uint, options *postgres.QueryOptions) ([]*entity.PanelEvent, error) {
 	var panelEvent []*entity.PanelEvent
 	query := db.GetDB().Where("panel_id = ?", panelID)
 	query = applyQueryOptions(query, options)
@@ -46,4 +73,17 @@ func (r *MonitoringRepository) FindPanelEventByPanelID(db database.Database, pan
 		return nil, result.Error
 	}
 	return panelEvent, nil
+}
+
+func (repo *MonitoringRepository) CountPanelEventByPanelID(db database.Database, panelID uint) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.PanelEvent{}).
+		Where("panel_id = ?", panelID).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

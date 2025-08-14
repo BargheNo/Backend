@@ -122,4 +122,29 @@ func (monitoringController *CustomerMonitoringController) GetPanelHistory(ctx *g
 }
 
 func (monitoringController *CustomerMonitoringController) GetPanelEvent(ctx *gin.Context) {
+	type getPanelEventParams struct {
+		PanelID  uint `uri:"panelID" validate:"required"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
+	}
+	param := controller.Validated[getPanelEventParams](ctx)
+
+	ownerID, _ := ctx.Get(monitoringController.constants.Context.ID)
+
+	offset, limit := controller.GetOffsetLimit(param.Page, param.PageSize, monitoringController.pagination.DefaultPage, monitoringController.pagination.DefaultPageSize)
+
+	listInfo := monitoringdto.CustomerPanelStatusListRequest{
+		PanelID: param.PanelID,
+		OwnerID: ownerID.(uint),
+		Offset:  offset,
+		Limit:   limit,
+	}
+
+	response, count, err := monitoringController.monitoringService.GetPanelEvent(listInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	data := controller.NewPaginatedResponse(response, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
 }
