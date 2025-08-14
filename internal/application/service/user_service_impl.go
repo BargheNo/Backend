@@ -249,14 +249,15 @@ func (userService *UserService) GetUserCredential(userID uint) (userdto.Credenti
 		}
 	}
 	return userdto.CredentialResponse{
-		ID:         user.ID,
-		FirstName:  user.FirstName,
-		LastName:   user.LastName,
-		Phone:      user.Phone,
-		Email:      user.Email,
-		NationalID: user.NationalCode,
-		ProfilePic: profilePic,
-		Status:     user.Status.String(),
+		ID:            user.ID,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+		Phone:         user.Phone,
+		Email:         user.Email,
+		EmailVerified: user.EmailVerified,
+		NationalID:    user.NationalCode,
+		ProfilePic:    profilePic,
+		Status:        user.Status.String(),
 	}, nil
 }
 
@@ -298,14 +299,15 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 			}
 		}
 		usersResponse[i] = userdto.CredentialResponse{
-			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
-			Phone:      user.Phone,
-			Email:      user.Email,
-			NationalID: user.NationalCode,
-			ProfilePic: profilePic,
-			Status:     user.Status.String(),
+			ID:            user.ID,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Phone:         user.Phone,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+			NationalID:    user.NationalCode,
+			ProfilePic:    profilePic,
+			Status:        user.Status.String(),
 		}
 	}
 	count, err := userService.userRepository.CountUserByStatus(userService.db, statuses)
@@ -720,14 +722,15 @@ func (userService *UserService) SearchUsers(request userdto.GetUsersListRequest)
 	userResponses := make([]userdto.CredentialResponse, len(users))
 	for i, user := range users {
 		userResponses[i] = userdto.CredentialResponse{
-			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
-			Phone:      user.Phone,
-			Email:      user.Email,
-			NationalID: user.NationalCode,
-			ProfilePic: user.ProfilePicPath,
-			Status:     user.Status.String(),
+			ID:            user.ID,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Phone:         user.Phone,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+			NationalID:    user.NationalCode,
+			ProfilePic:    user.ProfilePicPath,
+			Status:        user.Status.String(),
 		}
 	}
 
@@ -946,14 +949,15 @@ func (userService *UserService) GetRoleOwners(request userdto.GetRoleOwnersReque
 			}
 		}
 		userCreds[i] = userdto.CredentialResponse{
-			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
-			Phone:      user.Phone,
-			Email:      user.Email,
-			NationalID: user.NationalCode,
-			ProfilePic: profilePic,
-			Status:     user.Status.String(),
+			ID:            user.ID,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Phone:         user.Phone,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+			NationalID:    user.NationalCode,
+			ProfilePic:    profilePic,
+			Status:        user.Status.String(),
 		}
 	}
 
