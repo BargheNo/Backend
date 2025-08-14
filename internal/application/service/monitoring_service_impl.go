@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	monitoringdto "github.com/BargheNo/Backend/internal/application/dto/monitoring"
@@ -47,17 +48,30 @@ func NewMonitoringService(
 		hub:                    hub,
 		installationService:    installationService,
 	}
-	go func() {
-		panelIDs := service.installationRepository.FindAllPanelsID(service.db)
-		for _, panelID := range panelIDs {
-			// Subscribe to specific message type topics
-			service.mqttClient.Subscribe(fmt.Sprintf("panel/%d/status", panelID), service.HandleStatusMessage)
-			service.mqttClient.Subscribe(fmt.Sprintf("panel/%d/history", panelID), service.HandleHistoryMessage)
-			service.mqttClient.Subscribe(fmt.Sprintf("panel/%d/event", panelID), service.HandleEventMessage)
-		}
-	}()
+
+	go service.setupMQTTSubscriptions()
+
+	go service.refreshMQTTSubscriptions()
 
 	return service
+}
+
+func (monitoringService *MonitoringService) setupMQTTSubscriptions() {
+	panelIDs := monitoringService.installationRepository.FindAllPanelsID(monitoringService.db)
+	for _, panelID := range panelIDs {
+		monitoringService.mqttClient.Subscribe(fmt.Sprintf("panel/%d/status", panelID), monitoringService.HandleStatusMessage)
+		monitoringService.mqttClient.Subscribe(fmt.Sprintf("panel/%d/history", panelID), monitoringService.HandleHistoryMessage)
+		monitoringService.mqttClient.Subscribe(fmt.Sprintf("panel/%d/event", panelID), monitoringService.HandleEventMessage)
+	}
+}
+
+func (monitoringService *MonitoringService) refreshMQTTSubscriptions() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		monitoringService.setupMQTTSubscriptions()
+	}
 }
 
 func (monitoringService *MonitoringService) HandleStatusMessage(topic string, payload []byte) {
@@ -67,16 +81,14 @@ func (monitoringService *MonitoringService) HandleStatusMessage(topic string, pa
 		return
 	}
 
-	panel, err := monitoringService.installationService.GetPanelByID(uint(panelID))
+	_, err = monitoringService.installationService.GetPanelByID(uint(panelID))
 	if err != nil {
 		loggerImpl.GetLogger().Error("Failed to get panel", logger.Error("error:", err))
 		return
 	}
 
-	// Send to websocket
-	monitoringService.hub.SendToUser(panel.Customer.ID, websocket.MessageTypeMonitoring, payload)
+	monitoringService.hub.SendToPanel(uint(panelID), websocket.MessageTypeMonitoring, payload)
 
-	// Handle the status message
 	monitoringService.handleStatusMessage(uint(panelID), payload)
 }
 
@@ -93,10 +105,8 @@ func (monitoringService *MonitoringService) HandleHistoryMessage(topic string, p
 		return
 	}
 
-	// Send to websocket
 	monitoringService.hub.SendToUser(panel.Customer.ID, websocket.MessageTypeMonitoring, payload)
 
-	// Handle the history message
 	monitoringService.handleHistoryMessage(uint(panelID), payload)
 }
 
@@ -113,10 +123,8 @@ func (monitoringService *MonitoringService) HandleEventMessage(topic string, pay
 		return
 	}
 
-	// Send to websocket
 	monitoringService.hub.SendToUser(panel.Customer.ID, websocket.MessageTypeMonitoring, payload)
 
-	// Handle the event message
 	monitoringService.handleEventMessage(uint(panelID), payload)
 }
 

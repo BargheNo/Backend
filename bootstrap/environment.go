@@ -124,11 +124,12 @@ type RabbitMQ struct {
 }
 
 type MQTT struct {
-	Broker   string
-	Port     string
-	ClientID string
-	Username string
-	Password string
+	Broker         string
+	Port           string
+	ClientID       string
+	SenderClientID string
+	Username       string
+	Password       string
 }
 
 func NewEnvironments() *Env {
@@ -219,11 +220,12 @@ func NewEnvironments() *Env {
 			RetryDelay:    getEnvDuration("AMQP_RETRY_DELAY", 5*time.Second),
 		},
 		MQTT: MQTT{
-			Broker:   os.Getenv("MQTT_BROKER"),
-			Port:     os.Getenv("MQTT_PORT"),
-			ClientID: os.Getenv("MQTT_CLIENT_ID"),
-			Username: os.Getenv("MQTT_USERNAME"),
-			Password: os.Getenv("MQTT_PASSWORD"),
+			Broker:         os.Getenv("MQTT_BROKER"),
+			Port:           os.Getenv("MQTT_PORT"),
+			ClientID:       os.Getenv("MQTT_CLIENT_ID"),
+			SenderClientID: os.Getenv("MQTT_SENDER_CLIENT_ID"),
+			Username:       os.Getenv("MQTT_USERNAME"),
+			Password:       os.Getenv("MQTT_PASSWORD"),
 		},
 	}
 }

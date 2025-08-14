@@ -162,3 +162,28 @@ func (hub *Hub) SendToUser(userID uint, messageType string, content []byte) erro
 	}
 	return nil
 }
+
+func (hub *Hub) SendToPanel(panelID uint, messageType string, content []byte) error {
+	hub.mu.RLock()
+	defer hub.mu.RUnlock()
+
+	if room, ok := hub.rooms[panelID]; ok {
+		for client := range room {
+			if !client.IsReady() {
+				continue
+			}
+
+			select {
+			case client.send <- content:
+			case <-client.done:
+				continue
+			default:
+				select {
+				case hub.unregister <- client:
+				default:
+				}
+			}
+		}
+	}
+	return nil
+}
