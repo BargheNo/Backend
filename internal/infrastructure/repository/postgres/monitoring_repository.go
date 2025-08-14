@@ -87,3 +87,15 @@ func (repo *MonitoringRepository) CountPanelEventByPanelID(db database.Database,
 	}
 	return count, nil
 }
+
+func (repo *MonitoringRepository) CreatePanelStatus(db database.Database, panelStatus *entity.PanelStatus) error {
+	return db.GetDB().Create(panelStatus).Error
+}
+
+func (repo *MonitoringRepository) CreatePanelHistory(db database.Database, panelHistory *entity.PanelHistory) error {
+	return db.GetDB().Create(panelHistory).Error
+}
+
+func (repo *MonitoringRepository) CreatePanelEvent(db database.Database, panelEvent *entity.PanelEvent) error {
+	return db.GetDB().Create(panelEvent).Error
+}

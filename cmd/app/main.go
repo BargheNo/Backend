@@ -63,7 +63,6 @@ func main() {
 		&entity.PanelStatus{},
 		&entity.PanelHistory{},
 		&entity.PanelEvent{},
-		&entity.PanelDeviceInfo{},
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()

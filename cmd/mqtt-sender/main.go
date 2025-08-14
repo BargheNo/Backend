@@ -10,9 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	mqttdto "github.com/BargheNo/Backend/internal/application/dto/mqtt"
 	"github.com/BargheNo/Backend/internal/domain/logger"
 	loggerImpl "github.com/BargheNo/Backend/internal/infrastructure/logger"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	mqttClient "github.com/eclipse/paho.mqtt.golang"
 )
 
 type Config struct {
@@ -25,88 +26,26 @@ type Config struct {
 	Retained  bool
 }
 
-type Device struct {
-	DatalogSerial string `json:"datalogserial"`
-	PVSerial      string `json:"pvserial"`
-	DeviceModel   string `json:"device_model,omitempty"`
-	Firmware      string `json:"firmware,omitempty"`
-	Hardware      string `json:"hardware,omitempty"`
-	LoggerFW      string `json:"logger_fw,omitempty"`
-	Timezone      string `json:"timezone,omitempty"`
-}
-
-type StatusMessage struct {
-	Type      string `json:"type"`
-	Device    Device `json:"device"`
-	Status    Status `json:"status"`
-	Energy    Energy `json:"energy"`
-	Timestamp string `json:"timestamp"`
-}
-
-type Status struct {
-	PVStatus      int     `json:"pvstatus"`
-	PVPowerIn     float64 `json:"pvpowerin"`
-	PV1Voltage    float64 `json:"pv1voltage"`
-	PV1Current    float64 `json:"pv1current"`
-	PV2Voltage    float64 `json:"pv2voltage"`
-	PV2Current    float64 `json:"pv2current"`
-	PVPowerOut    float64 `json:"pvpowerout"`
-	ACFreq        float64 `json:"acfreq"`
-	ACVoltage     float64 `json:"acvoltage"`
-	ACOutputPower float64 `json:"acoutputpower"`
-	Temperature   float64 `json:"temperature"`
-	BatVoltage    float64 `json:"batvoltage"`
-	BatCurrent    float64 `json:"batcurrent"`
-	BatPower      float64 `json:"batpower"`
-	GridExport    float64 `json:"gridexport"`
-	GridImport    float64 `json:"gridimport"`
-}
-
-type Energy struct {
-	EnergyToday float64 `json:"energyToday"`
-	EnergyTotal float64 `json:"energyTotal"`
-}
-
-type DeviceInfoMessage struct {
-	Type      string `json:"type"`
-	Device    Device `json:"device"`
-	Timestamp string `json:"timestamp"`
-}
-
-type HistoryMessage struct {
-	Type      string        `json:"type"`
-	Device    Device        `json:"device"`
-	History   []HistoryItem `json:"history"`
-	Timestamp string        `json:"timestamp"`
-}
-
-type HistoryItem struct {
-	Date        string  `json:"date"`
-	EnergyToday float64 `json:"energyToday"`
-	EnergyTotal float64 `json:"energyTotal"`
-}
-
-type EventMessage struct {
-	Type      string `json:"type"`
-	Device    Device `json:"device"`
-	Event     Event  `json:"event"`
-	Timestamp string `json:"timestamp"`
-}
-
-type Event struct {
-	Code        string `json:"code"`
-	Description string `json:"description"`
-	Severity    string `json:"severity"`
+type Panel struct {
+	ID                   uint   `json:"id"`
+	Name                 string `json:"name"`
+	DatalogSerial        string `json:"datalog_serial"`
+	PVSerial             string `json:"pv_serial"`
+	BuildingType         string `json:"building_type"`
+	Area                 uint   `json:"area"`
+	Power                uint   `json:"power"`
+	Tilt                 uint   `json:"tilt"`
+	Azimuth              uint   `json:"azimuth"`
+	TotalNumberOfModules uint   `json:"total_number_of_modules"`
 }
 
 type MQTTClient struct {
-	client       mqtt.Client
+	client       mqttClient.Client
 	config       Config
-	device       Device
+	panel        Panel
 	energyToday  float64
 	energyTotal  float64
 	statusTicker *time.Ticker
-	deviceTicker *time.Ticker
 	historyTimer *time.Timer
 	eventTimer   *time.Timer
 	stopChan     chan struct{}
@@ -115,14 +54,17 @@ type MQTTClient struct {
 func NewMQTTClient(config Config) *MQTTClient {
 	return &MQTTClient{
 		config: config,
-		device: Device{
-			DatalogSerial: "YUZ081920C",
-			PVSerial:      "4FZG821037",
-			DeviceModel:   "SPH5000TL-BL",
-			Firmware:      "01.20.07",
-			Hardware:      "H4.2",
-			LoggerFW:      "V2.05.15",
-			Timezone:      "UTC+02:00",
+		panel: Panel{
+			ID:                   1,
+			Name:                 "Panel-001",
+			DatalogSerial:        "YUZ081920C",
+			PVSerial:             "4FZG821037",
+			BuildingType:         "residential",
+			Area:                 50,
+			Power:                5000,
+			Tilt:                 30,
+			Azimuth:              180,
+			TotalNumberOfModules: 16,
 		},
 		energyToday: 5.24,
 		energyTotal: 1456.72,
@@ -131,7 +73,7 @@ func NewMQTTClient(config Config) *MQTTClient {
 }
 
 func (m *MQTTClient) Connect() error {
-	opts := mqtt.NewClientOptions()
+	opts := mqttClient.NewClientOptions()
 	opts.AddBroker(m.config.BrokerURL)
 	opts.SetClientID(m.config.ClientID)
 	opts.SetUsername(m.config.Username)
@@ -143,15 +85,15 @@ func (m *MQTTClient) Connect() error {
 	}
 	opts.SetTLSConfig(tlsConfig)
 
-	opts.SetConnectionLostHandler(func(client mqtt.Client, err error) {
+	opts.SetConnectionLostHandler(func(client mqttClient.Client, err error) {
 		loggerImpl.GetLogger().Error("MQTT connection lost", logger.Error("error:", err))
 	})
 
-	opts.SetOnConnectHandler(func(client mqtt.Client) {
+	opts.SetOnConnectHandler(func(client mqttClient.Client) {
 		loggerImpl.GetLogger().Info("Connected to MQTT broker")
 	})
 
-	m.client = mqtt.NewClient(opts)
+	m.client = mqttClient.NewClient(opts)
 
 	if token := m.client.Connect(); token.Wait() && token.Error() != nil {
 		return fmt.Errorf("failed to connect to MQTT broker: %v", token.Error())
@@ -166,9 +108,6 @@ func (m *MQTTClient) Disconnect() {
 	if m.statusTicker != nil {
 		m.statusTicker.Stop()
 	}
-	if m.deviceTicker != nil {
-		m.deviceTicker.Stop()
-	}
 	if m.historyTimer != nil {
 		m.historyTimer.Stop()
 	}
@@ -182,114 +121,87 @@ func (m *MQTTClient) Disconnect() {
 	}
 }
 
-func (m *MQTTClient) publishMessage(payload interface{}) error {
+func (m *MQTTClient) publishMessageWithType(payload interface{}, messageType string) error {
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %v", err)
 	}
 
-	token := m.client.Publish(m.config.Topic, m.config.QoS, m.config.Retained, jsonPayload)
+	// Use topic-based routing for message type identification
+	topic := fmt.Sprintf("%s/%s", m.config.Topic, messageType)
+
+	token := m.client.Publish(topic, m.config.QoS, m.config.Retained, jsonPayload)
 	token.Wait()
 
 	if token.Error() != nil {
-		return fmt.Errorf("failed to publish message: %v", token.Error())
+		return fmt.Errorf("failed to publish %s message: %v", messageType, token.Error())
 	}
 
-	loggerImpl.GetLogger().Info("Message published", logger.String("topic", m.config.Topic), logger.String("payload", string(jsonPayload)))
+	loggerImpl.GetLogger().Info(fmt.Sprintf("%s message published", messageType), logger.String("topic", topic))
 	return nil
 }
 
-func (m *MQTTClient) createStatusMessage() StatusMessage {
+func (m *MQTTClient) createStatusMessage() mqttdto.StatusMessage {
 	pvPowerIn := 4200.5 + (rand.Float64()-0.5)*100
 	temperature := 44.8 + (rand.Float64()-0.5)*5
 	gridExport := 3900.0 + (rand.Float64()-0.5)*200
 
-	return StatusMessage{
-		Type: "status",
-		Device: Device{
-			DatalogSerial: m.device.DatalogSerial,
-			PVSerial:      m.device.PVSerial,
-		},
-		Status: Status{
-			PVStatus:      1,
-			PVPowerIn:     pvPowerIn,
-			PV1Voltage:    350.0,
-			PV1Current:    6.0,
-			PV2Voltage:    348.5,
-			PV2Current:    6.2,
-			PVPowerOut:    4150.0,
-			ACFreq:        50.0,
-			ACVoltage:     230.4,
-			ACOutputPower: 4120.0,
-			Temperature:   temperature,
-			BatVoltage:    51.2,
-			BatCurrent:    -5.3,
-			BatPower:      -270.0,
-			GridExport:    gridExport,
-			GridImport:    0.0,
-		},
-		Energy: Energy{
-			EnergyToday: m.energyToday,
-			EnergyTotal: m.energyTotal,
-		},
-		Timestamp: time.Now().Format(time.RFC3339),
+	return mqttdto.StatusMessage{
+		DatalogSerial: m.panel.DatalogSerial,
+		PVSerial:      m.panel.PVSerial,
+		PVStatus:      1, // Active status
+		PVPowerIn:     pvPowerIn,
+		PV1Voltage:    350.0,
+		PV1Current:    6.0,
+		PV2Voltage:    348.5,
+		PV2Current:    6.2,
+		PVPowerOut:    4150.0,
+		ACFreq:        50.0,
+		ACVoltage:     230.4,
+		ACOutputPower: 4120.0,
+		Temperature:   temperature,
+		BatVoltage:    51.2,
+		BatCurrent:    -5.3,
+		BatPower:      -270.0,
+		GridExport:    gridExport,
+		GridImport:    0.0,
 	}
 }
 
-func (m *MQTTClient) createDeviceInfoMessage() DeviceInfoMessage {
-	return DeviceInfoMessage{
-		Type:      "device_info",
-		Device:    m.device,
-		Timestamp: time.Now().Format(time.RFC3339),
-	}
-}
-
-func (m *MQTTClient) createHistoryMessage() HistoryMessage {
+func (m *MQTTClient) createHistoryMessage() mqttdto.HistoryMessage {
 	now := time.Now()
 	yesterday := now.AddDate(0, 0, -1)
-	dayBeforeYesterday := now.AddDate(0, 0, -2)
 
-	return HistoryMessage{
-		Type: "history",
-		Device: Device{
-			DatalogSerial: m.device.DatalogSerial,
-			PVSerial:      m.device.PVSerial,
-		},
-		History: []HistoryItem{
-			{
-				Date:        yesterday.Format("2006-01-02"),
-				EnergyToday: 4.21,
-				EnergyTotal: m.energyTotal - 5.24,
-			},
-			{
-				Date:        dayBeforeYesterday.Format("2006-01-02"),
-				EnergyToday: 3.88,
-				EnergyTotal: m.energyTotal - 9.45,
-			},
-		},
-		Timestamp: time.Now().Format(time.RFC3339),
+	return mqttdto.HistoryMessage{
+		DatalogSerial: m.panel.DatalogSerial,
+		PVSerial:      m.panel.PVSerial,
+		Date:          yesterday.Format("2006-01-02"),
+		EnergyToday:   4.21,
+		EnergyTotal:   m.energyTotal - 5.24,
 	}
 }
 
-func (m *MQTTClient) createEventMessage() EventMessage {
-	events := []Event{
-		{Code: "P28", Description: "PV isolation fault", Severity: "error"},
-		{Code: "P01", Description: "Grid overvoltage", Severity: "warning"},
-		{Code: "P02", Description: "Grid undervoltage", Severity: "warning"},
-		{Code: "P05", Description: "Temperature high", Severity: "warning"},
-		{Code: "P15", Description: "Battery low voltage", Severity: "info"},
+func (m *MQTTClient) createEventMessage() mqttdto.EventMessage {
+	events := []struct {
+		code        string
+		description string
+		severity    string
+	}{
+		{code: "P28", description: "PV isolation fault", severity: "error"},
+		{code: "P01", description: "Grid overvoltage", severity: "warning"},
+		{code: "P02", description: "Grid undervoltage", severity: "warning"},
+		{code: "P05", description: "Temperature high", severity: "warning"},
+		{code: "P15", description: "Battery low voltage", severity: "info"},
 	}
 
 	selectedEvent := events[rand.Intn(len(events))]
 
-	return EventMessage{
-		Type: "event",
-		Device: Device{
-			DatalogSerial: m.device.DatalogSerial,
-			PVSerial:      m.device.PVSerial,
-		},
-		Event:     selectedEvent,
-		Timestamp: time.Now().Format(time.RFC3339),
+	return mqttdto.EventMessage{
+		DatalogSerial: m.panel.DatalogSerial,
+		PVSerial:      m.panel.PVSerial,
+		EventCode:     selectedEvent.code,
+		Description:   selectedEvent.description,
+		Severity:      selectedEvent.severity,
 	}
 }
 
@@ -304,7 +216,7 @@ func (m *MQTTClient) scheduleRandomEvent() {
 		case <-m.stopChan:
 			return
 		default:
-			if err := m.publishMessage(m.createEventMessage()); err != nil {
+			if err := m.publishMessageWithType(m.createEventMessage(), "event"); err != nil {
 				loggerImpl.GetLogger().Error("Error publishing event message", logger.Error("error:", err))
 			}
 			m.scheduleRandomEvent()
@@ -323,34 +235,15 @@ func (m *MQTTClient) getNextMidnight() time.Duration {
 func (m *MQTTClient) StartPublishers() {
 	m.statusTicker = time.NewTicker(10 * time.Second)
 	go func() {
-		if err := m.publishMessage(m.createStatusMessage()); err != nil {
+		if err := m.publishMessageWithType(m.createStatusMessage(), "status"); err != nil {
 			loggerImpl.GetLogger().Error("Error publishing initial status message", logger.Error("error:", err))
 		}
 
 		for {
 			select {
 			case <-m.statusTicker.C:
-				if err := m.publishMessage(m.createStatusMessage()); err != nil {
+				if err := m.publishMessageWithType(m.createStatusMessage(), "status"); err != nil {
 					loggerImpl.GetLogger().Error("Error publishing status message", logger.Error("error:", err))
-				}
-			case <-m.stopChan:
-				return
-			}
-		}
-	}()
-
-	m.deviceTicker = time.NewTicker(10 * time.Minute)
-	go func() {
-		time.Sleep(30 * time.Second)
-		if err := m.publishMessage(m.createDeviceInfoMessage()); err != nil {
-			loggerImpl.GetLogger().Error("Error publishing initial device info message", logger.Error("error:", err))
-		}
-
-		for {
-			select {
-			case <-m.deviceTicker.C:
-				if err := m.publishMessage(m.createDeviceInfoMessage()); err != nil {
-					loggerImpl.GetLogger().Error("Error publishing device info message", logger.Error("error:", err))
 				}
 			case <-m.stopChan:
 				return
@@ -361,7 +254,7 @@ func (m *MQTTClient) StartPublishers() {
 	go func() {
 		timeToMidnight := m.getNextMidnight()
 		m.historyTimer = time.AfterFunc(timeToMidnight, func() {
-			if err := m.publishMessage(m.createHistoryMessage()); err != nil {
+			if err := m.publishMessageWithType(m.createHistoryMessage(), "history"); err != nil {
 				loggerImpl.GetLogger().Error("Error publishing history message", logger.Error("error:", err))
 			}
 
@@ -371,7 +264,7 @@ func (m *MQTTClient) StartPublishers() {
 				for {
 					select {
 					case <-dailyTicker.C:
-						if err := m.publishMessage(m.createHistoryMessage()); err != nil {
+						if err := m.publishMessageWithType(m.createHistoryMessage(), "history"); err != nil {
 							loggerImpl.GetLogger().Error("Error publishing daily history message", logger.Error("error:", err))
 						}
 					case <-m.stopChan:
@@ -384,11 +277,10 @@ func (m *MQTTClient) StartPublishers() {
 	}()
 
 	m.scheduleRandomEvent()
-
 	loggerImpl.GetLogger().Info("All publishers started")
 }
 
-var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+var messagePubHandler mqttClient.MessageHandler = func(client mqttClient.Client, msg mqttClient.Message) {
 	loggerImpl.GetLogger().Info("Received message", logger.String("payload", string(msg.Payload())), logger.String("topic", msg.Topic()))
 }
 
