@@ -172,6 +172,7 @@ var English = map[string]interface{}{
 		"deleteInstallationRequest":  "The installation request has been deleted successfully.",
 		"updatePanel":                "The panel has been updated.",
 		"deleteBid":                  "Bid has been removed successfully.",
+		"deletePanel":                "Panel has been deleted successfully",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",
