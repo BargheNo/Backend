@@ -18,8 +18,8 @@ type TicketRepository interface {
 	GetTickets(db database.Database, options *QueryOptions) ([]*entity.Ticket, error)
 	FindTicketsByStatus(db database.Database, statuses []enum.TicketStatus, options *QueryOptions) ([]*entity.Ticket, error)
 	CountTicketsByStatus(db database.Database, statuses []enum.TicketStatus) (int64, error)
-	FindTicketsByQuery(db database.Database, query string, options *QueryOptions) ([]*entity.Ticket, error)
-	CountTicketsByQuery(db database.Database, query string) (int64, error)
+	FindTicketsByQuery(db database.Database, query string, allowedStatuses []enum.TicketStatus, options *QueryOptions) ([]*entity.Ticket, error)
+	CountTicketsByQuery(db database.Database, query string, allowedStatuses []enum.TicketStatus) (int64, error)
 	FindCustomerTicketsByStatus(db database.Database, ownerID uint, statuses []enum.TicketStatus, options *QueryOptions) ([]*entity.Ticket, error)
 	CountCustomerTicketsByStatus(db database.Database, ownerID uint, statuses []enum.TicketStatus) (int64, error)
 }

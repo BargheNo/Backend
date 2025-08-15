@@ -28,6 +28,7 @@ type EditPostRequest struct {
 }
 
 type GetPublicPostsRequest struct {
+	Query  string
 	Offset int
 	Limit  int
 	SortBy uint
@@ -36,6 +37,7 @@ type GetPublicPostsRequest struct {
 
 type GetPublicCorporationPostsRequest struct {
 	CorporationID uint
+	Query         string
 	Offset        int
 	Limit         int
 	SortBy        uint
