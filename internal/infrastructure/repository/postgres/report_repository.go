@@ -60,7 +60,13 @@ func (repo *ReportRepository) UpdateReport(db database.Database, report *entity.
 func (repo *ReportRepository) FindReportsByQuery(db database.Database, query string, objectType string, statuses []enum.ReportStatus, options *postgres.QueryOptions) ([]*entity.Report, error) {
 	var reports []*entity.Report
 	result := db.GetDB().
-		Where("description ILIKE ? OR object_type = ? AND status IN ?", "%"+query+"%", objectType, statuses)
+		Where(`
+			reports.status IN ? AND (
+			reports.description ILIKE ? OR 
+			reports.object_type = ?
+		)
+		`,
+			statuses, "%"+query+"%", objectType)
 	result = applyQueryOptions(result, options)
 	result = result.Find(&reports)
 	if result.Error != nil {
@@ -73,7 +79,13 @@ func (repo *ReportRepository) CountReportsByQuery(db database.Database, query st
 	var count int64
 	err := db.GetDB().
 		Model(&entity.Report{}).
-		Where("description ILIKE ? OR object_type = ? AND status IN ?", "%"+query+"%", objectType, statuses).
+		Where(`
+			reports.status IN ? AND (
+			reports.description ILIKE ? OR 
+			reports.object_type = ?
+		)
+		`,
+			statuses, "%"+query+"%", objectType).
 		Count(&count).Error
 
 	if err != nil {

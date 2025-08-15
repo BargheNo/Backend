@@ -180,9 +180,17 @@ func (repo *BlogRepository) FindPostsByStatusAndQuery(db database.Database, quer
 		Model(&entity.Post{}).
 		Joins("LEFT JOIN users AS authors ON posts.author_id = authors.id").
 		Joins("LEFT JOIN corporations ON posts.corporation_id = corporations.id").
-		Where("posts.status IN ?", statuses).
-		Where("title ILIKE ? OR description ILIKE ? OR content ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR corporations.name ILIKE ?",
-			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%")
+		Where(`
+			posts.status IN ? AND (
+			posts.title ILIKE ? OR 
+			posts.description ILIKE ? OR 
+			posts.content ILIKE ? OR 
+			authors.first_name ILIKE ? OR 
+			authors.last_name ILIKE ? OR 
+			corporations.name ILIKE ?
+		)
+		`,
+			statuses, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%")
 	result = applyQueryOptions(result, options)
 	result = result.Find(&posts)
 	if result.Error != nil {
@@ -198,9 +206,17 @@ func (repo *BlogRepository) CountPostsByStatusAndQuery(db database.Database, que
 		Model(&entity.Post{}).
 		Joins("LEFT JOIN users AS authors ON posts.author_id = authors.id").
 		Joins("LEFT JOIN corporations ON posts.corporation_id = corporations.id").
-		Where("posts.status IN ?", statuses).
-		Where("title ILIKE ? OR description ILIKE ? OR content ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR corporations.name ILIKE ?",
-			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Where(`
+			posts.status IN ? AND (
+			posts.title ILIKE ? OR 
+			posts.description ILIKE ? OR 
+			posts.content ILIKE ? OR 
+			authors.first_name ILIKE ? OR 
+			authors.last_name ILIKE ? OR 
+			corporations.name ILIKE ?
+		)
+		`,
+			statuses, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {

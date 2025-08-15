@@ -275,7 +275,7 @@ func (repo *InstallationRepository) FindPanelsByQuery(db database.Database, allo
 		Joins("LEFT JOIN users AS customers ON panels.customer_id = customers.id").
 		Joins("LEFT JOIN corporations ON panels.corporation_id = corporations.id").
 		Where(`
-			(panels.status IN ? AND)
+			panels.status IN ? AND (
 			panels.name ILIKE ? OR 
 			customers.first_name ILIKE ? OR 
 			customers.last_name ILIKE ? OR 
@@ -283,6 +283,7 @@ func (repo *InstallationRepository) FindPanelsByQuery(db database.Database, allo
 			customers.phone ILIKE ? OR
 			corporations.name ILIKE ? OR
 			corporations.registration_number ILIKE ?
+		)
 		`,
 			allowedStatus, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
 			"%"+query+"%", "%"+query+"%", "%"+query+"%")
@@ -304,7 +305,7 @@ func (repo *InstallationRepository) CountPanelsByQuery(db database.Database, all
 		Joins("LEFT JOIN users AS customers ON panels.customer_id = customers.id").
 		Joins("LEFT JOIN corporations ON panels.corporation_id = corporations.id").
 		Where(`
-			(panels.status IN ? AND)
+			panels.status IN ? AND (
 			panels.name ILIKE ? OR 
 			customers.first_name ILIKE ? OR 
 			customers.last_name ILIKE ? OR 
@@ -312,6 +313,7 @@ func (repo *InstallationRepository) CountPanelsByQuery(db database.Database, all
 			customers.phone ILIKE ? OR
 			corporations.name ILIKE ? OR
 			corporations.registration_number ILIKE ?
+		)
 		`,
 			allowedStatus, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
 			"%"+query+"%", "%"+query+"%", "%"+query+"%").

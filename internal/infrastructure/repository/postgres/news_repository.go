@@ -68,8 +68,16 @@ func (repo *NewsRepository) FindNewsByStatusAndQuery(db database.Database, query
 	var news []*entity.News
 	result := db.GetDB().
 		Joins("LEFT JOIN users AS authors ON news.author_id = authors.id").
-		Where("title ILIKE ? OR description ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR authors.email ILIKE ? AND status IN ?",
-			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", allowedStatuses)
+		Where(`
+			news.status IN ? AND (
+			news.title ILIKE ? OR 
+			news.description ILIKE ? OR 
+			authors.first_name ILIKE ? OR 
+			authors.last_name ILIKE ? OR 
+			authors.email ILIKE ?
+		)
+		`,
+			allowedStatuses, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%")
 	result = applyQueryOptions(result, options)
 	result = result.Find(&news)
 	if result.Error != nil {
@@ -84,8 +92,16 @@ func (repo *NewsRepository) CountNewsByStatusAndQuery(db database.Database, quer
 	err := db.GetDB().
 		Model(&entity.News{}).
 		Joins("LEFT JOIN users AS authors ON news.author_id = authors.id").
-		Where("title ILIKE ? OR description ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR authors.email ILIKE ? AND status IN ?",
-			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", allowedStatuses).
+		Where(`
+			news.status IN ? AND (
+			news.title ILIKE ? OR 
+			news.description ILIKE ? OR 
+			authors.first_name ILIKE ? OR 
+			authors.last_name ILIKE ? OR 
+			authors.email ILIKE ?
+		)
+		`,
+			allowedStatuses, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {
