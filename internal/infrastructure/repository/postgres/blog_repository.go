@@ -50,8 +50,8 @@ func (repo *BlogRepository) FindCorporationPostByTitle(db database.Database, cor
 	return &post, nil
 }
 
-func (repo *BlogRepository) FindCorporationPostsByStatus(db database.Database, corporationID uint, statuses []enum.PostStatus, options *postgres.QueryOptions) ([]entity.Post, error) {
-	var posts []entity.Post
+func (repo *BlogRepository) FindCorporationPostsByStatus(db database.Database, corporationID uint, statuses []enum.PostStatus, options *postgres.QueryOptions) ([]*entity.Post, error) {
+	var posts []*entity.Post
 	query := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, statuses)
 	query = applyQueryOptions(query, options)
 	result := query.Find(&posts)
@@ -67,6 +67,35 @@ func (repo *BlogRepository) CountCorporationPostsByStatus(db database.Database, 
 	err := db.GetDB().
 		Model(&entity.Post{}).
 		Where("corporation_id = ? AND status IN ?", corporationID, statuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *BlogRepository) FindCorporationPostsByStatusAndQuery(db database.Database, query string, corporationID uint, statuses []enum.PostStatus, options *postgres.QueryOptions) ([]*entity.Post, error) {
+	var posts []*entity.Post
+	result := db.GetDB().
+		Where("corporation_id = ? AND status IN ?", corporationID, statuses).
+		Where("title ILIKE ? OR description ILIKE ? OR content ILIKE ?",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%")
+	result = applyQueryOptions(result, options)
+	result = result.Find(&posts)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return posts, nil
+}
+
+func (repo *BlogRepository) CountCorporationPostsByStatusAndQuery(db database.Database, query string, corporationID uint, statuses []enum.PostStatus) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.Post{}).
+		Where("corporation_id = ? AND status IN ?", corporationID, statuses).
+		Where("title ILIKE ? OR description ILIKE ? OR content ILIKE ?",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {
@@ -119,8 +148,8 @@ func (repo *BlogRepository) FindLikeByUserAndBlogID(db database.Database, userID
 	return &like, nil
 }
 
-func (repo *BlogRepository) FindPostsByStatus(db database.Database, statuses []enum.PostStatus, options *postgres.QueryOptions) ([]entity.Post, error) {
-	var posts []entity.Post
+func (repo *BlogRepository) FindPostsByStatus(db database.Database, statuses []enum.PostStatus, options *postgres.QueryOptions) ([]*entity.Post, error) {
+	var posts []*entity.Post
 	query := db.GetDB().Where("status IN ?", statuses)
 	query = applyQueryOptions(query, options)
 	result := query.Find(&posts)
@@ -136,6 +165,42 @@ func (repo *BlogRepository) CountPostsByStatus(db database.Database, statuses []
 	err := db.GetDB().
 		Model(&entity.Post{}).
 		Where("status IN ?", statuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *BlogRepository) FindPostsByStatusAndQuery(db database.Database, query string, statuses []enum.PostStatus, options *postgres.QueryOptions) ([]*entity.Post, error) {
+	var posts []*entity.Post
+
+	result := db.GetDB().
+		Model(&entity.Post{}).
+		Joins("LEFT JOIN users AS authors ON posts.author_id = authors.id").
+		Joins("LEFT JOIN corporations ON posts.corporation_id = corporations.id").
+		Where("posts.status IN ?", statuses).
+		Where("title ILIKE ? OR description ILIKE ? OR content ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR corporations.name ILIKE ?",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%")
+	result = applyQueryOptions(result, options)
+	result = result.Find(&posts)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return posts, nil
+}
+
+func (repo *BlogRepository) CountPostsByStatusAndQuery(db database.Database, query string, statuses []enum.PostStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Post{}).
+		Joins("LEFT JOIN users AS authors ON posts.author_id = authors.id").
+		Joins("LEFT JOIN corporations ON posts.corporation_id = corporations.id").
+		Where("posts.status IN ?", statuses).
+		Where("title ILIKE ? OR description ILIKE ? OR content ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR corporations.name ILIKE ?",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {

@@ -64,12 +64,12 @@ func (repo *NewsRepository) CountNewsByStatus(db database.Database, statuses []e
 	return count, nil
 }
 
-func (repo *NewsRepository) FindNewsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.News, error) {
+func (repo *NewsRepository) FindNewsByStatusAndQuery(db database.Database, query string, allowedStatuses []enum.NewsStatus, options *postgres.QueryOptions) ([]*entity.News, error) {
 	var news []*entity.News
 	result := db.GetDB().
 		Joins("LEFT JOIN users AS authors ON news.author_id = authors.id").
-		Where("title ILIKE ? OR description ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR authors.email ILIKE ?",
-			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%")
+		Where("title ILIKE ? OR description ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR authors.email ILIKE ? AND status IN ?",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", allowedStatuses)
 	result = applyQueryOptions(result, options)
 	result = result.Find(&news)
 	if result.Error != nil {
@@ -78,14 +78,14 @@ func (repo *NewsRepository) FindNewsByQuery(db database.Database, query string, 
 	return news, nil
 }
 
-func (repo *NewsRepository) CountNewsByQuery(db database.Database, query string) (int64, error) {
+func (repo *NewsRepository) CountNewsByStatusAndQuery(db database.Database, query string, allowedStatuses []enum.NewsStatus) (int64, error) {
 	var count int64
 
 	err := db.GetDB().
 		Model(&entity.News{}).
 		Joins("LEFT JOIN users AS authors ON news.author_id = authors.id").
-		Where("title ILIKE ? OR description ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR authors.email ILIKE ?",
-			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Where("title ILIKE ? OR description ILIKE ? OR authors.first_name ILIKE ? OR authors.last_name ILIKE ? OR authors.email ILIKE ? AND status IN ?",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", allowedStatuses).
 		Count(&count).Error
 
 	if err != nil {

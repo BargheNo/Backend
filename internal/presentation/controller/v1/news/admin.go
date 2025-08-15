@@ -69,7 +69,7 @@ func (newsController *AdminNewsController) EditNews(ctx *gin.Context) {
 		Content     *string               `json:"content"`
 		Description *string               `json:"description"`
 		CoverImage  *multipart.FileHeader `form:"cover_image"`
-		Status      *uint                  `json:"status"`
+		Status      *uint                 `json:"status"`
 	}
 	params := controller.Validated[editNewsParams](ctx)
 	authorID, _ := ctx.Get(newsController.constants.Context.ID)
@@ -135,17 +135,19 @@ func (newsController *AdminNewsController) UnpublishNews(ctx *gin.Context) {
 
 func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 	type getNewsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getNewsParams](ctx)
 
 	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
 
 	getNewsRequest := newsdto.GetAdminNewsListRequest{
+		Query:  params.Query,
 		Status: params.Status,
 		Offset: offset,
 		Limit:  limit,
@@ -158,37 +160,6 @@ func (newsController *AdminNewsController) GetNewsList(ctx *gin.Context) {
 	}
 	data := controller.NewPaginatedResponse(news, count, offset, limit)
 
-	controller.Response(ctx, 200, "", data)
-}
-
-func (newsController *AdminNewsController) SearchNews(ctx *gin.Context) {
-
-	type searchNewsParams struct {
-		Query    string `form:"query" validate:"required"`
-		Page     int    `form:"page"`
-		PageSize int    `form:"pageSize"`
-		SortBy   uint   `form:"sortBy"`
-		Asc      bool   `form:"asc"`
-	}
-
-	params := controller.Validated[searchNewsParams](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, newsController.pagination.DefaultPage, newsController.pagination.DefaultPageSize)
-
-	request := newsdto.SearchNewsRequest{
-		Query:  params.Query,
-		Offset: offset,
-		Limit:  limit,
-		SortBy: params.SortBy,
-		Asc:    params.Asc,
-	}
-
-	news, count, err := newsController.newsService.SearchNews(request)
-	if err != nil {
-		panic(err)
-	}
-
-	data := controller.NewPaginatedResponse(news, count, offset, limit)
 	controller.Response(ctx, 200, "", data)
 }
 

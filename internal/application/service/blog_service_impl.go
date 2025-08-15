@@ -225,6 +225,30 @@ func (blogService *BlogService) GetCorporationPosts(request blogdto.GetCorporati
 	return response, count, nil
 }
 
+func (blogService *BlogService) getCorporationPostsByQuery(query string, corporationID uint, allowedStatuses []enum.PostStatus, options *postgres.QueryOptions) ([]*entity.Post, int64, error) {
+	if query == "" {
+		posts, err := blogService.blogRepository.FindCorporationPostsByStatus(blogService.db, corporationID, allowedStatuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := blogService.blogRepository.CountCorporationPostsByStatus(blogService.db, corporationID, allowedStatuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return posts, count, nil
+	}
+
+	posts, err := blogService.blogRepository.FindCorporationPostsByStatusAndQuery(blogService.db, query, corporationID, allowedStatuses, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := blogService.blogRepository.CountCorporationPostsByStatusAndQuery(blogService.db, query, corporationID, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+	return posts, count, nil
+}
+
 func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.GetPublicCorporationPostsRequest) ([]blogdto.GeneralPostResponse, int64, error) {
 	if err := blogService.corporationService.DoesCorporationExist(request.CorporationID); err != nil {
 		return nil, 0, err
@@ -235,7 +259,7 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 		WithSorting(blogService.getSortByColumn(request.SortBy), request.Asc)
 
 	allowedStatuses := []enum.PostStatus{enum.PostStatusPublished}
-	posts, err := blogService.blogRepository.FindCorporationPostsByStatus(blogService.db, request.CorporationID, allowedStatuses, options)
+	posts, count, err := blogService.getCorporationPostsByQuery(request.Query, request.CorporationID, allowedStatuses, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -267,11 +291,31 @@ func (blogService *BlogService) GetCorporationPostsForGeneral(request blogdto.Ge
 		}
 	}
 
-	count, err := blogService.blogRepository.CountCorporationPostsByStatus(blogService.db, request.CorporationID, allowedStatuses)
+	return response, count, nil
+}
+
+func (blogService *BlogService) getGeneralPostsByQuery(query string, allowedStatuses []enum.PostStatus, options *postgres.QueryOptions) ([]*entity.Post, int64, error) {
+	if query == "" {
+		posts, err := blogService.blogRepository.FindPostsByStatus(blogService.db, allowedStatuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := blogService.blogRepository.CountPostsByStatus(blogService.db, allowedStatuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return posts, count, nil
+	}
+
+	posts, err := blogService.blogRepository.FindPostsByStatusAndQuery(blogService.db, query, allowedStatuses, options)
 	if err != nil {
 		return nil, 0, err
 	}
-	return response, count, nil
+	count, err := blogService.blogRepository.CountPostsByStatusAndQuery(blogService.db, query, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+	return posts, count, nil
 }
 
 func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPublicPostsRequest) ([]blogdto.GeneralPostResponse, int64, error) {
@@ -280,7 +324,7 @@ func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPublicPostsRe
 		WithSorting(blogService.getSortByColumn(request.SortBy), request.Asc)
 
 	allowedStatuses := []enum.PostStatus{enum.PostStatusPublished}
-	posts, err := blogService.blogRepository.FindPostsByStatus(blogService.db, allowedStatuses, options)
+	posts, count, err := blogService.getGeneralPostsByQuery(request.Query, allowedStatuses, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -310,10 +354,6 @@ func (blogService *BlogService) GetGeneralPosts(request blogdto.GetPublicPostsRe
 			CreatedAt:   post.CreatedAt,
 			LikeCount:   post.LikeCount,
 		}
-	}
-	count, err := blogService.blogRepository.CountPostsByStatus(blogService.db, allowedStatuses)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return response, count, nil
