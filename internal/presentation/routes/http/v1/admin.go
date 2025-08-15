@@ -42,6 +42,9 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 				panelsSubGroup.GET("", app.Controllers.Admin.InstallationController.GetPanel)
 				panelsSubGroup.PUT("", app.Controllers.Admin.InstallationController.UpdatePanel)
 				panelsSubGroup.DELETE("", app.Controllers.Admin.InstallationController.DeletePanel)
+				panelsSubGroup.GET("/status", app.Controllers.Admin.MonitoringController.GetPanelStatus)
+				panelsSubGroup.GET("/history", app.Controllers.Admin.MonitoringController.GetPanelHistory)
+				panelsSubGroup.GET("/event", app.Controllers.Admin.MonitoringController.GetPanelEvent)
 			}
 		}
 	}
@@ -134,11 +137,6 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			newsSubgroup.POST("/media", app.Controllers.Admin.NewsController.AddNewsMedia)
 			newsSubgroup.DELETE("/media/:mediaID", app.Controllers.Admin.NewsController.DeleteNewsMedia)
 			newsSubgroup.GET("/media/:mediaID", app.Controllers.Admin.NewsController.GetNewsMedia)
-		}
-
-		monitoring := routerGroup.Group("/monitoring")
-		{
-			monitoring.GET("/test", app.Controllers.Admin.MonitoringController.Test)
 		}
 	}
 }

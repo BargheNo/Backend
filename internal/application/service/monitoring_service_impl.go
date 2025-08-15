@@ -459,3 +459,100 @@ func (monitoringService *MonitoringService) GetCorporationPanelEvent(listInfo mo
 
 	return response, count, nil
 }
+
+func (monitoringService *MonitoringService) GetAdminPanelStatus(listInfo monitoringdto.AdminPanelStatusListRequest) ([]monitoringdto.PanelStatusResponse, int64, error) {
+	options := postgres.NewQueryOptions().WithPagination(listInfo.Limit, listInfo.Offset)
+
+	panelStatus, err := monitoringService.monitoringRepository.FindPanelStatusByPanelID(monitoringService.db, listInfo.PanelID, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	response := make([]monitoringdto.PanelStatusResponse, len(panelStatus))
+	for i, status := range panelStatus {
+		response[i] = monitoringdto.PanelStatusResponse{
+			DatalogSerial: status.DatalogSerial,
+			PVSerial:      status.PVSerial,
+			PVStatus:      status.PVStatus,
+			PVPowerIn:     status.PVPowerIn,
+			PV1Voltage:    status.PV1Voltage,
+			PV1Current:    status.PV1Current,
+			PV2Voltage:    status.PV2Voltage,
+			PV2Current:    status.PV2Current,
+			PVPowerOut:    status.PVPowerOut,
+			ACFreq:        status.ACFreq,
+			ACVoltage:     status.ACVoltage,
+			ACOutputPower: status.ACOutputPower,
+			Temperature:   status.Temperature,
+			BatVoltage:    status.BatVoltage,
+			BatCurrent:    status.BatCurrent,
+			BatPower:      status.BatPower,
+			GridExport:    status.GridExport,
+			GridImport:    status.GridImport,
+			Timestamp:     status.CreatedAt,
+		}
+	}
+
+	count, err := monitoringService.monitoringRepository.CountPanelStatusByPanelID(monitoringService.db, listInfo.PanelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
+}
+
+func (monitoringService *MonitoringService) GetAdminPanelHistory(listInfo monitoringdto.AdminPanelStatusListRequest) ([]monitoringdto.PanelHistoryResponse, int64, error) {
+	options := postgres.NewQueryOptions().WithPagination(listInfo.Limit, listInfo.Offset)
+
+	panelHistory, err := monitoringService.monitoringRepository.FindPanelHistoryByPanelID(monitoringService.db, listInfo.PanelID, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	response := make([]monitoringdto.PanelHistoryResponse, len(panelHistory))
+	for i, history := range panelHistory {
+		response[i] = monitoringdto.PanelHistoryResponse{
+			DatalogSerial: history.DatalogSerial,
+			PVSerial:      history.PVSerial,
+			Date:          history.Date,
+			EnergyToday:   history.EnergyToday,
+			EnergyTotal:   history.EnergyTotal,
+			Timestamp:     history.CreatedAt,
+		}
+	}
+
+	count, err := monitoringService.monitoringRepository.CountPanelHistoryByPanelID(monitoringService.db, listInfo.PanelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
+}
+
+func (monitoringService *MonitoringService) GetAdminPanelEvent(listInfo monitoringdto.AdminPanelStatusListRequest) ([]monitoringdto.PanelEventResponse, int64, error) {
+	options := postgres.NewQueryOptions().WithPagination(listInfo.Limit, listInfo.Offset)
+
+	panelEvent, err := monitoringService.monitoringRepository.FindPanelEventByPanelID(monitoringService.db, listInfo.PanelID, options)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	response := make([]monitoringdto.PanelEventResponse, len(panelEvent))
+	for i, event := range panelEvent {
+		response[i] = monitoringdto.PanelEventResponse{
+			DatalogSerial: event.DatalogSerial,
+			PVSerial:      event.PVSerial,
+			EventCode:     event.EventCode,
+			Description:   event.Description,
+			Severity:      event.Severity,
+			Timestamp:     event.CreatedAt,
+		}
+	}
+
+	count, err := monitoringService.monitoringRepository.CountPanelEventByPanelID(monitoringService.db, listInfo.PanelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, count, nil
+}

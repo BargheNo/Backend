@@ -12,4 +12,7 @@ type MonitoringService interface {
 	GetCorporationPanelStatus(listInfo monitoringdto.CorporationPanelStatusListRequest) ([]monitoringdto.PanelStatusResponse, int64, error)
 	GetCorporationPanelHistory(listInfo monitoringdto.CorporationPanelStatusListRequest) ([]monitoringdto.PanelHistoryResponse, int64, error)
 	GetCorporationPanelEvent(listInfo monitoringdto.CorporationPanelStatusListRequest) ([]monitoringdto.PanelEventResponse, int64, error)
+	GetAdminPanelStatus(listInfo monitoringdto.AdminPanelStatusListRequest) ([]monitoringdto.PanelStatusResponse, int64, error)
+	GetAdminPanelHistory(listInfo monitoringdto.AdminPanelStatusListRequest) ([]monitoringdto.PanelHistoryResponse, int64, error)
+	GetAdminPanelEvent(listInfo monitoringdto.AdminPanelStatusListRequest) ([]monitoringdto.PanelEventResponse, int64, error)
 }

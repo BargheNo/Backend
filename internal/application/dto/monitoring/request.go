@@ -14,3 +14,9 @@ type CorporationPanelStatusListRequest struct {
 	Offset        int
 	Limit         int
 }
+
+type AdminPanelStatusListRequest struct {
+	PanelID uint
+	Offset  int
+	Limit   int
+}
