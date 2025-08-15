@@ -27,7 +27,6 @@ type UserService interface {
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest) error
 	GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error)
 	GetAllRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error)
-	SearchRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error)
 	CreateRole(newRoleRequest userdto.NewRoleRequest) error
 	GetRoleDetails(roleID uint) (userdto.RoleResponse, error)
 	GetRoleOwners(request userdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error)
@@ -36,5 +35,4 @@ type UserService interface {
 	UpdateRole(newRoleRequest userdto.UpdateRoleRequest) error
 	UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) error
 	GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, int64, error)
-	SearchUsers(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error)
 }

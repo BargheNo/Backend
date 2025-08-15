@@ -93,21 +93,12 @@ func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
 		Limit:  limit,
 	}
 
-	if params.Query != "" {
-		roles, count, err := userController.userService.SearchRoles(request)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(roles, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		roles, count, err := userController.userService.GetAllRoles(request)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(roles, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	roles, count, err := userController.userService.GetAllRoles(request)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(roles, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (userController *AdminUserController) CreateRole(ctx *gin.Context) {
@@ -258,21 +249,12 @@ func (userController *AdminUserController) GetUsers(ctx *gin.Context) {
 		Asc:    params.Asc,
 	}
 
-	if params.Query != "" {
-		users, count, err := userController.userService.SearchUsers(request)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(users, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		users, count, err := userController.userService.GetUsersByStatus(request)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(users, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	users, count, err := userController.userService.GetUsersByStatus(request)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(users, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (userController *AdminUserController) BanUser(ctx *gin.Context) {

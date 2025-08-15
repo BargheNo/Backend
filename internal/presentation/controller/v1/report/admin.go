@@ -51,21 +51,13 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 		Asc:     params.Asc,
 	}
 
-	if params.Query != "" {
-		reports, count, err := reportController.reportService.SearchMaintenanceReports(requestInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(reports, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		reports, count, err := reportController.reportService.GetMaintenanceReports(requestInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(reports, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	reports, count, err := reportController.reportService.GetMaintenanceReports(requestInfo)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(reports, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+
 }
 
 func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context) {
@@ -93,21 +85,13 @@ func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context)
 		Asc:     params.Asc,
 	}
 
-	if params.Query != "" {
-		reports, count, err := reportController.reportService.SearchPanelReports(requestInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(reports, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		reports, count, err := reportController.reportService.GetPanelReports(requestInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(reports, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	reports, count, err := reportController.reportService.GetPanelReports(requestInfo)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(reports, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+
 }
 
 func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {

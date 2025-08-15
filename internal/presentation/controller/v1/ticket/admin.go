@@ -54,23 +54,12 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 		Asc:     params.Asc,
 	}
 
-	if params.Query != "" {
-		tickets, count, err := ticketController.ticketService.SearchTickets(requestInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(tickets, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-		return
-	} else {
-
-		tickets, count, err := ticketController.ticketService.GetAdminTickets(requestInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(tickets, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	tickets, count, err := ticketController.ticketService.GetAdminTickets(requestInfo)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
 
 }
 

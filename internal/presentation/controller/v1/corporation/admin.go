@@ -54,21 +54,13 @@ func (corporationController *AdminCorporationController) GetCorporations(ctx *gi
 		Asc:    params.Asc,
 	}
 
-	if params.Query != "" {
-		corporations, count, err := corporationController.corporationService.SearchCorporations(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(corporations, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		corporations, count, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(corporations, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	corporations, count, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(corporations, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+
 }
 
 func (corporationController *AdminCorporationController) GetCorporation(ctx *gin.Context) {
