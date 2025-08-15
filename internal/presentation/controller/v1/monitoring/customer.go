@@ -4,35 +4,38 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	monitoringdto "github.com/BargheNo/Backend/internal/application/dto/monitoring"
 	"github.com/BargheNo/Backend/internal/application/usecase"
-	"github.com/BargheNo/Backend/internal/infrastructure/websocket"
+	ws "github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type CustomerMonitoringController struct {
-	constants         *bootstrap.Constants
-	hub               *websocket.Hub
-	jwtService        usecase.JWTService
-	websocketSetting  *bootstrap.WebsocketSetting
-	monitoringService usecase.MonitoringService
-	pagination        *bootstrap.Pagination
+	constants           *bootstrap.Constants
+	hub                 *ws.Hub
+	jwtService          usecase.JWTService
+	installationService usecase.InstallationService
+	websocketSetting    *bootstrap.WebsocketSetting
+	monitoringService   usecase.MonitoringService
+	pagination          *bootstrap.Pagination
 }
 
 func NewCustomerMonitoringController(
 	constants *bootstrap.Constants,
-	hub *websocket.Hub,
+	hub *ws.Hub,
 	jwtService usecase.JWTService,
+	installationService usecase.InstallationService,
 	websocketSetting *bootstrap.WebsocketSetting,
 	monitoringService usecase.MonitoringService,
 	pagination *bootstrap.Pagination,
 ) *CustomerMonitoringController {
 	return &CustomerMonitoringController{
-		constants:         constants,
-		hub:               hub,
-		jwtService:        jwtService,
-		websocketSetting:  websocketSetting,
-		monitoringService: monitoringService,
-		pagination:        pagination,
+		constants:           constants,
+		hub:                 hub,
+		jwtService:          jwtService,
+		installationService: installationService,
+		websocketSetting:    websocketSetting,
+		monitoringService:   monitoringService,
+		pagination:          pagination,
 	}
 }
 
@@ -48,9 +51,14 @@ func (monitoringController *CustomerMonitoringController) HandleWebsocket(ctx *g
 		panic(err)
 	}
 	userID := uint(claims["sub"].(float64))
+
+	_, err = monitoringController.installationService.ValidatePanelOwnership(param.PanelID, userID)
+	if err != nil {
+		panic(err)
+	}
 	conn, _ := ctx.Get(monitoringController.constants.Context.WebsocketConnection)
 
-	client := websocket.NewClient(
+	client := ws.NewClient(
 		monitoringController.hub,
 		conn,
 		param.PanelID,

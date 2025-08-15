@@ -197,7 +197,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	client := mqttimpl.NewClient(mqtt)
 	monitoringRepository := postgres.NewMonitoringRepository()
 	monitoringService := service.NewMonitoringService(client, postgresDatabase, corporationService, installationRepository, monitoringRepository, hub, installationService)
-	customerMonitoringController := monitoring.NewCustomerMonitoringController(constants, hub, jwtService, websocketSetting, monitoringService, pagination)
+	customerMonitoringController := monitoring.NewCustomerMonitoringController(constants, hub, jwtService, installationService, websocketSetting, monitoringService, pagination)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
