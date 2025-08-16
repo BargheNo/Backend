@@ -16,6 +16,7 @@ type TicketListRequest struct {
 	OwnerID uint
 	Status  uint
 	Query   string
+	Subject uint
 	Offset  int
 	Limit   int
 	SortBy  uint

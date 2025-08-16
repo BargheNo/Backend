@@ -8,6 +8,7 @@ const (
 	TicketSubjectInstallation
 	TicketSubjectMaintenance
 	TicketSubjectOther
+	TicketSubjectAll
 )
 
 func (s TicketSubject) String() string {
@@ -22,6 +23,8 @@ func (s TicketSubject) String() string {
 		return "تعمیرات"
 	case TicketSubjectOther:
 		return "سایر"
+	case TicketSubjectAll:
+		return "همه"
 	}
 	return "unknown"
 }
@@ -32,5 +35,6 @@ func GetAllTicketSubjects() []TicketSubject {
 		TicketSubjectInstallation,
 		TicketSubjectMaintenance,
 		TicketSubjectOther,
+		TicketSubjectAll,
 	}
 }

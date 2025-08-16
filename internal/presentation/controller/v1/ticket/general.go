@@ -30,6 +30,11 @@ func (ticketController *GeneralTicketController) GetTicketStatuses(ctx *gin.Cont
 	controller.Response(ctx, 200, "", ticketStatuses)
 }
 
+func (ticketController *GeneralTicketController) GetTicketSubjects(ctx *gin.Context) {
+	ticketSubjects := ticketController.ticketService.GetTicketSubjects()
+	controller.Response(ctx, 200, "", ticketSubjects)
+}
+
 func (ticketController *GeneralTicketController) GetSortableFields(ctx *gin.Context) {
 	columns := ticketController.ticketService.GetTicketSortableColumns()
 	controller.Response(ctx, 200, "", columns)

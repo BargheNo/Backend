@@ -33,6 +33,7 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 	type GetTicketsRequest struct {
 		Status   uint   `form:"status"`
 		Query    string `form:"query"`
+		Subject  uint   `form:"subject"`
 		Page     int    `form:"page"`
 		PageSize int    `form:"pageSize"`
 		SortBy   uint   `form:"sortBy"`
@@ -48,6 +49,7 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
 		Query:   params.Query,
+		Subject: params.Subject,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
