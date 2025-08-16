@@ -11,11 +11,14 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 	profile := routerGroup.Group("/:corporationID/profile")
 	{
 		profile.GET("", app.Controllers.Corporation.CorporationController.GetMyProfile)
+		profile.GET("/public", app.Controllers.Corporation.CorporationController.GetPublicProfile)
 		profile.POST("/address", app.Controllers.Corporation.CorporationController.AddAddress)
 		profile.DELETE("/address/:addressID", app.Controllers.Corporation.CorporationController.DeleteAddress)
 		profile.POST("/contacts", app.Controllers.Corporation.CorporationController.AddContactInformation)
 		profile.DELETE("/contacts/:contactID", app.Controllers.Corporation.CorporationController.DeleteContactInformation)
 		profile.PUT("/logo", app.Controllers.Corporation.CorporationController.ChangeLogo)
+		profile.PUT("", app.Controllers.Corporation.CorporationController.UpdateRegister)
+		profile.PUT("/certificates", app.Controllers.Corporation.CorporationController.SubmitCertificateFiles)
 	}
 
 	guarantees := routerGroup.Group("/:corporationID/guarantee")

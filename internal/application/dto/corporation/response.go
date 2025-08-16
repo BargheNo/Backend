@@ -9,6 +9,7 @@ type CorporationCredentialResponse struct {
 	ID          uint                         `json:"id"`
 	Name        string                       `json:"name"`
 	Logo        string                       `json:"logo"`
+	Status      string                       `json:"status"`
 	ContactInfo []ContactInformationResponse `json:"contactInfo"`
 	Addresses   []addressdto.AddressResponse `json:"addresses"`
 }
