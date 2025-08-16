@@ -35,7 +35,7 @@ func (jwtService *JWTService) GenerateToken(userID uint) (string, string, error)
 	accessTokenClaims := jwt.MapClaims{
 		"sub": userID,
 		// "exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
-		"exp": time.Now().Add(time.Second * 20).Unix(),
+		"exp": time.Now().Add(time.Minute * 1).Unix(),
 		"iat": time.Now().Unix(),
 	}
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessTokenClaims)
@@ -46,8 +46,8 @@ func (jwtService *JWTService) GenerateToken(userID uint) (string, string, error)
 
 	refreshTokenClaims := jwt.MapClaims{
 		"sub": userID,
-		// "exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
-		"exp": time.Now().Add(time.Minute * 1).Unix(),
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+		// "exp": time.Now().Add(time.Minute * 1).Unix(),
 		"iat": time.Now().Unix(),
 	}
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, refreshTokenClaims)
