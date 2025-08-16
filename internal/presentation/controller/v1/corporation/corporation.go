@@ -50,6 +50,25 @@ func (corporationController *CorporationCorporationController) GetMyProfile(ctx 
 	controller.Response(ctx, 200, "", corporationDetails)
 }
 
+func (corporationController *CorporationCorporationController) GetPublicProfile(ctx *gin.Context) {
+	type getCorporationParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getCorporationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	corporationRequest := corporationdto.CorporationDetailsRequest{
+		CorporationID: params.CorporationID,
+		UserID:        userID.(uint),
+	}
+	corporationDetails, err := corporationController.corporationService.GetCorporationPublicDetails(corporationRequest)
+	if err != nil {
+		panic(err)
+	}
+
+	controller.Response(ctx, 200, "", corporationDetails)
+}
+
 func (corporationController *CorporationCorporationController) AddAddress(ctx *gin.Context) {
 	type address struct {
 		ProvinceID    uint   `json:"provinceID" validate:"required"`
@@ -195,5 +214,74 @@ func (corporationController *CorporationCorporationController) ChangeLogo(ctx *g
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.changeLogo")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) UpdateRegister(ctx *gin.Context) {
+	type signatory struct {
+		Name               string `json:"name" validate:"required"`
+		NationalCardNumber string `json:"nationalCardNumber" validate:"required"`
+		Position           string `json:"position" validate:"required"`
+	}
+
+	type registerParams struct {
+		CorporationID      uint        `uri:"corporationID" validate:"required"`
+		Name               *string     `json:"name"`
+		RegistrationNumber *string     `json:"registrationNumber"`
+		NationalID         *string     `json:"nationalID"`
+		IBAN               *string     `json:"iban"`
+		Signatories        []signatory `json:"signatories" validate:"omitempty,dive"`
+	}
+	params := controller.Validated[registerParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	signatories := make([]corporationdto.Signatory, len(params.Signatories))
+	for i, signatory := range params.Signatories {
+		signatories[i] = corporationdto.Signatory{
+			Name:               signatory.Name,
+			NationalCardNumber: signatory.NationalCardNumber,
+			Position:           signatory.Position,
+		}
+	}
+	updateRegisterInfo := corporationdto.UpdateRegisterRequest{
+		ApplicantID:        userID.(uint),
+		CorporationID:      params.CorporationID,
+		Name:               params.Name,
+		NationalID:         params.NationalID,
+		RegistrationNumber: params.RegistrationNumber,
+		IBAN:               params.IBAN,
+		Signatories:        signatories,
+	}
+
+	if err := corporationController.corporationService.UpdateRegistrationInfoProfile(updateRegisterInfo); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateCorporation")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) SubmitCertificateFiles(ctx *gin.Context) {
+	type certificatesParams struct {
+		CorporationID          uint                  `uri:"corporationID" validate:"required"`
+		VATTaxpayerCertificate *multipart.FileHeader `form:"vatTaxpayerCertificate"`
+		OfficialNewspaperAD    *multipart.FileHeader `form:"officialNewspaperAD"`
+	}
+	params := controller.Validated[certificatesParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	requestInfo := corporationdto.AddCertificatesRequest{
+		CorporationID:          params.CorporationID,
+		ApplicantID:            userID.(uint),
+		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
+		OfficialNewspaperAD:    params.OfficialNewspaperAD,
+	}
+	if err := corporationController.corporationService.AddCertificateFilesFromProfile(requestInfo); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addCorporationCertificate")
 	controller.Response(ctx, 200, message, nil)
 }
