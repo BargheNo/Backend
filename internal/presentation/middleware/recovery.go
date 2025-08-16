@@ -167,7 +167,7 @@ func handleWebsocketError(ctx *gin.Context, wsConn *websocket.Conn, err error, t
 	message, _ := trans.Translate(genericError)
 
 	switch err := err.(type) {
-	case exception.AuthError:
+	case *exception.AuthError:
 		message, _ = trans.Translate("errors.unauthorized")
 	case exception.ForbiddenError:
 		resourceName, _ := trans.Translate(err.Resource)
