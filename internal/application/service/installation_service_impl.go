@@ -416,11 +416,11 @@ func (installationService *InstallationService) getRequestsWithQuery(allowedStat
 		return requests, count, nil
 	}
 
-	requests, err := installationService.installationRepository.FindCorporationRequestsByQuery(installationService.db, allowedStatus, query, options)
+	requests, err := installationService.installationRepository.FindRequestsByQuery(installationService.db, query, allowedStatus, options)
 	if err != nil {
 		return nil, 0, err
 	}
-	count, err := installationService.installationRepository.CountCorporationRequestsByQuery(installationService.db, allowedStatus, query)
+	count, err := installationService.installationRepository.CountRequestsByQuery(installationService.db, query, allowedStatus)
 	if err != nil {
 		return nil, 0, err
 	}

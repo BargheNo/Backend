@@ -69,49 +69,21 @@ func (repo *InstallationRepository) CountRequestsByStatus(db database.Database, 
 	return count, nil
 }
 
-func (repo *InstallationRepository) FindCorporationRequestsByQuery(db database.Database, allowedStatus []enum.InstallationRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.InstallationRequest, error) {
-	var requests []*entity.InstallationRequest
-	result := db.GetDB().
-		Where(queryByStatus, allowedStatus).
-		Where("name ILIKE ? OR description ILIKE ?", "%"+query+"%", "%"+query+"%")
-
-	result = applyQueryOptions(result, options)
-	result = result.Find(&requests)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return requests, nil
-}
-
-func (repo *InstallationRepository) CountCorporationRequestsByQuery(db database.Database, allowedStatus []enum.InstallationRequestStatus, query string) (int64, error) {
-	var count int64
-
-	err := db.GetDB().
-		Model(&entity.Panel{}).
-		Where(queryByStatus, allowedStatus).
-		Where("name ILIKE ? OR description ILIKE ?", "%"+query+"%", "%"+query+"%").
-		Count(&count).Error
-
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-func (repo *InstallationRepository) FindRequestsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.InstallationRequest, error) {
+func (repo *InstallationRepository) FindRequestsByQuery(db database.Database, query string, allowedStatus []enum.InstallationRequestStatus, options *postgres.QueryOptions) ([]*entity.InstallationRequest, error) {
 	var requests []*entity.InstallationRequest
 	result := db.GetDB().
 		Joins("LEFT JOIN users AS customers ON installation_requests.owner_id = customers.id").
 		Where(`
+			installation_requests.status IN ? AND (
 			installation_requests.name ILIKE ? OR 
 			installation_requests.description ILIKE ? OR
 			customers.first_name ILIKE ? OR 
 			customers.last_name ILIKE ? OR 
 			customers.email ILIKE ? OR
 			customers.phone ILIKE ?
+			)
 		`,
-			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
+			allowedStatus, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
 			"%"+query+"%")
 
 	result = applyQueryOptions(result, options)
@@ -123,20 +95,22 @@ func (repo *InstallationRepository) FindRequestsByQuery(db database.Database, qu
 	return requests, nil
 }
 
-func (repo *InstallationRepository) CountRequestsByQuery(db database.Database, query string) (int64, error) {
+func (repo *InstallationRepository) CountRequestsByQuery(db database.Database, query string, allowedStatus []enum.InstallationRequestStatus) (int64, error) {
 	var count int64
 	err := db.GetDB().
 		Model(&entity.InstallationRequest{}).
 		Joins("LEFT JOIN users AS customers ON installation_requests.owner_id = customers.id").
 		Where(`
+			installation_requests.status IN ? AND (
 			installation_requests.name ILIKE ? OR 
 			installation_requests.description ILIKE ? OR
 			customers.first_name ILIKE ? OR 
 			customers.last_name ILIKE ? OR 
 			customers.email ILIKE ? OR
 			customers.phone ILIKE ?
+			)
 		`,
-			"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
+			allowedStatus, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
 			"%"+query+"%").
 		Count(&count).Error
 

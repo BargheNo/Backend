@@ -7,6 +7,7 @@ type NotificationInfoRequest struct {
 
 type NotificationListRequest struct {
 	Types  []uint
+	IsRead bool
 	UserID uint
 	Offset int
 	Limit  int
