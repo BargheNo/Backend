@@ -7,6 +7,7 @@ type BasicRegisterRequest struct {
 	LastName  string
 	Phone     string
 	Password  string
+	Recaptcha string
 }
 
 type VerifyPhoneRequest struct {
@@ -21,8 +22,9 @@ type VerifyEmailRequest struct {
 }
 
 type LoginRequest struct {
-	Phone    string
-	Password string
+	Phone     string
+	Password  string
+	Recaptcha string
 }
 
 type ForgotPasswordRequest struct {

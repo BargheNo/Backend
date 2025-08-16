@@ -23,6 +23,7 @@ type Env struct {
 	SuperAdmin         AdminCredentials
 	RabbitMQ           RabbitMQ
 	MQTT               MQTT
+	Recaptcha          Recaptcha
 }
 
 type Server struct {
@@ -132,6 +133,10 @@ type MQTT struct {
 	Password       string
 }
 
+type Recaptcha struct {
+	Secret string
+}
+
 func NewEnvironments() *Env {
 	// godotenv.Load("../../.env")
 	godotenv.Load(".env")
@@ -226,6 +231,9 @@ func NewEnvironments() *Env {
 			SenderClientID: os.Getenv("MQTT_SENDER_CLIENT_ID"),
 			Username:       os.Getenv("MQTT_USERNAME"),
 			Password:       os.Getenv("MQTT_PASSWORD"),
+		},
+		Recaptcha: Recaptcha{
+			Secret: os.Getenv("RECAPTCHA_SECRET"),
 		},
 	}
 }

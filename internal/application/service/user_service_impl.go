@@ -14,6 +14,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
+	"github.com/BargheNo/Backend/internal/domain/recaptcha"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -32,6 +33,7 @@ type UserService struct {
 	userRepository      postgres.UserRepository
 	userCacheRepository redis.UserCacheRepository
 	db                  database.Database
+	recaptcha           recaptcha.Recaptcha
 }
 
 type UserServiceDeps struct {
@@ -45,6 +47,7 @@ type UserServiceDeps struct {
 	UserRepository      postgres.UserRepository
 	UserCacheRepository redis.UserCacheRepository
 	DB                  database.Database
+	Recaptcha           recaptcha.Recaptcha
 }
 
 func NewUserService(deps UserServiceDeps) *UserService {
@@ -59,6 +62,7 @@ func NewUserService(deps UserServiceDeps) *UserService {
 		userRepository:      deps.UserRepository,
 		userCacheRepository: deps.UserCacheRepository,
 		db:                  deps.DB,
+		recaptcha:           deps.Recaptcha,
 	}
 }
 
@@ -408,7 +412,12 @@ func (userService *UserService) UnbanUser(userID uint) error {
 }
 
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) error {
-	err := userService.validateDuplicatePhone(registerInfo.Phone)
+	err := userService.recaptcha.Verify(registerInfo.Recaptcha)
+	if err != nil {
+		return err
+	}
+
+	err = userService.validateDuplicatePhone(registerInfo.Phone)
 	if err != nil {
 		return err
 	}
@@ -538,6 +547,11 @@ func (userService *UserService) RefreshToken(refreshToken string) (userdto.UserI
 }
 
 func (userService *UserService) Login(loginInfo userdto.LoginRequest) (userdto.UserInfoResponse, error) {
+	err := userService.recaptcha.Verify(loginInfo.Recaptcha)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
 	user, err := userService.FindActiveUserByPhone(loginInfo.Phone)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err

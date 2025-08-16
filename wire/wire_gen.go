@@ -15,6 +15,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/message"
 	metrics2 "github.com/BargheNo/Backend/internal/domain/metrics"
 	"github.com/BargheNo/Backend/internal/domain/mqtt"
+	recaptcha2 "github.com/BargheNo/Backend/internal/domain/recaptcha"
 	postgres2 "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	redis2 "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -28,6 +29,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/mqtt"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
+	"github.com/BargheNo/Backend/internal/infrastructure/recaptcha"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
@@ -82,6 +84,8 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	s3 := ProvideStorageConfig(container)
 	s3Storage := storage.NewS3Storage(constants, s3)
 	userRepository := postgres.NewUserRepository()
+	bootstrapRecaptcha := ProvideRecaptchaSecret(container)
+	recaptchaRecaptcha := recaptcha.NewRecaptcha(bootstrapRecaptcha)
 	userServiceDeps := service.UserServiceDeps{
 		Constants:           constants,
 		OTPService:          otpService,
@@ -93,6 +97,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		UserRepository:      userRepository,
 		UserCacheRepository: userCacheRepository,
 		DB:                  postgresDatabase,
+		Recaptcha:           recaptchaRecaptcha,
 	}
 	userService := service.NewUserService(userServiceDeps)
 	generalUserController := user.NewGeneralUserController(constants, userService, jwtService)
@@ -317,7 +322,7 @@ var RepositoryProviderSet = wire.NewSet(postgres.NewUserRepository, postgres.New
 
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(service.UserServiceDeps), "*"), wire.Struct(new(service.NotificationServiceDeps), "*"), wire.Struct(new(service.InstallationServiceDeps), "*"), wire.Struct(new(service.BidServiceDeps), "*"), service.NewUserService, service.NewOTPService, sms.NewSMSService, email.NewEmailService, service.NewJWTService, service.NewInstallationService, service.NewAddressService, service.NewCorporationService, service.NewBidService, service.NewChatService, service.NewNotificationService, service.NewMaintenanceService, service.NewTicketService, service.NewReportService, service.NewGuaranteeService, service.NewPaymentService, service.NewNewsService, service.NewBlogService, service.NewMonitoringService, wire.Bind(new(usecase.UserService), new(*service.UserService)), wire.Bind(new(usecase.OTPService), new(*service.OTPService)), wire.Bind(new(communication.SMSService), new(*sms.SMSService)), wire.Bind(new(communication.EmailService), new(*email.EmailService)), wire.Bind(new(usecase.JWTService), new(*service.JWTService)), wire.Bind(new(usecase.InstallationService), new(*service.InstallationService)), wire.Bind(new(usecase.AddressService), new(*service.AddressService)), wire.Bind(new(usecase.CorporationService), new(*service.CorporationService)), wire.Bind(new(usecase.BidService), new(*service.BidService)), wire.Bind(new(usecase.ChatService), new(*service.ChatService)), wire.Bind(new(usecase.NotificationService), new(*service.NotificationService)), wire.Bind(new(usecase.MaintenanceService), new(*service.MaintenanceService)), wire.Bind(new(usecase.TicketService), new(*service.TicketService)), wire.Bind(new(usecase.ReportService), new(*service.ReportService)), wire.Bind(new(usecase.GuaranteeService), new(*service.GuaranteeService)), wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)), wire.Bind(new(usecase.NewsService), new(*service.NewsService)), wire.Bind(new(usecase.BlogService), new(*service.BlogService)), wire.Bind(new(usecase.MonitoringService), new(*service.MonitoringService)))
 
-var AdapterProviderSet = wire.NewSet(localization.NewTranslationService, logger.NewLogger, jwt.NewJWTKeyManager, metrics.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, mqttimpl.NewClient, wire.Bind(new(logger2.Logger), new(*logger.Logger)), wire.Bind(new(metrics2.MetricsClient), new(*metrics.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)), wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)))
+var AdapterProviderSet = wire.NewSet(localization.NewTranslationService, logger.NewLogger, jwt.NewJWTKeyManager, metrics.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, mqttimpl.NewClient, recaptcha.NewRecaptcha, wire.Bind(new(logger2.Logger), new(*logger.Logger)), wire.Bind(new(metrics2.MetricsClient), new(*metrics.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)), wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)), wire.Bind(new(recaptcha2.Recaptcha), new(*recaptcha.Recaptcha)))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, installation.NewGeneralInstallationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, payment.NewGeneralPaymentController, ticket.NewGeneralTicketController, bid.NewGeneralBidController, report.NewGeneralReportController, maintenance.NewGeneralMaintenanceController, wire.Struct(new(GeneralControllers), "*"))
 
@@ -411,6 +416,10 @@ func ProvideMQTTConfig(container *bootstrap.Config) *bootstrap.MQTT {
 	return &container.Env.MQTT
 }
 
+func ProvideRecaptchaSecret(container *bootstrap.Config) *bootstrap.Recaptcha {
+	return &container.Env.Recaptcha
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -443,6 +452,7 @@ var ProviderSet = wire.NewSet(
 	ProvideRabbitMQConfig,
 	ProvideRabbitMQConstants,
 	ProvideMQTTConfig,
+	ProvideRecaptchaSecret,
 )
 
 type Database struct {

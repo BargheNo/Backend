@@ -34,6 +34,7 @@ func (userController *GeneralUserController) BasicRegister(ctx *gin.Context) {
 		Password        string `json:"password" validate:"required"`
 		ConfirmPassword string `json:"confirmPassword" validate:"required,eqfield=Password"`
 		AcceptedTerms   bool   `json:"acceptedTerms" validate:"required,eq=true"`
+		Recaptcha       string `json:"recaptcha" validate:"required"`
 	}
 	params := controller.Validated[registerParams](ctx)
 	registerInfo := userdto.BasicRegisterRequest{
@@ -41,6 +42,7 @@ func (userController *GeneralUserController) BasicRegister(ctx *gin.Context) {
 		LastName:  params.LastName,
 		Phone:     params.Phone,
 		Password:  params.Password,
+		Recaptcha: params.Recaptcha,
 	}
 	if err := userController.userService.Register(registerInfo); err != nil {
 		panic(err)
@@ -72,13 +74,15 @@ func (userController *GeneralUserController) VerifyPhone(ctx *gin.Context) {
 
 func (userController *GeneralUserController) Login(ctx *gin.Context) {
 	type verifyPhoneParams struct {
-		Phone    string `json:"phone" validate:"required,e164"`
-		Password string `json:"password" validate:"required"`
+		Phone     string `json:"phone" validate:"required,e164"`
+		Password  string `json:"password" validate:"required"`
+		Recaptcha string `json:"recaptcha" validate:"required"`
 	}
 	params := controller.Validated[verifyPhoneParams](ctx)
 	loginInfo := userdto.LoginRequest{
-		Phone:    params.Phone,
-		Password: params.Password,
+		Phone:     params.Phone,
+		Password:  params.Password,
+		Recaptcha: params.Recaptcha,
 	}
 	userInfo, err := userController.userService.Login(loginInfo)
 	if err != nil {
