@@ -101,7 +101,7 @@ func (ticketService *TicketService) getTicket(ticketID uint) (*entity.Ticket, er
 
 func (ticketService *TicketService) CreateCustomerTicket(requestInfo ticketdto.CreateTicketRequest) error {
 	ticket := &entity.Ticket{
-		Subject:     requestInfo.Subject,
+		Subject:     enum.TicketSubject(requestInfo.Subject),
 		Description: requestInfo.Description,
 		Status:      enum.TicketStatusNotAnswered,
 		OwnerID:     requestInfo.OwnerID,
