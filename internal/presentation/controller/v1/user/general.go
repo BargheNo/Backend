@@ -132,20 +132,12 @@ func (userController *GeneralUserController) RefreshToken(ctx *gin.Context) {
 		RefreshToken string `json:"refreshToken" validate:"required"`
 	}
 	params := controller.Validated[refreshTokenParams](ctx)
-	claims, err := userController.jwtService.ValidateToken(params.RefreshToken)
+	data, err := userController.userService.RefreshToken(params.RefreshToken)
 	if err != nil {
 		panic(err)
 	}
 
-	userID := uint(claims["sub"].(float64))
-	accessToken, _, err := userController.jwtService.GenerateToken(userID)
-	if err != nil {
-		panic(err)
-	}
-
-	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.refreshToken")
-	controller.Response(ctx, 200, message, accessToken)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (userController *GeneralUserController) GetSortableFields(ctx *gin.Context) {

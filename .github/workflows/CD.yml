@@ -7,6 +7,10 @@ on:
     types:
       - closed
 
+  push:
+    branches:
+      - 
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
