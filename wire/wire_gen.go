@@ -239,6 +239,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	adminInstallationController := installation.NewAdminInstallationController(constants, pagination, installationService)
 	adminBidController := bid.NewAdminBidController(constants, pagination, bidService)
 	adminMonitoringController := monitoring.NewAdminMonitoringController(constants, monitoringService, pagination, hub, jwtService, websocketSetting)
+	adminBlogController := blog.NewAdminBlogController(constants, blogService)
 	adminControllers := &AdminControllers{
 		TicketController:       adminTicketController,
 		UserController:         adminUserController,
@@ -248,6 +249,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		InstallationController: adminInstallationController,
 		BidController:          adminBidController,
 		MonitoringController:   adminMonitoringController,
+		BlogController:         adminBlogController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -323,7 +325,7 @@ var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, 
 
 var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, chat.NewCorporationChatController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, guarantee.NewCorporationGuaranteeController, blog.NewCorporationBlogController, monitoring.NewCorporationMonitoringController, wire.Struct(new(CorporationControllers), "*"))
 
-var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, user.NewAdminUserController, report.NewAdminReportController, news.NewAdminNewsController, corporation.NewAdminCorporationController, installation.NewAdminInstallationController, bid.NewAdminBidController, monitoring.NewAdminMonitoringController, wire.Struct(new(AdminControllers), "*"))
+var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, user.NewAdminUserController, report.NewAdminReportController, news.NewAdminNewsController, corporation.NewAdminCorporationController, installation.NewAdminInstallationController, bid.NewAdminBidController, monitoring.NewAdminMonitoringController, blog.NewAdminBlogController, wire.Struct(new(AdminControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -499,6 +501,7 @@ type AdminControllers struct {
 	InstallationController *installation.AdminInstallationController
 	BidController          *bid.AdminBidController
 	MonitoringController   *monitoring.AdminMonitoringController
+	BlogController         *blog.AdminBlogController
 }
 
 type Controllers struct {

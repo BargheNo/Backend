@@ -12,6 +12,7 @@ type BlogService interface {
 	GetCorporationPost(request blogdto.GetCorporationPostRequest) (blogdto.CorporationPostResponse, error)
 	GetGeneralPost(postID uint) (blogdto.GeneralPostResponse, error)
 	DeletePost(request blogdto.DeletePostRequest) error
+	DeletePostByAdmin(postID uint) error
 	AddPostMedia(request blogdto.AddPostMediaRequest) (uint, error)
 	DeletePostMedia(request blogdto.AccessPostMediaRequest) error
 	GetPostMedia(request blogdto.AccessPostMediaRequest) (string, error)
