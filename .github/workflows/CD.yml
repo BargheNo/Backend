@@ -6,10 +6,9 @@ on:
       - develop
     types:
       - closed
-
   push:
     branches:
-      - 
+      - fix/refresh-token
 
 jobs:
   deploy:
