@@ -325,3 +325,7 @@ func (repo *CorporationRepository) FindCorporationReviews(db database.Database, 
 func (repo *CorporationRepository) CreateReview(db database.Database, review *entity.CorporationReview) error {
 	return db.GetDB().Create(review).Error
 }
+
+func (repo *CorporationRepository) FindStaffRoles(db database.Database, staff *entity.CorporationStaff) error {
+	return db.GetDB().Model(staff).Association("Roles").Find(&staff.Roles)
+}

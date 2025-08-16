@@ -108,3 +108,10 @@ type SearchCorporationsRequest struct {
 	SortBy uint
 	Asc    bool
 }
+
+type AddStaffRequest struct {
+	CorporationID uint
+	StaffPhone    string
+	Role          uint
+	OperatorID    uint
+}

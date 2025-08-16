@@ -285,3 +285,14 @@ func (corporationController *CorporationCorporationController) SubmitCertificate
 	message, _ := trans.Translate("successMessage.addCorporationCertificate")
 	controller.Response(ctx, 200, message, nil)
 }
+
+// func (corporationController *CorporationCorporationController) CreateCorporationStaff(ctx *gin.Context) {
+// 	type addStaffParams struct {
+// 		CorporationID uint   `uri:"corporationID" validate:"required"`
+// 		Phone         string `json:"phone" validate:"required,e164"`
+// 		Role          uint   `json:"role" validate:"role"`
+// 	}
+// 	params := controller.Validated[addStaffParams](ctx)
+// 	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+// }

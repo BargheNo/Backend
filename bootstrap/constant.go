@@ -26,6 +26,7 @@ type Context struct {
 	IsLoadedValidationTranslator string
 	ID                           string
 	WebsocketConnection          string
+	CorporationID                string
 }
 
 type LogLevel struct {
@@ -208,6 +209,7 @@ func NewConstants() *Constants {
 			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
 			ID:                           "ID",
 			WebsocketConnection:          "wsConnection",
+			CorporationID:                "corporationID",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",

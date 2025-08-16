@@ -449,3 +449,31 @@ func GetCorporationPermissionTypes() []PermissionType {
 		ProfileViewPrivate, ProfileUpdate,
 	}
 }
+
+func GetAdminPermissionTypes() []PermissionType {
+	return []PermissionType{
+		PermissionAll, PermissionGeneral,
+
+		// User Management
+		UserViewAll, UserBanUnban, UserChangeRole, UserViewRoles,
+		UserManageRolePermissions, UserRemoveRole, UserCreateRole,
+
+		// Corporation Management
+		CorporationViewAll, CorporationApproveDecline,
+
+		// Installation Request Management
+		InstallationRequestViewAll, InstallationRequestEdit, InstallationRequestRemove,
+
+		// Ticket Management
+		TicketViewAll, TicketRespond, TicketClose, TicketComment,
+
+		// Report Management
+		ReportViewAll, ReportRespond,
+
+		// Blog Management (Admin)
+		AdminBlogViewAll, AdminBlogCreate, AdminBlogEdit, AdminBlogDelete,
+
+		// News Management
+		NewsViewAll, NewsCreate, NewsEdit, NewsDelete,
+	}
+}

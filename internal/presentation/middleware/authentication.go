@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/BargheNo/Backend/bootstrap"
@@ -14,23 +15,26 @@ import (
 )
 
 type AuthMiddleware struct {
-	constants      *bootstrap.Constants
-	jwtService     usecase.JWTService
-	userRepository repository.UserRepository
-	db             database.Database
+	constants             *bootstrap.Constants
+	jwtService            usecase.JWTService
+	userRepository        repository.UserRepository
+	corporationRepository repository.CorporationRepository
+	db                    database.Database
 }
 
 func NewAuthMiddleware(
 	constants *bootstrap.Constants,
 	jwtService usecase.JWTService,
 	userRepository repository.UserRepository,
+	corporationRepository repository.CorporationRepository,
 	db database.Database,
 ) *AuthMiddleware {
 	return &AuthMiddleware{
-		constants:      constants,
-		jwtService:     jwtService,
-		userRepository: userRepository,
-		db:             db,
+		constants:             constants,
+		jwtService:            jwtService,
+		userRepository:        userRepository,
+		corporationRepository: corporationRepository,
+		db:                    db,
 	}
 }
 
@@ -71,7 +75,11 @@ func (am *AuthMiddleware) RequiredWithPermission(allowedPermissions []enum.Permi
 			panic(unauthorizedError)
 		}
 		user, _ := am.userRepository.FindUserByID(am.db, id.(uint))
-		am.userRepository.FindUserRoles(am.db, user)
+
+		if err := am.userRepository.FindUserRoles(am.db, user); err != nil {
+			panic(err)
+		}
+
 		allowedPermissions = append(allowedPermissions, enum.PermissionAll)
 		if !am.isAllowRole(allowedPermissions, user.Roles) {
 			err := exception.ForbiddenError{Resource: am.constants.Field.Page, Message: "access denied"}
@@ -87,8 +95,7 @@ func (am *AuthMiddleware) isAllowRole(allowedPermissions []enum.PermissionType, 
 		allowedPermissionMap[permission] = true
 	}
 	for _, role := range roles {
-		err := am.userRepository.FindRolePermissions(am.db, &role)
-		if err != nil {
+		if err := am.userRepository.FindRolePermissions(am.db, &role); err != nil {
 			panic(err)
 		}
 		for _, permission := range role.Permissions {
@@ -98,4 +105,65 @@ func (am *AuthMiddleware) isAllowRole(allowedPermissions []enum.PermissionType, 
 		}
 	}
 	return false
+}
+
+func (am *AuthMiddleware) CorporationAccessRequired(ctx *gin.Context) {
+	id, exist := ctx.Get(am.constants.Context.ID)
+	if !exist {
+		unauthorizedError := exception.NewUnauthorizedError("", nil)
+		panic(unauthorizedError)
+	}
+
+	corporationIDStr := ctx.Param("corporationID")
+	corporationID, err := strconv.ParseUint(corporationIDStr, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	staff, err := am.corporationRepository.FindCorporationStaff(am.db, uint(corporationID), id.(uint))
+	if err != nil {
+		panic(err)
+	}
+	if staff == nil {
+		forbiddenError := exception.NewNoPropertyAccessForbiddenError(am.constants.Field.Corporation)
+		panic(forbiddenError)
+	}
+
+	ctx.Set(am.constants.Context.CorporationID, uint(corporationID))
+
+	ctx.Next()
+}
+
+func (am *AuthMiddleware) RequiredStaffWithPermission(corporationID uint, allowedPermissions []enum.PermissionType) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userID, exist := ctx.Get(am.constants.Context.ID)
+		if !exist {
+			unauthorizedError := exception.NewUnauthorizedError("", nil)
+			panic(unauthorizedError)
+		}
+
+		corporationID, exist := ctx.Get(am.constants.Context.CorporationID)
+		if !exist {
+			unauthorizedError := exception.NewUnauthorizedError("", nil)
+			panic(unauthorizedError)
+		}
+
+		staff, err := am.corporationRepository.FindCorporationStaff(am.db, corporationID.(uint), userID.(uint))
+		if err != nil {
+			panic(err)
+		}
+
+		if err = am.corporationRepository.FindStaffRoles(am.db, staff); err != nil {
+			panic(err)
+		}
+
+		allowedPermissions = append(allowedPermissions, enum.PermissionAll)
+
+		if !am.isAllowRole(allowedPermissions, staff.Roles) {
+			err := exception.ForbiddenError{Resource: am.constants.Field.Page, Message: "access denied"}
+			panic(err)
+		}
+
+		ctx.Next()
+	}
 }

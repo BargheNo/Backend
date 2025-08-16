@@ -39,4 +39,5 @@ type CorporationRepository interface {
 	DeleteCorporationSignatories(db database.Database, corporationID uint) error
 	DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error
 	CreateReview(db database.Database, review *entity.CorporationReview) error
+	FindStaffRoles(db database.Database, staff *entity.CorporationStaff) error
 }

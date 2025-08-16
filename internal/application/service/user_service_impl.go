@@ -356,9 +356,11 @@ func (userService *UserService) GetPermissionRoles(request userdto.GetPermission
 		if err != nil {
 			return nil, 0, err
 		}
+		isCorpStaff := role.UserType == enum.UserTypeCorporation
 		rolesResponse[i] = userdto.RoleResponse{
 			ID:          role.ID,
 			Name:        role.Name,
+			IsCorpStaff: isCorpStaff,
 			Permissions: permissions,
 		}
 	}
@@ -739,10 +741,12 @@ func (userService *UserService) GetAllPermissions(request userdto.GetPermissions
 	}
 	permissionsResponse := make([]userdto.PermissionResponse, len(permissions))
 	for i, permission := range permissions {
+		isCorpStaff := permission.UserType == enum.UserTypeCorporation
 		permissionsResponse[i] = userdto.PermissionResponse{
 			ID:          permission.ID,
 			Name:        permission.Type.String(),
 			Description: permission.Type.Description(),
+			IsCorpStaff: isCorpStaff,
 			Category:    permission.Category.String(),
 		}
 	}
@@ -760,10 +764,12 @@ func (userService *UserService) getRolePermissions(role *entity.Role) ([]userdto
 	}
 	permissions := make([]userdto.PermissionResponse, len(role.Permissions))
 	for i, permission := range role.Permissions {
+		isCorpStaff := permission.UserType == enum.UserTypeCorporation
 		permissions[i] = userdto.PermissionResponse{
 			ID:          permission.ID,
 			Name:        permission.Type.String(),
 			Description: permission.Type.Description(),
+			IsCorpStaff: isCorpStaff,
 			Category:    permission.Category.String(),
 		}
 	}
@@ -807,9 +813,11 @@ func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest)
 		if err != nil {
 			return nil, 0, err
 		}
+		isCorpStaff := role.UserType == enum.UserTypeCorporation
 		rolesResponse[i] = userdto.RoleResponse{
 			ID:          role.ID,
 			Name:        role.Name,
+			IsCorpStaff: isCorpStaff,
 			Permissions: permissions,
 		}
 	}
@@ -851,10 +859,15 @@ func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest
 		conflictErrors.Add(userService.constants.Field.Role, userService.constants.Tag.AlreadyExist)
 		return conflictErrors
 	}
+	userType := enum.UserTypeAdmin
+	if newRoleRequest.IsStaff {
+		userType = enum.UserTypeCorporation
+	}
+	role := &entity.Role{
+		Name:     newRoleRequest.Name,
+		UserType: userType,
+	}
 	err = userService.db.WithTransaction(func(tx database.Database) error {
-		role := &entity.Role{
-			Name: newRoleRequest.Name,
-		}
 		err = userService.userRepository.CreateRole(tx, role)
 		if err != nil {
 			return err
@@ -869,6 +882,10 @@ func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest
 			permission, err := userService.getPermission(permissionID)
 			if err != nil {
 				return err
+			}
+			isStaffPermission := permission.UserType == enum.UserTypeCorporation
+			if isStaffPermission != newRoleRequest.IsStaff {
+				continue
 			}
 
 			if err := userService.userRepository.AssignPermissionToRole(tx, role, permission); err != nil {
@@ -893,9 +910,11 @@ func (userService *UserService) GetRoleDetails(roleID uint) (userdto.RoleRespons
 		return userdto.RoleResponse{}, err
 	}
 
+	isCorpStaff := role.UserType == enum.UserTypeCorporation
 	return userdto.RoleResponse{
 		ID:          role.ID,
 		Name:        role.Name,
+		IsCorpStaff: isCorpStaff,
 		Permissions: permissions,
 	}, nil
 }
@@ -958,9 +977,11 @@ func (userService *UserService) GetUserRoles(userID uint) ([]userdto.RoleRespons
 		if err != nil {
 			return nil, err
 		}
+		isCorpStaff := role.UserType == enum.UserTypeCorporation
 		roles[i] = userdto.RoleResponse{
 			ID:          role.ID,
 			Name:        role.Name,
+			IsCorpStaff: isCorpStaff,
 			Permissions: permissions,
 		}
 	}

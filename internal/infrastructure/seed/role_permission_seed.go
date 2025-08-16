@@ -39,17 +39,21 @@ func (roleSeeder *RoleSeeder) SeedRoles() {
 
 func (roleSeeder *RoleSeeder) seedPermissions() map[enum.PermissionType]*entity.Permission {
 	permissions := make(map[enum.PermissionType]*entity.Permission)
-	permissionTypes := enum.GetAllPermissionTypes()
 
-	for _, permissionType := range permissionTypes {
-		permission := roleSeeder.getOrCreatePermission(permissionType)
+	for _, permissionType := range enum.GetAdminPermissionTypes() {
+		permission := roleSeeder.getOrCreatePermission(permissionType, enum.UserTypeAdmin)
+		permissions[permissionType] = permission
+	}
+
+	for _, permissionType := range enum.GetCorporationPermissionTypes() {
+		permission := roleSeeder.getOrCreatePermission(permissionType, enum.UserTypeCorporation)
 		permissions[permissionType] = permission
 	}
 
 	return permissions
 }
 
-func (roleSeeder *RoleSeeder) getOrCreatePermission(permissionType enum.PermissionType) *entity.Permission {
+func (roleSeeder *RoleSeeder) getOrCreatePermission(permissionType enum.PermissionType, userType enum.UserType) *entity.Permission {
 	permission, err := roleSeeder.userRepository.FindPermissionByType(roleSeeder.db, permissionType)
 	if err != nil {
 		panic(err)
@@ -61,6 +65,7 @@ func (roleSeeder *RoleSeeder) getOrCreatePermission(permissionType enum.Permissi
 	permission = &entity.Permission{
 		Type:        permissionType,
 		Description: permissionType.Description(),
+		UserType:    userType,
 		Category:    permissionType.Category(),
 	}
 
@@ -73,16 +78,23 @@ func (roleSeeder *RoleSeeder) getOrCreatePermission(permissionType enum.Permissi
 
 func (roleSeeder *RoleSeeder) seedRolesWithPermissions(permissions map[enum.PermissionType]*entity.Permission) map[enum.RoleName]*entity.Role {
 	roles := make(map[enum.RoleName]*entity.Role)
-	roleNames := enum.GetAllRoleNames()
-	for _, roleName := range roleNames {
-		role := roleSeeder.getOrCreateRole(roleName)
+
+	for _, roleName := range enum.GetAdminRoleNames() {
+		role := roleSeeder.getOrCreateRole(roleName, enum.UserTypeAdmin)
 		roles[roleName] = role
 		roleSeeder.assignPermissionsToRole(role, roleName, permissions)
 	}
+
+	for _, roleName := range enum.GetCorporationRoleNames() {
+		role := roleSeeder.getOrCreateRole(roleName, enum.UserTypeCorporation)
+		roles[roleName] = role
+		roleSeeder.assignPermissionsToRole(role, roleName, permissions)
+	}
+
 	return roles
 }
 
-func (roleSeeder *RoleSeeder) getOrCreateRole(roleName enum.RoleName) *entity.Role {
+func (roleSeeder *RoleSeeder) getOrCreateRole(roleName enum.RoleName, userType enum.UserType) *entity.Role {
 	role, err := roleSeeder.userRepository.FindRoleByName(roleSeeder.db, roleName.String())
 	if err != nil {
 		panic(err)
@@ -92,7 +104,8 @@ func (roleSeeder *RoleSeeder) getOrCreateRole(roleName enum.RoleName) *entity.Ro
 	}
 
 	role = &entity.Role{
-		Name: roleName.String(),
+		Name:     roleName.String(),
+		UserType: userType,
 	}
 
 	if err := roleSeeder.userRepository.CreateRole(roleSeeder.db, role); err != nil {

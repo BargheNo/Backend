@@ -79,3 +79,20 @@ func GetAllRoleNames() []RoleName {
 		Moderator,
 	}
 }
+
+func GetAdminRoleNames() []RoleName {
+	return []RoleName{
+		SuperAdmin,
+		Customer,
+		SupportAgent,
+		ContentManager,
+	}
+}
+
+func GetCorporationRoleNames() []RoleName {
+	return []RoleName{
+		Technician,
+		CorporationManager,
+		Moderator,
+	}
+}

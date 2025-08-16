@@ -312,7 +312,7 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		staff := &entity.CorporationStaff{
 			StaffID:       registerInfo.ApplicantID,
 			CorporationID: corporation.ID,
-			StaffType:     enum.StaffTypeManager,
+			// StaffType:     enum.StaffTypeManager,
 		}
 		err = corporationService.corporationRepository.CreateCorporationStaff(tx, staff)
 		if err != nil {
