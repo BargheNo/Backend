@@ -84,7 +84,7 @@ func (corporationService *CorporationService) GetCorporationSortableColumns() []
 	columns := sortby.GetCorporationSortableColumns()
 	response := make([]corporationdto.GetEnumResponse, len(columns))
 	i := 0
-	for col, _ := range columns {
+	for col := range columns {
 		response[i] = corporationdto.GetEnumResponse{
 			ID:   uint(col),
 			Name: col.Name(),
@@ -188,6 +188,7 @@ func (corporationService *CorporationService) GetCorporationCredentials(corporat
 
 	return corporationdto.CorporationCredentialResponse{
 		ID:          corporation.ID,
+		Status:      corporation.Status.String(),
 		Name:        corporation.Name,
 		ContactInfo: contactInfo,
 		Addresses:   addresses,
@@ -347,6 +348,51 @@ func (corporationService *CorporationService) replaceSignatories(corporationID u
 	return err
 }
 
+func (corporationService *CorporationService) updateCorporationStatus(corporation *entity.Corporation) {
+	if corporation.Status == enum.CorpStatusApproved {
+		corporation.Status = enum.CorpStatusSuspend
+	} else if corporation.Status == enum.CorpStatusRejected {
+		corporation.Status = enum.CorpStatusAwaitingApproval
+	}
+}
+
+func (corporationService *CorporationService) UpdateRegistrationInfoProfile(updateRegisterInfo corporationdto.UpdateRegisterRequest) error {
+	corporation, err := corporationService.getCorporationByID(updateRegisterInfo.CorporationID)
+	if err != nil {
+		return err
+	}
+
+	if err := corporationService.userService.IsUserActive(updateRegisterInfo.ApplicantID); err != nil {
+		return err
+	}
+
+	if err := corporationService.CheckApplicantAccess(updateRegisterInfo.CorporationID, updateRegisterInfo.ApplicantID); err != nil {
+		return err
+	}
+
+	if err := corporationService.checkCorporationConflicts(corporation, updateRegisterInfo.Name, updateRegisterInfo.NationalID, updateRegisterInfo.RegistrationNumber, updateRegisterInfo.IBAN); err != nil {
+		return err
+	}
+
+	corporationService.updateCorporationStatus(corporation)
+
+	err = corporationService.db.WithTransaction(func(tx database.Database) error {
+		err = corporationService.corporationRepository.UpdateCorporation(tx, corporation)
+		if err != nil {
+			return err
+		}
+
+		err = corporationService.replaceSignatories(updateRegisterInfo.CorporationID, updateRegisterInfo.Signatories)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}
+
 func (corporationService *CorporationService) UpdateRegister(updateRegisterInfo corporationdto.UpdateRegisterRequest) error {
 	corporation, err := corporationService.getCorporationByIDAndStatus(updateRegisterInfo.CorporationID, enum.CorpStatusAwaitingApproval)
 	if err != nil {
@@ -380,7 +426,7 @@ func (corporationService *CorporationService) UpdateRegister(updateRegisterInfo 
 		return nil
 	})
 
-	return nil
+	return err
 }
 
 func (corporationService *CorporationService) checkCorporationConflicts(corporation *entity.Corporation, name, nationalID, registrationNumber, iban *string) error {
@@ -417,6 +463,55 @@ func (corporationService *CorporationService) checkCorporationConflicts(corporat
 	if len(conflictErrors.Errors) > 0 {
 		return conflictErrors
 	}
+	return nil
+}
+
+func (corporationService *CorporationService) AddCertificateFilesFromProfile(requestInfo corporationdto.AddCertificatesRequest) error {
+	corporation, err := corporationService.getCorporationByID(requestInfo.CorporationID)
+	if err != nil {
+		return err
+	}
+
+	if err := corporationService.userService.IsUserActive(requestInfo.ApplicantID); err != nil {
+		return err
+	}
+
+	if err = corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.ApplicantID); err != nil {
+		return err
+	}
+
+	prevVatTaxPayerPath := ""
+
+	if requestInfo.VATTaxpayerCertificate != nil {
+		taxPayerPath := corporationService.constants.S3BucketPath.GetVATTaxpayerCertificatePath(corporation.ID, requestInfo.VATTaxpayerCertificate.Filename)
+		corporationService.s3Storage.UploadObject(enum.VATTaxpayerCertificate, taxPayerPath, requestInfo.VATTaxpayerCertificate)
+		prevVatTaxPayerPath = corporation.VATTaxpayerCertificate
+		corporation.VATTaxpayerCertificate = taxPayerPath
+	}
+
+	prevOfficialNewspaperPath := ""
+	if requestInfo.OfficialNewspaperAD != nil {
+		newspaperADPath := corporationService.constants.S3BucketPath.GetOfficialNewspaperADPath(corporation.ID, requestInfo.OfficialNewspaperAD.Filename)
+		corporationService.s3Storage.UploadObject(enum.OfficialNewspaperAD, newspaperADPath, requestInfo.OfficialNewspaperAD)
+		prevOfficialNewspaperPath = corporation.OfficialNewspaperAD
+		corporation.OfficialNewspaperAD = newspaperADPath
+	}
+
+	corporationService.updateCorporationStatus(corporation)
+
+	err = corporationService.corporationRepository.UpdateCorporation(corporationService.db, corporation)
+	if err != nil {
+		return err
+	}
+
+	if prevVatTaxPayerPath != "" {
+		corporationService.s3Storage.DeleteObject(enum.VATTaxpayerCertificate, corporation.VATTaxpayerCertificate)
+	}
+
+	if prevOfficialNewspaperPath != "" {
+		corporationService.s3Storage.DeleteObject(enum.OfficialNewspaperAD, corporation.OfficialNewspaperAD)
+	}
+
 	return nil
 }
 
@@ -601,7 +696,7 @@ func (corporationService *CorporationService) getPrivateCorporationDetails(corpo
 }
 
 func (corporationService *CorporationService) GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) (corporationdto.CorporationPrivateInfoResponse, error) {
-	corporation, err := corporationService.getCorporationByIDAndStatus(requestInfo.CorporationID, requestInfo.Status)
+	corporation, err := corporationService.getCorporationByID(requestInfo.CorporationID)
 	if err != nil {
 		return corporationdto.CorporationPrivateInfoResponse{}, err
 	}
@@ -615,6 +710,17 @@ func (corporationService *CorporationService) GetCorporationDetails(requestInfo 
 		return corporationdto.CorporationPrivateInfoResponse{}, err
 	}
 	return details, nil
+}
+
+func (corporationService *CorporationService) GetCorporationPublicDetails(requestInfo corporationdto.CorporationDetailsRequest) (corporationdto.CorporationCredentialResponse, error) {
+	if err := corporationService.CheckApplicantAccess(requestInfo.CorporationID, requestInfo.UserID); err != nil {
+		return corporationdto.CorporationCredentialResponse{}, err
+	}
+	credentials, err := corporationService.GetCorporationCredentials(requestInfo.CorporationID)
+	if err != nil {
+		return corporationdto.CorporationCredentialResponse{}, err
+	}
+	return credentials, nil
 }
 
 func (corporationService *CorporationService) getContactInfo(corporationID uint) ([]corporationdto.ContactInformationResponse, error) {

@@ -21,8 +21,11 @@ type CorporationService interface {
 	GetCorporationDetails(requestInfo corporationdto.CorporationDetailsRequest) (corporationdto.CorporationPrivateInfoResponse, error)
 	GetContactTypes() ([]corporationdto.ContactTypeResponse, error)
 	ChangeLogo(changeLogoRequest corporationdto.ChangeLogoRequest) error
+	UpdateRegistrationInfoProfile(updateRegisterInfo corporationdto.UpdateRegisterRequest) error
+	AddCertificateFilesFromProfile(requestInfo corporationdto.AddCertificatesRequest) error
 	GetUserCorporations(userID uint) ([]corporationdto.CorporationCredentialResponse, error)
 	GetAvailableCorporations() ([]corporationdto.CorporationCredentialResponse, error)
+	GetCorporationPublicDetails(requestInfo corporationdto.CorporationDetailsRequest) (corporationdto.CorporationCredentialResponse, error)
 	GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, int64, error)
 	GetCorporationByAdmin(corporationID uint) (corporationdto.CorporationPrivateInfoResponse, error)
 	GetReviewActions() []corporationdto.GetEnumResponse
