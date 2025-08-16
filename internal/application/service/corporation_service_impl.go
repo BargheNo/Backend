@@ -785,6 +785,29 @@ func (corporationService *CorporationService) GetAvailableCorporations() ([]corp
 	return response, nil
 }
 
+func (corporationService *CorporationService) getCorporationsByQuery(allowedStatuses []enum.CorporationStatus, query string, options *postgres.QueryOptions) ([]*entity.Corporation, int64, error) {
+	if query == "" {
+		corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := corporationService.corporationRepository.CountCorporationsByStatus(corporationService.db, allowedStatuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return corporations, count, nil
+	}
+	corporations, err := corporationService.corporationRepository.FindCorporationsByQuery(corporationService.db, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := corporationService.corporationRepository.CountCorporationsByQuery(corporationService.db, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return corporations, count, nil
+}
+
 func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, int64, error) {
 	allowedStatuses := corporationService.mapStatusIDToAllowedStatuses(listInfo.Status)
 
@@ -792,7 +815,7 @@ func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo co
 		WithPagination(listInfo.Limit, listInfo.Offset).
 		WithSorting(corporationService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
 
-	corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, options)
+	corporations, count, err := corporationService.getCorporationsByQuery(allowedStatuses, listInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -806,10 +829,6 @@ func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo co
 		response[i] = credentials
 	}
 
-	count, err := corporationService.corporationRepository.CountCorporationsByStatus(corporationService.db, allowedStatuses)
-	if err != nil {
-		return nil, 0, err
-	}
 	return response, count, nil
 }
 

@@ -129,6 +129,30 @@ func (ticketService *TicketService) CreateCustomerTicket(requestInfo ticketdto.C
 	return err
 }
 
+func (ticketService *TicketService) getCustomerTicketsByQuery(ownerID uint, allowedStatus []enum.TicketStatus, query string, options *postgres.QueryOptions) ([]*entity.Ticket, int64, error) {
+	if query == "" {
+		tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, ownerID, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := ticketService.ticketRepository.CountCustomerTicketsByStatus(ticketService.db, ownerID, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return tickets, count, nil
+	}
+
+	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByQuery(ticketService.db, ownerID, allowedStatus, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := ticketService.ticketRepository.CountCustomerTicketsByQuery(ticketService.db, ownerID, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return tickets, count, nil
+}
+
 func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
@@ -136,7 +160,7 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 
 	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
 
-	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses, options)
+	tickets, count, err := ticketService.getCustomerTicketsByQuery(requestInfo.OwnerID, statuses, requestInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -163,11 +187,6 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 				return nil, 0, err
 			}
 		}
-	}
-
-	count, err := ticketService.ticketRepository.CountCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return responses, count, nil
@@ -265,6 +284,32 @@ func (ticketService *TicketService) CreateAdminTicketComment(requestInfo ticketd
 	return nil
 }
 
+func (ticketService *TicketService) getAdminTicketsByQuery(statuses []enum.TicketStatus, query string, allowedStatuses []enum.TicketStatus, options *postgres.QueryOptions) ([]*entity.Ticket, int64, error) {
+
+	if query == "" {
+		tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, allowedStatuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		count, err := ticketService.ticketRepository.CountTicketsByStatus(ticketService.db, allowedStatuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return tickets, count, nil
+	}
+
+	tickets, err := ticketService.ticketRepository.FindTicketsByQuery(ticketService.db, query, allowedStatuses, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := ticketService.ticketRepository.CountTicketsByQuery(ticketService.db, query, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+	return tickets, count, nil
+}
+
 func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
@@ -272,7 +317,7 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 
 	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
 
-	tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, statuses, options)
+	tickets, count, err := ticketService.getAdminTicketsByQuery(statuses, requestInfo.Query, statuses, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -300,10 +345,6 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 			}
 			responses[i].Image = image
 		}
-	}
-	count, err := ticketService.ticketRepository.CountTicketsByStatus(ticketService.db, statuses)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return responses, count, nil

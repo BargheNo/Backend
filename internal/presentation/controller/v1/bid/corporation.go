@@ -31,7 +31,7 @@ func NewCorporationBidController(
 }
 
 func (bidController *CorporationBidController) GetBidStatuses(ctx *gin.Context) {
-	statuses := bidController.bidService.GetBidStatuses()
+	statuses := bidController.bidService.GetCorporationBidStatuses()
 
 	controller.Response(ctx, 200, "", statuses)
 }
@@ -61,7 +61,7 @@ func (bidController *CorporationBidController) SetBid(ctx *gin.Context) {
 	params := controller.Validated[setBidParams](ctx)
 	userID, _ := ctx.Get(bidController.constants.Context.ID)
 
-	var installmentPlanParams *paymentdto.InstallmentPlanRequest
+	var installmentPlanParams *paymentdto.InstallmentPlanRequest = nil
 	if params.PaymentTerms.InstallmentPlan != nil {
 		installmentPlanParams = &paymentdto.InstallmentPlanRequest{
 			NumberOfMonths:    params.PaymentTerms.InstallmentPlan.NumberOfMonths,
@@ -69,8 +69,6 @@ func (bidController *CorporationBidController) SetBid(ctx *gin.Context) {
 			MonthlyAmount:     params.PaymentTerms.InstallmentPlan.MonthlyAmount,
 			Notes:             params.PaymentTerms.InstallmentPlan.Notes,
 		}
-	} else {
-		installmentPlanParams = nil
 	}
 
 	bidInfo := biddto.SetBidRequest{
@@ -89,7 +87,9 @@ func (bidController *CorporationBidController) SetBid(ctx *gin.Context) {
 			InstallmentPlan: installmentPlanParams,
 		},
 	}
-	bidController.bidService.SetBid(bidInfo)
+	if err := bidController.bidService.SetBid(bidInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.setBid")
@@ -98,12 +98,13 @@ func (bidController *CorporationBidController) SetBid(ctx *gin.Context) {
 
 func (bidController *CorporationBidController) GetBids(ctx *gin.Context) {
 	type getBidsParams struct {
-		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status"`
-		Page          int  `form:"page"`
-		PageSize      int  `form:"pageSize"`
-		SortBy        uint `form:"sortBy"`
-		Asc           bool `form:"asc"`
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Status        uint   `form:"status"`
+		Query         string `form:"query"`
+		Page          int    `form:"page"`
+		PageSize      int    `form:"pageSize"`
+		SortBy        uint   `form:"sortBy"`
+		Asc           bool   `form:"asc"`
 	}
 	params := controller.Validated[getBidsParams](ctx)
 	userID, _ := ctx.Get(bidController.constants.Context.ID)
@@ -114,6 +115,7 @@ func (bidController *CorporationBidController) GetBids(ctx *gin.Context) {
 		CorporationID: params.CorporationID,
 		UserID:        userID.(uint),
 		Status:        params.Status,
+		Query:         params.Query,
 		Offset:        offset,
 		Limit:         limit,
 		SortBy:        params.SortBy,
@@ -159,8 +161,9 @@ func (bidController *CorporationBidController) UpdateBid(ctx *gin.Context) {
 	}
 
 	type paymentTerms struct {
-		PaymentMethod   *uint            `json:"method"`
-		InstallmentPlan *installmentPlan `json:"installmentPlan" validate:"required_if=method 1"`
+		PaymentMethod *uint `json:"method"`
+
+		InstallmentPlan *installmentPlan `json:"installmentPlan" validate:"required_if=PaymentMethod 1"`
 	}
 
 	type updateBidParams struct {
@@ -207,7 +210,9 @@ func (bidController *CorporationBidController) UpdateBid(ctx *gin.Context) {
 		GuaranteeID:      params.GuaranteeID,
 		PaymentTerms:     paymentTermsParams,
 	}
-	bidController.bidService.UpdateBid(updateBidInfo)
+	if err := bidController.bidService.UpdateBid(updateBidInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.updateBid")
@@ -227,7 +232,9 @@ func (bidController *CorporationBidController) CancelBid(ctx *gin.Context) {
 		UserID:        userID.(uint),
 		BidID:         params.BidID,
 	}
-	bidController.bidService.CancelBid(bidInfo)
+	if err := bidController.bidService.CancelBid(bidInfo); err != nil {
+		panic(err)
+	}
 
 	trans := controller.GetTranslator(ctx, bidController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.cancelBid")

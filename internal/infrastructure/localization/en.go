@@ -89,6 +89,7 @@ var English = map[string]interface{}{
 		"alreadyRejected":        "This {0} has been already rejected.",
 		"alreadyAccepted":        "This {0} has been already accepted.",
 		"alreadyDraft":           "This {0} has been already drafted.",
+		"bannedUser":             "Your account is currently banned. You are not allowed to perform this action.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":               "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -170,6 +171,8 @@ var English = map[string]interface{}{
 		"updateInstallationRequest":  "The installation request has been updated successfully.",
 		"deleteInstallationRequest":  "The installation request has been deleted successfully.",
 		"updatePanel":                "The panel has been updated.",
+		"deleteBid":                  "Bid has been removed successfully.",
+		"deletePanel":                "Panel has been deleted successfully",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

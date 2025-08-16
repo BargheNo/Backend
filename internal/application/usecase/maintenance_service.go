@@ -16,7 +16,7 @@ type MaintenanceService interface {
 	UpdateMaintenanceRequest(updateRequest maintenancedto.UpdateCustomerRequest) error
 	CancelMaintenanceRequest(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) error
 	ApproveMaintenanceRecord(maintenanceInfo maintenancedto.CustomerMaintenanceRequest) error
-	GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) ([]maintenancedto.CorporationMaintenanceListResponse, int64, error)
+	GetCorporationMaintenanceRequests(listInfo maintenancedto.CorporationMaintenanceListRequest) ([]maintenancedto.CorporationMaintenanceResponse, int64, error)
 	GetCorporationMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) (maintenancedto.CorporationMaintenanceResponse, error)
 	AcceptMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) error
 	RejectMaintenanceRequest(maintenanceInfo maintenancedto.CorporationMaintenanceRequest) error

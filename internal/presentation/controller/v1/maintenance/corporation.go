@@ -37,12 +37,13 @@ func (maintenanceController *CorporationMaintenanceController) GetMaintenanceSta
 
 func (maintenanceController *CorporationMaintenanceController) GetAllMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
-		CorporationID uint `uri:"corporationID" validate:"required"`
-		Status        uint `form:"status"`
-		Page          int  `form:"page"`
-		PageSize      int  `form:"pageSize"`
-		SortBy        uint `form:"sortBy"`
-		Asc           bool `form:"asc"`
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Status        uint   `form:"status"`
+		Query         string `form:"query"`
+		Page          int    `form:"page"`
+		PageSize      int    `form:"pageSize"`
+		SortBy        uint   `form:"sortBy"`
+		Asc           bool   `form:"asc"`
 	}
 	params := controller.Validated[maintenanceRequestsParams](ctx)
 	operatorID, _ := ctx.Get(maintenanceController.constants.Context.ID)
@@ -53,6 +54,7 @@ func (maintenanceController *CorporationMaintenanceController) GetAllMaintenance
 		CorporationID: params.CorporationID,
 		OperatorID:    operatorID.(uint),
 		Status:        params.Status,
+		Query:         params.Query,
 		Offset:        offset,
 		Limit:         limit,
 		SortBy:        params.SortBy,
@@ -134,16 +136,18 @@ func (maintenanceController *CorporationMaintenanceController) RejectMaintenance
 
 func (maintenanceController *CorporationMaintenanceController) CreateMaintenanceRecord(ctx *gin.Context) {
 	type guaranteeViolation struct {
-		Reason  string `json:"reason" validate:"required"`
-		Details string `json:"details" validate:"required"`
+		Reason  string `json:"reason" validate:"required_with=Details,omitempty"`
+		Details string `json:"details" validate:"required_with=Reason,omitempty"`
 	}
+
 	type createRecordParams struct {
 		RequestID          uint                `uri:"requestID" validate:"required"`
 		CorporationID      uint                `uri:"corporationID" validate:"required"`
 		Title              string              `json:"title" validate:"required"`
 		Details            string              `json:"details" validate:"required"`
-		GuaranteeViolation *guaranteeViolation `json:"guaranteeViolation"`
+		GuaranteeViolation *guaranteeViolation `json:"guaranteeViolation" validate:"omitempty,dive"`
 	}
+
 	params := controller.Validated[createRecordParams](ctx)
 	operatorID, _ := ctx.Get(maintenanceController.constants.Context.ID)
 
@@ -176,15 +180,15 @@ func (maintenanceController *CorporationMaintenanceController) CreateMaintenance
 
 func (maintenanceController *CorporationMaintenanceController) UpdateMaintenanceRecord(ctx *gin.Context) {
 	type guaranteeViolation struct {
-		Reason  *string `json:"reason"`
-		Details *string `json:"details"`
+		Reason  *string `json:"reason" validate:"omitempty"`
+		Details *string `json:"details" validate:"omitempty"`
 	}
 	type createRecordParams struct {
 		RequestID          uint                `uri:"requestID" validate:"required"`
 		CorporationID      uint                `uri:"corporationID" validate:"required"`
 		Title              *string             `json:"title"`
 		Details            *string             `json:"details"`
-		GuaranteeViolation *guaranteeViolation `json:"guaranteeViolation"`
+		GuaranteeViolation *guaranteeViolation `json:"guaranteeViolation,omitempty" validate:"omitempty,dive"`
 	}
 	params := controller.Validated[createRecordParams](ctx)
 	operatorID, _ := ctx.Get(maintenanceController.constants.Context.ID)

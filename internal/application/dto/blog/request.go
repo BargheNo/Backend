@@ -24,10 +24,11 @@ type EditPostRequest struct {
 	Content       *string
 	Description   *string
 	CoverImage    *multipart.FileHeader
-	Status        uint
+	Status        *uint
 }
 
 type GetPublicPostsRequest struct {
+	Query  string
 	Offset int
 	Limit  int
 	SortBy uint
@@ -36,6 +37,7 @@ type GetPublicPostsRequest struct {
 
 type GetPublicCorporationPostsRequest struct {
 	CorporationID uint
+	Query         string
 	Offset        int
 	Limit         int
 	SortBy        uint

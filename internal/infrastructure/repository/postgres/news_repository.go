@@ -64,6 +64,52 @@ func (repo *NewsRepository) CountNewsByStatus(db database.Database, statuses []e
 	return count, nil
 }
 
+func (repo *NewsRepository) FindNewsByStatusAndQuery(db database.Database, query string, allowedStatuses []enum.NewsStatus, options *postgres.QueryOptions) ([]*entity.News, error) {
+	var news []*entity.News
+	result := db.GetDB().
+		Joins("LEFT JOIN users AS authors ON news.author_id = authors.id").
+		Where(`
+			news.status IN ? AND (
+			news.title ILIKE ? OR 
+			news.description ILIKE ? OR 
+			authors.first_name ILIKE ? OR 
+			authors.last_name ILIKE ? OR 
+			authors.email ILIKE ?
+		)
+		`,
+			allowedStatuses, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%")
+	result = applyQueryOptions(result, options)
+	result = result.Find(&news)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return news, nil
+}
+
+func (repo *NewsRepository) CountNewsByStatusAndQuery(db database.Database, query string, allowedStatuses []enum.NewsStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.News{}).
+		Joins("LEFT JOIN users AS authors ON news.author_id = authors.id").
+		Where(`
+			news.status IN ? AND (
+			news.title ILIKE ? OR 
+			news.description ILIKE ? OR 
+			authors.first_name ILIKE ? OR 
+			authors.last_name ILIKE ? OR 
+			authors.email ILIKE ?
+		)
+		`,
+			allowedStatuses, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *NewsRepository) UpdateNews(db database.Database, news *entity.News) error {
 	return db.GetDB().Save(&news).Error
 }

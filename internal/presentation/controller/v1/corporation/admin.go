@@ -34,11 +34,12 @@ func (corporationController *AdminCorporationController) GetCorporationStatus(ct
 
 func (corporationController *AdminCorporationController) GetCorporations(ctx *gin.Context) {
 	type getCorporationsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getCorporationsParams](ctx)
 
@@ -46,18 +47,20 @@ func (corporationController *AdminCorporationController) GetCorporations(ctx *gi
 
 	listInfo := corporationdto.GetCorporationsByAdminRequest{
 		Status: params.Status,
-		Limit:  limit,
+		Query:  params.Query,
 		Offset: offset,
+		Limit:  limit,
 		SortBy: params.SortBy,
 		Asc:    params.Asc,
 	}
+
 	corporations, count, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
 	if err != nil {
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(corporations, count, offset, limit)
-
 	controller.Response(ctx, 200, "", data)
+
 }
 
 func (corporationController *AdminCorporationController) GetCorporation(ctx *gin.Context) {

@@ -29,10 +29,11 @@ func NewGeneralNewsController(
 
 func (newsController *GeneralNewsController) GetNewsList(ctx *gin.Context) {
 	type getNewsParams struct {
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getNewsParams](ctx)
 
@@ -43,6 +44,7 @@ func (newsController *GeneralNewsController) GetNewsList(ctx *gin.Context) {
 		Limit:  limit,
 		SortBy: params.SortBy,
 		Asc:    params.Asc,
+		Query:  params.Query,
 	}
 	news, count, err := newsController.newsService.GetPublicNewsList(getNewsRequest)
 	if err != nil {

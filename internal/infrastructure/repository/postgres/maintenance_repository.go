@@ -87,6 +87,40 @@ func (repo *MaintenanceRepository) CountRequestsByCustomerID(db database.Databas
 	return count, nil
 }
 
+func (repo *MaintenanceRepository) FindRequestsByCustomerIDAndQuery(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
+	var requests []*entity.MaintenanceRequest
+	result := db.GetDB().
+		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
+		Where("Panel.customer_id = ?", customerID).
+		Where("maintenance_requests.status IN ?", allowedStatus).
+		Where("maintenance_requests.subject ILIKE ?", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+
+	result = result.Find(&requests)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return requests, nil
+}
+
+func (repo *MaintenanceRepository) CountRequestsByCustomerIDAndQuery(db database.Database, customerID uint, allowedStatus []enum.MaintenanceRequestStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.MaintenanceRequest{}).
+		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
+		Where("Panel.customer_id = ?", customerID).
+		Where("maintenance_requests.status IN ?", allowedStatus).
+		Where("maintenance_requests.subject ILIKE ?", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *MaintenanceRepository) CreateMaintenanceRequest(db database.Database, maintenanceRequest *entity.MaintenanceRequest) error {
 	return db.GetDB().Create(maintenanceRequest).Error
 }
@@ -106,7 +140,7 @@ func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.
 
 func (repo *MaintenanceRepository) FindCorporationRequestsByStatus(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
-	query := db.GetDB().Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses)
+	query := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, allowedStatuses)
 
 	query = applyQueryOptions(query, options)
 
@@ -122,7 +156,52 @@ func (repo *MaintenanceRepository) CountCorporationRequestsByStatus(db database.
 
 	err := db.GetDB().
 		Model(&entity.MaintenanceRequest{}).
-		Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses).
+		Where("corporation_id = ? AND status IN ?", corporationID, allowedStatuses).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *MaintenanceRepository) FindCorporationRequestsByStatusAndQuery(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
+	var requests []*entity.MaintenanceRequest
+
+	result := db.GetDB().
+		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
+		Where(`
+			maintenance_requests.corporation_id = ? AND 
+			maintenance_requests.status IN ? AND (
+			maintenance_requests.subject ILIKE ? OR 
+			maintenance_requests.description ILIKE ?
+		)
+		`,
+			corporationID, allowedStatuses, "%"+query+"%", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&requests)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return requests, nil
+}
+
+func (repo *MaintenanceRepository) CountCorporationRequestsByStatusAndQuery(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.MaintenanceRequest{}).
+		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
+		Where(`
+			maintenance_requests.corporation_id = ? AND 
+			maintenance_requests.status IN ? AND (
+			maintenance_requests.subject ILIKE ? OR 
+			maintenance_requests.description ILIKE ?
+		)
+		`,
+			corporationID, allowedStatuses, "%"+query+"%", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {

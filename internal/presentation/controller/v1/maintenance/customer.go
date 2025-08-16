@@ -57,7 +57,7 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 		CorporationID:    params.CorporationID,
 		Subject:          params.Subject,
 		Description:      params.Description,
-		UrgencyLevel:     enum.UrgencyLevel(params.UrgencyLevel),
+		UrgencyLevel:     params.UrgencyLevel,
 		IsUsingGuarantee: params.IsUsingGuarantee,
 	}
 	if err := maintenanceController.maintenanceService.CreateMaintenanceRequest(requestInfo); err != nil {
@@ -71,11 +71,12 @@ func (maintenanceController *CustomerMaintenanceController) CreateMaintenanceReq
 
 func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceRequests(ctx *gin.Context) {
 	type maintenanceRequestsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[maintenanceRequestsParams](ctx)
 	ownerID, _ := ctx.Get(maintenanceController.constants.Context.ID)
@@ -85,11 +86,13 @@ func (maintenanceController *CustomerMaintenanceController) GetAllMaintenanceReq
 	listInfo := maintenancedto.CustomerMaintenanceListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
+		Query:   params.Query,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
+
 	requests, count, err := maintenanceController.maintenanceService.GetCustomerMaintenanceRequests(listInfo)
 	if err != nil {
 		panic(err)

@@ -152,10 +152,13 @@ func handleNotFoundError(ctx *gin.Context, notFoundError exception.NotFoundError
 }
 
 func handleForbiddenError(ctx *gin.Context, forbiddenError exception.ForbiddenError, transKey string) {
-	// maybe add without field later -> add type and switch case between them
 	trans := controller.GetTranslator(ctx, transKey)
 	ResourceName, _ := trans.Translate(forbiddenError.Resource)
 	message, _ := trans.Translate("errors.forbiddenError", ResourceName)
+	switch forbiddenError.Type {
+	case exception.ForbiddenTypeBannedUser:
+		message, _ = trans.Translate("errors.bannedUser")
+	}
 	controller.Response(ctx, 403, message, nil)
 }
 

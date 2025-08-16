@@ -30,7 +30,7 @@ func NewCustomerInstallationController(
 
 func (installationController *CustomerInstallationController) CreateInstallationRequest(ctx *gin.Context) {
 	type installationRequestParams struct {
-		Name          string  `json:"name" validate:"required"`
+		Name          string  `json:"name" validate:"required,max=50"`
 		Area          uint    `json:"area"`
 		Power         uint    `json:"power" validate:"required"`
 		MaxCost       float64 `json:"maxCost"`
@@ -39,7 +39,7 @@ func (installationController *CustomerInstallationController) CreateInstallation
 		ProvinceID    uint    `json:"provinceID" validate:"required"`
 		CityID        uint    `json:"cityID" validate:"required"`
 		StreetAddress string  `json:"streetAddress" validate:"required"`
-		PostalCode    string  `json:"postalCode" validate:"required"`
+		PostalCode    string  `json:"postalCode" validate:"required,min=10,max=10"`
 		HouseNumber   string  `json:"houseNumber" validate:"required"`
 		Unit          uint    `json:"unit" validate:"required"`
 	}
@@ -144,11 +144,12 @@ func (installationController *CustomerInstallationController) CancelInstallation
 
 func (installationController *CustomerInstallationController) GetCustomerPanels(ctx *gin.Context) {
 	type getPanelsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		Query    string `form:"query"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getPanelsParams](ctx)
 
@@ -159,6 +160,7 @@ func (installationController *CustomerInstallationController) GetCustomerPanels(
 	listInfo := installationdto.CustomerPanelListRequest{
 		OwnerID: ownerId.(uint),
 		Status:  params.Status,
+		Query:   params.Query,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
@@ -169,7 +171,6 @@ func (installationController *CustomerInstallationController) GetCustomerPanels(
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(panels, count, offset, limit)
-
 	controller.Response(ctx, 200, "", data)
 }
 
@@ -184,12 +185,12 @@ func (installationController *CustomerInstallationController) GetCustomerPanel(c
 		InstallationID: params.PanelID,
 		OwnerID:        ownerID.(uint),
 	}
-	panels, err := installationController.installationService.GetCustomerPanel(panelInfo)
+	panel, err := installationController.installationService.GetCustomerPanel(panelInfo)
 	if err != nil {
 		panic(err)
 	}
 
-	controller.Response(ctx, 200, "", panels)
+	controller.Response(ctx, 200, "", panel)
 }
 
 func (installationController *CustomerInstallationController) GetPanelGuaranteeViolation(ctx *gin.Context) {

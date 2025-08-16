@@ -102,6 +102,39 @@ func (repo *BidRepository) CountCorporationBids(db database.Database, corporatio
 	return count, nil
 }
 
+func (repo *BidRepository) FindCorporationBidsByQuery(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, query string, options *postgres.QueryOptions) ([]*entity.Bid, error) {
+	var bids []*entity.Bid
+
+	result := db.GetDB().
+		Joins("LEFT JOIN installation_requests AS requests ON bids.request_id = requests.id").
+		Where("corporation_id = ? AND bids.status IN ?", corporationID, allowedStatus).
+		Where("name ILIKE ? OR bids.description ILIKE ?", "%"+query+"%", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&bids)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return bids, nil
+}
+
+func (repo *BidRepository) CountCorporationBidsByQuery(db database.Database, corporationID uint, allowedStatus []enum.BidStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Bid{}).
+		Joins("LEFT JOIN installation_requests AS requests ON bids.request_id = requests.id").
+		Where("corporation_id = ? AND bids.status IN ?", corporationID, allowedStatus).
+		Where("name ILIKE ? OR bids.description ILIKE ?", "%"+query+"%", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *BidRepository) FindRequestBids(db database.Database, requestID uint, allowedStatus []enum.BidStatus, options *postgres.QueryOptions) ([]*entity.Bid, error) {
 	var bids []*entity.Bid
 
@@ -125,6 +158,102 @@ func (repo *BidRepository) CountRequestBids(
 	err := db.GetDB().
 		Model(&entity.Bid{}).
 		Where("request_id = ? AND status IN ?", requestID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (repo *BidRepository) FindRequestBidsByQuery(db database.Database, requestID uint, allowedStatus []enum.BidStatus, query string, options *postgres.QueryOptions) ([]*entity.Bid, error) {
+	var bids []*entity.Bid
+
+	result := db.GetDB().
+		Joins("LEFT JOIN installation_requests AS requests ON bids.request_id = requests.id").
+		Where("request_id = ? AND bids.status IN ?", requestID, allowedStatus).
+		Where("name ILIKE ? OR bids.description ILIKE ?", "%"+query+"%", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&bids)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return bids, nil
+}
+
+func (repo *BidRepository) CountRequestBidsByQuery(db database.Database, requestID uint, allowedStatus []enum.BidStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Bid{}).
+		Joins("LEFT JOIN installation_requests AS requests ON bids.request_id = requests.id").
+		Where("request_id = ? AND bids.status IN ?", requestID, allowedStatus).
+		Where("name ILIKE ? OR bids.description ILIKE ?", "%"+query+"%", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (repo *BidRepository) FindBidsByStatus(db database.Database, allowedStatus []enum.BidStatus, options *postgres.QueryOptions) ([]*entity.Bid, error) {
+	var bids []*entity.Bid
+
+	query := db.GetDB().Where("status IN ?", allowedStatus)
+
+	query = applyQueryOptions(query, options)
+	result := query.Find(&bids)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return bids, nil
+}
+
+func (repo *BidRepository) CountBidsByStatus(db database.Database, allowedStatus []enum.BidStatus) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Bid{}).
+		Where("status IN ?", allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *BidRepository) FindBidsByStatusAndQuery(db database.Database, allowedStatus []enum.BidStatus, query string, options *postgres.QueryOptions) ([]*entity.Bid, error) {
+	var bids []*entity.Bid
+
+	result := db.GetDB().
+		Joins("LEFT JOIN installation_requests AS requests ON bids.request_id = requests.id").
+		Where("bids.status IN ?", allowedStatus).
+		Where("name ILIKE ? OR bids.description ILIKE ?", "%"+query+"%", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&bids)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return bids, nil
+}
+
+func (repo *BidRepository) CountBidsByStatusAndQuery(db database.Database, allowedStatus []enum.BidStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Bid{}).
+		Joins("LEFT JOIN installation_requests AS requests ON bids.request_id = requests.id").
+		Where("bids.status IN ?", allowedStatus).
+		Where("name ILIKE ? OR bids.description ILIKE ?", "%"+query+"%", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {

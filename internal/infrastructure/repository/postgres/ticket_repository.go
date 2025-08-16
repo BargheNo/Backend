@@ -35,6 +35,36 @@ func (ticketRepo *TicketRepository) GetCustomerTickets(db database.Database, own
 	return tickets, nil
 }
 
+func (ticketRepo *TicketRepository) FindCustomerTicketsByQuery(db database.Database, ownerID uint, allowedStatus []enum.TicketStatus, query string, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
+	var tickets []*entity.Ticket
+	result := db.GetDB().
+		Where("owner_id = ? AND status IN ?", ownerID, allowedStatus).
+		Where("description ILIKE ?", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&tickets)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return tickets, nil
+}
+
+func (ticketRepo *TicketRepository) CountCustomerTicketsByQuery(db database.Database, ownerID uint, allowedStatus []enum.TicketStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Ticket{}).
+		Where("owner_id = ? AND status IN ?", ownerID, allowedStatus).
+		Where("description ILIKE ?", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (ticketRepo *TicketRepository) GetTicketComments(db database.Database, ticketID uint, options *postgres.QueryOptions) ([]*entity.TicketComment, error) {
 	var comments []*entity.TicketComment
 	query := db.GetDB().Where("ticket_id = ?", ticketID)
@@ -106,6 +136,33 @@ func (ticketRepo TicketRepository) CountTicketsByStatus(db database.Database, st
 	return count, nil
 }
 
+func (ticketRepo TicketRepository) FindTicketsByQuery(db database.Database, query string, allowedStatuses []enum.TicketStatus, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
+	var tickets []*entity.Ticket
+	result := db.GetDB().
+		Where("status IN ?", allowedStatuses).
+		Where("description ILIKE ?", "%"+query+"%")
+	result = applyQueryOptions(result, options)
+	result = result.Find(&tickets)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return tickets, nil
+}
+
+func (ticketRepo TicketRepository) CountTicketsByQuery(db database.Database, query string, allowedStatuses []enum.TicketStatus) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.Ticket{}).
+		Where("status IN ?", allowedStatuses).
+		Where("description ILIKE ?", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
 func (ticketRepo TicketRepository) FindCustomerTicketsByStatus(db database.Database, ownerID uint, statuses []enum.TicketStatus, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
 	var tickets []*entity.Ticket
 	query := db.GetDB().Where("owner_id = ? AND status IN (?)", ownerID, statuses)

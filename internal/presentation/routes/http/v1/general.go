@@ -101,11 +101,13 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	bids := routerGroup.Group("/bid")
 	{
 		bids.GET(sortable, app.Controllers.General.BidController.GetSortableFields)
+		bids.GET(status, app.Controllers.General.BidController.UserBidStatuses)
 	}
 
 	reports := routerGroup.Group("/report")
 	{
 		reports.GET(sortable, app.Controllers.General.ReportController.GetSortableFields)
+		reports.GET(status, app.Controllers.General.ReportController.GetReportStatuses)
 	}
 
 	users := routerGroup.Group("/user")

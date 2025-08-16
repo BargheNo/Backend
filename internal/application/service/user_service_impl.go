@@ -222,14 +222,9 @@ func (userService *UserService) FindActiveUserByPhone(phone string) (*entity.Use
 	if err != nil {
 		return nil, err
 	}
-	if user == nil {
+	if user == nil || !user.PhoneVerified {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
 		return nil, notFoundError
-	}
-	if !user.PhoneVerified {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
-		return nil, conflictErrors
 	}
 
 	return user, nil
@@ -249,14 +244,15 @@ func (userService *UserService) GetUserCredential(userID uint) (userdto.Credenti
 		}
 	}
 	return userdto.CredentialResponse{
-		ID:         user.ID,
-		FirstName:  user.FirstName,
-		LastName:   user.LastName,
-		Phone:      user.Phone,
-		Email:      user.Email,
-		NationalID: user.NationalCode,
-		ProfilePic: profilePic,
-		Status:     user.Status.String(),
+		ID:            user.ID,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+		Phone:         user.Phone,
+		Email:         user.Email,
+		EmailVerified: user.EmailVerified,
+		NationalID:    user.NationalCode,
+		ProfilePic:    profilePic,
+		Status:        user.Status.String(),
 	}, nil
 }
 
@@ -277,6 +273,29 @@ func (userService *UserService) mapToFilterStatuses(enumStatus uint) []enum.User
 	return statuses
 }
 
+func (userService *UserService) getUsersByQuery(query string, statuses []enum.UserStatus, options *postgres.QueryOptions) ([]*entity.User, int64, error) {
+	if query == "" {
+		users, err := userService.userRepository.FindUserByStatus(userService.db, statuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := userService.userRepository.CountUserByStatus(userService.db, statuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return users, count, nil
+	}
+	users, err := userService.userRepository.FindUsersByQuery(userService.db, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := userService.userRepository.CountUsersByQuery(userService.db, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return users, count, nil
+}
+
 func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
 	statuses := userService.mapToFilterStatuses(request.Status)
 
@@ -284,7 +303,7 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(userService.getSortByColumn(request.SortBy), request.Asc)
 
-	users, err := userService.userRepository.FindUserByStatus(userService.db, statuses, options)
+	users, count, err := userService.getUsersByQuery(request.Query, statuses, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -298,19 +317,16 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 			}
 		}
 		usersResponse[i] = userdto.CredentialResponse{
-			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
-			Phone:      user.Phone,
-			Email:      user.Email,
-			NationalID: user.NationalCode,
-			ProfilePic: profilePic,
-			Status:     user.Status.String(),
+			ID:            user.ID,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Phone:         user.Phone,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+			NationalID:    user.NationalCode,
+			ProfilePic:    profilePic,
+			Status:        user.Status.String(),
 		}
-	}
-	count, err := userService.userRepository.CountUserByStatus(userService.db, statuses)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return usersResponse, count, nil
@@ -336,9 +352,14 @@ func (userService *UserService) GetPermissionRoles(request userdto.GetPermission
 	}
 	rolesResponse := make([]userdto.RoleResponse, len(roles))
 	for i, role := range roles {
+		permissions, err := userService.getRolePermissions(role)
+		if err != nil {
+			return nil, 0, err
+		}
 		rolesResponse[i] = userdto.RoleResponse{
-			ID:   role.ID,
-			Name: role.Name,
+			ID:          role.ID,
+			Name:        role.Name,
+			Permissions: permissions,
 		}
 	}
 	count, err := userService.userRepository.CountRolesByPermission(userService.db, request.PermissionID)
@@ -749,11 +770,34 @@ func (userService *UserService) getRolePermissions(role *entity.Role) ([]userdto
 	return permissions, nil
 }
 
+func (userService *UserService) getRolesByQuery(query string, options *postgres.QueryOptions) ([]*entity.Role, int64, error) {
+	if query == "" {
+		roles, err := userService.userRepository.FindAllRoles(userService.db, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := userService.userRepository.CountAllRoles(userService.db)
+		if err != nil {
+			return nil, 0, err
+		}
+		return roles, count, nil
+	}
+	roles, err := userService.userRepository.FindRolesByQuery(userService.db, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := userService.userRepository.CountRolesByQuery(userService.db, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return roles, count, nil
+}
+
 func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset)
 
-	roles, err := userService.userRepository.FindAllRoles(userService.db, options)
+	roles, count, err := userService.getRolesByQuery(request.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -770,10 +814,6 @@ func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest)
 		}
 	}
 
-	count, err := userService.userRepository.CountAllRoles(userService.db)
-	if err != nil {
-		return nil, 0, err
-	}
 	return rolesResponse, count, nil
 }
 
@@ -884,14 +924,15 @@ func (userService *UserService) GetRoleOwners(request userdto.GetRoleOwnersReque
 			}
 		}
 		userCreds[i] = userdto.CredentialResponse{
-			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
-			Phone:      user.Phone,
-			Email:      user.Email,
-			NationalID: user.NationalCode,
-			ProfilePic: profilePic,
-			Status:     user.Status.String(),
+			ID:            user.ID,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Phone:         user.Phone,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+			NationalID:    user.NationalCode,
+			ProfilePic:    profilePic,
+			Status:        user.Status.String(),
 		}
 	}
 

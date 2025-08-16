@@ -208,6 +208,29 @@ func (reportService *ReportService) GetPanelReport(reportID uint) (reportdto.Pan
 	}, nil
 }
 
+func (reportService *ReportService) getReportsByQuery(objectType string, statuses []enum.ReportStatus, query string, options *postgres.QueryOptions) ([]*entity.Report, int64, error) {
+	if query == "" {
+		reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, objectType, statuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := reportService.reportRepository.CountReportsByObjectType(reportService.db, objectType, statuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return reports, count, nil
+	}
+	reports, err := reportService.reportRepository.FindReportsByQuery(reportService.db, query, objectType, statuses, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := reportService.reportRepository.CountReportsByQuery(reportService.db, query, objectType, statuses)
+	if err != nil {
+		return nil, 0, err
+	}
+	return reports, count, nil
+}
+
 func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.ReportListRequest) ([]reportdto.MaintenanceReportResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
@@ -215,7 +238,7 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 
 	statuses := reportService.mapToFilterStatuses(requestInfo.Status)
 
-	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses, options)
+	reports, count, err := reportService.getReportsByQuery(reportService.constants.ReportObjectTypes.Maintenance, statuses, requestInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -235,11 +258,6 @@ func (reportService *ReportService) GetMaintenanceReports(requestInfo reportdto.
 		}
 	}
 
-	count, err := reportService.reportRepository.CountReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses)
-	if err != nil {
-		return nil, 0, err
-	}
-
 	return reportResponses, count, nil
 }
 
@@ -250,7 +268,7 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 
 	statuses := reportService.mapToFilterStatuses(requestInfo.Status)
 
-	reports, err := reportService.reportRepository.GetReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Panel, statuses, options)
+	reports, count, err := reportService.getReportsByQuery(reportService.constants.ReportObjectTypes.Panel, statuses, requestInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -268,11 +286,6 @@ func (reportService *ReportService) GetPanelReports(requestInfo reportdto.Report
 			Description: report.Description,
 			Status:      report.Status.String(),
 		}
-	}
-
-	count, err := reportService.reportRepository.CountReportsByObjectType(reportService.db, reportService.constants.ReportObjectTypes.Maintenance, statuses)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return reportResponses, count, nil
@@ -295,4 +308,16 @@ func (reportService *ReportService) ResolveReport(requestInfo reportdto.ResolveR
 		return err
 	}
 	return nil
+}
+
+func (reportService *ReportService) GetReportStatuses() []reportdto.GetReportEnumResponse {
+	statuses := enum.GetAllReportStatuses()
+	response := make([]reportdto.GetReportEnumResponse, len(statuses))
+	for i, status := range statuses {
+		response[i] = reportdto.GetReportEnumResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return response
 }

@@ -56,3 +56,40 @@ func (repo *ReportRepository) FindReportByID(db database.Database, id uint) (*en
 func (repo *ReportRepository) UpdateReport(db database.Database, report *entity.Report) error {
 	return db.GetDB().Save(report).Error
 }
+
+func (repo *ReportRepository) FindReportsByQuery(db database.Database, query string, objectType string, statuses []enum.ReportStatus, options *postgres.QueryOptions) ([]*entity.Report, error) {
+	var reports []*entity.Report
+	result := db.GetDB().
+		Where(`
+			reports.status IN ? AND (
+			reports.description ILIKE ? OR 
+			reports.object_type = ?
+		)
+		`,
+			statuses, "%"+query+"%", objectType)
+	result = applyQueryOptions(result, options)
+	result = result.Find(&reports)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return reports, nil
+}
+
+func (repo *ReportRepository) CountReportsByQuery(db database.Database, query string, objectType string, statuses []enum.ReportStatus) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.Report{}).
+		Where(`
+			reports.status IN ? AND (
+			reports.description ILIKE ? OR 
+			reports.object_type = ?
+		)
+		`,
+			statuses, "%"+query+"%", objectType).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

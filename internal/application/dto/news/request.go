@@ -21,7 +21,7 @@ type EditNewsRequest struct {
 	Title       *string
 	Content     *string
 	Description *string
-	Status      uint
+	Status      *uint
 	CoverImage  *multipart.FileHeader
 }
 
@@ -37,6 +37,7 @@ type DeleteNewsRequest struct {
 }
 
 type GetAdminNewsListRequest struct {
+	Query  string
 	Status uint
 	Offset int
 	Limit  int
@@ -45,6 +46,7 @@ type GetAdminNewsListRequest struct {
 }
 
 type GetPublicNewsListRequest struct {
+	Query  string
 	Offset int
 	Limit  int
 	SortBy uint
@@ -67,4 +69,12 @@ type AccessMediaRequest struct {
 type GetNewsByCustomer struct {
 	NewsID uint
 	UserID uint
+}
+
+type SearchNewsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }

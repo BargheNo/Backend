@@ -120,7 +120,7 @@ type CustomerPanelResponse struct {
 	Guarantee            guaranteedto.GuaranteeResponse               `json:"guarantee"`
 }
 
-type PanelResponse struct {
+type GeneralPanelResponse struct {
 	ID                   uint                       `json:"id"`
 	Name                 string                     `json:"name"`
 	Status               string                     `json:"status"`
@@ -131,4 +131,5 @@ type PanelResponse struct {
 	Azimuth              uint                       `json:"azimuth"`
 	TotalNumberOfModules uint                       `json:"totalNumberOfModules"`
 	Customer             userdto.CredentialResponse `json:"customer"`
+	Address              addressdto.AddressResponse `json:"address"`
 }
