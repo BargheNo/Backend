@@ -1391,18 +1391,18 @@ func (installationService *InstallationService) UpdatePanelGuaranteeViolation(vi
 	return nil
 }
 
-func (installationService *InstallationService) GetPanelByID(panelID uint) (installationdto.PanelResponse, error) {
+func (installationService *InstallationService) GetPanelByID(panelID uint) (installationdto.GeneralPanelResponse, error) {
 	panel, err := installationService.getPanel(panelID)
 	if err != nil {
-		return installationdto.PanelResponse{}, err
+		return installationdto.GeneralPanelResponse{}, err
 	}
 
 	customer, err := installationService.userService.GetUserCredential(panel.CustomerID)
 	if err != nil {
-		return installationdto.PanelResponse{}, err
+		return installationdto.GeneralPanelResponse{}, err
 	}
 
-	response := installationdto.PanelResponse{
+	response := installationdto.GeneralPanelResponse{
 		ID:                   panel.ID,
 		Name:                 panel.Name,
 		Status:               panel.Status.String(),
