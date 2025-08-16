@@ -220,7 +220,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationMaintenanceController := maintenance.NewCorporationMaintenanceController(constants, pagination, maintenanceService)
 	corporationGuaranteeController := guarantee.NewCorporationGuaranteeController(constants, guaranteeService)
 	corporationBlogController := blog.NewCorporationBlogController(constants, blogService, pagination)
-	corporationMonitoringController := monitoring.NewCorporationMonitoringController(constants, monitoringService, pagination)
+	corporationMonitoringController := monitoring.NewCorporationMonitoringController(constants, monitoringService, pagination, hub, jwtService, websocketSetting, installationService)
 	corporationControllers := &CorporationControllers{
 		CorporationController:  corporationCorporationController,
 		InstallationController: corporationInstallationController,
@@ -238,7 +238,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	adminCorporationController := corporation.NewAdminCorporationController(constants, pagination, corporationService)
 	adminInstallationController := installation.NewAdminInstallationController(constants, pagination, installationService)
 	adminBidController := bid.NewAdminBidController(constants, pagination, bidService)
-	adminMonitoringController := monitoring.NewAdminMonitoringController(monitoringService, pagination)
+	adminMonitoringController := monitoring.NewAdminMonitoringController(constants, monitoringService, pagination, hub, jwtService, websocketSetting)
 	adminControllers := &AdminControllers{
 		TicketController:       adminTicketController,
 		UserController:         adminUserController,

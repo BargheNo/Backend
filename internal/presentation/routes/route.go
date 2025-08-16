@@ -44,10 +44,18 @@ func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	corporation.Use(app.Middlewares.Authentication.AuthRequired)
 	// corporation.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.AccessCorporation}))
 	httpv1.SetupCorporationRoutes(corporation, app)
+
+	wsCorporation := v1.Group("/corp")
+	wsCorporation.Use(app.Middlewares.WebsocketMiddleware.UpgradeToWebSocket)
+	wsv1.SetupCorporationRoutes(wsCorporation, app)
 }
 
 func registerAdminRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	admin := v1.Group("/admin")
 	admin.Use(app.Middlewares.Authentication.AuthRequired)
 	httpv1.SetupAdminRoutes(admin, app)
+
+	wsAdmin := v1.Group("/admin")
+	wsAdmin.Use(app.Middlewares.WebsocketMiddleware.UpgradeToWebSocket)
+	wsv1.SetupAdminRoutes(wsAdmin, app)
 }

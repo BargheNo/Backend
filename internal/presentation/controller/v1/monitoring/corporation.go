@@ -2,28 +2,82 @@ package monitoring
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	monitoringdto "github.com/BargheNo/Backend/internal/application/dto/monitoring"
 	"github.com/BargheNo/Backend/internal/application/usecase"
+	ws "github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type CorporationMonitoringController struct {
-	constants         *bootstrap.Constants
-	monitoringService usecase.MonitoringService
-	pagination        *bootstrap.Pagination
+	constants           *bootstrap.Constants
+	monitoringService   usecase.MonitoringService
+	pagination          *bootstrap.Pagination
+	hub                 *ws.Hub
+	jwtService          usecase.JWTService
+	websocketSetting    *bootstrap.WebsocketSetting
+	installationService usecase.InstallationService
 }
 
 func NewCorporationMonitoringController(
 	constants *bootstrap.Constants,
 	monitoringService usecase.MonitoringService,
 	pagination *bootstrap.Pagination,
+	hub *ws.Hub,
+	jwtService usecase.JWTService,
+	websocketSetting *bootstrap.WebsocketSetting,
+	installationService usecase.InstallationService,
 ) *CorporationMonitoringController {
 	return &CorporationMonitoringController{
-		constants:         constants,
-		monitoringService: monitoringService,
-		pagination:        pagination,
+		constants:           constants,
+		monitoringService:   monitoringService,
+		pagination:          pagination,
+		hub:                 hub,
+		jwtService:          jwtService,
+		websocketSetting:    websocketSetting,
+		installationService: installationService,
 	}
+}
+
+func (monitoringController *CorporationMonitoringController) HandleWebsocket(ctx *gin.Context) {
+	type roomConnectionParams struct {
+		PanelID       uint   `uri:"panelID" validate:"required"`
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Token         string `uri:"token" validate:"required"`
+	}
+	param := controller.Validated[roomConnectionParams](ctx)
+
+	claims, err := monitoringController.jwtService.ValidateToken(param.Token)
+	if err != nil {
+		panic(err)
+	}
+	userID := uint(claims["sub"].(float64))
+
+	_, err = monitoringController.installationService.GetCorporationPanel(installationdto.CorporationPanelRequest{
+		InstallationID: param.PanelID,
+		CorporationID:  param.CorporationID,
+		OperatorID:     userID,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	conn, _ := ctx.Get(monitoringController.constants.Context.WebsocketConnection)
+
+	client := ws.NewClient(
+		monitoringController.hub,
+		conn,
+		param.PanelID,
+		userID,
+		monitoringController.websocketSetting,
+		nil,
+		nil,
+	)
+	client.Hub.Register <- client
+
+	go client.ReadPump()
+	go client.WritePump()
 }
 
 func (monitoringController *CorporationMonitoringController) GetPanelStatus(ctx *gin.Context) {

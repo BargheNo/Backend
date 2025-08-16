@@ -174,13 +174,16 @@ func (hub *Hub) SendToPanel(panelID uint, messageType string, content []byte) er
 			}
 
 			select {
-			case client.send <- content:
 			case <-client.done:
 				continue
 			default:
 				select {
-				case hub.unregister <- client:
+				case client.send <- content:
 				default:
+					select {
+					case hub.unregister <- client:
+					default:
+					}
 				}
 			}
 		}

@@ -368,7 +368,7 @@ func main() {
 		Password:         config.Env.MQTT.Password,
 		QoS:              0,
 		Retained:         false,
-		StatusInterval:   10 * time.Second,
+		StatusInterval:   30 * time.Second,
 		HistoryInterval:  24 * time.Hour,
 		EventMinInterval: 30 * time.Minute,
 		EventMaxInterval: 6 * time.Hour,

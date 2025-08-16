@@ -4,23 +4,66 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	monitoringdto "github.com/BargheNo/Backend/internal/application/dto/monitoring"
 	"github.com/BargheNo/Backend/internal/application/usecase"
+	ws "github.com/BargheNo/Backend/internal/infrastructure/websocket"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
 
 type AdminMonitoringController struct {
+	constants         *bootstrap.Constants
 	monitoringService usecase.MonitoringService
 	pagination        *bootstrap.Pagination
+	hub               *ws.Hub
+	jwtService        usecase.JWTService
+	websocketSetting  *bootstrap.WebsocketSetting
 }
 
 func NewAdminMonitoringController(
+	constants *bootstrap.Constants,
 	monitoringService usecase.MonitoringService,
 	pagination *bootstrap.Pagination,
+	hub *ws.Hub,
+	jwtService usecase.JWTService,
+	websocketSetting *bootstrap.WebsocketSetting,
 ) *AdminMonitoringController {
 	return &AdminMonitoringController{
+		constants:         constants,
 		monitoringService: monitoringService,
 		pagination:        pagination,
+		hub:               hub,
+		jwtService:        jwtService,
+		websocketSetting:  websocketSetting,
 	}
+}
+
+func (monitoringController *AdminMonitoringController) HandleWebsocket(ctx *gin.Context) {
+	type roomConnectionParams struct {
+		PanelID uint   `uri:"panelID" validate:"required"`
+		Token   string `uri:"token" validate:"required"`
+	}
+	param := controller.Validated[roomConnectionParams](ctx)
+
+	claims, err := monitoringController.jwtService.ValidateToken(param.Token)
+	if err != nil {
+		panic(err)
+	}
+	userID := uint(claims["sub"].(float64))
+
+	conn, _ := ctx.Get(monitoringController.constants.Context.WebsocketConnection)
+
+	client := ws.NewClient(
+		monitoringController.hub,
+		conn,
+		param.PanelID,
+		userID,
+		monitoringController.websocketSetting,
+		nil,
+		nil,
+	)
+	client.Hub.Register <- client
+
+	go client.ReadPump()
+	go client.WritePump()
 }
 
 func (monitoringController *AdminMonitoringController) GetPanelStatus(ctx *gin.Context) {
