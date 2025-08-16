@@ -2,12 +2,10 @@ package ticket
 
 import (
 	"mime/multipart"
-	"strconv"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
 	"github.com/BargheNo/Backend/internal/application/usecase"
-	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -32,21 +30,17 @@ func NewCustomerTicketController(
 
 func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context) {
 	type createTicketParams struct {
-		Subject     string                `form:"subject" validate:"required"`
+		Subject     uint                  `form:"subject" validate:"required"`
 		Description string                `form:"description" validate:"required"`
 		Image       *multipart.FileHeader `form:"image"`
 	}
 	params := controller.Validated[createTicketParams](ctx)
-	// TODO: what? why? :)
-	subject, err := strconv.Atoi(params.Subject)
-	if err != nil {
-		subject = 2
-	}
+
 	userID, _ := ctx.Get(ticketController.constants.Context.ID)
 	requestInfo := ticketdto.CreateTicketRequest{
 		OwnerID:     userID.(uint),
 		OwnerType:   ticketController.constants.TicketOwners.User,
-		Subject:     enum.TicketSubject(subject),
+		Subject:     params.Subject,
 		Description: params.Description,
 		Image:       params.Image,
 	}

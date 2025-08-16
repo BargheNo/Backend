@@ -95,6 +95,7 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	tickets := routerGroup.Group("/ticket")
 	{
 		tickets.GET(status, app.Controllers.General.TicketController.GetTicketStatuses)
+		tickets.GET("/subject", app.Controllers.General.TicketController.GetTicketSubjects)
 		tickets.GET(sortable, app.Controllers.General.TicketController.GetSortableFields)
 	}
 
