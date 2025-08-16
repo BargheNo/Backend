@@ -104,6 +104,16 @@ func (hub *Hub) handleBroadcast(message *Message) {
 				}
 			}
 		}
+	case MessageTypeMonitoring:
+		if clients, ok := hub.clients[message.RoomID]; ok {
+			for client := range clients {
+				select {
+				case client.send <- message.Content:
+				default:
+					hub.unregister <- client
+				}
+			}
+		}
 	}
 }
 
@@ -147,6 +157,34 @@ func (hub *Hub) SendToUser(userID uint, messageType string, content []byte) erro
 			case hub.unregister <- client:
 			default:
 				log.Printf("Failed to unregister client: unregister channel is full")
+			}
+		}
+	}
+	return nil
+}
+
+func (hub *Hub) SendToPanel(panelID uint, messageType string, content []byte) error {
+	hub.mu.RLock()
+	defer hub.mu.RUnlock()
+
+	if room, ok := hub.rooms[panelID]; ok {
+		for client := range room {
+			if !client.IsReady() {
+				continue
+			}
+
+			select {
+			case <-client.done:
+				continue
+			default:
+				select {
+				case client.send <- content:
+				default:
+					select {
+					case hub.unregister <- client:
+					default:
+					}
+				}
 			}
 		}
 	}

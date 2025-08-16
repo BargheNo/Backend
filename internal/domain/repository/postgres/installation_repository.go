@@ -41,4 +41,5 @@ type InstallationRepository interface {
 	CreatePanel(db database.Database, panel *entity.Panel) error
 	UpdatePanel(db database.Database, panel *entity.Panel) error
 	DeletePanel(db database.Database, panel *entity.Panel) error
+	FindAllPanelsID(db database.Database) []uint
 }
