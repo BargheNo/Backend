@@ -61,12 +61,11 @@ func (repo *ReportRepository) FindReportsByQuery(db database.Database, query str
 	var reports []*entity.Report
 	result := db.GetDB().
 		Where(`
-			reports.status IN ? AND (
-			reports.description ILIKE ? OR 
-			reports.object_type = ?
-		)
+			reports.status IN ? AND reports.object_type = ? AND (
+				reports.description ILIKE ?
+			)
 		`,
-			statuses, "%"+query+"%", objectType)
+			statuses, objectType, "%"+query+"%")
 	result = applyQueryOptions(result, options)
 	result = result.Find(&reports)
 	if result.Error != nil {
@@ -80,12 +79,11 @@ func (repo *ReportRepository) CountReportsByQuery(db database.Database, query st
 	err := db.GetDB().
 		Model(&entity.Report{}).
 		Where(`
-			reports.status IN ? AND (
-			reports.description ILIKE ? OR 
-			reports.object_type = ?
-		)
+			reports.status IN ? AND reports.object_type = ? AND (
+				reports.description ILIKE ?
+			)
 		`,
-			statuses, "%"+query+"%", objectType).
+			statuses, objectType, "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {
