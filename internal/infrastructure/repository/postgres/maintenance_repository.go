@@ -140,7 +140,7 @@ func (repo *MaintenanceRepository) FindMaintenanceRequestsByOwnerID(db database.
 
 func (repo *MaintenanceRepository) FindCorporationRequestsByStatus(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
-	query := db.GetDB().Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses)
+	query := db.GetDB().Where("corporation_id = ? AND status IN ?", corporationID, allowedStatuses)
 
 	query = applyQueryOptions(query, options)
 
@@ -156,7 +156,7 @@ func (repo *MaintenanceRepository) CountCorporationRequestsByStatus(db database.
 
 	err := db.GetDB().
 		Model(&entity.MaintenanceRequest{}).
-		Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses).
+		Where("corporation_id = ? AND status IN ?", corporationID, allowedStatuses).
 		Count(&count).Error
 
 	if err != nil {
@@ -165,13 +165,19 @@ func (repo *MaintenanceRepository) CountCorporationRequestsByStatus(db database.
 	return count, nil
 }
 
-func (repo *MaintenanceRepository) FindCorporationRequestsByStatusAdnQuery(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
+func (repo *MaintenanceRepository) FindCorporationRequestsByStatusAndQuery(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, error) {
 	var requests []*entity.MaintenanceRequest
 
 	result := db.GetDB().
 		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
-		Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses).
-		Where("maintenance_requests.subject ILIKE ?", "%"+query+"%")
+		Where(`
+			maintenance_requests.corporation_id = ? AND 
+			maintenance_requests.status IN ? AND (
+			maintenance_requests.subject ILIKE ? OR 
+			maintenance_requests.description ILIKE ?
+		)
+		`,
+			corporationID, allowedStatuses, "%"+query+"%", "%"+query+"%")
 
 	result = applyQueryOptions(result, options)
 	result = result.Find(&requests)
@@ -182,14 +188,20 @@ func (repo *MaintenanceRepository) FindCorporationRequestsByStatusAdnQuery(db da
 	return requests, nil
 }
 
-func (repo *MaintenanceRepository) CountCorporationRequestsByStatusAdnQuery(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, query string) (int64, error) {
+func (repo *MaintenanceRepository) CountCorporationRequestsByStatusAndQuery(db database.Database, corporationID uint, allowedStatuses []enum.MaintenanceRequestStatus, query string) (int64, error) {
 	var count int64
 
 	err := db.GetDB().
 		Model(&entity.MaintenanceRequest{}).
 		Joins("LEFT JOIN panels AS Panel ON maintenance_requests.panel_id = Panel.id").
-		Where("corporation_id = ? AND  status IN ?", corporationID, allowedStatuses).
-		Where("maintenance_requests.subject ILIKE ?", "%"+query+"%").
+		Where(`
+			maintenance_requests.corporation_id = ? AND 
+			maintenance_requests.status IN ? AND (
+			maintenance_requests.subject ILIKE ? OR 
+			maintenance_requests.description ILIKE ?
+		)
+		`,
+			corporationID, allowedStatuses, "%"+query+"%", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {

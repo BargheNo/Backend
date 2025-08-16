@@ -57,10 +57,16 @@ func (repo *ReportRepository) UpdateReport(db database.Database, report *entity.
 	return db.GetDB().Save(report).Error
 }
 
-func (repo *ReportRepository) FindMaintenanceReportsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Report, error) {
+func (repo *ReportRepository) FindReportsByQuery(db database.Database, query string, objectType string, statuses []enum.ReportStatus, options *postgres.QueryOptions) ([]*entity.Report, error) {
 	var reports []*entity.Report
 	result := db.GetDB().
-		Where("description ILIKE ? OR object_type = ?", "%"+query+"%", "maintenance")
+		Where(`
+			reports.status IN ? AND (
+			reports.description ILIKE ? OR 
+			reports.object_type = ?
+		)
+		`,
+			statuses, "%"+query+"%", objectType)
 	result = applyQueryOptions(result, options)
 	result = result.Find(&reports)
 	if result.Error != nil {
@@ -69,36 +75,17 @@ func (repo *ReportRepository) FindMaintenanceReportsByQuery(db database.Database
 	return reports, nil
 }
 
-func (repo *ReportRepository) CountMaintenanceReportsByQuery(db database.Database, query string) (int64, error) {
+func (repo *ReportRepository) CountReportsByQuery(db database.Database, query string, objectType string, statuses []enum.ReportStatus) (int64, error) {
 	var count int64
 	err := db.GetDB().
 		Model(&entity.Report{}).
-		Where("description ILIKE ? OR object_type = ?", "%"+query+"%", "maintenance").
-		Count(&count).Error
-
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-func (repo *ReportRepository) FindPanelReportsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Report, error) {
-	var reports []*entity.Report
-	result := db.GetDB().
-		Where("description ILIKE ? OR object_type = ?", "%"+query+"%", "panel")
-	result = applyQueryOptions(result, options)
-	result = result.Find(&reports)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return reports, nil
-}
-
-func (repo *ReportRepository) CountPanelReportsByQuery(db database.Database, query string) (int64, error) {
-	var count int64
-	err := db.GetDB().
-		Model(&entity.Report{}).
-		Where("description ILIKE ? OR object_type = ?", "%"+query+"%", "panel").
+		Where(`
+			reports.status IN ? AND (
+			reports.description ILIKE ? OR 
+			reports.object_type = ?
+		)
+		`,
+			statuses, "%"+query+"%", objectType).
 		Count(&count).Error
 
 	if err != nil {

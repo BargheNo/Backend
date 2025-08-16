@@ -84,21 +84,12 @@ func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
-	if params.Query != "" {
-		tickets, count, err := ticketController.ticketService.SearchCustomerTickets(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(tickets, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
-	} else {
-		tickets, count, err := ticketController.ticketService.GetCustomerTickets(listInfo)
-		if err != nil {
-			panic(err)
-		}
-		data := controller.NewPaginatedResponse(tickets, count, offset, limit)
-		controller.Response(ctx, 200, "", data)
+	tickets, count, err := ticketController.ticketService.GetCustomerTickets(listInfo)
+	if err != nil {
+		panic(err)
 	}
+	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
 }
 
 func (ticketController *CustomerTicketController) GetComments(ctx *gin.Context) {

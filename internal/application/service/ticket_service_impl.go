@@ -129,6 +129,30 @@ func (ticketService *TicketService) CreateCustomerTicket(requestInfo ticketdto.C
 	return err
 }
 
+func (ticketService *TicketService) getCustomerTicketsByQuery(ownerID uint, allowedStatus []enum.TicketStatus, query string, options *postgres.QueryOptions) ([]*entity.Ticket, int64, error) {
+	if query == "" {
+		tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, ownerID, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := ticketService.ticketRepository.CountCustomerTicketsByStatus(ticketService.db, ownerID, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return tickets, count, nil
+	}
+
+	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByQuery(ticketService.db, ownerID, allowedStatus, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := ticketService.ticketRepository.CountCustomerTicketsByQuery(ticketService.db, ownerID, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return tickets, count, nil
+}
+
 func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
@@ -136,7 +160,7 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 
 	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
 
-	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses, options)
+	tickets, count, err := ticketService.getCustomerTicketsByQuery(requestInfo.OwnerID, statuses, requestInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -165,56 +189,7 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 		}
 	}
 
-	count, err := ticketService.ticketRepository.CountCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses)
-	if err != nil {
-		return nil, 0, err
-	}
-
 	return responses, count, nil
-}
-
-func (ticketService *TicketService) SearchCustomerTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
-	allowedStatus := ticketService.mapToFilterStatuses(requestInfo.Status)
-
-	options := postgres.NewQueryOptions().
-		WithPagination(requestInfo.Limit, requestInfo.Offset).
-		WithSorting(ticketService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
-
-	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByQuery(ticketService.db, requestInfo.OwnerID, allowedStatus, requestInfo.Query, options)
-	if err != nil {
-		return nil, 0, err
-	}
-	response := make([]ticketdto.TicketResponse, len(tickets))
-
-	for i, ticket := range tickets {
-		owner, err := ticketService.userService.GetUserCredential(ticket.OwnerID)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		response[i] = ticketdto.TicketResponse{
-			ID:          ticket.ID,
-			Owner:       owner,
-			Subject:     ticket.Subject.String(),
-			Description: ticket.Description,
-			Status:      ticket.Status.String(),
-			CreatedAt:   ticket.CreatedAt,
-		}
-
-		if ticket.Image != "" {
-			response[i].Image, err = ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
-			if err != nil {
-				return nil, 0, err
-			}
-		}
-	}
-
-	count, err := ticketService.ticketRepository.CountCustomerTicketsByQuery(ticketService.db, requestInfo.OwnerID, allowedStatus, requestInfo.Query)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return response, count, nil
 }
 
 func (ticketService *TicketService) CreateCustomerTicketComment(requestInfo ticketdto.CreateTicketCommentRequest) error {
@@ -309,6 +284,32 @@ func (ticketService *TicketService) CreateAdminTicketComment(requestInfo ticketd
 	return nil
 }
 
+func (ticketService *TicketService) getAdminTicketsByQuery(statuses []enum.TicketStatus, query string, allowedStatuses []enum.TicketStatus, options *postgres.QueryOptions) ([]*entity.Ticket, int64, error) {
+
+	if query == "" {
+		tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, allowedStatuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		count, err := ticketService.ticketRepository.CountTicketsByStatus(ticketService.db, allowedStatuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return tickets, count, nil
+	}
+
+	tickets, err := ticketService.ticketRepository.FindTicketsByQuery(ticketService.db, query, allowedStatuses, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := ticketService.ticketRepository.CountTicketsByQuery(ticketService.db, query, allowedStatuses)
+	if err != nil {
+		return nil, 0, err
+	}
+	return tickets, count, nil
+}
+
 func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
@@ -316,7 +317,7 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 
 	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
 
-	tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, statuses, options)
+	tickets, count, err := ticketService.getAdminTicketsByQuery(statuses, requestInfo.Query, statuses, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -344,57 +345,6 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 			}
 			responses[i].Image = image
 		}
-	}
-	count, err := ticketService.ticketRepository.CountTicketsByStatus(ticketService.db, statuses)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return responses, count, nil
-}
-
-func (ticketService *TicketService) SearchTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
-	options := postgres.NewQueryOptions().
-		WithPagination(requestInfo.Limit, requestInfo.Offset).
-		WithSorting(ticketService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
-
-	tickets, err := ticketService.ticketRepository.FindTicketsByQuery(ticketService.db, requestInfo.Query, options)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	responses := make([]ticketdto.TicketResponse, len(tickets))
-
-	for i, ticket := range tickets {
-		owner, err := ticketService.userService.GetUserCredential(ticket.OwnerID)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		responses[i] = ticketdto.TicketResponse{
-			ID:          ticket.ID,
-			Owner:       owner,
-			Subject:     ticket.Subject.String(),
-			Description: ticket.Description,
-			Status:      ticket.Status.String(),
-			CreatedAt:   ticket.CreatedAt,
-		}
-
-		if ticket.Image != "" {
-		}
-
-		if ticket.Image != "" {
-			image, err := ticketService.s3Storage.GetPresignedURL(enum.TicketImage, ticket.Image, 24*time.Hour)
-			if err != nil {
-				return nil, 0, err
-			}
-			responses[i].Image = image
-		}
-	}
-
-	count, err := ticketService.ticketRepository.CountTicketsByQuery(ticketService.db, requestInfo.Query)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return responses, count, nil

@@ -37,6 +37,7 @@ type DeleteNewsRequest struct {
 }
 
 type GetAdminNewsListRequest struct {
+	Query  string
 	Status uint
 	Offset int
 	Limit  int
@@ -45,6 +46,7 @@ type GetAdminNewsListRequest struct {
 }
 
 type GetPublicNewsListRequest struct {
+	Query  string
 	Offset int
 	Limit  int
 	SortBy uint

@@ -136,9 +136,10 @@ func (ticketRepo TicketRepository) CountTicketsByStatus(db database.Database, st
 	return count, nil
 }
 
-func (ticketRepo TicketRepository) FindTicketsByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
+func (ticketRepo TicketRepository) FindTicketsByQuery(db database.Database, query string, allowedStatuses []enum.TicketStatus, options *postgres.QueryOptions) ([]*entity.Ticket, error) {
 	var tickets []*entity.Ticket
 	result := db.GetDB().
+		Where("status IN ?", allowedStatuses).
 		Where("description ILIKE ?", "%"+query+"%")
 	result = applyQueryOptions(result, options)
 	result = result.Find(&tickets)
@@ -148,10 +149,11 @@ func (ticketRepo TicketRepository) FindTicketsByQuery(db database.Database, quer
 	return tickets, nil
 }
 
-func (ticketRepo TicketRepository) CountTicketsByQuery(db database.Database, query string) (int64, error) {
+func (ticketRepo TicketRepository) CountTicketsByQuery(db database.Database, query string, allowedStatuses []enum.TicketStatus) (int64, error) {
 	var count int64
 	err := db.GetDB().
 		Model(&entity.Ticket{}).
+		Where("status IN ?", allowedStatuses).
 		Where("description ILIKE ?", "%"+query+"%").
 		Count(&count).Error
 

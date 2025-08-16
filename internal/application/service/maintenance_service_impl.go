@@ -593,11 +593,11 @@ func (maintenanceService *MaintenanceService) getMaintenanceByQuery(corporationI
 		return maintenanceRequests, count, nil
 	}
 
-	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatusAdnQuery(maintenanceService.db, corporationID, allowedStatus, query, options)
+	maintenanceRequests, err := maintenanceService.maintenanceRepository.FindCorporationRequestsByStatusAndQuery(maintenanceService.db, corporationID, allowedStatus, query, options)
 	if err != nil {
 		return nil, 0, err
 	}
-	count, err := maintenanceService.maintenanceRepository.CountCorporationRequestsByStatusAdnQuery(maintenanceService.db, corporationID, allowedStatus, query)
+	count, err := maintenanceService.maintenanceRepository.CountCorporationRequestsByStatusAndQuery(maintenanceService.db, corporationID, allowedStatus, query)
 	if err != nil {
 		return nil, 0, err
 	}

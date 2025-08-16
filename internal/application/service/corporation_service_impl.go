@@ -785,6 +785,29 @@ func (corporationService *CorporationService) GetAvailableCorporations() ([]corp
 	return response, nil
 }
 
+func (corporationService *CorporationService) getCorporationsByQuery(allowedStatuses []enum.CorporationStatus, query string, options *postgres.QueryOptions) ([]*entity.Corporation, int64, error) {
+	if query == "" {
+		corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := corporationService.corporationRepository.CountCorporationsByStatus(corporationService.db, allowedStatuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return corporations, count, nil
+	}
+	corporations, err := corporationService.corporationRepository.FindCorporationsByQuery(corporationService.db, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := corporationService.corporationRepository.CountCorporationsByQuery(corporationService.db, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return corporations, count, nil
+}
+
 func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, int64, error) {
 	allowedStatuses := corporationService.mapStatusIDToAllowedStatuses(listInfo.Status)
 
@@ -792,7 +815,7 @@ func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo co
 		WithPagination(listInfo.Limit, listInfo.Offset).
 		WithSorting(corporationService.getSortByColumn(listInfo.SortBy), listInfo.Asc)
 
-	corporations, err := corporationService.corporationRepository.FindCorporationsByStatus(corporationService.db, allowedStatuses, options)
+	corporations, count, err := corporationService.getCorporationsByQuery(allowedStatuses, listInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -804,37 +827,6 @@ func (corporationService *CorporationService) GetCorporationsByAdmin(listInfo co
 			return nil, 0, err
 		}
 		response[i] = credentials
-	}
-
-	count, err := corporationService.corporationRepository.CountCorporationsByStatus(corporationService.db, allowedStatuses)
-	if err != nil {
-		return nil, 0, err
-	}
-	return response, count, nil
-}
-
-func (corporationService *CorporationService) SearchCorporations(request corporationdto.GetCorporationsByAdminRequest) ([]corporationdto.CorporationCredentialResponse, int64, error) {
-	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset).
-		WithSorting(corporationService.getSortByColumn(request.SortBy), request.Asc)
-
-	corporations, err := corporationService.corporationRepository.FindCorporationsByQuery(corporationService.db, request.Query, options)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	response := make([]corporationdto.CorporationCredentialResponse, len(corporations))
-	for i, corporation := range corporations {
-		credentials, err := corporationService.GetCorporationCredentials(corporation.ID)
-		if err != nil {
-			return nil, 0, err
-		}
-		response[i] = credentials
-	}
-
-	count, err := corporationService.corporationRepository.CountCorporationsByQuery(corporationService.db, request.Query)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return response, count, nil

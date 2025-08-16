@@ -29,16 +29,18 @@ func NewGeneralBlogController(
 
 func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
 	type getPostsParams struct {
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getPostsParams](ctx)
 
 	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, blogController.pagination.DefaultPage, blogController.pagination.DefaultPageSize)
 
 	request := blogdto.GetPublicPostsRequest{
+		Query:  params.Query,
 		Offset: offset,
 		Limit:  limit,
 		SortBy: params.SortBy,
@@ -55,11 +57,12 @@ func (blogController *GeneralBlogController) GetPosts(ctx *gin.Context) {
 
 func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Context) {
 	type getCorporationPostsParams struct {
-		CorporationID uint `uri:"corporationID" validate:"required"`
-		Page          int  `form:"page"`
-		PageSize      int  `form:"pageSize"`
-		SortBy        uint `form:"sortBy"`
-		Asc           bool `form:"asc"`
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Query         string `form:"query"`
+		Page          int    `form:"page"`
+		PageSize      int    `form:"pageSize"`
+		SortBy        uint   `form:"sortBy"`
+		Asc           bool   `form:"asc"`
 	}
 	params := controller.Validated[getCorporationPostsParams](ctx)
 
@@ -67,6 +70,7 @@ func (blogController *GeneralBlogController) GetCorporationPosts(ctx *gin.Contex
 
 	request := blogdto.GetPublicCorporationPostsRequest{
 		CorporationID: params.CorporationID,
+		Query:         params.Query,
 		Offset:        offset,
 		Limit:         limit,
 		SortBy:        params.SortBy,
