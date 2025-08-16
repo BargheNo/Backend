@@ -511,6 +511,19 @@ func (blogService *BlogService) DeletePost(request blogdto.DeletePostRequest) er
 	return nil
 }
 
+func (blogService *BlogService) DeletePostByAdmin(postID uint) error {
+	_, err := blogService.getPost(postID)
+	if err != nil {
+		return err
+	}
+
+	if err := blogService.blogRepository.DeletePost(blogService.db, postID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (blogService *BlogService) AddPostMedia(request blogdto.AddPostMediaRequest) (uint, error) {
 	if err := blogService.userService.IsUserActive(request.AuthorID); err != nil {
 		return 0, err

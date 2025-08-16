@@ -139,4 +139,9 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			newsSubgroup.GET("/media/:mediaID", app.Controllers.Admin.NewsController.GetNewsMedia)
 		}
 	}
+
+	blog := routerGroup.Group("/blog")
+	{
+		blog.DELETE("/:postID", app.Controllers.Admin.BlogController.DeletePost)
+	}
 }

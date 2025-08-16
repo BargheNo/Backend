@@ -206,6 +206,7 @@ var AdminControllerProviderSet = wire.NewSet(
 	installation.NewAdminInstallationController,
 	bid.NewAdminBidController,
 	monitoring.NewAdminMonitoringController,
+	blog.NewAdminBlogController,
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -407,6 +408,7 @@ type AdminControllers struct {
 	InstallationController *installation.AdminInstallationController
 	BidController          *bid.AdminBidController
 	MonitoringController   *monitoring.AdminMonitoringController
+	BlogController         *blog.AdminBlogController
 }
 
 type Controllers struct {
