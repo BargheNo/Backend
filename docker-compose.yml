@@ -34,6 +34,8 @@ services:
       - .env
     ports:
       - ${MQTT_SENDER_PORT}:${MQTT_SENDER_PORT}
+    depends_on:
+      - db
 
   db:
     image: postgres:latest
