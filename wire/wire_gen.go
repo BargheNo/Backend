@@ -85,7 +85,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	s3Storage := storage.NewS3Storage(constants, s3)
 	userRepository := postgres.NewUserRepository()
 	bootstrapRecaptcha := ProvideRecaptchaSecret(container)
-	recaptchaRecaptcha := recaptcha.NewRecaptcha(bootstrapRecaptcha)
+	recaptchaRecaptcha := recaptcha.NewRecaptcha(constants, bootstrapRecaptcha)
 	userServiceDeps := service.UserServiceDeps{
 		Constants:           constants,
 		OTPService:          otpService,

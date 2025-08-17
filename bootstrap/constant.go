@@ -44,6 +44,7 @@ type BucketPath struct {
 }
 
 type ErrorField struct {
+	Recaptcha           string
 	User                string
 	Phone               string
 	Email               string
@@ -117,6 +118,7 @@ type ErrorTag struct {
 	AlreadyRejected        string
 	AlreadyAccepted        string
 	AlreadyDraft           string
+	InvalidRecaptcha       string
 }
 
 type SMSTemplates struct {
@@ -220,6 +222,7 @@ func NewConstants() *Constants {
 			Fatal: "fatal",
 		},
 		Field: ErrorField{
+			Recaptcha:           "recaptcha",
 			User:                "user",
 			Phone:               "phone",
 			Email:               "email",
@@ -292,6 +295,7 @@ func NewConstants() *Constants {
 			AlreadyRejected:        "alreadyRejected",
 			AlreadyAccepted:        "alreadyAccepted",
 			AlreadyDraft:           "alreadyDraft",
+			InvalidRecaptcha:       "invalidRecaptcha",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",
