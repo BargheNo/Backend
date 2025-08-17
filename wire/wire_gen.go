@@ -14,7 +14,7 @@ import (
 	logger2 "github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	metrics2 "github.com/BargheNo/Backend/internal/domain/metrics"
-	"github.com/BargheNo/Backend/internal/domain/mqtt"
+	mqtt2 "github.com/BargheNo/Backend/internal/domain/mqtt"
 	postgres2 "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	redis2 "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -193,8 +193,8 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	customerReportController := report.NewCustomerReportController(constants, reportService)
 	customerBlogController := blog.NewCustomerBlogController(constants, blogService, pagination)
 	customerNewsController := news.NewCustomerNewsController(constants, newsService)
-	mqtt := ProvideMQTTConfig(container)
-	client := mqttimpl.NewClient(mqtt)
+	bootstrapMQTT := ProvideMQTTConfig(container)
+	client := mqtt.NewClient(bootstrapMQTT)
 	monitoringRepository := postgres.NewMonitoringRepository()
 	monitoringService := service.NewMonitoringService(client, postgresDatabase, corporationService, installationRepository, monitoringRepository, hub, installationService)
 	customerMonitoringController := monitoring.NewCustomerMonitoringController(constants, hub, jwtService, installationService, websocketSetting, monitoringService, pagination)
@@ -305,7 +305,11 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		Email:        emailConsumer,
 		Notification: sendNotificationConsumer,
 	}
-	application := NewApplication(wireDatabase, controllers, middlewares, seeds, consumers)
+	mqttSubscription := mqtt.NewMQTTSubscription(client, monitoringService, installationRepository, postgresDatabase)
+	wireMQTTSubscription := &MQTTSubscription{
+		MQTTSubscription: mqttSubscription,
+	}
+	application := NewApplication(wireDatabase, controllers, middlewares, seeds, consumers, wireMQTTSubscription)
 	return application, nil
 }
 
@@ -317,7 +321,9 @@ var RepositoryProviderSet = wire.NewSet(postgres.NewUserRepository, postgres.New
 
 var ServiceProviderSet = wire.NewSet(wire.Struct(new(service.UserServiceDeps), "*"), wire.Struct(new(service.NotificationServiceDeps), "*"), wire.Struct(new(service.InstallationServiceDeps), "*"), wire.Struct(new(service.BidServiceDeps), "*"), service.NewUserService, service.NewOTPService, sms.NewSMSService, email.NewEmailService, service.NewJWTService, service.NewInstallationService, service.NewAddressService, service.NewCorporationService, service.NewBidService, service.NewChatService, service.NewNotificationService, service.NewMaintenanceService, service.NewTicketService, service.NewReportService, service.NewGuaranteeService, service.NewPaymentService, service.NewNewsService, service.NewBlogService, service.NewMonitoringService, wire.Bind(new(usecase.UserService), new(*service.UserService)), wire.Bind(new(usecase.OTPService), new(*service.OTPService)), wire.Bind(new(communication.SMSService), new(*sms.SMSService)), wire.Bind(new(communication.EmailService), new(*email.EmailService)), wire.Bind(new(usecase.JWTService), new(*service.JWTService)), wire.Bind(new(usecase.InstallationService), new(*service.InstallationService)), wire.Bind(new(usecase.AddressService), new(*service.AddressService)), wire.Bind(new(usecase.CorporationService), new(*service.CorporationService)), wire.Bind(new(usecase.BidService), new(*service.BidService)), wire.Bind(new(usecase.ChatService), new(*service.ChatService)), wire.Bind(new(usecase.NotificationService), new(*service.NotificationService)), wire.Bind(new(usecase.MaintenanceService), new(*service.MaintenanceService)), wire.Bind(new(usecase.TicketService), new(*service.TicketService)), wire.Bind(new(usecase.ReportService), new(*service.ReportService)), wire.Bind(new(usecase.GuaranteeService), new(*service.GuaranteeService)), wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)), wire.Bind(new(usecase.NewsService), new(*service.NewsService)), wire.Bind(new(usecase.BlogService), new(*service.BlogService)), wire.Bind(new(usecase.MonitoringService), new(*service.MonitoringService)))
 
-var AdapterProviderSet = wire.NewSet(localization.NewTranslationService, logger.NewLogger, jwt.NewJWTKeyManager, metrics.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, mqttimpl.NewClient, wire.Bind(new(logger2.Logger), new(*logger.Logger)), wire.Bind(new(metrics2.MetricsClient), new(*metrics.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)), wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)))
+var AdapterProviderSet = wire.NewSet(localization.NewTranslationService, logger.NewLogger, jwt.NewJWTKeyManager, metrics.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, mqtt.NewClient, wire.Bind(new(logger2.Logger), new(*logger.Logger)), wire.Bind(new(metrics2.MetricsClient), new(*metrics.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)), wire.Bind(new(mqtt2.Client), new(*mqtt.Client)))
+
+var MQTTSubscriptionProviderSet = wire.NewSet(mqtt.NewMQTTSubscription, wire.Bind(new(mqtt2.MQTTSubscription), new(*mqtt.MQTTSubscription)), wire.Struct(new(MQTTSubscription), "*"))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, installation.NewGeneralInstallationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, payment.NewGeneralPaymentController, ticket.NewGeneralTicketController, bid.NewGeneralBidController, report.NewGeneralReportController, maintenance.NewGeneralMaintenanceController, wire.Struct(new(GeneralControllers), "*"))
 
@@ -416,6 +422,7 @@ var ProviderSet = wire.NewSet(
 	RepositoryProviderSet,
 	ServiceProviderSet,
 	AdapterProviderSet,
+	MQTTSubscriptionProviderSet,
 	GeneralControllerProviderSet,
 	CustomerControllerProviderSet,
 	CorporationControllerProviderSet,
@@ -536,12 +543,17 @@ type Consumers struct {
 	Notification *consumer.SendNotificationConsumer
 }
 
+type MQTTSubscription struct {
+	MQTTSubscription *mqtt.MQTTSubscription
+}
+
 type Application struct {
-	Database    *Database
-	Controllers *Controllers
-	Middlewares *Middlewares
-	Seeds       *Seeds
-	Consumers   *Consumers
+	Database         *Database
+	Controllers      *Controllers
+	Middlewares      *Middlewares
+	Seeds            *Seeds
+	Consumers        *Consumers
+	MQTTSubscription *MQTTSubscription
 }
 
 func NewApplication(database2 *Database,
@@ -549,12 +561,14 @@ func NewApplication(database2 *Database,
 	middlewares *Middlewares,
 	seeds *Seeds,
 	consumers *Consumers,
+	mqttSubscription *MQTTSubscription,
 ) *Application {
 	return &Application{
-		Database:    database2,
-		Controllers: controllers,
-		Middlewares: middlewares,
-		Seeds:       seeds,
-		Consumers:   consumers,
+		Database:         database2,
+		Controllers:      controllers,
+		Middlewares:      middlewares,
+		Seeds:            seeds,
+		Consumers:        consumers,
+		MQTTSubscription: mqttSubscription,
 	}
 }
