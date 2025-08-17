@@ -574,7 +574,7 @@ func (newsService *NewsService) LikeNews(request newsdto.GetNewsByCustomer) erro
 	news.LikeCount++
 
 	err = newsService.db.WithTransaction(func(tx database.Database) error {
-		if err := newsService.newsRepository.CreateLike(newsService.db, like.UserID, request.NewsID); err != nil {
+		if err := newsService.newsRepository.CreateLike(tx, request.UserID, request.NewsID); err != nil {
 			return err
 		}
 
@@ -612,7 +612,7 @@ func (newsService *NewsService) DislikeNews(request newsdto.GetNewsByCustomer) e
 	news.LikeCount--
 
 	err = newsService.db.WithTransaction(func(tx database.Database) error {
-		if err := newsService.newsRepository.DeleteLike(newsService.db, like); err != nil {
+		if err := newsService.newsRepository.DeleteLike(tx, like); err != nil {
 			return err
 		}
 
