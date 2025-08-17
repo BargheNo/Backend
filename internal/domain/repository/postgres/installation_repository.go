@@ -9,11 +9,9 @@ import (
 type InstallationRepository interface {
 	FindRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus, options *QueryOptions) ([]*entity.InstallationRequest, error)
 	CountRequestsByStatus(db database.Database, status []enum.InstallationRequestStatus) (int64, error)
-	FindCorporationRequestsByQuery(db database.Database, allowedStatus []enum.InstallationRequestStatus, query string, options *QueryOptions) ([]*entity.InstallationRequest, error)
-	CountCorporationRequestsByQuery(db database.Database, allowedStatus []enum.InstallationRequestStatus, query string) (int64, error)
 	FindRequestByID(db database.Database, requestID uint) (*entity.InstallationRequest, error)
-	FindRequestsByQuery(db database.Database, query string, options *QueryOptions) ([]*entity.InstallationRequest, error)
-	CountRequestsByQuery(db database.Database, query string) (int64, error)
+	FindRequestsByQuery(db database.Database, query string, allowedStatus []enum.InstallationRequestStatus, options *QueryOptions) ([]*entity.InstallationRequest, error)
+	CountRequestsByQuery(db database.Database, query string, allowedStatus []enum.InstallationRequestStatus) (int64, error)
 	FindRequestByOwner(db database.Database, requestID, ownerID uint) (*entity.InstallationRequest, error)
 	FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, options *QueryOptions) ([]*entity.InstallationRequest, error)
 	CountOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus) (int64, error)
@@ -41,4 +39,5 @@ type InstallationRepository interface {
 	CreatePanel(db database.Database, panel *entity.Panel) error
 	UpdatePanel(db database.Database, panel *entity.Panel) error
 	DeletePanel(db database.Database, panel *entity.Panel) error
+	FindAllPanelsID(db database.Database) []uint
 }

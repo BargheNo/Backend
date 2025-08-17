@@ -14,6 +14,7 @@ import (
 	logger2 "github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	metrics2 "github.com/BargheNo/Backend/internal/domain/metrics"
+	"github.com/BargheNo/Backend/internal/domain/mqtt"
 	postgres2 "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	redis2 "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -24,6 +25,7 @@ import (
 	"github.com/BargheNo/Backend/internal/infrastructure/localization"
 	"github.com/BargheNo/Backend/internal/infrastructure/logger"
 	"github.com/BargheNo/Backend/internal/infrastructure/metrics"
+	"github.com/BargheNo/Backend/internal/infrastructure/mqtt"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
 	"github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
@@ -39,6 +41,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/guarantee"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/monitoring"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/news"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/payment"
@@ -190,6 +193,11 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	customerReportController := report.NewCustomerReportController(constants, reportService)
 	customerBlogController := blog.NewCustomerBlogController(constants, blogService, pagination)
 	customerNewsController := news.NewCustomerNewsController(constants, newsService)
+	mqtt := ProvideMQTTConfig(container)
+	client := mqttimpl.NewClient(mqtt)
+	monitoringRepository := postgres.NewMonitoringRepository()
+	monitoringService := service.NewMonitoringService(client, postgresDatabase, corporationService, installationRepository, monitoringRepository, hub, installationService)
+	customerMonitoringController := monitoring.NewCustomerMonitoringController(constants, hub, jwtService, installationService, websocketSetting, monitoringService, pagination)
 	customerControllers := &CustomerControllers{
 		UserController:         customerUserController,
 		InstallationController: customerInstallationController,
@@ -203,6 +211,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		ReportController:       customerReportController,
 		BlogController:         customerBlogController,
 		NewsController:         customerNewsController,
+		MonitoringController:   customerMonitoringController,
 	}
 	corporationCorporationController := corporation.NewCorporationCorporationController(constants, pagination, corporationService)
 	corporationInstallationController := installation.NewCorporationInstallationController(constants, pagination, installationService)
@@ -211,6 +220,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	corporationMaintenanceController := maintenance.NewCorporationMaintenanceController(constants, pagination, maintenanceService)
 	corporationGuaranteeController := guarantee.NewCorporationGuaranteeController(constants, guaranteeService)
 	corporationBlogController := blog.NewCorporationBlogController(constants, blogService, pagination)
+	corporationMonitoringController := monitoring.NewCorporationMonitoringController(constants, monitoringService, pagination, hub, jwtService, websocketSetting, installationService)
 	corporationControllers := &CorporationControllers{
 		CorporationController:  corporationCorporationController,
 		InstallationController: corporationInstallationController,
@@ -219,6 +229,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		MaintenanceController:  corporationMaintenanceController,
 		GuaranteeController:    corporationGuaranteeController,
 		BlogController:         corporationBlogController,
+		MonitoringController:   corporationMonitoringController,
 	}
 	adminTicketController := ticket.NewAdminTicketController(constants, pagination, userService, ticketService)
 	adminUserController := user.NewAdminUserController(constants, pagination, userService)
@@ -227,6 +238,8 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 	adminCorporationController := corporation.NewAdminCorporationController(constants, pagination, corporationService)
 	adminInstallationController := installation.NewAdminInstallationController(constants, pagination, installationService)
 	adminBidController := bid.NewAdminBidController(constants, pagination, bidService)
+	adminMonitoringController := monitoring.NewAdminMonitoringController(constants, monitoringService, pagination, hub, jwtService, websocketSetting)
+	adminBlogController := blog.NewAdminBlogController(constants, blogService)
 	adminControllers := &AdminControllers{
 		TicketController:       adminTicketController,
 		UserController:         adminUserController,
@@ -235,6 +248,8 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		CorporationController:  adminCorporationController,
 		InstallationController: adminInstallationController,
 		BidController:          adminBidController,
+		MonitoringController:   adminMonitoringController,
+		BlogController:         adminBlogController,
 	}
 	controllers := &Controllers{
 		General:     generalControllers,
@@ -298,19 +313,19 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 
 var DatabaseProviderSet = wire.NewSet(database.NewPostgresDatabase, database.NewRedisDatabase, wire.Bind(new(database.Database), new(*database.PostgresDatabase)), wire.Bind(new(database.Cache), new(*database.RedisDatabase)), wire.Struct(new(Database), "*"))
 
-var RepositoryProviderSet = wire.NewSet(postgres.NewUserRepository, postgres.NewInstallationRepository, postgres.NewAddressRepository, redis.NewUserCacheRepository, postgres.NewCorporationRepository, postgres.NewBidRepository, postgres.NewChatRepository, postgres.NewNotificationRepository, postgres.NewMaintenanceRepository, postgres.NewTicketRepository, postgres.NewReportRepository, postgres.NewGuaranteeRepository, postgres.NewPaymentRepository, postgres.NewNewsRepository, postgres.NewBlogRepository, wire.Bind(new(postgres2.UserRepository), new(*postgres.UserRepository)), wire.Bind(new(postgres2.InstallationRepository), new(*postgres.InstallationRepository)), wire.Bind(new(postgres2.AddressRepository), new(*postgres.AddressRepository)), wire.Bind(new(redis2.UserCacheRepository), new(*redis.UserCacheRepository)), wire.Bind(new(postgres2.CorporationRepository), new(*postgres.CorporationRepository)), wire.Bind(new(postgres2.BidRepository), new(*postgres.BidRepository)), wire.Bind(new(postgres2.ChatRepository), new(*postgres.ChatRepository)), wire.Bind(new(postgres2.NotificationRepository), new(*postgres.NotificationRepository)), wire.Bind(new(postgres2.MaintenanceRepository), new(*postgres.MaintenanceRepository)), wire.Bind(new(postgres2.TicketRepository), new(*postgres.TicketRepository)), wire.Bind(new(postgres2.ReportRepository), new(*postgres.ReportRepository)), wire.Bind(new(postgres2.GuaranteeRepository), new(*postgres.GuaranteeRepository)), wire.Bind(new(postgres2.PaymentRepository), new(*postgres.PaymentRepository)), wire.Bind(new(postgres2.NewsRepository), new(*postgres.NewsRepository)), wire.Bind(new(postgres2.BlogRepository), new(*postgres.BlogRepository)))
+var RepositoryProviderSet = wire.NewSet(postgres.NewUserRepository, postgres.NewInstallationRepository, postgres.NewAddressRepository, redis.NewUserCacheRepository, postgres.NewCorporationRepository, postgres.NewBidRepository, postgres.NewChatRepository, postgres.NewNotificationRepository, postgres.NewMaintenanceRepository, postgres.NewTicketRepository, postgres.NewReportRepository, postgres.NewGuaranteeRepository, postgres.NewPaymentRepository, postgres.NewNewsRepository, postgres.NewBlogRepository, postgres.NewMonitoringRepository, wire.Bind(new(postgres2.UserRepository), new(*postgres.UserRepository)), wire.Bind(new(postgres2.InstallationRepository), new(*postgres.InstallationRepository)), wire.Bind(new(postgres2.AddressRepository), new(*postgres.AddressRepository)), wire.Bind(new(redis2.UserCacheRepository), new(*redis.UserCacheRepository)), wire.Bind(new(postgres2.CorporationRepository), new(*postgres.CorporationRepository)), wire.Bind(new(postgres2.BidRepository), new(*postgres.BidRepository)), wire.Bind(new(postgres2.ChatRepository), new(*postgres.ChatRepository)), wire.Bind(new(postgres2.NotificationRepository), new(*postgres.NotificationRepository)), wire.Bind(new(postgres2.MaintenanceRepository), new(*postgres.MaintenanceRepository)), wire.Bind(new(postgres2.TicketRepository), new(*postgres.TicketRepository)), wire.Bind(new(postgres2.ReportRepository), new(*postgres.ReportRepository)), wire.Bind(new(postgres2.GuaranteeRepository), new(*postgres.GuaranteeRepository)), wire.Bind(new(postgres2.PaymentRepository), new(*postgres.PaymentRepository)), wire.Bind(new(postgres2.NewsRepository), new(*postgres.NewsRepository)), wire.Bind(new(postgres2.BlogRepository), new(*postgres.BlogRepository)), wire.Bind(new(postgres2.MonitoringRepository), new(*postgres.MonitoringRepository)))
 
-var ServiceProviderSet = wire.NewSet(wire.Struct(new(service.UserServiceDeps), "*"), wire.Struct(new(service.NotificationServiceDeps), "*"), wire.Struct(new(service.InstallationServiceDeps), "*"), wire.Struct(new(service.BidServiceDeps), "*"), service.NewUserService, service.NewOTPService, sms.NewSMSService, email.NewEmailService, service.NewJWTService, service.NewInstallationService, service.NewAddressService, service.NewCorporationService, service.NewBidService, service.NewChatService, service.NewNotificationService, service.NewMaintenanceService, service.NewTicketService, service.NewReportService, service.NewGuaranteeService, service.NewPaymentService, service.NewNewsService, service.NewBlogService, wire.Bind(new(usecase.UserService), new(*service.UserService)), wire.Bind(new(usecase.OTPService), new(*service.OTPService)), wire.Bind(new(communication.SMSService), new(*sms.SMSService)), wire.Bind(new(communication.EmailService), new(*email.EmailService)), wire.Bind(new(usecase.JWTService), new(*service.JWTService)), wire.Bind(new(usecase.InstallationService), new(*service.InstallationService)), wire.Bind(new(usecase.AddressService), new(*service.AddressService)), wire.Bind(new(usecase.CorporationService), new(*service.CorporationService)), wire.Bind(new(usecase.BidService), new(*service.BidService)), wire.Bind(new(usecase.ChatService), new(*service.ChatService)), wire.Bind(new(usecase.NotificationService), new(*service.NotificationService)), wire.Bind(new(usecase.MaintenanceService), new(*service.MaintenanceService)), wire.Bind(new(usecase.TicketService), new(*service.TicketService)), wire.Bind(new(usecase.ReportService), new(*service.ReportService)), wire.Bind(new(usecase.GuaranteeService), new(*service.GuaranteeService)), wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)), wire.Bind(new(usecase.NewsService), new(*service.NewsService)), wire.Bind(new(usecase.BlogService), new(*service.BlogService)))
+var ServiceProviderSet = wire.NewSet(wire.Struct(new(service.UserServiceDeps), "*"), wire.Struct(new(service.NotificationServiceDeps), "*"), wire.Struct(new(service.InstallationServiceDeps), "*"), wire.Struct(new(service.BidServiceDeps), "*"), service.NewUserService, service.NewOTPService, sms.NewSMSService, email.NewEmailService, service.NewJWTService, service.NewInstallationService, service.NewAddressService, service.NewCorporationService, service.NewBidService, service.NewChatService, service.NewNotificationService, service.NewMaintenanceService, service.NewTicketService, service.NewReportService, service.NewGuaranteeService, service.NewPaymentService, service.NewNewsService, service.NewBlogService, service.NewMonitoringService, wire.Bind(new(usecase.UserService), new(*service.UserService)), wire.Bind(new(usecase.OTPService), new(*service.OTPService)), wire.Bind(new(communication.SMSService), new(*sms.SMSService)), wire.Bind(new(communication.EmailService), new(*email.EmailService)), wire.Bind(new(usecase.JWTService), new(*service.JWTService)), wire.Bind(new(usecase.InstallationService), new(*service.InstallationService)), wire.Bind(new(usecase.AddressService), new(*service.AddressService)), wire.Bind(new(usecase.CorporationService), new(*service.CorporationService)), wire.Bind(new(usecase.BidService), new(*service.BidService)), wire.Bind(new(usecase.ChatService), new(*service.ChatService)), wire.Bind(new(usecase.NotificationService), new(*service.NotificationService)), wire.Bind(new(usecase.MaintenanceService), new(*service.MaintenanceService)), wire.Bind(new(usecase.TicketService), new(*service.TicketService)), wire.Bind(new(usecase.ReportService), new(*service.ReportService)), wire.Bind(new(usecase.GuaranteeService), new(*service.GuaranteeService)), wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)), wire.Bind(new(usecase.NewsService), new(*service.NewsService)), wire.Bind(new(usecase.BlogService), new(*service.BlogService)), wire.Bind(new(usecase.MonitoringService), new(*service.MonitoringService)))
 
-var AdapterProviderSet = wire.NewSet(localization.NewTranslationService, logger.NewLogger, jwt.NewJWTKeyManager, metrics.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, wire.Bind(new(logger2.Logger), new(*logger.Logger)), wire.Bind(new(metrics2.MetricsClient), new(*metrics.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)))
+var AdapterProviderSet = wire.NewSet(localization.NewTranslationService, logger.NewLogger, jwt.NewJWTKeyManager, metrics.NewPrometheusMetrics, storage.NewS3Storage, rabbitmq.NewRabbitMQ, mqttimpl.NewClient, wire.Bind(new(logger2.Logger), new(*logger.Logger)), wire.Bind(new(metrics2.MetricsClient), new(*metrics.PrometheusMetrics)), wire.Bind(new(s3.S3Storage), new(*storage.S3Storage)), wire.Bind(new(message.Broker), new(*rabbitmq.RabbitMQ)), wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)))
 
 var GeneralControllerProviderSet = wire.NewSet(user.NewGeneralUserController, address.NewGeneralAddressController, corporation.NewGeneralCorporationController, notification.NewGeneralNotificationController, installation.NewGeneralInstallationController, news.NewGeneralNewsController, blog.NewGeneralBlogController, payment.NewGeneralPaymentController, ticket.NewGeneralTicketController, bid.NewGeneralBidController, report.NewGeneralReportController, maintenance.NewGeneralMaintenanceController, wire.Struct(new(GeneralControllers), "*"))
 
-var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, blog.NewCustomerBlogController, news.NewCustomerNewsController, wire.Struct(new(CustomerControllers), "*"))
+var CustomerControllerProviderSet = wire.NewSet(user.NewCustomerUserController, installation.NewCustomerInstallationController, address.NewCustomerAddressController, corporation.NewCustomerCorporationController, bid.NewCustomerBidController, chat.NewCustomerChatController, notification.NewCustomerNotificationController, maintenance.NewCustomerMaintenanceController, ticket.NewCustomerTicketController, report.NewCustomerReportController, blog.NewCustomerBlogController, news.NewCustomerNewsController, monitoring.NewCustomerMonitoringController, wire.Struct(new(CustomerControllers), "*"))
 
-var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, chat.NewCorporationChatController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, guarantee.NewCorporationGuaranteeController, blog.NewCorporationBlogController, wire.Struct(new(CorporationControllers), "*"))
+var CorporationControllerProviderSet = wire.NewSet(corporation.NewCorporationCorporationController, installation.NewCorporationInstallationController, chat.NewCorporationChatController, bid.NewCorporationBidController, maintenance.NewCorporationMaintenanceController, guarantee.NewCorporationGuaranteeController, blog.NewCorporationBlogController, monitoring.NewCorporationMonitoringController, wire.Struct(new(CorporationControllers), "*"))
 
-var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, user.NewAdminUserController, report.NewAdminReportController, news.NewAdminNewsController, corporation.NewAdminCorporationController, installation.NewAdminInstallationController, bid.NewAdminBidController, wire.Struct(new(AdminControllers), "*"))
+var AdminControllerProviderSet = wire.NewSet(ticket.NewAdminTicketController, user.NewAdminUserController, report.NewAdminReportController, news.NewAdminNewsController, corporation.NewAdminCorporationController, installation.NewAdminInstallationController, bid.NewAdminBidController, monitoring.NewAdminMonitoringController, blog.NewAdminBlogController, wire.Struct(new(AdminControllers), "*"))
 
 var ControllersProviderSet = wire.NewSet(wire.Struct(new(Controllers), "*"))
 
@@ -392,6 +407,10 @@ func ProvideRabbitMQConstants(container *bootstrap.Config) *bootstrap.RabbitMQCo
 	return &container.Constants.RabbitMQ
 }
 
+func ProvideMQTTConfig(container *bootstrap.Config) *bootstrap.MQTT {
+	return &container.Env.MQTT
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -423,6 +442,7 @@ var ProviderSet = wire.NewSet(
 	ProvideSuperAdminCredential,
 	ProvideRabbitMQConfig,
 	ProvideRabbitMQConstants,
+	ProvideMQTTConfig,
 )
 
 type Database struct {
@@ -458,6 +478,7 @@ type CustomerControllers struct {
 	ReportController       *report.CustomerReportController
 	BlogController         *blog.CustomerBlogController
 	NewsController         *news.CustomerNewsController
+	MonitoringController   *monitoring.CustomerMonitoringController
 }
 
 type CorporationControllers struct {
@@ -468,6 +489,7 @@ type CorporationControllers struct {
 	MaintenanceController  *maintenance.CorporationMaintenanceController
 	GuaranteeController    *guarantee.CorporationGuaranteeController
 	BlogController         *blog.CorporationBlogController
+	MonitoringController   *monitoring.CorporationMonitoringController
 }
 
 type AdminControllers struct {
@@ -478,6 +500,8 @@ type AdminControllers struct {
 	CorporationController  *corporation.AdminCorporationController
 	InstallationController *installation.AdminInstallationController
 	BidController          *bid.AdminBidController
+	MonitoringController   *monitoring.AdminMonitoringController
+	BlogController         *blog.AdminBlogController
 }
 
 type Controllers struct {

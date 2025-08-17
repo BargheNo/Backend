@@ -18,11 +18,12 @@ type Client struct {
 	send                chan []byte
 	roomID              uint
 	userID              uint
-	mu                  sync.Mutex
+	mu                  sync.RWMutex
 	done                chan struct{}
 	closeOnce           sync.Once
 	chatService         usecase.ChatService
 	notificationService usecase.NotificationService
+	isReady             bool
 }
 
 func NewClient(
@@ -47,6 +48,10 @@ func NewClient(
 
 func (client *Client) ReadPump() error {
 	defer client.CloseConnection()
+
+	client.mu.Lock()
+	client.isReady = true
+	client.mu.Unlock()
 
 	client.conn.SetReadLimit(int64(client.websocketSetting.MaxMessageSize))
 	client.conn.SetReadDeadline(time.Now().Add(client.websocketSetting.ReadTimeout))
@@ -148,4 +153,10 @@ func (client *Client) processAndSaveChatMessage(message *Message) {
 
 	message.MessageID = savedMessage.ID
 	message.Sender = savedMessage.Sender
+}
+
+func (client *Client) IsReady() bool {
+	client.mu.RLock()
+	defer client.mu.RUnlock()
+	return client.isReady
 }

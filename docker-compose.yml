@@ -23,6 +23,20 @@ services:
       - rdb
       - rabbitmq
 
+  mqtt-sender:
+    build:
+      context: .
+      dockerfile: ./cmd/mqtt-sender/Dockerfile
+    image: ghcr.io/bargheno/mqtt-sender
+    container_name: mqtt-sender
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - ${MQTT_SENDER_PORT}:${MQTT_SENDER_PORT}
+    depends_on:
+      - db
+
   db:
     image: postgres:latest
     container_name: db

@@ -26,9 +26,9 @@ func (repo *NotificationRepository) GetNotificationByID(db database.Database, no
 	return notification, nil
 }
 
-func (repo *NotificationRepository) GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, options *postgres.QueryOptions) ([]*entity.Notification, error) {
+func (repo *NotificationRepository) GetNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, isRead bool, options *postgres.QueryOptions) ([]*entity.Notification, error) {
 	var notifications []*entity.Notification
-	query := db.GetDB().Where("recipient_id = ? and type_id IN ?", userID, types)
+	query := db.GetDB().Where("recipient_id = ? and type_id IN ? and is_read = ?", userID, types, isRead)
 	query = applyQueryOptions(query, options)
 	result := query.Find(&notifications)
 
@@ -38,12 +38,12 @@ func (repo *NotificationRepository) GetNotificationsByTypesAndUserID(db database
 	return notifications, nil
 }
 
-func (repo *NotificationRepository) CountNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint) (int64, error) {
+func (repo *NotificationRepository) CountNotificationsByTypesAndUserID(db database.Database, userID uint, types []uint, isRead bool) (int64, error) {
 	var count int64
 
 	err := db.GetDB().
 		Model(&entity.Notification{}).
-		Where("recipient_id = ? and type_id IN ?", userID, types).
+		Where("recipient_id = ? and type_id IN ? and is_read = ?", userID, types, isRead).
 		Count(&count).Error
 
 	if err != nil {

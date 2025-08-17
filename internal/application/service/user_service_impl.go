@@ -508,6 +508,37 @@ func (userService *UserService) FindUserPermissions(user *entity.User) ([]userdt
 	return permissions, nil
 }
 
+func (userService *UserService) RefreshToken(refreshToken string) (userdto.UserInfoResponse, error) {
+	claims, err := userService.jwtService.ValidateToken(refreshToken)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
+	userID := uint(claims["sub"].(float64))
+	user, err := userService.GetUserByID(userID)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
+	accessToken, _, err := userService.jwtService.GenerateToken(userID)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
+	permissions, err := userService.FindUserPermissions(user)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
+	return userdto.UserInfoResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		Permissions:  permissions,
+	}, nil
+}
+
 func (userService *UserService) Login(loginInfo userdto.LoginRequest) (userdto.UserInfoResponse, error) {
 	user, err := userService.FindActiveUserByPhone(loginInfo.Phone)
 	if err != nil {

@@ -61,10 +61,14 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		{
 			panels.POST("", app.Controllers.Corporation.InstallationController.AddPanel)
 			panels.GET("", app.Controllers.Corporation.InstallationController.GetCorporationPanels)
+
 			panelsSubGroup := panels.Group("/:panelID")
 			{
 				panelsSubGroup.GET("", app.Controllers.Corporation.InstallationController.GetCorporationPanel)
 				panelsSubGroup.PUT("/complete", app.Controllers.Corporation.InstallationController.CompleteInstallation)
+				panelsSubGroup.GET("/status", app.Controllers.Corporation.MonitoringController.GetPanelStatus)
+				panelsSubGroup.GET("/history", app.Controllers.Corporation.MonitoringController.GetPanelHistory)
+				panelsSubGroup.GET("/event", app.Controllers.Corporation.MonitoringController.GetPanelEvent)
 				guaranteeViolation := panelsSubGroup.Group("/guarantee/violation")
 				{
 					guaranteeViolation.POST("", app.Controllers.Corporation.InstallationController.ViolatePanelGuarantee)
@@ -73,6 +77,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 					guaranteeViolation.PUT("", app.Controllers.Corporation.InstallationController.UpdatePanelGuaranteeViolation)
 				}
 			}
+
 		}
 	}
 

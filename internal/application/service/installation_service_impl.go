@@ -416,11 +416,11 @@ func (installationService *InstallationService) getRequestsWithQuery(allowedStat
 		return requests, count, nil
 	}
 
-	requests, err := installationService.installationRepository.FindCorporationRequestsByQuery(installationService.db, allowedStatus, query, options)
+	requests, err := installationService.installationRepository.FindRequestsByQuery(installationService.db, query, allowedStatus, options)
 	if err != nil {
 		return nil, 0, err
 	}
-	count, err := installationService.installationRepository.CountCorporationRequestsByQuery(installationService.db, allowedStatus, query)
+	count, err := installationService.installationRepository.CountRequestsByQuery(installationService.db, query, allowedStatus)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -1389,4 +1389,30 @@ func (installationService *InstallationService) UpdatePanelGuaranteeViolation(vi
 	}
 
 	return nil
+}
+
+func (installationService *InstallationService) GetPanelByID(panelID uint) (installationdto.GeneralPanelResponse, error) {
+	panel, err := installationService.getPanel(panelID)
+	if err != nil {
+		return installationdto.GeneralPanelResponse{}, err
+	}
+
+	customer, err := installationService.userService.GetUserCredential(panel.CustomerID)
+	if err != nil {
+		return installationdto.GeneralPanelResponse{}, err
+	}
+
+	response := installationdto.GeneralPanelResponse{
+		ID:                   panel.ID,
+		Name:                 panel.Name,
+		Status:               panel.Status.String(),
+		BuildingType:         panel.BuildingType.String(),
+		Area:                 panel.Area,
+		Power:                panel.Power,
+		Tilt:                 panel.Tilt,
+		Azimuth:              panel.Azimuth,
+		TotalNumberOfModules: panel.TotalNumberOfModules,
+		Customer:             customer,
+	}
+	return response, nil
 }
