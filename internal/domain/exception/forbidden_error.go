@@ -5,6 +5,7 @@ type ForbiddenType string
 const (
 	ForbiddenTypeBannedUser            ForbiddenType = "banned_user"
 	ForbiddenTypeUnapprovedCorporation ForbiddenType = "unapproved_corporation"
+	ForbiddenTypeNoPropertyAccess      ForbiddenType = "no_property_access"
 )
 
 type ForbiddenError struct {
@@ -31,5 +32,13 @@ func NewUnapprovedCorporationForbiddenError() ForbiddenError {
 	return ForbiddenError{
 		Type:    ForbiddenTypeUnapprovedCorporation,
 		Message: "Vendor approval is required to access this resource.",
+	}
+}
+
+func NewNoPropertyAccessForbiddenError(resource string) ForbiddenError {
+	return ForbiddenError{
+		Type:     ForbiddenTypeNoPropertyAccess,
+		Resource: resource,
+		Message:  "You do not have access to the property: " + resource,
 	}
 }

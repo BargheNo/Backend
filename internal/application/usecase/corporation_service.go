@@ -32,4 +32,9 @@ type CorporationService interface {
 	GetCorporationReviewsByAdmin(corporationID uint) ([]corporationdto.GetAdminCorporationReview, error)
 	ApproveCorporationRegistration(request corporationdto.HandleCorporationActionRequest) error
 	RejectCorporationRegistration(request corporationdto.HandleCorporationActionRequest) error
+	GetStaffStatuses() []corporationdto.GetEnumResponse
+	AddStaff(request corporationdto.AddStaffRequest) error
+	EditStaff(request corporationdto.EditStaffRequest) error
+	GetStaffList(request corporationdto.GetStaffList) ([]corporationdto.StaffDetailsResponse, int64, error)
+	GetStaff(corporationID, staffID uint) (corporationdto.StaffDetailsResponse, error)
 }

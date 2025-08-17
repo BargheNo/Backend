@@ -257,7 +257,7 @@ func InitializeApplication(container *bootstrap.Config, hub *websocket.Hub) (*Ap
 		Corporation: corporationControllers,
 		Admin:       adminControllers,
 	}
-	authMiddleware := middleware.NewAuthMiddleware(constants, jwtService, userRepository, postgresDatabase)
+	authMiddleware := middleware.NewAuthMiddleware(constants, jwtService, userRepository, corporationRepository, postgresDatabase)
 	corsMiddleware := middleware.NewCorsMiddleware()
 	recoveryMiddleware := middleware.NewRecovery(constants)
 	translator := localization.NewTranslationService()

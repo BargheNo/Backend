@@ -8,7 +8,7 @@ import (
 func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	const status string = "/status"
 
-	profile := routerGroup.Group("/:corporationID/profile")
+	profile := routerGroup.Group("/profile")
 	{
 		profile.GET("", app.Controllers.Corporation.CorporationController.GetMyProfile)
 		profile.GET("/public", app.Controllers.Corporation.CorporationController.GetPublicProfile)
@@ -21,7 +21,19 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		profile.PUT("/certificates", app.Controllers.Corporation.CorporationController.SubmitCertificateFiles)
 	}
 
-	guarantees := routerGroup.Group("/:corporationID/guarantee")
+	staff := routerGroup.Group("/staff")
+	{
+		staff.GET(status, app.Controllers.Corporation.CorporationController.GetStaffStatuses)
+		staff.GET("", app.Controllers.Corporation.CorporationController.GetStaffList)
+		staff.POST("", app.Controllers.Corporation.CorporationController.CreateCorporationStaff)
+		staffSubGroup := staff.Group("/:staffID")
+		{
+			staffSubGroup.GET("", app.Controllers.Corporation.CorporationController.GetStaff)
+			staffSubGroup.PUT("", app.Controllers.Corporation.CorporationController.EditCorporationStaff)
+		}
+	}
+
+	guarantees := routerGroup.Group("/guarantee")
 	{
 		guarantees.GET("", app.Controllers.Corporation.GuaranteeController.GetGuarantees)
 		guarantees.GET("/type", app.Controllers.Corporation.GuaranteeController.GetGuaranteeTypes)
@@ -33,7 +45,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		}
 	}
 
-	installations := routerGroup.Group("/:corporationID/installation")
+	installations := routerGroup.Group("/installation")
 	{
 		requests := installations.Group("/request")
 		{
@@ -69,7 +81,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		}
 	}
 
-	maintenances := routerGroup.Group("/:corporationID/maintenance")
+	maintenances := routerGroup.Group("/maintenance")
 	{
 		requests := maintenances.Group("/request")
 		{
@@ -89,7 +101,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		}
 	}
 
-	bids := routerGroup.Group(":corporationID/bid")
+	bids := routerGroup.Group("/bid")
 	{
 		bids.GET("", app.Controllers.Corporation.BidController.GetBids)
 		bids.GET(status, app.Controllers.Corporation.BidController.GetBidStatuses)
@@ -103,13 +115,13 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 
 	chat := routerGroup.Group("/chat")
 	{
-		chat.GET("/room/:corporationID", app.Controllers.Corporation.ChatController.GetRoom)
-		chat.GET("/rooms/:corporationID", app.Controllers.Corporation.ChatController.GetRooms)
+		chat.GET("/room", app.Controllers.Corporation.ChatController.GetRoom)
+		chat.GET("/rooms", app.Controllers.Corporation.ChatController.GetRooms)
 		chat.PUT("/room/:roomID/block", app.Controllers.Corporation.ChatController.BlockRoom)
 		chat.PUT("/room/:roomID/unblock", app.Controllers.Corporation.ChatController.UnBlockRoom)
 	}
 
-	blog := routerGroup.Group(":corporationID/blog")
+	blog := routerGroup.Group("/blog")
 	{
 		blog.POST("/create", app.Controllers.Corporation.BlogController.CreateDraftPost)
 		blog.PUT("/:postID/edit", app.Controllers.Corporation.BlogController.EditPost)

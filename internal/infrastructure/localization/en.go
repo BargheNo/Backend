@@ -173,6 +173,8 @@ var English = map[string]interface{}{
 		"updatePanel":                "The panel has been updated.",
 		"deleteBid":                  "Bid has been removed successfully.",
 		"deletePanel":                "Panel has been deleted successfully",
+		"editStaff":                  "Staff credential has been updated successfully.",
+		"addStaff":                   "New staff has been added successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

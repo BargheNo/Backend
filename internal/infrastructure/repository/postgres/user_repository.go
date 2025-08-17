@@ -315,7 +315,6 @@ func (repo *UserRepository) ReplaceRolePermissions(db database.Database, role *e
 
 func (repo *UserRepository) ReplaceUserRoles(db database.Database, user *entity.User, roles []entity.Role) error {
 	return db.GetDB().Model(&user).Association("Roles").Replace(roles)
-
 }
 
 func (repo *UserRepository) FindRolesByPermission(db database.Database, permissionID uint, options *postgres.QueryOptions) ([]*entity.Role, error) {

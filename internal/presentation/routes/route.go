@@ -42,8 +42,9 @@ func registerCustomerRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 func registerCorporationRoutes(v1 *gin.RouterGroup, app *wire.Application) {
 	corporation := v1.Group("/corp")
 	corporation.Use(app.Middlewares.Authentication.AuthRequired)
-	// corporation.Use(app.Middlewares.Authentication.RequiredWithPermission([]enum.PermissionType{enum.AccessCorporation}))
-	httpv1.SetupCorporationRoutes(corporation, app)
+	corporationWithAuth := corporation.Group("/:corporationID")
+	corporationWithAuth.Use(app.Middlewares.Authentication.CorporationAccessRequired)
+	httpv1.SetupCorporationRoutes(corporationWithAuth, app)
 
 	wsCorporation := v1.Group("/corp")
 	wsCorporation.Use(app.Middlewares.WebsocketMiddleware.UpgradeToWebSocket)
