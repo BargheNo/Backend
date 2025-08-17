@@ -21,6 +21,18 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 		profile.PUT("/certificates", app.Controllers.Corporation.CorporationController.SubmitCertificateFiles)
 	}
 
+	staff := routerGroup.Group("/staff")
+	{
+		staff.GET(status, app.Controllers.Corporation.CorporationController.GetStaffStatuses)
+		staff.GET("", app.Controllers.Corporation.CorporationController.GetStaffList)
+		staff.POST("", app.Controllers.Corporation.CorporationController.CreateCorporationStaff)
+		staffSubGroup := staff.Group("/:staffID")
+		{
+			staffSubGroup.GET("", app.Controllers.Corporation.CorporationController.GetStaff)
+			staffSubGroup.PUT("", app.Controllers.Corporation.CorporationController.EditCorporationStaff)
+		}
+	}
+
 	guarantees := routerGroup.Group("/guarantee")
 	{
 		guarantees.GET("", app.Controllers.Corporation.GuaranteeController.GetGuarantees)

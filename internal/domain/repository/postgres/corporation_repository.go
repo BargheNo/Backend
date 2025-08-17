@@ -40,4 +40,15 @@ type CorporationRepository interface {
 	DeleteContactInfo(db database.Database, contact *entity.ContactInformation) error
 	CreateReview(db database.Database, review *entity.CorporationReview) error
 	FindStaffRoles(db database.Database, staff *entity.CorporationStaff) error
+	FindStaffByUserIDAndStatus(db database.Database, userID uint, status []enum.StaffStatus) (*entity.CorporationStaff, error)
+	FindRolesByIDs(db database.Database, roleIDs []uint, userType enum.UserType) ([]entity.Role, error)
+	CreateStaff(db database.Database, staff *entity.CorporationStaff) error
+	ReplaceStaffRoles(db database.Database, staff *entity.CorporationStaff, roles []entity.Role) error
+	FindRoleByName(db database.Database, name string) (*entity.Role, error)
+	FindCorporationStaffByID(db database.Database, corporationID, staffID uint) (*entity.CorporationStaff, error)
+	UpdateStaff(db database.Database, staff *entity.CorporationStaff) error
+	FindCorporationStaffs(db database.Database, corporationID uint, allowedStatus []enum.StaffStatus, options *QueryOptions) ([]*entity.CorporationStaff, error)
+	CountCorporationStaffs(db database.Database, corporationID uint, allowedStatus []enum.StaffStatus) (int64, error)
+	FindCorporationStaffByQuery(db database.Database, corporationID uint, allowedStatus []enum.StaffStatus, query string, options *QueryOptions) ([]*entity.CorporationStaff, error)
+	CountCorporationStaffByQuery(db database.Database, corporationID uint, allowedStatus []enum.StaffStatus, query string) (int64, error)
 }

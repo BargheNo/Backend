@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/BargheNo/Backend/bootstrap"
@@ -114,13 +113,16 @@ func (am *AuthMiddleware) CorporationAccessRequired(ctx *gin.Context) {
 		panic(unauthorizedError)
 	}
 
-	corporationIDStr := ctx.Param("corporationID")
-	corporationID, err := strconv.ParseUint(corporationIDStr, 10, 32)
-	if err != nil {
+	type CorporationURI struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	var uri CorporationURI
+
+	if err := ctx.ShouldBindUri(&uri); err != nil {
 		panic(err)
 	}
 
-	staff, err := am.corporationRepository.FindCorporationStaff(am.db, uint(corporationID), id.(uint))
+	staff, err := am.corporationRepository.FindCorporationStaff(am.db, id.(uint), uint(uri.CorporationID))
 	if err != nil {
 		panic(err)
 	}
@@ -129,7 +131,7 @@ func (am *AuthMiddleware) CorporationAccessRequired(ctx *gin.Context) {
 		panic(forbiddenError)
 	}
 
-	ctx.Set(am.constants.Context.CorporationID, uint(corporationID))
+	ctx.Set(am.constants.Context.CorporationID, uint(uri.CorporationID))
 
 	ctx.Next()
 }

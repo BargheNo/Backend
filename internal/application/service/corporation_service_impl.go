@@ -6,6 +6,7 @@ import (
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
@@ -295,6 +296,15 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		return corporationdto.CorporationCredentialResponse{}, conflictErrors
 	}
 
+	role, err := corporationService.corporationRepository.FindRoleByName(corporationService.db, enum.CorporationOwner.String())
+	if err != nil {
+		return corporationdto.CorporationCredentialResponse{}, err
+	}
+	if role == nil {
+		notFoundError := exception.NotFoundError{Item: corporationService.constants.Field.Role}
+		return corporationdto.CorporationCredentialResponse{}, notFoundError
+	}
+
 	corporation := &entity.Corporation{
 		Name:               registerInfo.Name,
 		RegistrationNumber: registerInfo.RegistrationNumber,
@@ -303,16 +313,17 @@ func (corporationService *CorporationService) Register(registerInfo corporationd
 		Status:             enum.CorpStatusAwaitingApproval,
 	}
 
-	err := corporationService.db.WithTransaction(func(tx database.Database) error {
+	err = corporationService.db.WithTransaction(func(tx database.Database) error {
 		err := corporationService.corporationRepository.CreateCorporation(tx, corporation)
 		if err != nil {
 			return err
 		}
 
 		staff := &entity.CorporationStaff{
-			StaffID:       registerInfo.ApplicantID,
+			UserID:        registerInfo.ApplicantID,
 			CorporationID: corporation.ID,
-			// StaffType:     enum.StaffTypeManager,
+			Status:        enum.StaffStatusActive,
+			Roles:         []entity.Role{*role},
 		}
 		err = corporationService.corporationRepository.CreateCorporationStaff(tx, staff)
 		if err != nil {
@@ -1082,4 +1093,207 @@ func (corporationService *CorporationService) RejectCorporationRegistration(requ
 	})
 
 	return err
+}
+
+func (corporationService *CorporationService) GetStaffStatuses() []corporationdto.GetEnumResponse {
+	statuses := enum.GetAllStaffStatuses()
+	response := make([]corporationdto.GetEnumResponse, len(statuses))
+	for i, status := range statuses {
+		response[i] = corporationdto.GetEnumResponse{
+			ID:   uint(status),
+			Name: status.String(),
+		}
+	}
+	return response
+}
+
+func (corporationService *CorporationService) createStaff(UserID, CorporationID uint, roleIDs []uint) error {
+	roles, err := corporationService.corporationRepository.FindRolesByIDs(corporationService.db, roleIDs, enum.UserTypeCorporation)
+	if err != nil {
+		return err
+	}
+
+	staff := &entity.CorporationStaff{
+		UserID:        UserID,
+		CorporationID: CorporationID,
+		Status:        enum.StaffStatusActive,
+		Roles:         roles,
+	}
+
+	return corporationService.corporationRepository.CreateStaff(corporationService.db, staff)
+}
+
+func (corporationService *CorporationService) updateStaffRoles(staff *entity.CorporationStaff, roleIDs []uint) error {
+	roles, err := corporationService.corporationRepository.FindRolesByIDs(corporationService.db, roleIDs, enum.UserTypeCorporation)
+	if err != nil {
+		return err
+	}
+
+	return corporationService.corporationRepository.ReplaceStaffRoles(corporationService.db, staff, roles)
+}
+
+func (corporationService *CorporationService) AddStaff(request corporationdto.AddStaffRequest) error {
+	user, err := corporationService.userService.FindActiveUserByPhone(request.StaffPhone)
+	if err != nil {
+		return err
+	}
+
+	allowedStatuses := []enum.StaffStatus{enum.StaffStatusActive}
+	staff, err := corporationService.corporationRepository.FindStaffByUserIDAndStatus(corporationService.db, user.ID, allowedStatuses)
+	if err != nil {
+		return err
+	}
+	if staff == nil {
+		if err := corporationService.createStaff(user.ID, request.CorporationID, request.RoleIDs); err != nil {
+			return err
+		}
+	}
+	if err := corporationService.updateStaffRoles(staff, request.RoleIDs); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (corporationService *CorporationService) getCorporationStaffByID(corporationID, staffID uint) (*entity.CorporationStaff, error) {
+	staff, err := corporationService.corporationRepository.FindCorporationStaffByID(corporationService.db, corporationID, staffID)
+	if err != nil {
+		return nil, err
+	}
+	if staff == nil {
+		return nil, exception.NotFoundError{Item: corporationService.constants.Field.CorporationStaff}
+	}
+	return staff, nil
+}
+
+func (corporationService *CorporationService) mapToStaffStatus(requested uint) []enum.StaffStatus {
+	if requested == uint(enum.StaffStatusAll) {
+		return enum.GetAllStaffStatuses()
+	}
+	for _, status := range enum.GetAllStaffStatuses() {
+		if requested == uint(status) && status != enum.StaffStatusAll {
+			return []enum.StaffStatus{status}
+		}
+	}
+	return enum.GetAllStaffStatuses()
+}
+
+func (corporationService *CorporationService) EditStaff(request corporationdto.EditStaffRequest) error {
+	staff, err := corporationService.getCorporationStaffByID(request.CorporationID, request.StaffID)
+	if err != nil {
+		return err
+	}
+
+	if staff.Status != enum.StaffStatusActive {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(corporationService.constants.Field.CorporationStaff, corporationService.constants.Tag.NotActive)
+		return conflictErrors
+	}
+
+	if request.Status != nil {
+		if *request.Status == uint(enum.StaffStatusInactive) {
+			staff.Status = enum.StaffStatusInactive
+		} else if *request.Status == uint(enum.StaffStatusActive) {
+			staff.Status = enum.StaffStatusActive
+		}
+	}
+
+	err = corporationService.db.WithTransaction(func(tx database.Database) error {
+		if err := corporationService.updateStaffRoles(staff, request.RoleIDs); err != nil {
+			return err
+		}
+		if err := corporationService.corporationRepository.UpdateStaff(corporationService.db, staff); err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
+}
+
+func (corporationService *CorporationService) getStaffsByQuery(corporationID uint, allowedStatus []enum.StaffStatus, query string, options *postgres.QueryOptions) ([]*entity.CorporationStaff, int64, error) {
+	if query == "" {
+		maintenanceRequests, err := corporationService.corporationRepository.FindCorporationStaffs(corporationService.db, corporationID, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := corporationService.corporationRepository.CountCorporationStaffs(corporationService.db, corporationID, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return maintenanceRequests, count, nil
+	}
+
+	maintenanceRequests, err := corporationService.corporationRepository.FindCorporationStaffByQuery(corporationService.db, corporationID, allowedStatus, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := corporationService.corporationRepository.CountCorporationStaffByQuery(corporationService.db, corporationID, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return maintenanceRequests, count, nil
+}
+
+func (corporationService *CorporationService) GetStaffList(request corporationdto.GetStaffList) ([]corporationdto.StaffDetailsResponse, int64, error) {
+	options := postgres.NewQueryOptions().
+		WithPagination(request.Limit, request.Offset).
+		WithSorting(corporationService.getSortByColumn(request.SortBy), request.Asc)
+
+	allowedStatus := corporationService.mapToStaffStatus(request.Status)
+	staffs, count, err := corporationService.getStaffsByQuery(request.CorporationID, allowedStatus, request.Query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	response := make([]corporationdto.StaffDetailsResponse, len(staffs))
+
+	for i, staff := range staffs {
+		user, err := corporationService.userService.GetUserCredential(staff.UserID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		rolesResponse := make([]userdto.RoleResponse, len(staff.Roles))
+		for j, role := range staff.Roles {
+			roleResponse, err := corporationService.userService.GetRoleDetails(role.ID)
+			if err != nil {
+				continue
+			}
+			rolesResponse[j] = roleResponse
+		}
+
+		response[i] = corporationdto.StaffDetailsResponse{
+			ID:     staff.ID,
+			Staff:  user,
+			Roles:  rolesResponse,
+			Status: staff.Status.String(),
+		}
+	}
+	return response, count, nil
+}
+
+func (corporationService *CorporationService) GetStaff(corporationID, staffID uint) (corporationdto.StaffDetailsResponse, error) {
+	staff, err := corporationService.getCorporationStaffByID(corporationID, staffID)
+	if err != nil {
+		return corporationdto.StaffDetailsResponse{}, err
+	}
+
+	user, err := corporationService.userService.GetUserCredential(staff.UserID)
+	if err != nil {
+		return corporationdto.StaffDetailsResponse{}, err
+	}
+
+	rolesResponse := make([]userdto.RoleResponse, len(staff.Roles))
+	for i, role := range staff.Roles {
+		roleResponse, err := corporationService.userService.GetRoleDetails(role.ID)
+		if err != nil {
+			continue
+		}
+		rolesResponse[i] = roleResponse
+	}
+
+	return corporationdto.StaffDetailsResponse{
+		ID:     staff.ID,
+		Staff:  user,
+		Roles:  rolesResponse,
+		Status: staff.Status.String(),
+	}, nil
 }

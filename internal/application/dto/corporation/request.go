@@ -111,7 +111,25 @@ type SearchCorporationsRequest struct {
 
 type AddStaffRequest struct {
 	CorporationID uint
-	StaffPhone    string
-	Role          uint
 	OperatorID    uint
+	StaffPhone    string
+	RoleIDs       []uint
+}
+
+type EditStaffRequest struct {
+	CorporationID uint
+	OperatorID    uint
+	StaffID       uint
+	Status        *uint
+	RoleIDs       []uint
+}
+
+type GetStaffList struct {
+	CorporationID uint
+	Query         string
+	Status        uint
+	Offset        int
+	Limit         int
+	SortBy        uint
+	Asc           bool
 }

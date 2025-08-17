@@ -49,6 +49,9 @@ const (
 	NewsDelete
 
 	// Corporation Role Permissions
+	// general
+	CorporationPermissionAll
+
 	// Panel Management
 	PanelViewAll
 	PanelCreate
@@ -142,6 +145,9 @@ var permissionNames = map[PermissionType]string{
 	NewsEdit:    "news.edit",
 	NewsDelete:  "news.delete",
 
+	// general
+	CorporationPermissionAll: "corporation.all",
+
 	// Panel Management
 	PanelViewAll: "panel.viewAll",
 	PanelCreate:  "panel.create",
@@ -223,6 +229,9 @@ var permissionDescriptions = map[PermissionType]string{
 	PanelViewAll: "مشاهده لیست پنل‌ها",
 	PanelCreate:  "ایجاد پنل جدید",
 
+	// general
+	CorporationPermissionAll: "دسترسی کامل به شرکت",
+
 	// Bid Management
 	BidViewInstallationRequests: "مشاهده لیست درخواست‌های نصب",
 	BidViewAll:                  "مشاهده لیست پیشنهادات",
@@ -295,6 +304,9 @@ var permissionCategories = map[PermissionType]PermissionCategory{
 	NewsCreate:  CategoryNews,
 	NewsEdit:    CategoryNews,
 	NewsDelete:  CategoryNews,
+
+	// General Corporation
+	CorporationPermissionAll: CategoryGeneral,
 
 	// Panel Management
 	PanelViewAll: CategoryPanel,
@@ -408,6 +420,9 @@ func GetAllPermissionTypes() []PermissionType {
 		// News Management
 		NewsViewAll, NewsCreate, NewsEdit, NewsDelete,
 
+		// general
+		CorporationPermissionAll,
+
 		// Panel Management
 		PanelViewAll, PanelCreate,
 
@@ -430,6 +445,9 @@ func GetAllPermissionTypes() []PermissionType {
 
 func GetCorporationPermissionTypes() []PermissionType {
 	return []PermissionType{
+		// general
+		CorporationPermissionAll,
+
 		// Panel Management
 		PanelViewAll, PanelCreate,
 

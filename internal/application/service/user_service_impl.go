@@ -1017,6 +1017,9 @@ func (userService *UserService) UpdateRole(newRoleRequest userdto.UpdateRoleRequ
 		if err != nil {
 			return err
 		}
+		if permission.UserType != role.UserType {
+			continue
+		}
 
 		permissions = append(permissions, *permission)
 		existingPermissions[permissionID] = true
