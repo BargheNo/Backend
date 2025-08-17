@@ -637,7 +637,7 @@ func (blogService *BlogService) LikePost(request blogdto.GetPostRequest) error {
 	post.LikeCount++
 
 	err = blogService.db.WithTransaction(func(tx database.Database) error {
-		if err := blogService.blogRepository.CreateLike(blogService.db, like.UserID, request.PostID); err != nil {
+		if err := blogService.blogRepository.CreateLike(tx, request.UserID, request.PostID); err != nil {
 			return err
 		}
 
@@ -675,7 +675,7 @@ func (blogService *BlogService) UnlikePost(request blogdto.GetPostRequest) error
 	post.LikeCount--
 
 	err = blogService.db.WithTransaction(func(tx database.Database) error {
-		if err := blogService.blogRepository.DeleteLike(blogService.db, like.ID); err != nil {
+		if err := blogService.blogRepository.DeleteLike(tx, like.ID); err != nil {
 			return err
 		}
 
