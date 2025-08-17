@@ -173,6 +173,8 @@ var Persian = map[string]interface{}{
 		"updatePanel":               "پنل مورد نظر با موفقیت به روزرسانی شد.",
 		"deleteBid":                 "پیشنهاد مورد نظر با موفقیت حذف شد.",
 		"deletePanel":               "پنل مورد نظر شما با موفقیت حذف شد.",
+		"editStaff":                 "مسئول مورد نظر شما با موفقیت به روزرسانی شد.",
+		"addStaff":                  "مسئول مورد نظر شما با موفقیت اضافه شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

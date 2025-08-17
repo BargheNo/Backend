@@ -104,12 +104,15 @@ func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
 func (userController *AdminUserController) CreateRole(ctx *gin.Context) {
 	type newRoleParams struct {
 		Name          string `json:"name" validate:"required"`
+		IsStaff       bool   `json:"isStaff"`
+		IsCorpStaff   bool   `json:"isCorpStaff"`
 		PermissionIDs []uint `json:"permissionIDs"`
 	}
 	params := controller.Validated[newRoleParams](ctx)
 
 	newRoleRequest := userdto.NewRoleRequest{
 		Name:          params.Name,
+		IsStaff:       params.IsStaff,
 		PermissionIDs: params.PermissionIDs,
 	}
 	if err := userController.userService.CreateRole(newRoleRequest); err != nil {

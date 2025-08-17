@@ -63,3 +63,10 @@ type GetCustomerCorporationReview struct {
 	Reason *string `json:"reason"`
 	Notes  *string `json:"notes"`
 }
+
+type StaffDetailsResponse struct {
+	ID     uint                       `json:"id"`
+	Staff  userdto.CredentialResponse `json:"staff"`
+	Status string                     `json:"status"`
+	Roles  []userdto.RoleResponse     `json:"roles"`
+}

@@ -70,6 +70,9 @@ func main() {
 	app.Seeds.RoleSeeder.SeedRoles()
 	app.Seeds.ContactType.SeedContactTypes()
 
+	app.MQTTSubscription.MQTTSubscription.SetupMQTTSubscriptions()
+	go app.MQTTSubscription.MQTTSubscription.RefreshMQTTSubscriptions()
+
 	if err := app.Consumers.Register.Start(); err != nil {
 		panic(err)
 	}

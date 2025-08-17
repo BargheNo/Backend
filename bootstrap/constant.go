@@ -26,6 +26,7 @@ type Context struct {
 	IsLoadedValidationTranslator string
 	ID                           string
 	WebsocketConnection          string
+	CorporationID                string
 }
 
 type LogLevel struct {
@@ -82,6 +83,7 @@ type ErrorField struct {
 	Post                string
 	Like                string
 	CorporationReview   string
+	CorporationStaff    string
 }
 
 type ErrorTag struct {
@@ -208,6 +210,7 @@ func NewConstants() *Constants {
 			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
 			ID:                           "ID",
 			WebsocketConnection:          "wsConnection",
+			CorporationID:                "corporationID",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",
@@ -256,6 +259,7 @@ func NewConstants() *Constants {
 			Post:                "post",
 			Like:                "like",
 			CorporationReview:   "corporationReview",
+			CorporationStaff:    "corporationStaff",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",

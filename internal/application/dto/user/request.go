@@ -58,6 +58,7 @@ type UpdateProfileRequest struct {
 
 type NewRoleRequest struct {
 	Name          string
+	IsStaff       bool
 	PermissionIDs []uint
 }
 

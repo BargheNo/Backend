@@ -23,7 +23,7 @@ import (
 	infraLocalization "github.com/BargheNo/Backend/internal/infrastructure/localization"
 	infraLogger "github.com/BargheNo/Backend/internal/infrastructure/logger"
 	infraMetrics "github.com/BargheNo/Backend/internal/infrastructure/metrics"
-	mqttimpl "github.com/BargheNo/Backend/internal/infrastructure/mqtt"
+	infraMQTT "github.com/BargheNo/Backend/internal/infrastructure/mqtt"
 	infraRabbitMQ "github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
 	infraRecaptcha "github.com/BargheNo/Backend/internal/infrastructure/recaptcha"
@@ -146,14 +146,20 @@ var AdapterProviderSet = wire.NewSet(
 	infraMetrics.NewPrometheusMetrics,
 	infraStorage.NewS3Storage,
 	infraRabbitMQ.NewRabbitMQ,
-	mqttimpl.NewClient,
+	infraMQTT.NewClient,
 	infraRecaptcha.NewRecaptcha,
 	wire.Bind(new(domainLogger.Logger), new(*infraLogger.Logger)),
 	wire.Bind(new(domainMetrics.MetricsClient), new(*infraMetrics.PrometheusMetrics)),
 	wire.Bind(new(s3.S3Storage), new(*infraStorage.S3Storage)),
 	wire.Bind(new(message.Broker), new(*infraRabbitMQ.RabbitMQ)),
-	wire.Bind(new(mqtt.Client), new(*mqttimpl.Client)),
+	wire.Bind(new(mqtt.Client), new(*infraMQTT.Client)),
 	wire.Bind(new(domainRecaptcha.Recaptcha), new(*infraRecaptcha.Recaptcha)),
+)
+
+var MQTTSubscriptionProviderSet = wire.NewSet(
+	infraMQTT.NewMQTTSubscription,
+	wire.Bind(new(mqtt.MQTTSubscription), new(*infraMQTT.MQTTSubscription)),
+	wire.Struct(new(MQTTSubscription), "*"),
 )
 
 var GeneralControllerProviderSet = wire.NewSet(
@@ -331,6 +337,7 @@ var ProviderSet = wire.NewSet(
 	RepositoryProviderSet,
 	ServiceProviderSet,
 	AdapterProviderSet,
+	MQTTSubscriptionProviderSet,
 	GeneralControllerProviderSet,
 	CustomerControllerProviderSet,
 	CorporationControllerProviderSet,
@@ -452,12 +459,17 @@ type Consumers struct {
 	Notification *consumer.SendNotificationConsumer
 }
 
+type MQTTSubscription struct {
+	MQTTSubscription *infraMQTT.MQTTSubscription
+}
+
 type Application struct {
-	Database    *Database
-	Controllers *Controllers
-	Middlewares *Middlewares
-	Seeds       *Seeds
-	Consumers   *Consumers
+	Database         *Database
+	Controllers      *Controllers
+	Middlewares      *Middlewares
+	Seeds            *Seeds
+	Consumers        *Consumers
+	MQTTSubscription *MQTTSubscription
 }
 
 func NewApplication(
@@ -466,13 +478,15 @@ func NewApplication(
 	middlewares *Middlewares,
 	seeds *Seeds,
 	consumers *Consumers,
+	mqttSubscription *MQTTSubscription,
 ) *Application {
 	return &Application{
-		Database:    database,
-		Controllers: controllers,
-		Middlewares: middlewares,
-		Seeds:       seeds,
-		Consumers:   consumers,
+		Database:         database,
+		Controllers:      controllers,
+		Middlewares:      middlewares,
+		Seeds:            seeds,
+		Consumers:        consumers,
+		MQTTSubscription: mqttSubscription,
 	}
 }
 

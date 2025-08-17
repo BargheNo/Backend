@@ -2,10 +2,8 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	installationdto "github.com/BargheNo/Backend/internal/application/dto/installation"
 	monitoringdto "github.com/BargheNo/Backend/internal/application/dto/monitoring"
@@ -48,30 +46,7 @@ func NewMonitoringService(
 		hub:                    hub,
 		installationService:    installationService,
 	}
-
-	go service.setupMQTTSubscriptions()
-
-	go service.refreshMQTTSubscriptions()
-
 	return service
-}
-
-func (monitoringService *MonitoringService) setupMQTTSubscriptions() {
-	panelIDs := monitoringService.installationRepository.FindAllPanelsID(monitoringService.db)
-	for _, panelID := range panelIDs {
-		monitoringService.mqttClient.Subscribe(fmt.Sprintf("panel/%d/status", panelID), monitoringService.HandleStatusMessage)
-		monitoringService.mqttClient.Subscribe(fmt.Sprintf("panel/%d/history", panelID), monitoringService.HandleHistoryMessage)
-		monitoringService.mqttClient.Subscribe(fmt.Sprintf("panel/%d/event", panelID), monitoringService.HandleEventMessage)
-	}
-}
-
-func (monitoringService *MonitoringService) refreshMQTTSubscriptions() {
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		monitoringService.setupMQTTSubscriptions()
-	}
 }
 
 func (monitoringService *MonitoringService) HandleStatusMessage(topic string, payload []byte) {
