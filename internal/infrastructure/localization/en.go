@@ -67,6 +67,7 @@ var English = map[string]interface{}{
 		"invalidAuthCredentials": "Username and password not matched",
 		"expiredAuthToken":       "Your token has been expired. Please log in again.",
 		"invalidAuthToken":       "There is a problem with your token.",
+		"invalidRecaptcha":       "Recaptcha is invalid.",
 		"unauthorized":           "Please login first.",
 		"awaitingApproval":       "Your account is awaiting admin approval.",
 		"rejected":               "Your account has been rejected by admin.",

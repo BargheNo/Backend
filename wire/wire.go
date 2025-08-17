@@ -12,6 +12,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/message"
 	domainMetrics "github.com/BargheNo/Backend/internal/domain/metrics"
 	"github.com/BargheNo/Backend/internal/domain/mqtt"
+	domainRecaptcha "github.com/BargheNo/Backend/internal/domain/recaptcha"
 	domainPostgres "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	domainRedis "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -25,6 +26,7 @@ import (
 	infraMQTT "github.com/BargheNo/Backend/internal/infrastructure/mqtt"
 	infraRabbitMQ "github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
+	infraRecaptcha "github.com/BargheNo/Backend/internal/infrastructure/recaptcha"
 	infraPostgres "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	infraRedis "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
@@ -145,11 +147,13 @@ var AdapterProviderSet = wire.NewSet(
 	infraStorage.NewS3Storage,
 	infraRabbitMQ.NewRabbitMQ,
 	infraMQTT.NewClient,
+	infraRecaptcha.NewRecaptcha,
 	wire.Bind(new(domainLogger.Logger), new(*infraLogger.Logger)),
 	wire.Bind(new(domainMetrics.MetricsClient), new(*infraMetrics.PrometheusMetrics)),
 	wire.Bind(new(s3.S3Storage), new(*infraStorage.S3Storage)),
 	wire.Bind(new(message.Broker), new(*infraRabbitMQ.RabbitMQ)),
 	wire.Bind(new(mqtt.Client), new(*infraMQTT.Client)),
+	wire.Bind(new(domainRecaptcha.Recaptcha), new(*infraRecaptcha.Recaptcha)),
 )
 
 var MQTTSubscriptionProviderSet = wire.NewSet(
@@ -324,6 +328,10 @@ func ProvideMQTTConfig(container *bootstrap.Config) *bootstrap.MQTT {
 	return &container.Env.MQTT
 }
 
+func ProvideRecaptchaSecret(container *bootstrap.Config) *bootstrap.Recaptcha {
+	return &container.Env.Recaptcha
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
@@ -357,6 +365,7 @@ var ProviderSet = wire.NewSet(
 	ProvideRabbitMQConfig,
 	ProvideRabbitMQConstants,
 	ProvideMQTTConfig,
+	ProvideRecaptchaSecret,
 )
 
 type Database struct {
