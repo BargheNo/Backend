@@ -3,7 +3,7 @@ name: CD
 on:
   push:
     branches:
-      - feat/recaptcha
+      - fix/cors
 
   pull_request:
     branches:
