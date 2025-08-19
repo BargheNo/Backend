@@ -868,7 +868,7 @@ func (corporationService *CorporationService) ChangeLogo(changeLogoRequest corpo
 }
 
 func (corporationService *CorporationService) GetUserCorporations(userID uint) ([]corporationdto.CorporationCredentialResponse, error) {
-	corporations, err := corporationService.corporationRepository.FindUserCorporations(corporationService.db, userID)
+	corporations, err := corporationService.corporationRepository.FindUserActiveCorporations(corporationService.db, userID)
 	if err != nil {
 		return nil, err
 	}
