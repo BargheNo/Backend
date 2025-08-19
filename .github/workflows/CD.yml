@@ -1,10 +1,6 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - feat/recaptcha
-
   pull_request:
     branches:
       - develop
