@@ -775,12 +775,20 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 	return err
 }
 
-func (userService *UserService) GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error) {
+func (userService *UserService) getRBACUserType(isStaff bool) enum.UserType {
+	permissionUserType := enum.UserTypeAdmin
+	if isStaff {
+		permissionUserType = enum.UserTypeCorporation
+	}
+	return permissionUserType
+}
 
+func (userService *UserService) GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset)
 
-	permissions, err := userService.userRepository.FindAllPermissions(userService.db, options)
+	permissionUserType := userService.getRBACUserType(request.IsStaff)
+	permissions, err := userService.userRepository.FindAllPermissions(userService.db, permissionUserType, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -796,7 +804,7 @@ func (userService *UserService) GetAllPermissions(request userdto.GetPermissions
 		}
 	}
 
-	count, err := userService.userRepository.CountAllPermissions(userService.db)
+	count, err := userService.userRepository.CountAllPermissions(userService.db, permissionUserType)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -821,23 +829,23 @@ func (userService *UserService) getRolePermissions(role *entity.Role) ([]userdto
 	return permissions, nil
 }
 
-func (userService *UserService) getRolesByQuery(query string, options *postgres.QueryOptions) ([]*entity.Role, int64, error) {
+func (userService *UserService) getRolesByQuery(query string, userType enum.UserType, options *postgres.QueryOptions) ([]*entity.Role, int64, error) {
 	if query == "" {
-		roles, err := userService.userRepository.FindAllRoles(userService.db, options)
+		roles, err := userService.userRepository.FindAllRoles(userService.db, userType, options)
 		if err != nil {
 			return nil, 0, err
 		}
-		count, err := userService.userRepository.CountAllRoles(userService.db)
+		count, err := userService.userRepository.CountAllRoles(userService.db, userType)
 		if err != nil {
 			return nil, 0, err
 		}
 		return roles, count, nil
 	}
-	roles, err := userService.userRepository.FindRolesByQuery(userService.db, query, options)
+	roles, err := userService.userRepository.FindRolesByQuery(userService.db, userType, query, options)
 	if err != nil {
 		return nil, 0, err
 	}
-	count, err := userService.userRepository.CountRolesByQuery(userService.db, query)
+	count, err := userService.userRepository.CountRolesByQuery(userService.db, userType, query)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -848,7 +856,8 @@ func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest)
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset)
 
-	roles, count, err := userService.getRolesByQuery(request.Query, options)
+	roleUserType := userService.getRBACUserType(request.IsStaff)
+	roles, count, err := userService.getRolesByQuery(request.Query, roleUserType, options)
 	if err != nil {
 		return nil, 0, err
 	}

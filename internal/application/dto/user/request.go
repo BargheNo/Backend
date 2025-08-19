@@ -91,8 +91,9 @@ type GetPermissionRolesRequest struct {
 }
 
 type GetPermissionsListRequest struct {
-	Offset int
-	Limit  int
+	IsStaff bool
+	Offset  int
+	Limit   int
 }
 
 type GetRoleOwnersRequest struct {
@@ -102,9 +103,10 @@ type GetRoleOwnersRequest struct {
 }
 
 type GetRolesListRequest struct {
-	Query  string
-	Offset int
-	Limit  int
+	IsStaff bool
+	Query   string
+	Offset  int
+	Limit   int
 }
 
 type SearchUsersRequest struct {

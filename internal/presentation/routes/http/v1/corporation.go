@@ -24,6 +24,7 @@ func SetupCorporationRoutes(routerGroup *gin.RouterGroup, app *wire.Application)
 	staff := routerGroup.Group("/staff")
 	{
 		staff.GET(status, app.Controllers.Corporation.CorporationController.GetStaffStatuses)
+		staff.GET("/roles", app.Controllers.Corporation.CorporationController.GetCorporationRoles)
 		staff.GET("", app.Controllers.Corporation.CorporationController.GetStaffList)
 		staff.POST("", app.Controllers.Corporation.CorporationController.CreateCorporationStaff)
 		staffSubGroup := staff.Group("/:staffID")

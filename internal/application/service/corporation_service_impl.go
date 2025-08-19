@@ -1095,6 +1095,16 @@ func (corporationService *CorporationService) RejectCorporationRegistration(requ
 	return err
 }
 
+func (corporationService *CorporationService) GetCorporationRoles(request corporationdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error) {
+	roleRequest := userdto.GetRolesListRequest{
+		IsStaff: true,
+		Query:   request.Query,
+		Offset:  request.Offset,
+		Limit:   request.Limit,
+	}
+	return corporationService.userService.GetAllRoles(roleRequest)
+}
+
 func (corporationService *CorporationService) GetStaffStatuses() []corporationdto.GetEnumResponse {
 	statuses := enum.GetAllStaffStatuses()
 	response := make([]corporationdto.GetEnumResponse, len(statuses))

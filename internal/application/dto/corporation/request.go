@@ -133,3 +133,9 @@ type GetStaffList struct {
 	SortBy        uint
 	Asc           bool
 }
+
+type GetRolesListRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+}

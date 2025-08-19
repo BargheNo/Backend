@@ -2,6 +2,7 @@ package usecase
 
 import (
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
 type CorporationService interface {
@@ -37,4 +38,5 @@ type CorporationService interface {
 	EditStaff(request corporationdto.EditStaffRequest) error
 	GetStaffList(request corporationdto.GetStaffList) ([]corporationdto.StaffDetailsResponse, int64, error)
 	GetStaff(corporationID, staffID uint) (corporationdto.StaffDetailsResponse, error)
+	GetCorporationRoles(request corporationdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error)
 }
