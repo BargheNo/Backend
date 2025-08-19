@@ -279,11 +279,11 @@ func (repo *CorporationRepository) CountCorporationsByQuery(db database.Database
 	return count, nil
 }
 
-func (repo *CorporationRepository) FindUserCorporations(db database.Database, userID uint) ([]*entity.Corporation, error) {
+func (repo *CorporationRepository) FindUserActiveCorporations(db database.Database, userID uint) ([]*entity.Corporation, error) {
 	var corporations []*entity.Corporation
 	result := db.GetDB().
 		Joins("JOIN corporation_staffs ON corporation_staffs.corporation_id = corporations.id").
-		Where("corporation_staffs.user_id = ?", userID).
+		Where("corporation_staffs.status = ? AND corporation_staffs.user_id = ?", 1, userID).
 		Find(&corporations)
 
 	if result.Error != nil {

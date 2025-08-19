@@ -868,7 +868,7 @@ func (corporationService *CorporationService) ChangeLogo(changeLogoRequest corpo
 }
 
 func (corporationService *CorporationService) GetUserCorporations(userID uint) ([]corporationdto.CorporationCredentialResponse, error) {
-	corporations, err := corporationService.corporationRepository.FindUserCorporations(corporationService.db, userID)
+	corporations, err := corporationService.corporationRepository.FindUserActiveCorporations(corporationService.db, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -1093,6 +1093,16 @@ func (corporationService *CorporationService) RejectCorporationRegistration(requ
 	})
 
 	return err
+}
+
+func (corporationService *CorporationService) GetCorporationRoles(request corporationdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error) {
+	roleRequest := userdto.GetRolesListRequest{
+		IsStaff: true,
+		Query:   request.Query,
+		Offset:  request.Offset,
+		Limit:   request.Limit,
+	}
+	return corporationService.userService.GetAllRoles(roleRequest)
 }
 
 func (corporationService *CorporationService) GetStaffStatuses() []corporationdto.GetEnumResponse {

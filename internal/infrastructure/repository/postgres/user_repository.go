@@ -164,9 +164,9 @@ func (repo *UserRepository) AssignRoleToUser(db database.Database, user *entity.
 	return db.GetDB().Model(user).Association("Roles").Append(role)
 }
 
-func (repo *UserRepository) FindAllPermissions(db database.Database, options *postgres.QueryOptions) ([]*entity.Permission, error) {
+func (repo *UserRepository) FindAllPermissions(db database.Database, userType enum.UserType, options *postgres.QueryOptions) ([]*entity.Permission, error) {
 	var permissions []*entity.Permission
-	query := db.GetDB().Find(&permissions)
+	query := db.GetDB().Where("user_type = ?", userType).Find(&permissions)
 	query = applyQueryOptions(query, options)
 
 	result := query.Find(&permissions)
@@ -176,18 +176,18 @@ func (repo *UserRepository) FindAllPermissions(db database.Database, options *po
 	return permissions, nil
 }
 
-func (repo *UserRepository) CountAllPermissions(db database.Database) (int64, error) {
+func (repo *UserRepository) CountAllPermissions(db database.Database, userType enum.UserType) (int64, error) {
 	var count int64
-	err := db.GetDB().Model(&entity.Permission{}).Count(&count).Error
+	err := db.GetDB().Model(&entity.Permission{}).Where("user_type = ?", userType).Count(&count).Error
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
 }
 
-func (repo *UserRepository) FindAllRoles(db database.Database, options *postgres.QueryOptions) ([]*entity.Role, error) {
+func (repo *UserRepository) FindAllRoles(db database.Database, userType enum.UserType, options *postgres.QueryOptions) ([]*entity.Role, error) {
 	var roles []*entity.Role
-	query := db.GetDB().Find(&roles)
+	query := db.GetDB().Where("user_type = ?", userType).Find(&roles)
 	query = applyQueryOptions(query, options)
 
 	result := query.Find(&roles)
@@ -197,9 +197,9 @@ func (repo *UserRepository) FindAllRoles(db database.Database, options *postgres
 	return roles, nil
 }
 
-func (repo *UserRepository) FindRolesByQuery(db database.Database, query string, options *postgres.QueryOptions) ([]*entity.Role, error) {
+func (repo *UserRepository) FindRolesByQuery(db database.Database, userType enum.UserType, query string, options *postgres.QueryOptions) ([]*entity.Role, error) {
 	var roles []*entity.Role
-	result := db.GetDB().Where("name ILIKE ?", "%"+query+"%")
+	result := db.GetDB().Where("user_type = ? AND name ILIKE ?", userType, "%"+query+"%")
 	result = applyQueryOptions(result, options)
 
 	result = result.Find(&roles)
@@ -209,18 +209,18 @@ func (repo *UserRepository) FindRolesByQuery(db database.Database, query string,
 	return roles, nil
 }
 
-func (repo *UserRepository) CountRolesByQuery(db database.Database, query string) (int64, error) {
+func (repo *UserRepository) CountRolesByQuery(db database.Database, userType enum.UserType, query string) (int64, error) {
 	var count int64
-	err := db.GetDB().Model(&entity.Role{}).Where("name ILIKE ?", "%"+query+"%").Count(&count).Error
+	err := db.GetDB().Model(&entity.Role{}).Where("user_type = ? AND name ILIKE ?", userType, "%"+query+"%").Count(&count).Error
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
 }
 
-func (repo *UserRepository) CountAllRoles(db database.Database) (int64, error) {
+func (repo *UserRepository) CountAllRoles(db database.Database, userType enum.UserType) (int64, error) {
 	var count int64
-	err := db.GetDB().Model(&entity.Role{}).Count(&count).Error
+	err := db.GetDB().Model(&entity.Role{}).Where("user_type = ?", userType).Count(&count).Error
 	if err != nil {
 		return 0, err
 	}

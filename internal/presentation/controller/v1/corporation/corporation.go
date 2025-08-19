@@ -286,6 +286,30 @@ func (corporationController *CorporationCorporationController) SubmitCertificate
 	controller.Response(ctx, 200, message, nil)
 }
 
+func (corporationController *CorporationCorporationController) GetCorporationRoles(ctx *gin.Context) {
+	type getRolesParams struct {
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+	}
+	params := controller.Validated[getRolesParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
+
+	request := corporationdto.GetRolesListRequest{
+		Query:  params.Query,
+		Offset: offset,
+		Limit:  limit,
+	}
+
+	roles, count, err := corporationController.corporationService.GetCorporationRoles(request)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(roles, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}
+
 func (corporationController *CorporationCorporationController) CreateCorporationStaff(ctx *gin.Context) {
 	type addStaffParams struct {
 		CorporationID uint   `uri:"corporationID" validate:"required"`
