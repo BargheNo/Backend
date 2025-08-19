@@ -41,6 +41,7 @@ type CustomerRequestsListRequest struct {
 
 type AdminInstallationListRequest struct {
 	Status uint
+	Query  string
 	Offset int
 	Limit  int
 	SortBy uint
@@ -51,6 +52,7 @@ type CorporationPanelListRequest struct {
 	CorporationID uint
 	OperatorID    uint
 	Status        uint
+	Query         string
 	Offset        int
 	Limit         int
 	SortBy        uint
@@ -66,6 +68,7 @@ type CorporationPanelRequest struct {
 type CustomerPanelListRequest struct {
 	OwnerID uint
 	Status  uint
+	Query   string
 	Offset  int
 	Limit   int
 	SortBy  uint
@@ -145,4 +148,20 @@ type UpdatePanelRequest struct {
 	Tilt                 *uint
 	Azimuth              *uint
 	TotalNumberOfModules *uint
+}
+
+type SearchPanelsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
+}
+
+type SearchInstallationRequestsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }

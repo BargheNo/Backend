@@ -309,7 +309,7 @@ func (notificationService *NotificationService) GetUserNotifications(notificatio
 		WithPagination(notificationsRequest.Limit, notificationsRequest.Offset).
 		WithSorting(notificationService.getSortByColumn(notificationsRequest.SortBy), notificationsRequest.Asc)
 
-	notifications, err := notificationService.notificationRepository.GetNotificationsByTypesAndUserID(notificationService.db, notificationsRequest.UserID, notificationsRequest.Types, options)
+	notifications, err := notificationService.notificationRepository.GetNotificationsByTypesAndUserID(notificationService.db, notificationsRequest.UserID, notificationsRequest.Types, notificationsRequest.IsRead, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -342,7 +342,7 @@ func (notificationService *NotificationService) GetUserNotifications(notificatio
 		}
 	}
 
-	count, err := notificationService.notificationRepository.CountNotificationsByTypesAndUserID(notificationService.db, notificationsRequest.UserID, notificationsRequest.Types)
+	count, err := notificationService.notificationRepository.CountNotificationsByTypesAndUserID(notificationService.db, notificationsRequest.UserID, notificationsRequest.Types, notificationsRequest.IsRead)
 	if err != nil {
 		return nil, 0, err
 	}

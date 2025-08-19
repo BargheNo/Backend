@@ -69,6 +69,57 @@ func (repo *InstallationRepository) CountRequestsByStatus(db database.Database, 
 	return count, nil
 }
 
+func (repo *InstallationRepository) FindRequestsByQuery(db database.Database, query string, allowedStatus []enum.InstallationRequestStatus, options *postgres.QueryOptions) ([]*entity.InstallationRequest, error) {
+	var requests []*entity.InstallationRequest
+	result := db.GetDB().
+		Joins("LEFT JOIN users AS customers ON installation_requests.owner_id = customers.id").
+		Where(`
+			installation_requests.status IN ? AND (
+			installation_requests.name ILIKE ? OR 
+			installation_requests.description ILIKE ? OR
+			customers.first_name ILIKE ? OR 
+			customers.last_name ILIKE ? OR 
+			customers.email ILIKE ? OR
+			customers.phone ILIKE ?
+			)
+		`,
+			allowedStatus, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
+			"%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+
+	result = result.Find(&requests)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return requests, nil
+}
+
+func (repo *InstallationRepository) CountRequestsByQuery(db database.Database, query string, allowedStatus []enum.InstallationRequestStatus) (int64, error) {
+	var count int64
+	err := db.GetDB().
+		Model(&entity.InstallationRequest{}).
+		Joins("LEFT JOIN users AS customers ON installation_requests.owner_id = customers.id").
+		Where(`
+			installation_requests.status IN ? AND (
+			installation_requests.name ILIKE ? OR 
+			installation_requests.description ILIKE ? OR
+			customers.first_name ILIKE ? OR 
+			customers.last_name ILIKE ? OR 
+			customers.email ILIKE ? OR
+			customers.phone ILIKE ?
+			)
+		`,
+			allowedStatus, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
+			"%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *InstallationRepository) FindOwnerRequests(db database.Database, ownerID uint, status []enum.InstallationRequestStatus, options *postgres.QueryOptions) ([]*entity.InstallationRequest, error) {
 	var requests []*entity.InstallationRequest
 	query := db.GetDB().Where("owner_id = ? and status IN ?", ownerID, status)
@@ -191,6 +242,63 @@ func (repo *InstallationRepository) CountPanelsByStatus(db database.Database, al
 	return count, nil
 }
 
+func (repo *InstallationRepository) FindPanelsByQuery(db database.Database, allowedStatus []enum.PanelStatus, query string, options *postgres.QueryOptions) ([]*entity.Panel, error) {
+	var panels []*entity.Panel
+
+	result := db.GetDB().
+		Joins("LEFT JOIN users AS customers ON panels.customer_id = customers.id").
+		Joins("LEFT JOIN corporations ON panels.corporation_id = corporations.id").
+		Where(`
+			panels.status IN ? AND (
+			panels.name ILIKE ? OR 
+			customers.first_name ILIKE ? OR 
+			customers.last_name ILIKE ? OR 
+			customers.email ILIKE ? OR
+			customers.phone ILIKE ? OR
+			corporations.name ILIKE ? OR
+			corporations.registration_number ILIKE ?
+		)
+		`,
+			allowedStatus, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&panels)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return panels, nil
+}
+
+func (repo *InstallationRepository) CountPanelsByQuery(db database.Database, allowedStatus []enum.PanelStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Panel{}).
+		Joins("LEFT JOIN users AS customers ON panels.customer_id = customers.id").
+		Joins("LEFT JOIN corporations ON panels.corporation_id = corporations.id").
+		Where(`
+			panels.status IN ? AND (
+			panels.name ILIKE ? OR 
+			customers.first_name ILIKE ? OR 
+			customers.last_name ILIKE ? OR 
+			customers.email ILIKE ? OR
+			customers.phone ILIKE ? OR
+			corporations.name ILIKE ? OR
+			corporations.registration_number ILIKE ?
+		)
+		`,
+			allowedStatus, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%",
+			"%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (repo *InstallationRepository) FindCustomerPanels(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, options *postgres.QueryOptions) ([]*entity.Panel, error) {
 	var panels []*entity.Panel
 	query := db.GetDB().Where("customer_id = ? AND status IN ?", customerID, allowedStatus)
@@ -208,6 +316,66 @@ func (repo *InstallationRepository) CountCustomerPanels(db database.Database, cu
 	err := db.GetDB().
 		Model(&entity.Panel{}).
 		Where("customer_id = ? AND status IN ?", customerID, allowedStatus).
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *InstallationRepository) FindCustomerPanelsByQuery(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, query string, options *postgres.QueryOptions) ([]*entity.Panel, error) {
+	var panels []*entity.Panel
+	result := db.GetDB().
+		Where("customer_id = ? AND status IN ?", customerID, allowedStatus).
+		Where("name ILIKE ?", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&panels)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return panels, nil
+}
+
+func (repo *InstallationRepository) CountCustomerPanelsByQuery(db database.Database, customerID uint, allowedStatus []enum.PanelStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Panel{}).
+		Where("customer_id = ? AND status IN ?", customerID, allowedStatus).
+		Where("name ILIKE ?", "%"+query+"%").
+		Count(&count).Error
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (repo *InstallationRepository) FindCorporationPanelsByQuery(db database.Database, corporationID uint, allowedStatus []enum.PanelStatus, query string, options *postgres.QueryOptions) ([]*entity.Panel, error) {
+	var panels []*entity.Panel
+	result := db.GetDB().
+		Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus).
+		Where("name ILIKE ?", "%"+query+"%")
+
+	result = applyQueryOptions(result, options)
+	result = result.Find(&panels)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return panels, nil
+}
+
+func (repo *InstallationRepository) CountCorporationPanelsByQuery(db database.Database, corporationID uint, allowedStatus []enum.PanelStatus, query string) (int64, error) {
+	var count int64
+
+	err := db.GetDB().
+		Model(&entity.Panel{}).
+		Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus).
+		Where("name ILIKE ?", "%"+query+"%").
 		Count(&count).Error
 
 	if err != nil {
@@ -261,5 +429,18 @@ func (repo *InstallationRepository) UpdatePanel(db database.Database, panel *ent
 }
 
 func (repo *InstallationRepository) DeletePanel(db database.Database, panel *entity.Panel) error {
-	return db.GetDB().Delete(&panel).Error
+	return db.GetDB().Unscoped().Delete(&panel).Error
+}
+
+func (repo *InstallationRepository) FindAllPanelsID(db database.Database) []uint {
+	var ids []uint
+	result := db.GetDB().Model(&entity.Panel{}).Select("id").Find(&ids)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return []uint{}
+		}
+		panic(result.Error)
+	}
+
+	return ids
 }

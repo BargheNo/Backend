@@ -7,6 +7,7 @@ type BasicRegisterRequest struct {
 	LastName  string
 	Phone     string
 	Password  string
+	Recaptcha string
 }
 
 type VerifyPhoneRequest struct {
@@ -21,8 +22,9 @@ type VerifyEmailRequest struct {
 }
 
 type LoginRequest struct {
-	Phone    string
-	Password string
+	Phone     string
+	Password  string
+	Recaptcha string
 }
 
 type ForgotPasswordRequest struct {
@@ -56,6 +58,7 @@ type UpdateProfileRequest struct {
 
 type NewRoleRequest struct {
 	Name          string
+	IsStaff       bool
 	PermissionIDs []uint
 }
 
@@ -71,6 +74,7 @@ type UpdateUserRolesRequest struct {
 }
 
 type GetUsersListRequest struct {
+	Query  string
 	Status uint
 	Offset int
 	Limit  int
@@ -87,8 +91,9 @@ type GetPermissionRolesRequest struct {
 }
 
 type GetPermissionsListRequest struct {
-	Offset int
-	Limit  int
+	IsStaff bool
+	Offset  int
+	Limit   int
 }
 
 type GetRoleOwnersRequest struct {
@@ -98,6 +103,17 @@ type GetRoleOwnersRequest struct {
 }
 
 type GetRolesListRequest struct {
+	IsStaff bool
+	Query   string
+	Offset  int
+	Limit   int
+}
+
+type SearchUsersRequest struct {
+	Query  string
+	Status uint
 	Offset int
 	Limit  int
+	SortBy uint
+	Asc    bool
 }

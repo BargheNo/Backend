@@ -11,6 +11,8 @@ import (
 	domainLogger "github.com/BargheNo/Backend/internal/domain/logger"
 	"github.com/BargheNo/Backend/internal/domain/message"
 	domainMetrics "github.com/BargheNo/Backend/internal/domain/metrics"
+	"github.com/BargheNo/Backend/internal/domain/mqtt"
+	domainRecaptcha "github.com/BargheNo/Backend/internal/domain/recaptcha"
 	domainPostgres "github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	domainRedis "github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -21,8 +23,10 @@ import (
 	infraLocalization "github.com/BargheNo/Backend/internal/infrastructure/localization"
 	infraLogger "github.com/BargheNo/Backend/internal/infrastructure/logger"
 	infraMetrics "github.com/BargheNo/Backend/internal/infrastructure/metrics"
+	infraMQTT "github.com/BargheNo/Backend/internal/infrastructure/mqtt"
 	infraRabbitMQ "github.com/BargheNo/Backend/internal/infrastructure/rabbitmq"
 	"github.com/BargheNo/Backend/internal/infrastructure/rabbitmq/consumer"
+	infraRecaptcha "github.com/BargheNo/Backend/internal/infrastructure/recaptcha"
 	infraPostgres "github.com/BargheNo/Backend/internal/infrastructure/repository/postgres"
 	infraRedis "github.com/BargheNo/Backend/internal/infrastructure/repository/redis"
 	"github.com/BargheNo/Backend/internal/infrastructure/seed"
@@ -36,6 +40,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/guarantee"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/installation"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/maintenance"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/monitoring"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/news"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/payment"
@@ -70,6 +75,7 @@ var RepositoryProviderSet = wire.NewSet(
 	infraPostgres.NewPaymentRepository,
 	infraPostgres.NewNewsRepository,
 	infraPostgres.NewBlogRepository,
+	infraPostgres.NewMonitoringRepository,
 	wire.Bind(new(domainPostgres.UserRepository), new(*infraPostgres.UserRepository)),
 	wire.Bind(new(domainPostgres.InstallationRepository), new(*infraPostgres.InstallationRepository)),
 	wire.Bind(new(domainPostgres.AddressRepository), new(*infraPostgres.AddressRepository)),
@@ -85,6 +91,7 @@ var RepositoryProviderSet = wire.NewSet(
 	wire.Bind(new(domainPostgres.PaymentRepository), new(*infraPostgres.PaymentRepository)),
 	wire.Bind(new(domainPostgres.NewsRepository), new(*infraPostgres.NewsRepository)),
 	wire.Bind(new(domainPostgres.BlogRepository), new(*infraPostgres.BlogRepository)),
+	wire.Bind(new(domainPostgres.MonitoringRepository), new(*infraPostgres.MonitoringRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -110,6 +117,7 @@ var ServiceProviderSet = wire.NewSet(
 	service.NewPaymentService,
 	service.NewNewsService,
 	service.NewBlogService,
+	service.NewMonitoringService,
 	wire.Bind(new(usecase.UserService), new(*service.UserService)),
 	wire.Bind(new(usecase.OTPService), new(*service.OTPService)),
 	wire.Bind(new(communication.SMSService), new(*sms.SMSService)),
@@ -128,6 +136,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(usecase.PaymentService), new(*service.PaymentService)),
 	wire.Bind(new(usecase.NewsService), new(*service.NewsService)),
 	wire.Bind(new(usecase.BlogService), new(*service.BlogService)),
+	wire.Bind(new(usecase.MonitoringService), new(*service.MonitoringService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -137,10 +146,20 @@ var AdapterProviderSet = wire.NewSet(
 	infraMetrics.NewPrometheusMetrics,
 	infraStorage.NewS3Storage,
 	infraRabbitMQ.NewRabbitMQ,
+	infraMQTT.NewClient,
+	infraRecaptcha.NewRecaptcha,
 	wire.Bind(new(domainLogger.Logger), new(*infraLogger.Logger)),
 	wire.Bind(new(domainMetrics.MetricsClient), new(*infraMetrics.PrometheusMetrics)),
 	wire.Bind(new(s3.S3Storage), new(*infraStorage.S3Storage)),
 	wire.Bind(new(message.Broker), new(*infraRabbitMQ.RabbitMQ)),
+	wire.Bind(new(mqtt.Client), new(*infraMQTT.Client)),
+	wire.Bind(new(domainRecaptcha.Recaptcha), new(*infraRecaptcha.Recaptcha)),
+)
+
+var MQTTSubscriptionProviderSet = wire.NewSet(
+	infraMQTT.NewMQTTSubscription,
+	wire.Bind(new(mqtt.MQTTSubscription), new(*infraMQTT.MQTTSubscription)),
+	wire.Struct(new(MQTTSubscription), "*"),
 )
 
 var GeneralControllerProviderSet = wire.NewSet(
@@ -172,6 +191,7 @@ var CustomerControllerProviderSet = wire.NewSet(
 	report.NewCustomerReportController,
 	blog.NewCustomerBlogController,
 	news.NewCustomerNewsController,
+	monitoring.NewCustomerMonitoringController,
 	wire.Struct(new(CustomerControllers), "*"),
 )
 
@@ -183,6 +203,7 @@ var CorporationControllerProviderSet = wire.NewSet(
 	maintenance.NewCorporationMaintenanceController,
 	guarantee.NewCorporationGuaranteeController,
 	blog.NewCorporationBlogController,
+	monitoring.NewCorporationMonitoringController,
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
@@ -194,6 +215,8 @@ var AdminControllerProviderSet = wire.NewSet(
 	corporation.NewAdminCorporationController,
 	installation.NewAdminInstallationController,
 	bid.NewAdminBidController,
+	monitoring.NewAdminMonitoringController,
+	blog.NewAdminBlogController,
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -301,11 +324,20 @@ func ProvideRabbitMQConstants(container *bootstrap.Config) *bootstrap.RabbitMQCo
 	return &container.Constants.RabbitMQ
 }
 
+func ProvideMQTTConfig(container *bootstrap.Config) *bootstrap.MQTT {
+	return &container.Env.MQTT
+}
+
+func ProvideRecaptchaSecret(container *bootstrap.Config) *bootstrap.Recaptcha {
+	return &container.Env.Recaptcha
+}
+
 var ProviderSet = wire.NewSet(
 	DatabaseProviderSet,
 	RepositoryProviderSet,
 	ServiceProviderSet,
 	AdapterProviderSet,
+	MQTTSubscriptionProviderSet,
 	GeneralControllerProviderSet,
 	CustomerControllerProviderSet,
 	CorporationControllerProviderSet,
@@ -332,6 +364,8 @@ var ProviderSet = wire.NewSet(
 	ProvideSuperAdminCredential,
 	ProvideRabbitMQConfig,
 	ProvideRabbitMQConstants,
+	ProvideMQTTConfig,
+	ProvideRecaptchaSecret,
 )
 
 type Database struct {
@@ -367,6 +401,7 @@ type CustomerControllers struct {
 	ReportController       *report.CustomerReportController
 	BlogController         *blog.CustomerBlogController
 	NewsController         *news.CustomerNewsController
+	MonitoringController   *monitoring.CustomerMonitoringController
 }
 
 type CorporationControllers struct {
@@ -377,6 +412,7 @@ type CorporationControllers struct {
 	MaintenanceController  *maintenance.CorporationMaintenanceController
 	GuaranteeController    *guarantee.CorporationGuaranteeController
 	BlogController         *blog.CorporationBlogController
+	MonitoringController   *monitoring.CorporationMonitoringController
 }
 
 type AdminControllers struct {
@@ -387,6 +423,8 @@ type AdminControllers struct {
 	CorporationController  *corporation.AdminCorporationController
 	InstallationController *installation.AdminInstallationController
 	BidController          *bid.AdminBidController
+	MonitoringController   *monitoring.AdminMonitoringController
+	BlogController         *blog.AdminBlogController
 }
 
 type Controllers struct {
@@ -421,12 +459,17 @@ type Consumers struct {
 	Notification *consumer.SendNotificationConsumer
 }
 
+type MQTTSubscription struct {
+	MQTTSubscription *infraMQTT.MQTTSubscription
+}
+
 type Application struct {
-	Database    *Database
-	Controllers *Controllers
-	Middlewares *Middlewares
-	Seeds       *Seeds
-	Consumers   *Consumers
+	Database         *Database
+	Controllers      *Controllers
+	Middlewares      *Middlewares
+	Seeds            *Seeds
+	Consumers        *Consumers
+	MQTTSubscription *MQTTSubscription
 }
 
 func NewApplication(
@@ -435,13 +478,15 @@ func NewApplication(
 	middlewares *Middlewares,
 	seeds *Seeds,
 	consumers *Consumers,
+	mqttSubscription *MQTTSubscription,
 ) *Application {
 	return &Application{
-		Database:    database,
-		Controllers: controllers,
-		Middlewares: middlewares,
-		Seeds:       seeds,
-		Consumers:   consumers,
+		Database:         database,
+		Controllers:      controllers,
+		Middlewares:      middlewares,
+		Seeds:            seeds,
+		Consumers:        consumers,
+		MQTTSubscription: mqttSubscription,
 	}
 }
 

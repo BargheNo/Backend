@@ -24,10 +24,12 @@ type UserRepository interface {
 	CreatePermission(db database.Database, permission *entity.Permission) error
 	AssignPermissionToRole(db database.Database, role *entity.Role, permission *entity.Permission) error
 	AssignRoleToUser(db database.Database, user *entity.User, role *entity.Role) error
-	FindAllPermissions(db database.Database, options *QueryOptions) ([]*entity.Permission, error)
-	CountAllPermissions(db database.Database) (int64, error)
-	FindAllRoles(db database.Database, options *QueryOptions) ([]*entity.Role, error)
-	CountAllRoles(db database.Database) (int64, error)
+	FindAllPermissions(db database.Database, userType enum.UserType, options *QueryOptions) ([]*entity.Permission, error)
+	CountAllPermissions(db database.Database, userType enum.UserType) (int64, error)
+	FindAllRoles(db database.Database, userType enum.UserType, options *QueryOptions) ([]*entity.Role, error)
+	FindRolesByQuery(db database.Database, userType enum.UserType, query string, options *QueryOptions) ([]*entity.Role, error)
+	CountRolesByQuery(db database.Database, userType enum.UserType, query string) (int64, error)
+	CountAllRoles(db database.Database, userType enum.UserType) (int64, error)
 	FindPermissionByID(db database.Database, permissionID uint) (*entity.Permission, error)
 	FindRolesByPermission(db database.Database, permissionID uint, options *QueryOptions) ([]*entity.Role, error)
 	CountRolesByPermission(db database.Database, permissionID uint) (int64, error)
@@ -41,4 +43,6 @@ type UserRepository interface {
 	UpdateRole(db database.Database, role *entity.Role) error
 	ReplaceRolePermissions(db database.Database, role *entity.Role, permissions []entity.Permission) error
 	ReplaceUserRoles(db database.Database, user *entity.User, roles []entity.Role) error
+	FindUsersByQuery(db database.Database, query string, options *QueryOptions) ([]*entity.User, error)
+	CountUsersByQuery(db database.Database, query string) (int64, error)
 }

@@ -2,12 +2,10 @@ package ticket
 
 import (
 	"mime/multipart"
-	"strconv"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	ticketdto "github.com/BargheNo/Backend/internal/application/dto/ticket"
 	"github.com/BargheNo/Backend/internal/application/usecase"
-	"github.com/BargheNo/Backend/internal/domain/enum"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
 )
@@ -32,21 +30,17 @@ func NewCustomerTicketController(
 
 func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context) {
 	type createTicketParams struct {
-		Subject     string                `form:"subject" validate:"required"`
+		Subject     uint                  `form:"subject" validate:"required"`
 		Description string                `form:"description" validate:"required"`
 		Image       *multipart.FileHeader `form:"image"`
 	}
 	params := controller.Validated[createTicketParams](ctx)
-	// TODO: what? why? :)
-	subject, err := strconv.Atoi(params.Subject)
-	if err != nil {
-		subject = 2
-	}
+
 	userID, _ := ctx.Get(ticketController.constants.Context.ID)
 	requestInfo := ticketdto.CreateTicketRequest{
 		OwnerID:     userID.(uint),
 		OwnerType:   ticketController.constants.TicketOwners.User,
-		Subject:     enum.TicketSubject(subject),
+		Subject:     params.Subject,
 		Description: params.Description,
 		Image:       params.Image,
 	}
@@ -62,11 +56,12 @@ func (ticketController *CustomerTicketController) CreateTicket(ctx *gin.Context)
 
 func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 	type GetTicketsRequest struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		Query    string `form:"query"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[GetTicketsRequest](ctx)
 
@@ -77,16 +72,17 @@ func (ticketController *CustomerTicketController) GetTickets(ctx *gin.Context) {
 	listInfo := ticketdto.TicketListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
+		Query:   params.Query,
 		Offset:  offset,
 		Limit:   limit,
+		SortBy:  params.SortBy,
+		Asc:     params.Asc,
 	}
-
 	tickets, count, err := ticketController.ticketService.GetCustomerTickets(listInfo)
 	if err != nil {
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
-
 	controller.Response(ctx, 200, "", data)
 }
 

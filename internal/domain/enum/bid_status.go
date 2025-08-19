@@ -9,6 +9,7 @@ const (
 	BidStatusRejected
 	BidStatusCanceled
 	BidStatusAll
+	BidStatusAllCustomer
 )
 
 func (s BidStatus) String() string {
@@ -25,8 +26,30 @@ func (s BidStatus) String() string {
 		return "لغو شده"
 	case BidStatusAll:
 		return "همه"
+	case BidStatusAllCustomer:
+		return "همه"
 	}
 	return "unknown"
+}
+
+func GetUserBidStatuses() []BidStatus {
+	return []BidStatus{
+		BidStatusPending,
+		BidStatusAccepted,
+		BidStatusRejected,
+		BidStatusAllCustomer,
+	}
+}
+
+func GetCorporationBidStatuses() []BidStatus {
+	return []BidStatus{
+		BidStatusPending,
+		BidStatusAccepted,
+		BidStatusExpired,
+		BidStatusRejected,
+		BidStatusCanceled,
+		BidStatusAll,
+	}
 }
 
 func GetAllBidStatuses() []BidStatus {

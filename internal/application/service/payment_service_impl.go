@@ -40,6 +40,16 @@ func (paymentService *PaymentService) GetPaymentMethods() []paymentdto.PaymentMe
 	return response
 }
 
+func (paymentService *PaymentService) ValidatePaymentMethod(requested uint) error {
+	methods := enum.GetAllPaymentMethods()
+	for _, method := range methods {
+		if requested == uint(method) {
+			return nil
+		}
+	}
+	return exception.NotFoundError{Item: paymentService.constants.Field.PaymentTerm}
+}
+
 func (paymentService *PaymentService) GetPaymentTerms(payTermID uint) (paymentdto.PaymentTermsResponse, error) {
 	paymentTerms, err := paymentService.paymentRepository.FindPaymentTerms(paymentService.db, payTermID)
 	if err != nil {

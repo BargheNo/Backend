@@ -50,6 +50,25 @@ func (corporationController *CorporationCorporationController) GetMyProfile(ctx 
 	controller.Response(ctx, 200, "", corporationDetails)
 }
 
+func (corporationController *CorporationCorporationController) GetPublicProfile(ctx *gin.Context) {
+	type getCorporationParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+	}
+	params := controller.Validated[getCorporationParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	corporationRequest := corporationdto.CorporationDetailsRequest{
+		CorporationID: params.CorporationID,
+		UserID:        userID.(uint),
+	}
+	corporationDetails, err := corporationController.corporationService.GetCorporationPublicDetails(corporationRequest)
+	if err != nil {
+		panic(err)
+	}
+
+	controller.Response(ctx, 200, "", corporationDetails)
+}
+
 func (corporationController *CorporationCorporationController) AddAddress(ctx *gin.Context) {
 	type address struct {
 		ProvinceID    uint   `json:"provinceID" validate:"required"`
@@ -196,4 +215,199 @@ func (corporationController *CorporationCorporationController) ChangeLogo(ctx *g
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.changeLogo")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) UpdateRegister(ctx *gin.Context) {
+	type signatory struct {
+		Name               string `json:"name" validate:"required"`
+		NationalCardNumber string `json:"nationalCardNumber" validate:"required"`
+		Position           string `json:"position" validate:"required"`
+	}
+
+	type registerParams struct {
+		CorporationID      uint        `uri:"corporationID" validate:"required"`
+		Name               *string     `json:"name"`
+		RegistrationNumber *string     `json:"registrationNumber"`
+		NationalID         *string     `json:"nationalID"`
+		IBAN               *string     `json:"iban"`
+		Signatories        []signatory `json:"signatories" validate:"omitempty,dive"`
+	}
+	params := controller.Validated[registerParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	signatories := make([]corporationdto.Signatory, len(params.Signatories))
+	for i, signatory := range params.Signatories {
+		signatories[i] = corporationdto.Signatory{
+			Name:               signatory.Name,
+			NationalCardNumber: signatory.NationalCardNumber,
+			Position:           signatory.Position,
+		}
+	}
+	updateRegisterInfo := corporationdto.UpdateRegisterRequest{
+		ApplicantID:        userID.(uint),
+		CorporationID:      params.CorporationID,
+		Name:               params.Name,
+		NationalID:         params.NationalID,
+		RegistrationNumber: params.RegistrationNumber,
+		IBAN:               params.IBAN,
+		Signatories:        signatories,
+	}
+
+	if err := corporationController.corporationService.UpdateRegistrationInfoProfile(updateRegisterInfo); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateCorporation")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) SubmitCertificateFiles(ctx *gin.Context) {
+	type certificatesParams struct {
+		CorporationID          uint                  `uri:"corporationID" validate:"required"`
+		VATTaxpayerCertificate *multipart.FileHeader `form:"vatTaxpayerCertificate"`
+		OfficialNewspaperAD    *multipart.FileHeader `form:"officialNewspaperAD"`
+	}
+	params := controller.Validated[certificatesParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	requestInfo := corporationdto.AddCertificatesRequest{
+		CorporationID:          params.CorporationID,
+		ApplicantID:            userID.(uint),
+		VATTaxpayerCertificate: params.VATTaxpayerCertificate,
+		OfficialNewspaperAD:    params.OfficialNewspaperAD,
+	}
+	if err := corporationController.corporationService.AddCertificateFilesFromProfile(requestInfo); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addCorporationCertificate")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) GetCorporationRoles(ctx *gin.Context) {
+	type getRolesParams struct {
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+	}
+	params := controller.Validated[getRolesParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
+
+	request := corporationdto.GetRolesListRequest{
+		Query:  params.Query,
+		Offset: offset,
+		Limit:  limit,
+	}
+
+	roles, count, err := corporationController.corporationService.GetCorporationRoles(request)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(roles, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
+}
+
+func (corporationController *CorporationCorporationController) CreateCorporationStaff(ctx *gin.Context) {
+	type addStaffParams struct {
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Phone         string `json:"phone" validate:"required,e164"`
+		RoleIDs       []uint `json:"roleIDs" validate:"required"`
+	}
+	params := controller.Validated[addStaffParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	request := corporationdto.AddStaffRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    userID.(uint),
+		StaffPhone:    params.Phone,
+		RoleIDs:       params.RoleIDs,
+	}
+	if err := corporationController.corporationService.AddStaff(request); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addStaff")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) GetStaffStatuses(ctx *gin.Context) {
+	statuses := corporationController.corporationService.GetStaffStatuses()
+	controller.Response(ctx, 200, "", statuses)
+}
+
+func (corporationController *CorporationCorporationController) EditCorporationStaff(ctx *gin.Context) {
+	type editStaffParams struct {
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		StaffID       uint   `uri:"staffID" validate:"required"`
+		Status        *uint  `json:"status"`
+		RoleIDs       []uint `json:"roleIDs"`
+	}
+	params := controller.Validated[editStaffParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	request := corporationdto.EditStaffRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    userID.(uint),
+		StaffID:       params.StaffID,
+		Status:        params.Status,
+		RoleIDs:       params.RoleIDs,
+	}
+	if err := corporationController.corporationService.EditStaff(request); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.editStaff")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *CorporationCorporationController) GetStaffList(ctx *gin.Context) {
+	type getStaffParams struct {
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Query         string `form:"query"`
+		Status        uint   `form:"status"`
+		Page          int    `form:"page"`
+		PageSize      int    `form:"pageSize"`
+		SortBy        uint   `form:"sortBy"`
+		Asc           bool   `form:"asc"`
+	}
+	params := controller.Validated[getStaffParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
+
+	request := corporationdto.GetStaffList{
+		CorporationID: params.CorporationID,
+		Query:         params.Query,
+		Status:        params.Status,
+		Offset:        offset,
+		Limit:         limit,
+		SortBy:        params.SortBy,
+		Asc:           params.Asc,
+	}
+	staffs, count, err := corporationController.corporationService.GetStaffList(request)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(staffs, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
+}
+
+func (corporationController *CorporationCorporationController) GetStaff(ctx *gin.Context) {
+	type getStaffParams struct {
+		CorporationID uint `uri:"corporationID" validate:"required"`
+		StaffID       uint `uri:"staffID" validate:"required"`
+	}
+	params := controller.Validated[getStaffParams](ctx)
+
+	staff, err := corporationController.corporationService.GetStaff(params.CorporationID, params.StaffID)
+	if err != nil {
+		panic(err)
+	}
+
+	controller.Response(ctx, 200, "", staff)
 }

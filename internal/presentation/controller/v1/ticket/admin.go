@@ -31,11 +31,13 @@ func NewAdminTicketController(
 
 func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 	type GetTicketsRequest struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Query    string `form:"query"`
+		Subject  uint   `form:"subject"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[GetTicketsRequest](ctx)
 
@@ -46,6 +48,8 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 	requestInfo := ticketdto.TicketListRequest{
 		OwnerID: ownerID.(uint),
 		Status:  params.Status,
+		Query:   params.Query,
+		Subject: params.Subject,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
@@ -57,8 +61,8 @@ func (ticketController *AdminTicketController) GetTickets(ctx *gin.Context) {
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(tickets, count, offset, limit)
-
 	controller.Response(ctx, 200, "", data)
+
 }
 
 func (ticketController *AdminTicketController) GetComments(ctx *gin.Context) {

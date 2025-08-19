@@ -67,6 +67,7 @@ var English = map[string]interface{}{
 		"invalidAuthCredentials": "Username and password not matched",
 		"expiredAuthToken":       "Your token has been expired. Please log in again.",
 		"invalidAuthToken":       "There is a problem with your token.",
+		"invalidRecaptcha":       "Recaptcha is invalid.",
 		"unauthorized":           "Please login first.",
 		"awaitingApproval":       "Your account is awaiting admin approval.",
 		"rejected":               "Your account has been rejected by admin.",
@@ -89,6 +90,7 @@ var English = map[string]interface{}{
 		"alreadyRejected":        "This {0} has been already rejected.",
 		"alreadyAccepted":        "This {0} has been already accepted.",
 		"alreadyDraft":           "This {0} has been already drafted.",
+		"bannedUser":             "Your account is currently banned. You are not allowed to perform this action.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":               "Registration Successful! Please check your messages to verify your account and complete the registration process.",
@@ -170,6 +172,10 @@ var English = map[string]interface{}{
 		"updateInstallationRequest":  "The installation request has been updated successfully.",
 		"deleteInstallationRequest":  "The installation request has been deleted successfully.",
 		"updatePanel":                "The panel has been updated.",
+		"deleteBid":                  "Bid has been removed successfully.",
+		"deletePanel":                "Panel has been deleted successfully",
+		"editStaff":                  "Staff credential has been updated successfully.",
+		"addStaff":                   "New staff has been added successfully.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "Verify Your Email Address",

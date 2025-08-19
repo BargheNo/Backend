@@ -28,11 +28,12 @@ func NewAdminReportController(
 
 func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Context) {
 	type GetMaintenanceReportsRequest struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[GetMaintenanceReportsRequest](ctx)
 
@@ -42,28 +43,31 @@ func (reportController *AdminReportController) GetMaintenanceReports(ctx *gin.Co
 
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
+		Query:   params.Query,
 		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
+
 	reports, count, err := reportController.reportService.GetMaintenanceReports(requestInfo)
 	if err != nil {
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(reports, count, offset, limit)
-
 	controller.Response(ctx, 200, "", data)
+
 }
 
 func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context) {
 	type GetPanelReportsRequest struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[GetPanelReportsRequest](ctx)
 
@@ -73,19 +77,21 @@ func (reportController *AdminReportController) GetPanelReports(ctx *gin.Context)
 
 	requestInfo := reportdto.ReportListRequest{
 		OwnerID: ownerID.(uint),
+		Query:   params.Query,
 		Status:  params.Status,
 		Offset:  offset,
 		Limit:   limit,
 		SortBy:  params.SortBy,
 		Asc:     params.Asc,
 	}
+
 	reports, count, err := reportController.reportService.GetPanelReports(requestInfo)
 	if err != nil {
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(reports, count, offset, limit)
-
 	controller.Response(ctx, 200, "", data)
+
 }
 
 func (reportController *AdminReportController) ResolveReport(ctx *gin.Context) {

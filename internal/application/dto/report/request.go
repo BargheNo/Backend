@@ -10,6 +10,7 @@ type CreateReportRequest struct {
 
 type ReportListRequest struct {
 	OwnerID uint
+	Query   string
 	Status  uint
 	Offset  int
 	Limit   int
@@ -24,4 +25,12 @@ type ResolveReportRequest struct {
 
 type ReportNotificationData struct {
 	ReportID uint
+}
+
+type SearchReportsRequest struct {
+	Query  string
+	Offset int
+	Limit  int
+	SortBy uint
+	Asc    bool
 }

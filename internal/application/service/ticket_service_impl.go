@@ -87,6 +87,18 @@ func (ticketService *TicketService) GetTicketStatuses() []ticketdto.TicketEnumRe
 	return responses
 }
 
+func (ticketService *TicketService) GetTicketSubjects() []ticketdto.TicketEnumResponse {
+	subjects := enum.GetAllTicketSubjects()
+	responses := make([]ticketdto.TicketEnumResponse, len(subjects))
+	for i, subject := range subjects {
+		responses[i] = ticketdto.TicketEnumResponse{
+			ID:   uint(subject),
+			Name: subject.String(),
+		}
+	}
+	return responses
+}
+
 func (ticketService *TicketService) getTicket(ticketID uint) (*entity.Ticket, error) {
 	ticket, err := ticketService.ticketRepository.FindTicketByID(ticketService.db, ticketID)
 	if err != nil {
@@ -101,7 +113,7 @@ func (ticketService *TicketService) getTicket(ticketID uint) (*entity.Ticket, er
 
 func (ticketService *TicketService) CreateCustomerTicket(requestInfo ticketdto.CreateTicketRequest) error {
 	ticket := &entity.Ticket{
-		Subject:     requestInfo.Subject,
+		Subject:     enum.TicketSubject(requestInfo.Subject),
 		Description: requestInfo.Description,
 		Status:      enum.TicketStatusNotAnswered,
 		OwnerID:     requestInfo.OwnerID,
@@ -129,6 +141,30 @@ func (ticketService *TicketService) CreateCustomerTicket(requestInfo ticketdto.C
 	return err
 }
 
+func (ticketService *TicketService) getCustomerTicketsByQuery(ownerID uint, allowedStatus []enum.TicketStatus, query string, options *postgres.QueryOptions) ([]*entity.Ticket, int64, error) {
+	if query == "" {
+		tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, ownerID, allowedStatus, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := ticketService.ticketRepository.CountCustomerTicketsByStatus(ticketService.db, ownerID, allowedStatus)
+		if err != nil {
+			return nil, 0, err
+		}
+		return tickets, count, nil
+	}
+
+	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByQuery(ticketService.db, ownerID, allowedStatus, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := ticketService.ticketRepository.CountCustomerTicketsByQuery(ticketService.db, ownerID, allowedStatus, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return tickets, count, nil
+}
+
 func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(requestInfo.Limit, requestInfo.Offset).
@@ -136,7 +172,7 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 
 	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
 
-	tickets, err := ticketService.ticketRepository.FindCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses, options)
+	tickets, count, err := ticketService.getCustomerTicketsByQuery(requestInfo.OwnerID, statuses, requestInfo.Query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -163,11 +199,6 @@ func (ticketService *TicketService) GetCustomerTickets(requestInfo ticketdto.Tic
 				return nil, 0, err
 			}
 		}
-	}
-
-	count, err := ticketService.ticketRepository.CountCustomerTicketsByStatus(ticketService.db, requestInfo.OwnerID, statuses)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return responses, count, nil
@@ -253,16 +284,67 @@ func (ticketService *TicketService) CreateAdminTicketComment(requestInfo ticketd
 		return conflictErrors
 	}
 
-	comment := &entity.TicketComment{
-		TicketID:  requestInfo.TicketID,
-		OwnerID:   requestInfo.OwnerID,
-		OwnerType: requestInfo.OwnerType,
-		Body:      requestInfo.Body,
+	err = ticketService.db.WithTransaction(func(tx database.Database) error {
+		comment := &entity.TicketComment{
+			TicketID:  requestInfo.TicketID,
+			OwnerID:   requestInfo.OwnerID,
+			OwnerType: requestInfo.OwnerType,
+			Body:      requestInfo.Body,
+		}
+		if err = ticketService.ticketRepository.CreateTicketComment(tx, comment); err != nil {
+			return err
+		}
+
+		if ticket.Status == enum.TicketStatusNotAnswered {
+			ticket.Status = enum.TicketStatusAnswered
+			if err = ticketService.ticketRepository.UpdateTicket(tx, ticket); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (ticketService *TicketService) getAdminTicketsByQuery(query string, allowedStatuses []enum.TicketStatus, allowedSubjects []enum.TicketSubject, options *postgres.QueryOptions) ([]*entity.Ticket, int64, error) {
+
+	if query == "" {
+		tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, allowedStatuses, allowedSubjects, options)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		count, err := ticketService.ticketRepository.CountTicketsByStatus(ticketService.db, allowedStatuses, allowedSubjects)
+		if err != nil {
+			return nil, 0, err
+		}
+		return tickets, count, nil
 	}
-	if err = ticketService.ticketRepository.CreateTicketComment(ticketService.db, comment); err != nil {
-		return err
+
+	tickets, err := ticketService.ticketRepository.FindTicketsByQuery(ticketService.db, query, allowedStatuses, allowedSubjects, options)
+	if err != nil {
+		return nil, 0, err
 	}
-	return nil
+	count, err := ticketService.ticketRepository.CountTicketsByQuery(ticketService.db, query, allowedStatuses, allowedSubjects)
+	if err != nil {
+		return nil, 0, err
+	}
+	return tickets, count, nil
+}
+
+func (ticketService *TicketService) mapToFilterSubjects(enumSubject uint) []enum.TicketSubject {
+	subjects := enum.GetAllTicketSubjects()
+	for _, subject := range subjects {
+		if uint(subject) == enumSubject {
+			if subject == enum.TicketSubjectAll {
+				return subjects
+			}
+			return []enum.TicketSubject{subject}
+		}
+	}
+	return subjects
 }
 
 func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.TicketListRequest) ([]ticketdto.TicketResponse, int64, error) {
@@ -271,8 +353,9 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 		WithSorting(ticketService.getSortByColumn(requestInfo.SortBy), requestInfo.Asc)
 
 	statuses := ticketService.mapToFilterStatuses(requestInfo.Status)
+	subjects := ticketService.mapToFilterSubjects(requestInfo.Subject)
 
-	tickets, err := ticketService.ticketRepository.FindTicketsByStatus(ticketService.db, statuses, options)
+	tickets, count, err := ticketService.getAdminTicketsByQuery(requestInfo.Query, statuses, subjects, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -300,10 +383,6 @@ func (ticketService *TicketService) GetAdminTickets(requestInfo ticketdto.Ticket
 			}
 			responses[i].Image = image
 		}
-	}
-	count, err := ticketService.ticketRepository.CountTicketsByStatus(ticketService.db, statuses)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return responses, count, nil

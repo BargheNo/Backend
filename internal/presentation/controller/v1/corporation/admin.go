@@ -34,11 +34,12 @@ func (corporationController *AdminCorporationController) GetCorporationStatus(ct
 
 func (corporationController *AdminCorporationController) GetCorporations(ctx *gin.Context) {
 	type getCorporationsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getCorporationsParams](ctx)
 
@@ -46,18 +47,20 @@ func (corporationController *AdminCorporationController) GetCorporations(ctx *gi
 
 	listInfo := corporationdto.GetCorporationsByAdminRequest{
 		Status: params.Status,
-		Limit:  limit,
+		Query:  params.Query,
 		Offset: offset,
+		Limit:  limit,
 		SortBy: params.SortBy,
 		Asc:    params.Asc,
 	}
+
 	corporations, count, err := corporationController.corporationService.GetCorporationsByAdmin(listInfo)
 	if err != nil {
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(corporations, count, offset, limit)
-
 	controller.Response(ctx, 200, "", data)
+
 }
 
 func (corporationController *AdminCorporationController) GetCorporation(ctx *gin.Context) {
@@ -141,5 +144,87 @@ func (corporationController *AdminCorporationController) RejectCorporationReques
 
 	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.rejectCorporation")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *AdminCorporationController) GetStaffList(ctx *gin.Context) {
+	type getStaffParams struct {
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Query         string `form:"query"`
+		Status        uint   `form:"status"`
+		Page          int    `form:"page"`
+		PageSize      int    `form:"pageSize"`
+		SortBy        uint   `form:"sortBy"`
+		Asc           bool   `form:"asc"`
+	}
+	params := controller.Validated[getStaffParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, corporationController.pagination.DefaultPage, corporationController.pagination.DefaultPageSize)
+
+	request := corporationdto.GetStaffList{
+		CorporationID: params.CorporationID,
+		Query:         params.Query,
+		Status:        params.Status,
+		Offset:        offset,
+		Limit:         limit,
+		SortBy:        params.SortBy,
+		Asc:           params.Asc,
+	}
+	staffs, count, err := corporationController.corporationService.GetStaffList(request)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(staffs, count, offset, limit)
+
+	controller.Response(ctx, 200, "", data)
+}
+
+func (corporationController *AdminCorporationController) CreateCorporationStaff(ctx *gin.Context) {
+	type addStaffParams struct {
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		Phone         string `json:"phone" validate:"required,e164"`
+		RoleIDs       []uint `json:"roleIDs" validate:"required"`
+	}
+	params := controller.Validated[addStaffParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	request := corporationdto.AddStaffRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    userID.(uint),
+		StaffPhone:    params.Phone,
+		RoleIDs:       params.RoleIDs,
+	}
+	if err := corporationController.corporationService.AddStaff(request); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.addStaff")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (corporationController *AdminCorporationController) EditCorporationStaff(ctx *gin.Context) {
+	type editStaffParams struct {
+		CorporationID uint   `uri:"corporationID" validate:"required"`
+		StaffID       uint   `uri:"staffID" validate:"required"`
+		Status        *uint  `json:"status"`
+		RoleIDs       []uint `json:"roleIDs"`
+	}
+	params := controller.Validated[editStaffParams](ctx)
+	userID, _ := ctx.Get(corporationController.constants.Context.ID)
+
+	request := corporationdto.EditStaffRequest{
+		CorporationID: params.CorporationID,
+		OperatorID:    userID.(uint),
+		StaffID:       params.StaffID,
+		Status:        params.Status,
+		RoleIDs:       params.RoleIDs,
+	}
+	if err := corporationController.corporationService.EditStaff(request); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, corporationController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.editStaff")
 	controller.Response(ctx, 200, message, nil)
 }

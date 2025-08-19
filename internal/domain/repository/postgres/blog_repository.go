@@ -15,12 +15,16 @@ type BlogRepository interface {
 	DeletePost(db database.Database, postID uint) error
 	FindCorporationPost(db database.Database, postID uint, corporationID uint) (*entity.Post, error)
 	FindCorporationPostByTitle(db database.Database, corporationID uint, title string) (*entity.Post, error)
-	FindCorporationPostsByStatus(db database.Database, corporationID uint, statuses []enum.PostStatus, options *QueryOptions) ([]entity.Post, error)
-	FindLikeByUserAndBlogID(db database.Database, userID, ownerID uint) (*entity.Like, error)
+	FindCorporationPostsByStatus(db database.Database, corporationID uint, statuses []enum.PostStatus, options *QueryOptions) ([]*entity.Post, error)
 	CountCorporationPostsByStatus(db database.Database, corporationID uint, statuses []enum.PostStatus) (int64, error)
+	FindCorporationPostsByStatusAndQuery(db database.Database, query string, corporationID uint, statuses []enum.PostStatus, options *QueryOptions) ([]*entity.Post, error)
+	CountCorporationPostsByStatusAndQuery(db database.Database, query string, corporationID uint, statuses []enum.PostStatus) (int64, error)
+	FindLikeByUserAndBlogID(db database.Database, userID, ownerID uint) (*entity.Like, error)
 	FindPostByID(db database.Database, postID uint) (*entity.Post, error)
-	FindPostsByStatus(db database.Database, statuses []enum.PostStatus, options *QueryOptions) ([]entity.Post, error)
+	FindPostsByStatus(db database.Database, statuses []enum.PostStatus, options *QueryOptions) ([]*entity.Post, error)
 	CountPostsByStatus(db database.Database, statuses []enum.PostStatus) (int64, error)
+	FindPostsByStatusAndQuery(db database.Database, query string, statuses []enum.PostStatus, options *QueryOptions) ([]*entity.Post, error)
+	CountPostsByStatusAndQuery(db database.Database, query string, statuses []enum.PostStatus) (int64, error)
 	FindPostMediaByID(db database.Database, mediaID, postID uint, ownerType string) (*entity.Media, error)
 	UpdatePost(db database.Database, post *entity.Post) error
 }

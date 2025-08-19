@@ -7,7 +7,10 @@ import (
 
 type CorporationStaff struct {
 	database.Model
-	StaffID       uint           `gorm:"not null;index"`
-	CorporationID uint           `gorm:"not null;index"`
-	StaffType     enum.StaffType `gorm:"not null;index"`
+	UserID        uint             `gorm:"not null;index"`
+	User          User             `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	CorporationID uint             `gorm:"not null;index"`
+	Corporation   Corporation      `gorm:"foreignKey:CorporationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Status        enum.StaffStatus `gorm:"default:1;not null"`
+	Roles         []Role           `gorm:"many2many:staff_roles;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

@@ -26,6 +26,7 @@ type Context struct {
 	IsLoadedValidationTranslator string
 	ID                           string
 	WebsocketConnection          string
+	CorporationID                string
 }
 
 type LogLevel struct {
@@ -43,6 +44,7 @@ type BucketPath struct {
 }
 
 type ErrorField struct {
+	Recaptcha           string
 	User                string
 	Phone               string
 	Email               string
@@ -82,6 +84,7 @@ type ErrorField struct {
 	Post                string
 	Like                string
 	CorporationReview   string
+	CorporationStaff    string
 }
 
 type ErrorTag struct {
@@ -115,6 +118,7 @@ type ErrorTag struct {
 	AlreadyRejected        string
 	AlreadyAccepted        string
 	AlreadyDraft           string
+	InvalidRecaptcha       string
 }
 
 type SMSTemplates struct {
@@ -208,6 +212,7 @@ func NewConstants() *Constants {
 			IsLoadedValidationTranslator: "isLoadedValidationTranslator",
 			ID:                           "ID",
 			WebsocketConnection:          "wsConnection",
+			CorporationID:                "corporationID",
 		},
 		LogLevel: LogLevel{
 			Debug: "debug",
@@ -217,6 +222,7 @@ func NewConstants() *Constants {
 			Fatal: "fatal",
 		},
 		Field: ErrorField{
+			Recaptcha:           "recaptcha",
 			User:                "user",
 			Phone:               "phone",
 			Email:               "email",
@@ -256,6 +262,7 @@ func NewConstants() *Constants {
 			Post:                "post",
 			Like:                "like",
 			CorporationReview:   "corporationReview",
+			CorporationStaff:    "corporationStaff",
 		},
 		Tag: ErrorTag{
 			AlreadyRegistered:      "alreadyRegistered",
@@ -288,6 +295,7 @@ func NewConstants() *Constants {
 			AlreadyRejected:        "alreadyRejected",
 			AlreadyAccepted:        "alreadyAccepted",
 			AlreadyDraft:           "alreadyDraft",
+			InvalidRecaptcha:       "invalidRecaptcha",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

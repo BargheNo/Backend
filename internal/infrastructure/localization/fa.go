@@ -66,6 +66,7 @@ var Persian = map[string]interface{}{
 		"invalidAuthCredentials": "نام کاربری و رمز عبور تطابق ندارند.",
 		"expiredAuthToken":       "نشست شما منقضی شده است. لطفا دوباره وارد شوید.",
 		"invalidAuthToken":       "در توکن ورود شما اشکالی وجود دارد.",
+		"invalidRecaptcha":       "ریکپچا اشتباه است.",
 		"unauthorized":           "ابتدا باید وارد شوید.",
 		"awaitingApproval":       "حساب شما در انتظار تایید ادمین است.",
 		"rejected":               "حساب شما توسط ادمین رد شده است.",
@@ -89,6 +90,7 @@ var Persian = map[string]interface{}{
 		"alreadyRejected":        "این {0} قبلا رد شده است.",
 		"alreadyAccepted":        "این {0} قبلا قبول شده است.",
 		"alreadyDraft":           "این {0} قبلا در حالت پیش نویس قرار گرفته است.",
+		"bannedUser":             "حساب شما مسدود شده است. شما مجاز به انجام این عمل نیستید.",
 	},
 	"successMessage": map[string]interface{}{
 		"userRegister":              "ثبت نام موفق بود! لطفاً پیامک های خود را بررسی کنید تا حساب خود را تأیید کرده و فرآیند ثبت نام را تکمیل نمایید.",
@@ -170,6 +172,10 @@ var Persian = map[string]interface{}{
 		"updateInstallationRequest": "درخواست نصب با موفقیت به روز رسانی شد.",
 		"deleteInstallationRequest": "درخواست نصب با موفقیت حذف شد.",
 		"updatePanel":               "پنل مورد نظر با موفقیت به روزرسانی شد.",
+		"deleteBid":                 "پیشنهاد مورد نظر با موفقیت حذف شد.",
+		"deletePanel":               "پنل مورد نظر شما با موفقیت حذف شد.",
+		"editStaff":                 "مسئول مورد نظر شما با موفقیت به روزرسانی شد.",
+		"addStaff":                  "مسئول مورد نظر شما با موفقیت اضافه شد.",
 	},
 	"emailSubject": map[string]interface{}{
 		"emailConfirmation": "تأیید آدرس ایمیل شما",

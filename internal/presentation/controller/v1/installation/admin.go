@@ -28,11 +28,12 @@ func NewAdminInstallationController(
 
 func (installationController *AdminInstallationController) GetInstallationRequests(ctx *gin.Context) {
 	type getRequestsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getRequestsParams](ctx)
 
@@ -40,11 +41,13 @@ func (installationController *AdminInstallationController) GetInstallationReques
 
 	listInfo := installationdto.AdminInstallationListRequest{
 		Status: params.Status,
+		Query:  params.Query,
 		Offset: offset,
 		Limit:  limit,
 		SortBy: params.SortBy,
 		Asc:    params.Asc,
 	}
+
 	requests, count, err := installationController.installationService.GetInstallationRequestsByAdmin(listInfo)
 	if err != nil {
 		panic(err)
@@ -117,11 +120,12 @@ func (installationController *AdminInstallationController) DeleteInstallationReq
 
 func (installationController *AdminInstallationController) GetPanels(ctx *gin.Context) {
 	type getPanelsParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Status   uint   `form:"status"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[getPanelsParams](ctx)
 
@@ -129,16 +133,19 @@ func (installationController *AdminInstallationController) GetPanels(ctx *gin.Co
 
 	listInfo := installationdto.AdminInstallationListRequest{
 		Status: params.Status,
+		Query:  params.Query,
 		Offset: offset,
 		Limit:  limit,
 		SortBy: params.SortBy,
 		Asc:    params.Asc,
 	}
+
 	requests, count, err := installationController.installationService.GetPanelsByAdmin(listInfo)
 	if err != nil {
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(requests, count, offset, limit)
+
 	controller.Response(ctx, 200, "", data)
 }
 

@@ -10,6 +10,7 @@ const (
 	SupportAgent
 	ContentManager
 	Moderator
+	CorporationOwner
 )
 
 var rolePermissions = map[RoleName][]PermissionType{
@@ -39,6 +40,9 @@ var rolePermissions = map[RoleName][]PermissionType{
 	Moderator: {
 		CorpBlogViewAll, CorpBlogCreate, CorpBlogEdit, CorpBlogDelete,
 	},
+	CorporationOwner: {
+		CorporationPermissionAll,
+	},
 }
 
 func (role RoleName) Permissions() []PermissionType {
@@ -64,6 +68,8 @@ func (role RoleName) String() string {
 		return "مدیر محتوا"
 	case Moderator:
 		return "ناظر"
+	case CorporationOwner:
+		return "صاحب شرکت"
 	}
 	return "unknown"
 }
@@ -77,5 +83,24 @@ func GetAllRoleNames() []RoleName {
 		SupportAgent,
 		ContentManager,
 		Moderator,
+		CorporationOwner,
+	}
+}
+
+func GetAdminRoleNames() []RoleName {
+	return []RoleName{
+		SuperAdmin,
+		Customer,
+		SupportAgent,
+		ContentManager,
+	}
+}
+
+func GetCorporationRoleNames() []RoleName {
+	return []RoleName{
+		Technician,
+		CorporationManager,
+		Moderator,
+		CorporationOwner,
 	}
 }

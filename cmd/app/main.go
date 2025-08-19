@@ -60,12 +60,18 @@ func main() {
 		&entity.News{},
 		&entity.Post{},
 		&entity.Like{},
+		&entity.PanelStatus{},
+		&entity.PanelHistory{},
+		&entity.PanelEvent{},
 	)
 
 	app.Seeds.AddressSeeder.SeedProvincesAndCities()
 	app.Seeds.NotificationTypeSeeder.SeedNotificationTypes()
 	app.Seeds.RoleSeeder.SeedRoles()
 	app.Seeds.ContactType.SeedContactTypes()
+
+	app.MQTTSubscription.MQTTSubscription.SetupMQTTSubscriptions()
+	go app.MQTTSubscription.MQTTSubscription.RefreshMQTTSubscriptions()
 
 	if err := app.Consumers.Register.Start(); err != nil {
 		panic(err)

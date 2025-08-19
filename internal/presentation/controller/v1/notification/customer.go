@@ -60,6 +60,7 @@ func (notificationController *CustomerNotificationController) MarkAsRead(ctx *gi
 func (notificationController *CustomerNotificationController) GetUserNotifications(ctx *gin.Context) {
 	type notificationsParams struct {
 		Types    []uint `form:"notificationTypes" validate:"required"`
+		IsRead   bool   `form:"isRead"`
 		Page     int    `form:"page"`
 		PageSize int    `form:"pageSize"`
 		SortBy   uint   `form:"sortBy"`
@@ -72,6 +73,7 @@ func (notificationController *CustomerNotificationController) GetUserNotificatio
 
 	notificationsRequest := notificationdto.NotificationListRequest{
 		Types:  params.Types,
+		IsRead: params.IsRead,
 		UserID: userID.(uint),
 		Offset: offset,
 		Limit:  limit,

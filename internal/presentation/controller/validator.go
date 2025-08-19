@@ -13,7 +13,6 @@ var validate *validator.Validate = validator.New()
 func Validated[T any](ctx *gin.Context) T {
 	var params T
 	if err := ctx.ShouldBindUri(&params); err != nil {
-
 		bindingError := exception.BindingError{Err: err}
 		panic(bindingError)
 	}

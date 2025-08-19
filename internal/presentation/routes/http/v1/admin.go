@@ -29,7 +29,7 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 				requestSubGroup.GET("", app.Controllers.Admin.InstallationController.GetInstallationRequest)
 				requestSubGroup.DELETE("", app.Controllers.Admin.InstallationController.DeleteInstallationRequest)
 				requestSubGroup.PUT("", app.Controllers.Admin.InstallationController.UpdateInstallationRequest)
-				requestSubGroup.GET("/bid", app.Controllers.Admin.BidController.GetBids)
+				requestSubGroup.GET("/bid", app.Controllers.Admin.BidController.GetRequestBids)
 			}
 		}
 
@@ -42,18 +42,21 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 				panelsSubGroup.GET("", app.Controllers.Admin.InstallationController.GetPanel)
 				panelsSubGroup.PUT("", app.Controllers.Admin.InstallationController.UpdatePanel)
 				panelsSubGroup.DELETE("", app.Controllers.Admin.InstallationController.DeletePanel)
+				panelsSubGroup.GET("/status", app.Controllers.Admin.MonitoringController.GetPanelStatus)
+				panelsSubGroup.GET("/history", app.Controllers.Admin.MonitoringController.GetPanelHistory)
+				panelsSubGroup.GET("/event", app.Controllers.Admin.MonitoringController.GetPanelEvent)
 			}
 		}
 	}
 
-	bids := routerGroup.Group("/bids")
+	bids := routerGroup.Group("/bid")
 	{
-		bids.GET("")
+		bids.GET("", app.Controllers.Admin.BidController.GetBids)
 		bidsSubGroup := bids.Group("/:bidID")
 		{
-			bidsSubGroup.GET("")
-			bidsSubGroup.PUT("")
-			bidsSubGroup.DELETE("")
+			bidsSubGroup.GET("", app.Controllers.Admin.BidController.GetBid)
+			bidsSubGroup.PUT("", app.Controllers.Admin.BidController.UpdateBid)
+			bidsSubGroup.DELETE("", app.Controllers.Admin.BidController.DeleteBid)
 		}
 	}
 
@@ -84,6 +87,13 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 		{
 			userRoles.GET("", app.Controllers.Admin.UserController.GetUserRoles)
 			userRoles.PUT("", app.Controllers.Admin.UserController.UpdateUserRoles)
+		}
+
+		corporationStaffs := accessManagement.Group("/corporation/:corporationID/staff")
+		{
+			corporationStaffs.GET("", app.Controllers.Admin.CorporationController.GetStaffList)
+			corporationStaffs.POST("", app.Controllers.Admin.CorporationController.CreateCorporationStaff)
+			corporationStaffs.PUT("/:staffID", app.Controllers.Admin.CorporationController.EditCorporationStaff)
 		}
 	}
 
@@ -135,6 +145,10 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 			newsSubgroup.DELETE("/media/:mediaID", app.Controllers.Admin.NewsController.DeleteNewsMedia)
 			newsSubgroup.GET("/media/:mediaID", app.Controllers.Admin.NewsController.GetNewsMedia)
 		}
+	}
 
+	blog := routerGroup.Group("/blog")
+	{
+		blog.DELETE("/:postID", app.Controllers.Admin.BlogController.DeletePost)
 	}
 }

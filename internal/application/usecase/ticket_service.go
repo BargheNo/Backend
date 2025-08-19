@@ -13,4 +13,5 @@ type TicketService interface {
 	GetAdminTicketComments(requestInfo ticketdto.TicketCommentListRequest) ([]ticketdto.TicketCommentResponse, error)
 	ResolveTicket(requestInfo ticketdto.ResolveTicketRequest) error
 	GetTicketStatuses() []ticketdto.TicketEnumResponse
+	GetTicketSubjects() []ticketdto.TicketEnumResponse
 }

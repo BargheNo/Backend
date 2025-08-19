@@ -14,14 +14,15 @@ type UserInfoResponse struct {
 }
 
 type CredentialResponse struct {
-	ID         uint   `json:"id"`
-	FirstName  string `json:"firstName"`
-	LastName   string `json:"lastName"`
-	Phone      string `json:"phone"`
-	Email      string `json:"email"`
-	NationalID string `json:"nationalID"`
-	ProfilePic string `json:"profilePic"`
-	Status     string `json:"status"`
+	ID            uint   `json:"id"`
+	FirstName     string `json:"firstName"`
+	LastName      string `json:"lastName"`
+	Phone         string `json:"phone"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"emailVerified"`
+	NationalID    string `json:"nationalID"`
+	ProfilePic    string `json:"profilePic"`
+	Status        string `json:"status"`
 }
 
 type UserResponse struct {
@@ -31,6 +32,7 @@ type UserResponse struct {
 type RoleResponse struct {
 	ID          uint                 `json:"id"`
 	Name        string               `json:"name"`
+	IsCorpStaff bool                 `json:"isCorpStaff"`
 	Permissions []PermissionResponse `json:"permissions"`
 }
 
@@ -38,6 +40,7 @@ type PermissionResponse struct {
 	ID          uint   `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	IsCorpStaff bool   `json:"isCorpStaff"`
 	Category    string `json:"category"`
 }
 

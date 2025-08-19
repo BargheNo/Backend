@@ -14,6 +14,7 @@ import (
 	"github.com/BargheNo/Backend/internal/domain/enum/sortby"
 	"github.com/BargheNo/Backend/internal/domain/exception"
 	"github.com/BargheNo/Backend/internal/domain/message"
+	"github.com/BargheNo/Backend/internal/domain/recaptcha"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	"github.com/BargheNo/Backend/internal/domain/repository/redis"
 	"github.com/BargheNo/Backend/internal/domain/s3"
@@ -32,6 +33,7 @@ type UserService struct {
 	userRepository      postgres.UserRepository
 	userCacheRepository redis.UserCacheRepository
 	db                  database.Database
+	recaptcha           recaptcha.Recaptcha
 }
 
 type UserServiceDeps struct {
@@ -45,6 +47,7 @@ type UserServiceDeps struct {
 	UserRepository      postgres.UserRepository
 	UserCacheRepository redis.UserCacheRepository
 	DB                  database.Database
+	Recaptcha           recaptcha.Recaptcha
 }
 
 func NewUserService(deps UserServiceDeps) *UserService {
@@ -59,6 +62,7 @@ func NewUserService(deps UserServiceDeps) *UserService {
 		userRepository:      deps.UserRepository,
 		userCacheRepository: deps.UserCacheRepository,
 		db:                  deps.DB,
+		recaptcha:           deps.Recaptcha,
 	}
 }
 
@@ -222,14 +226,9 @@ func (userService *UserService) FindActiveUserByPhone(phone string) (*entity.Use
 	if err != nil {
 		return nil, err
 	}
-	if user == nil {
+	if user == nil || !user.PhoneVerified {
 		notFoundError := exception.NotFoundError{Item: userService.constants.Field.User}
 		return nil, notFoundError
-	}
-	if !user.PhoneVerified {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Phone, userService.constants.Tag.NotVerified)
-		return nil, conflictErrors
 	}
 
 	return user, nil
@@ -249,14 +248,15 @@ func (userService *UserService) GetUserCredential(userID uint) (userdto.Credenti
 		}
 	}
 	return userdto.CredentialResponse{
-		ID:         user.ID,
-		FirstName:  user.FirstName,
-		LastName:   user.LastName,
-		Phone:      user.Phone,
-		Email:      user.Email,
-		NationalID: user.NationalCode,
-		ProfilePic: profilePic,
-		Status:     user.Status.String(),
+		ID:            user.ID,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+		Phone:         user.Phone,
+		Email:         user.Email,
+		EmailVerified: user.EmailVerified,
+		NationalID:    user.NationalCode,
+		ProfilePic:    profilePic,
+		Status:        user.Status.String(),
 	}, nil
 }
 
@@ -277,6 +277,29 @@ func (userService *UserService) mapToFilterStatuses(enumStatus uint) []enum.User
 	return statuses
 }
 
+func (userService *UserService) getUsersByQuery(query string, statuses []enum.UserStatus, options *postgres.QueryOptions) ([]*entity.User, int64, error) {
+	if query == "" {
+		users, err := userService.userRepository.FindUserByStatus(userService.db, statuses, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := userService.userRepository.CountUserByStatus(userService.db, statuses)
+		if err != nil {
+			return nil, 0, err
+		}
+		return users, count, nil
+	}
+	users, err := userService.userRepository.FindUsersByQuery(userService.db, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := userService.userRepository.CountUsersByQuery(userService.db, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return users, count, nil
+}
+
 func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListRequest) ([]userdto.CredentialResponse, int64, error) {
 	statuses := userService.mapToFilterStatuses(request.Status)
 
@@ -284,7 +307,7 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 		WithPagination(request.Limit, request.Offset).
 		WithSorting(userService.getSortByColumn(request.SortBy), request.Asc)
 
-	users, err := userService.userRepository.FindUserByStatus(userService.db, statuses, options)
+	users, count, err := userService.getUsersByQuery(request.Query, statuses, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -298,19 +321,16 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 			}
 		}
 		usersResponse[i] = userdto.CredentialResponse{
-			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
-			Phone:      user.Phone,
-			Email:      user.Email,
-			NationalID: user.NationalCode,
-			ProfilePic: profilePic,
-			Status:     user.Status.String(),
+			ID:            user.ID,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Phone:         user.Phone,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+			NationalID:    user.NationalCode,
+			ProfilePic:    profilePic,
+			Status:        user.Status.String(),
 		}
-	}
-	count, err := userService.userRepository.CountUserByStatus(userService.db, statuses)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return usersResponse, count, nil
@@ -336,9 +356,16 @@ func (userService *UserService) GetPermissionRoles(request userdto.GetPermission
 	}
 	rolesResponse := make([]userdto.RoleResponse, len(roles))
 	for i, role := range roles {
+		permissions, err := userService.getRolePermissions(role)
+		if err != nil {
+			return nil, 0, err
+		}
+		isCorpStaff := role.UserType == enum.UserTypeCorporation
 		rolesResponse[i] = userdto.RoleResponse{
-			ID:   role.ID,
-			Name: role.Name,
+			ID:          role.ID,
+			Name:        role.Name,
+			IsCorpStaff: isCorpStaff,
+			Permissions: permissions,
 		}
 	}
 	count, err := userService.userRepository.CountRolesByPermission(userService.db, request.PermissionID)
@@ -387,7 +414,12 @@ func (userService *UserService) UnbanUser(userID uint) error {
 }
 
 func (userService *UserService) Register(registerInfo userdto.BasicRegisterRequest) error {
-	err := userService.validateDuplicatePhone(registerInfo.Phone)
+	err := userService.recaptcha.Verify(registerInfo.Recaptcha)
+	if err != nil {
+		return err
+	}
+
+	err = userService.validateDuplicatePhone(registerInfo.Phone)
 	if err != nil {
 		return err
 	}
@@ -485,7 +517,43 @@ func (userService *UserService) FindUserPermissions(user *entity.User) ([]userdt
 	return permissions, nil
 }
 
+func (userService *UserService) RefreshToken(refreshToken string) (userdto.UserInfoResponse, error) {
+	claims, err := userService.jwtService.ValidateToken(refreshToken)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
+	userID := uint(claims["sub"].(float64))
+	user, err := userService.GetUserByID(userID)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
+	accessToken, _, err := userService.jwtService.GenerateToken(userID)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
+	permissions, err := userService.FindUserPermissions(user)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
+	return userdto.UserInfoResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		Permissions:  permissions,
+	}, nil
+}
+
 func (userService *UserService) Login(loginInfo userdto.LoginRequest) (userdto.UserInfoResponse, error) {
+	err := userService.recaptcha.Verify(loginInfo.Recaptcha)
+	if err != nil {
+		return userdto.UserInfoResponse{}, err
+	}
+
 	user, err := userService.FindActiveUserByPhone(loginInfo.Phone)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
@@ -707,26 +775,36 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 	return err
 }
 
-func (userService *UserService) GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error) {
+func (userService *UserService) getRBACUserType(isStaff bool) enum.UserType {
+	permissionUserType := enum.UserTypeAdmin
+	if isStaff {
+		permissionUserType = enum.UserTypeCorporation
+	}
+	return permissionUserType
+}
 
+func (userService *UserService) GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset)
 
-	permissions, err := userService.userRepository.FindAllPermissions(userService.db, options)
+	permissionUserType := userService.getRBACUserType(request.IsStaff)
+	permissions, err := userService.userRepository.FindAllPermissions(userService.db, permissionUserType, options)
 	if err != nil {
 		return nil, 0, err
 	}
 	permissionsResponse := make([]userdto.PermissionResponse, len(permissions))
 	for i, permission := range permissions {
+		isCorpStaff := permission.UserType == enum.UserTypeCorporation
 		permissionsResponse[i] = userdto.PermissionResponse{
 			ID:          permission.ID,
 			Name:        permission.Type.String(),
 			Description: permission.Type.Description(),
+			IsCorpStaff: isCorpStaff,
 			Category:    permission.Category.String(),
 		}
 	}
 
-	count, err := userService.userRepository.CountAllPermissions(userService.db)
+	count, err := userService.userRepository.CountAllPermissions(userService.db, permissionUserType)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -739,21 +817,47 @@ func (userService *UserService) getRolePermissions(role *entity.Role) ([]userdto
 	}
 	permissions := make([]userdto.PermissionResponse, len(role.Permissions))
 	for i, permission := range role.Permissions {
+		isCorpStaff := permission.UserType == enum.UserTypeCorporation
 		permissions[i] = userdto.PermissionResponse{
 			ID:          permission.ID,
 			Name:        permission.Type.String(),
 			Description: permission.Type.Description(),
+			IsCorpStaff: isCorpStaff,
 			Category:    permission.Category.String(),
 		}
 	}
 	return permissions, nil
 }
 
+func (userService *UserService) getRolesByQuery(query string, userType enum.UserType, options *postgres.QueryOptions) ([]*entity.Role, int64, error) {
+	if query == "" {
+		roles, err := userService.userRepository.FindAllRoles(userService.db, userType, options)
+		if err != nil {
+			return nil, 0, err
+		}
+		count, err := userService.userRepository.CountAllRoles(userService.db, userType)
+		if err != nil {
+			return nil, 0, err
+		}
+		return roles, count, nil
+	}
+	roles, err := userService.userRepository.FindRolesByQuery(userService.db, userType, query, options)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := userService.userRepository.CountRolesByQuery(userService.db, userType, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return roles, count, nil
+}
+
 func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset)
 
-	roles, err := userService.userRepository.FindAllRoles(userService.db, options)
+	roleUserType := userService.getRBACUserType(request.IsStaff)
+	roles, count, err := userService.getRolesByQuery(request.Query, roleUserType, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -763,17 +867,15 @@ func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest)
 		if err != nil {
 			return nil, 0, err
 		}
+		isCorpStaff := role.UserType == enum.UserTypeCorporation
 		rolesResponse[i] = userdto.RoleResponse{
 			ID:          role.ID,
 			Name:        role.Name,
+			IsCorpStaff: isCorpStaff,
 			Permissions: permissions,
 		}
 	}
 
-	count, err := userService.userRepository.CountAllRoles(userService.db)
-	if err != nil {
-		return nil, 0, err
-	}
 	return rolesResponse, count, nil
 }
 
@@ -811,10 +913,15 @@ func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest
 		conflictErrors.Add(userService.constants.Field.Role, userService.constants.Tag.AlreadyExist)
 		return conflictErrors
 	}
+	userType := enum.UserTypeAdmin
+	if newRoleRequest.IsStaff {
+		userType = enum.UserTypeCorporation
+	}
+	role := &entity.Role{
+		Name:     newRoleRequest.Name,
+		UserType: userType,
+	}
 	err = userService.db.WithTransaction(func(tx database.Database) error {
-		role := &entity.Role{
-			Name: newRoleRequest.Name,
-		}
 		err = userService.userRepository.CreateRole(tx, role)
 		if err != nil {
 			return err
@@ -829,6 +936,10 @@ func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest
 			permission, err := userService.getPermission(permissionID)
 			if err != nil {
 				return err
+			}
+			isStaffPermission := permission.UserType == enum.UserTypeCorporation
+			if isStaffPermission != newRoleRequest.IsStaff {
+				continue
 			}
 
 			if err := userService.userRepository.AssignPermissionToRole(tx, role, permission); err != nil {
@@ -853,9 +964,11 @@ func (userService *UserService) GetRoleDetails(roleID uint) (userdto.RoleRespons
 		return userdto.RoleResponse{}, err
 	}
 
+	isCorpStaff := role.UserType == enum.UserTypeCorporation
 	return userdto.RoleResponse{
 		ID:          role.ID,
 		Name:        role.Name,
+		IsCorpStaff: isCorpStaff,
 		Permissions: permissions,
 	}, nil
 }
@@ -884,14 +997,15 @@ func (userService *UserService) GetRoleOwners(request userdto.GetRoleOwnersReque
 			}
 		}
 		userCreds[i] = userdto.CredentialResponse{
-			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
-			Phone:      user.Phone,
-			Email:      user.Email,
-			NationalID: user.NationalCode,
-			ProfilePic: profilePic,
-			Status:     user.Status.String(),
+			ID:            user.ID,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Phone:         user.Phone,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+			NationalID:    user.NationalCode,
+			ProfilePic:    profilePic,
+			Status:        user.Status.String(),
 		}
 	}
 
@@ -917,9 +1031,11 @@ func (userService *UserService) GetUserRoles(userID uint) ([]userdto.RoleRespons
 		if err != nil {
 			return nil, err
 		}
+		isCorpStaff := role.UserType == enum.UserTypeCorporation
 		roles[i] = userdto.RoleResponse{
 			ID:          role.ID,
 			Name:        role.Name,
+			IsCorpStaff: isCorpStaff,
 			Permissions: permissions,
 		}
 	}
@@ -954,6 +1070,9 @@ func (userService *UserService) UpdateRole(newRoleRequest userdto.UpdateRoleRequ
 		permission, err := userService.getPermission(permissionID)
 		if err != nil {
 			return err
+		}
+		if permission.UserType != role.UserType {
+			continue
 		}
 
 		permissions = append(permissions, *permission)

@@ -28,16 +28,18 @@ func NewAdminUserController(
 
 func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) {
 	type getPermissionsParams struct {
-		Page     int `form:"page"`
-		PageSize int `form:"pageSize"`
+		IsStaff  bool `form:"isStaff"`
+		Page     int  `form:"page"`
+		PageSize int  `form:"pageSize"`
 	}
 	params := controller.Validated[getPermissionsParams](ctx)
 
 	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
 
 	request := userdto.GetPermissionsListRequest{
-		Offset: offset,
-		Limit:  limit,
+		IsStaff: params.IsStaff,
+		Offset:  offset,
+		Limit:   limit,
 	}
 
 	permissions, count, err := userController.userService.GetAllPermissions(request)
@@ -79,16 +81,20 @@ func (userController *AdminUserController) GetPermissionRoles(ctx *gin.Context) 
 
 func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
 	type getRolesParams struct {
-		Page     int `form:"page"`
-		PageSize int `form:"pageSize"`
+		IsStaff  bool   `form:"isStaff"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
 	}
 	params := controller.Validated[getRolesParams](ctx)
 
 	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
 
 	request := userdto.GetRolesListRequest{
-		Offset: offset,
-		Limit:  limit,
+		IsStaff: params.IsStaff,
+		Query:   params.Query,
+		Offset:  offset,
+		Limit:   limit,
 	}
 
 	roles, count, err := userController.userService.GetAllRoles(request)
@@ -102,12 +108,15 @@ func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
 func (userController *AdminUserController) CreateRole(ctx *gin.Context) {
 	type newRoleParams struct {
 		Name          string `json:"name" validate:"required"`
+		IsStaff       bool   `json:"isStaff"`
+		IsCorpStaff   bool   `json:"isCorpStaff"`
 		PermissionIDs []uint `json:"permissionIDs"`
 	}
 	params := controller.Validated[newRoleParams](ctx)
 
 	newRoleRequest := userdto.NewRoleRequest{
 		Name:          params.Name,
+		IsStaff:       params.IsStaff,
 		PermissionIDs: params.PermissionIDs,
 	}
 	if err := userController.userService.CreateRole(newRoleRequest); err != nil {
@@ -227,29 +236,31 @@ func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
 
 func (userController *AdminUserController) GetUsers(ctx *gin.Context) {
 	type usersParams struct {
-		Status   uint `form:"status"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-		SortBy   uint `form:"sortBy"`
-		Asc      bool `form:"asc"`
+		Query    string `form:"query"`
+		Status   uint   `form:"status"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
 	}
 	params := controller.Validated[usersParams](ctx)
 
 	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
 
 	request := userdto.GetUsersListRequest{
+		Query:  params.Query,
 		Status: params.Status,
 		Offset: offset,
 		Limit:  limit,
 		SortBy: params.SortBy,
 		Asc:    params.Asc,
 	}
+
 	users, count, err := userController.userService.GetUsersByStatus(request)
 	if err != nil {
 		panic(err)
 	}
 	data := controller.NewPaginatedResponse(users, count, offset, limit)
-
 	controller.Response(ctx, 200, "", data)
 }
 

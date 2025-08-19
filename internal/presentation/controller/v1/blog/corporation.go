@@ -63,7 +63,7 @@ func (blogController *CorporationBlogController) EditPost(ctx *gin.Context) {
 	type editPostParams struct {
 		CorporationID uint                  `uri:"corporationID" validate:"required"`
 		PostID        uint                  `uri:"postID" validate:"required"`
-		Status        uint                  `form:"status"`
+		Status        *uint                 `form:"status"`
 		Title         *string               `form:"title"`
 		Content       *string               `form:"content"`
 		Description   *string               `form:"description"`
@@ -100,10 +100,11 @@ func (blogController *CorporationBlogController) PublishPost(ctx *gin.Context) {
 	params := controller.Validated[publishPostParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
 
+	status := uint(enum.PostStatusPublished)
 	request := blogdto.EditPostRequest{
 		PostID:        params.PostID,
 		AuthorID:      authorID.(uint),
-		Status:        uint(enum.PostStatusPublished),
+		Status:        &status,
 		CorporationID: params.CorporationID,
 	}
 	if err := blogController.blogService.EditPost(request); err != nil {
@@ -123,10 +124,11 @@ func (blogController *CorporationBlogController) UnpublishPost(ctx *gin.Context)
 	params := controller.Validated[unpublishPostParams](ctx)
 	authorID, _ := ctx.Get(blogController.constants.Context.ID)
 
+	status := uint(enum.PostStatusDraft)
 	request := blogdto.EditPostRequest{
 		PostID:        params.PostID,
 		AuthorID:      authorID.(uint),
-		Status:        uint(enum.PostStatusDraft),
+		Status:        &status,
 		CorporationID: params.CorporationID,
 	}
 	if err := blogController.blogService.EditPost(request); err != nil {

@@ -9,6 +9,7 @@ type CorporationCredentialResponse struct {
 	ID          uint                         `json:"id"`
 	Name        string                       `json:"name"`
 	Logo        string                       `json:"logo"`
+	Status      string                       `json:"status"`
 	ContactInfo []ContactInformationResponse `json:"contactInfo"`
 	Addresses   []addressdto.AddressResponse `json:"addresses"`
 }
@@ -61,4 +62,11 @@ type GetCustomerCorporationReview struct {
 	Action string  `json:"action"`
 	Reason *string `json:"reason"`
 	Notes  *string `json:"notes"`
+}
+
+type StaffDetailsResponse struct {
+	ID     uint                       `json:"id"`
+	Staff  userdto.CredentialResponse `json:"staff"`
+	Status string                     `json:"status"`
+	Roles  []userdto.RoleResponse     `json:"roles"`
 }

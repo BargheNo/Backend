@@ -11,6 +11,7 @@ import (
 	loggerImpl "github.com/BargheNo/Backend/internal/infrastructure/logger"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -57,6 +58,12 @@ func (recovery RecoveryMiddleware) handleRecoveredError(ctx *gin.Context, err er
 		handleForbiddenError(ctx, forbiddenError, recovery.constants.Context.Translator)
 	} else {
 		unhandledErrors(ctx, err, recovery.constants.Context.Translator)
+	}
+
+	if conn, exists := ctx.Get(recovery.constants.Context.WebsocketConnection); exists {
+		if wsConn, ok := conn.(*websocket.Conn); ok {
+			handleWebsocketError(ctx, wsConn, err, recovery.constants.Context.Translator)
+		}
 	}
 }
 
@@ -145,11 +152,33 @@ func handleNotFoundError(ctx *gin.Context, notFoundError exception.NotFoundError
 }
 
 func handleForbiddenError(ctx *gin.Context, forbiddenError exception.ForbiddenError, transKey string) {
-	// maybe add without field later -> add type and switch case between them
 	trans := controller.GetTranslator(ctx, transKey)
 	ResourceName, _ := trans.Translate(forbiddenError.Resource)
 	message, _ := trans.Translate("errors.forbiddenError", ResourceName)
+	switch forbiddenError.Type {
+	case exception.ForbiddenTypeBannedUser:
+		message, _ = trans.Translate("errors.bannedUser")
+	}
 	controller.Response(ctx, 403, message, nil)
+}
+
+func handleWebsocketError(ctx *gin.Context, wsConn *websocket.Conn, err error, transKey string) {
+	trans := controller.GetTranslator(ctx, transKey)
+	message, _ := trans.Translate(genericError)
+
+	switch err := err.(type) {
+	case *exception.AuthError:
+		message, _ = trans.Translate("errors.unauthorized")
+	case exception.ForbiddenError:
+		resourceName, _ := trans.Translate(err.Resource)
+		message, _ = trans.Translate("errors.forbiddenError", resourceName)
+	case exception.NotFoundError:
+		itemName, _ := trans.Translate(err.Item)
+		message, _ = trans.Translate("errors.notFound", itemName)
+	}
+
+	wsConn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, message))
+	wsConn.Close()
 }
 
 func unhandledErrors(ctx *gin.Context, err error, transKey string) {
