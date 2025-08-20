@@ -1,9 +1,6 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - ops/service-healthcheck
   pull_request:
     branches:
       - develop
