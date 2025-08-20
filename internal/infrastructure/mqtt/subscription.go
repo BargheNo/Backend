@@ -7,6 +7,7 @@ import (
 	"github.com/BargheNo/Backend/internal/application/service"
 	"github.com/BargheNo/Backend/internal/domain/repository/postgres"
 	database "github.com/BargheNo/Backend/internal/infrastructure/database"
+	loggerImpl "github.com/BargheNo/Backend/internal/infrastructure/logger"
 )
 
 type MQTTSubscription struct {
@@ -44,6 +45,10 @@ func (subscription *MQTTSubscription) RefreshMQTTSubscriptions() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		subscription.SetupMQTTSubscriptions()
+		if subscription.mqttClient.client.IsConnected() {
+			subscription.SetupMQTTSubscriptions()
+		} else {
+			loggerImpl.GetLogger().Warn("Skipping MQTT subscription refresh - client not connected")
+		}
 	}
 }

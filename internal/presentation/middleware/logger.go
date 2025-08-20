@@ -22,6 +22,11 @@ func (log *LoggerMiddleware) GinLoggerMiddleware(c *gin.Context) {
 	path := c.Request.URL.Path
 	query := c.Request.URL.RawQuery
 
+	if path == "/metrics" {
+		c.Next()
+		return
+	}
+
 	c.Next()
 
 	latency := time.Since(start)
