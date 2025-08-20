@@ -1005,13 +1005,13 @@ func (corporationService *CorporationService) ApproveCorporationRegistration(req
 	var conflictErrors exception.ConflictErrors
 	if corporation.Status == enum.CorpStatusApproved {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyAccepted)
-		return &conflictErrors
+		return conflictErrors
 	} else if corporation.Status == enum.CorpStatusRejected {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyRejected)
-		return &conflictErrors
+		return conflictErrors
 	} else if corporation.Status != enum.CorpStatusAwaitingApproval {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.ForbiddenStatus)
-		return &conflictErrors
+		return conflictErrors
 	}
 
 	review := &entity.CorporationReview{
@@ -1055,13 +1055,13 @@ func (corporationService *CorporationService) RejectCorporationRegistration(requ
 	var conflictErrors exception.ConflictErrors
 	if corporation.Status == enum.CorpStatusApproved {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyAccepted)
-		return &conflictErrors
+		return conflictErrors
 	} else if corporation.Status == enum.CorpStatusRejected {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.AlreadyRejected)
-		return &conflictErrors
+		return conflictErrors
 	} else if corporation.Status != enum.CorpStatusAwaitingApproval {
 		conflictErrors.Add(corporationService.constants.Field.Corporation, corporationService.constants.Tag.ForbiddenStatus)
-		return &conflictErrors
+		return conflictErrors
 	}
 
 	review := &entity.CorporationReview{
