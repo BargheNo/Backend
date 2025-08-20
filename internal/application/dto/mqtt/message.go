@@ -1,5 +1,10 @@
 package mqttdto
 
+type Message struct {
+	MessageType string      `json:"message_type"`
+	Message     interface{} `json:"message"`
+}
+
 type StatusMessage struct {
 	DatalogSerial string  `json:"datalogserial"`
 	PVSerial      string  `json:"pvserial"`
