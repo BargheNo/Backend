@@ -19,9 +19,12 @@ services:
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     depends_on:
-      - db
-      - rdb
-      - rabbitmq
+      db:
+        condition: service_started
+      rdb:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
 
   mqtt-sender:
     build:
@@ -72,6 +75,34 @@ services:
         reservations:
           cpus: "0.1"
           memory: 64M
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "${AMQP_PORT}:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${AMQP_USER}
+      - RABBITMQ_DEFAULT_PASS=${AMQP_PASSWORD}
+      - RABBITMQ_DEFAULT_VHOST=${AMQP_VHOST}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
 
   prometheus:
     image: prom/prometheus:main
@@ -197,28 +228,6 @@ services:
         limits:
           cpus: "0.3"
           memory: 384M
-        reservations:
-          cpus: "0.1"
-          memory: 128M
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    restart: unless-stopped
-    ports:
-      - "${AMQP_PORT}:5672"
-      - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=${AMQP_USER}
-      - RABBITMQ_DEFAULT_PASS=${AMQP_PASSWORD}
-      - RABBITMQ_DEFAULT_VHOST=${AMQP_VHOST}
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    deploy:
-      resources:
-        limits:
-          cpus: "0.3"
-          memory: 512M
         reservations:
           cpus: "0.1"
           memory: 128M
