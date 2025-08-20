@@ -80,7 +80,7 @@ func (monitoringService *MonitoringService) HandleHistoryMessage(topic string, p
 		return
 	}
 
-	monitoringService.hub.SendToUser(panel.Customer.ID, websocket.MessageTypeMonitoring, payload)
+	monitoringService.hub.SendToPanel(panel.ID, websocket.MessageTypeMonitoring, payload)
 
 	monitoringService.handleHistoryMessage(uint(panelID), payload)
 }
@@ -98,7 +98,7 @@ func (monitoringService *MonitoringService) HandleEventMessage(topic string, pay
 		return
 	}
 
-	monitoringService.hub.SendToUser(panel.Customer.ID, websocket.MessageTypeMonitoring, payload)
+	monitoringService.hub.SendToPanel(panel.ID, websocket.MessageTypeMonitoring, payload)
 
 	monitoringService.handleEventMessage(uint(panelID), payload)
 }

@@ -45,7 +45,7 @@ type MQTTClient struct {
 	energyToday      map[uint]float64
 	energyTotal      map[uint]float64
 	statusTicker     *time.Ticker
-	historyTimer     *time.Timer
+	historyTicker    *time.Ticker
 	eventTimers      map[uint]*time.Timer
 	stopChan         chan struct{}
 }
@@ -106,8 +106,8 @@ func (m *MQTTClient) Disconnect() {
 	if m.statusTicker != nil {
 		m.statusTicker.Stop()
 	}
-	if m.historyTimer != nil {
-		m.historyTimer.Stop()
+	if m.historyTicker != nil {
+		m.historyTicker.Stop()
 	}
 
 	for _, timer := range m.eventTimers {
@@ -167,7 +167,7 @@ func (m *MQTTClient) publishMessageWithType(payload interface{}, messageType str
 	return nil
 }
 
-func (m *MQTTClient) createStatusMessage(panel *entity.Panel) mqttdto.StatusMessage {
+func (m *MQTTClient) createStatusMessage(panel *entity.Panel) mqttdto.Message {
 	pvPowerIn := 4200.5 + (rand.Float64()-0.5)*100
 	temperature := 44.8 + (rand.Float64()-0.5)*5
 	gridExport := 3900.0 + (rand.Float64()-0.5)*200
@@ -175,45 +175,51 @@ func (m *MQTTClient) createStatusMessage(panel *entity.Panel) mqttdto.StatusMess
 	datalogSerial := fmt.Sprintf("YUZ%08d", panel.ID)
 	pvSerial := fmt.Sprintf("4FZG%08d", panel.ID)
 
-	return mqttdto.StatusMessage{
-		DatalogSerial: datalogSerial,
-		PVSerial:      pvSerial,
-		PVStatus:      1,
-		PVPowerIn:     pvPowerIn,
-		PV1Voltage:    350.0,
-		PV1Current:    6.0,
-		PV2Voltage:    348.5,
-		PV2Current:    6.2,
-		PVPowerOut:    4150.0,
-		ACFreq:        50.0,
-		ACVoltage:     230.4,
-		ACOutputPower: 4120.0,
-		Temperature:   temperature,
-		BatVoltage:    51.2,
-		BatCurrent:    -5.3,
-		BatPower:      -270.0,
-		GridExport:    gridExport,
-		GridImport:    0.0,
+	return mqttdto.Message{
+		MessageType: "status",
+		Message: mqttdto.StatusMessage{
+			DatalogSerial: datalogSerial,
+			PVSerial:      pvSerial,
+			PVStatus:      1,
+			PVPowerIn:     pvPowerIn,
+			PV1Voltage:    350.0,
+			PV1Current:    6.0,
+			PV2Voltage:    348.5,
+			PV2Current:    6.2,
+			PVPowerOut:    4150.0,
+			ACFreq:        50.0,
+			ACVoltage:     230.4,
+			ACOutputPower: 4120.0,
+			Temperature:   temperature,
+			BatVoltage:    51.2,
+			BatCurrent:    -5.3,
+			BatPower:      -270.0,
+			GridExport:    gridExport,
+			GridImport:    0.0,
+		},
 	}
 }
 
-func (m *MQTTClient) createHistoryMessage(panel *entity.Panel) mqttdto.HistoryMessage {
+func (m *MQTTClient) createHistoryMessage(panel *entity.Panel) mqttdto.Message {
 	now := time.Now()
 	yesterday := now.AddDate(0, 0, -1)
 
 	datalogSerial := fmt.Sprintf("YUZ%08d", panel.ID)
 	pvSerial := fmt.Sprintf("4FZG%08d", panel.ID)
 
-	return mqttdto.HistoryMessage{
-		DatalogSerial: datalogSerial,
-		PVSerial:      pvSerial,
-		Date:          yesterday.Format("2006-01-02"),
-		EnergyToday:   m.energyToday[panel.ID],
-		EnergyTotal:   m.energyTotal[panel.ID],
+	return mqttdto.Message{
+		MessageType: "history",
+		Message: mqttdto.HistoryMessage{
+			DatalogSerial: datalogSerial,
+			PVSerial:      pvSerial,
+			Date:          yesterday.Format("2006-01-02"),
+			EnergyToday:   m.energyToday[panel.ID],
+			EnergyTotal:   m.energyTotal[panel.ID],
+		},
 	}
 }
 
-func (m *MQTTClient) createEventMessage(panel *entity.Panel) mqttdto.EventMessage {
+func (m *MQTTClient) createEventMessage(panel *entity.Panel) mqttdto.Message {
 	events := []struct {
 		code        string
 		description string
@@ -231,12 +237,15 @@ func (m *MQTTClient) createEventMessage(panel *entity.Panel) mqttdto.EventMessag
 	datalogSerial := fmt.Sprintf("YUZ%08d", panel.ID)
 	pvSerial := fmt.Sprintf("4FZG%08d", panel.ID)
 
-	return mqttdto.EventMessage{
-		DatalogSerial: datalogSerial,
-		PVSerial:      pvSerial,
-		EventCode:     selectedEvent.code,
-		Description:   selectedEvent.description,
-		Severity:      selectedEvent.severity,
+	return mqttdto.Message{
+		MessageType: "event",
+		Message: mqttdto.EventMessage{
+			DatalogSerial: datalogSerial,
+			PVSerial:      pvSerial,
+			EventCode:     selectedEvent.code,
+			Description:   selectedEvent.description,
+			Severity:      selectedEvent.severity,
+		},
 	}
 }
 
@@ -259,12 +268,6 @@ func (m *MQTTClient) scheduleRandomEvent(panel *entity.Panel) {
 	})
 
 	loggerImpl.GetLogger().Info(fmt.Sprintf("Next event scheduled for panel %d", panel.ID), logger.Duration("duration", randomDuration))
-}
-
-func (m *MQTTClient) getNextMidnight() time.Duration {
-	now := time.Now()
-	nextMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
-	return nextMidnight.Sub(now)
 }
 
 func (m *MQTTClient) StartPublishers() {
@@ -300,33 +303,26 @@ func (m *MQTTClient) StartPublishers() {
 		}
 	}()
 
+	m.historyTicker = time.NewTicker(m.config.HistoryInterval)
 	go func() {
-		timeToMidnight := m.getNextMidnight()
-		m.historyTimer = time.AfterFunc(timeToMidnight, func() {
-			for _, panel := range m.panels {
-				if err := m.publishMessageWithType(m.createHistoryMessage(panel), "history", panel.ID); err != nil {
-					loggerImpl.GetLogger().Error(fmt.Sprintf("Error publishing history message for panel %d", panel.ID), logger.Error("error:", err))
-				}
+		for _, panel := range m.panels {
+			if err := m.publishMessageWithType(m.createHistoryMessage(panel), "history", panel.ID); err != nil {
+				loggerImpl.GetLogger().Error(fmt.Sprintf("Error publishing initial history message for panel %d", panel.ID), logger.Error("error:", err))
 			}
+		}
 
-			dailyTicker := time.NewTicker(m.config.HistoryInterval)
-			go func() {
-				defer dailyTicker.Stop()
-				for {
-					select {
-					case <-dailyTicker.C:
-						for _, panel := range m.panels {
-							if err := m.publishMessageWithType(m.createHistoryMessage(panel), "history", panel.ID); err != nil {
-								loggerImpl.GetLogger().Error(fmt.Sprintf("Error publishing daily history message for panel %d", panel.ID), logger.Error("error:", err))
-							}
-						}
-					case <-m.stopChan:
-						return
+		for {
+			select {
+			case <-m.historyTicker.C:
+				for _, panel := range m.panels {
+					if err := m.publishMessageWithType(m.createHistoryMessage(panel), "history", panel.ID); err != nil {
+						loggerImpl.GetLogger().Error(fmt.Sprintf("Error publishing history message for panel %d", panel.ID), logger.Error("error:", err))
 					}
 				}
-			}()
-		})
-		loggerImpl.GetLogger().Info("First history message scheduled", logger.Duration("duration", timeToMidnight))
+			case <-m.stopChan:
+				return
+			}
+		}
 	}()
 
 	for _, panel := range m.panels {
