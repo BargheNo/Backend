@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/BargheNo/Backend/bootstrap"
@@ -106,51 +107,30 @@ func (am *AuthMiddleware) isAllowRole(allowedPermissions []enum.PermissionType, 
 	return false
 }
 
-func (am *AuthMiddleware) CorporationAccessRequired(ctx *gin.Context) {
-	id, exist := ctx.Get(am.constants.Context.ID)
-	if !exist {
-		unauthorizedError := exception.NewUnauthorizedError("", nil)
-		panic(unauthorizedError)
-	}
+func (am *AuthMiddleware) RequireCorporationAccess(corporationIDField string) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userID, _ := ctx.Get(am.constants.Context.ID)
 
-	type CorporationURI struct {
-		CorporationID uint `uri:"corporationID" validate:"required"`
-	}
-	var uri CorporationURI
+		corporationID, err := am.extractCorporationID(ctx, corporationIDField)
+		if err != nil {
+			panic(err)
+		}
 
-	if err := ctx.ShouldBindUri(&uri); err != nil {
-		panic(err)
-	}
+		if err := am.validateCorporationAccess(userID.(uint), uint(corporationID)); err != nil {
+			panic(err)
+		}
 
-	staff, err := am.corporationRepository.FindCorporationStaff(am.db, id.(uint), uint(uri.CorporationID))
-	if err != nil {
-		panic(err)
+		ctx.Set(am.constants.Context.CorporationID, corporationID)
+		ctx.Next()
 	}
-	if staff == nil {
-		forbiddenError := exception.NewNoPropertyAccessForbiddenError(am.constants.Field.Corporation)
-		panic(forbiddenError)
-	}
-
-	ctx.Set(am.constants.Context.CorporationID, uint(uri.CorporationID))
-
-	ctx.Next()
 }
 
-func (am *AuthMiddleware) RequiredStaffWithPermission(corporationID uint, allowedPermissions []enum.PermissionType) gin.HandlerFunc {
+func (am *AuthMiddleware) RequireCorporationPermission(allowedPermissions []enum.PermissionType) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		userID, exist := ctx.Get(am.constants.Context.ID)
-		if !exist {
-			unauthorizedError := exception.NewUnauthorizedError("", nil)
-			panic(unauthorizedError)
-		}
+		userID, _ := ctx.Get(am.constants.Context.ID)
+		corporationID, _ := ctx.Get(am.constants.Context.CorporationID)
 
-		corporationID, exist := ctx.Get(am.constants.Context.CorporationID)
-		if !exist {
-			unauthorizedError := exception.NewUnauthorizedError("", nil)
-			panic(unauthorizedError)
-		}
-
-		staff, err := am.corporationRepository.FindCorporationStaff(am.db, corporationID.(uint), userID.(uint))
+		staff, err := am.corporationRepository.FindCorporationStaff(am.db, userID.(uint), corporationID.(uint))
 		if err != nil {
 			panic(err)
 		}
@@ -159,7 +139,7 @@ func (am *AuthMiddleware) RequiredStaffWithPermission(corporationID uint, allowe
 			panic(err)
 		}
 
-		allowedPermissions = append(allowedPermissions, enum.PermissionAll)
+		allowedPermissions = append(allowedPermissions, enum.PermissionAll, enum.CorporationPermissionAll)
 
 		if !am.isAllowRole(allowedPermissions, staff.Roles) {
 			err := exception.ForbiddenError{Resource: am.constants.Field.Page, Message: "access denied"}
@@ -168,4 +148,68 @@ func (am *AuthMiddleware) RequiredStaffWithPermission(corporationID uint, allowe
 
 		ctx.Next()
 	}
+}
+
+func (am *AuthMiddleware) extractCorporationID(ctx *gin.Context, corporationIDField string) (uint, error) {
+	var corporationID uint
+	var found, invalid bool
+
+	if corporationIDStr := ctx.Param(corporationIDField); corporationIDStr != "" {
+		if id, err := am.parseUint(corporationIDStr); err == nil {
+			corporationID = uint(id)
+			found = true
+		} else {
+			invalid = true
+		}
+	}
+
+	if !found {
+		if corporationIDStr := ctx.Query(corporationIDField); corporationIDStr != "" {
+			if id, err := am.parseUint(corporationIDStr); err == nil {
+				corporationID = uint(id)
+				found = true
+			} else {
+				invalid = true
+			}
+		}
+	}
+
+	if invalid {
+		validationError := exception.ValidationErrors{}
+		validationError.Add(corporationIDField, am.constants.Tag.InvalidNumber)
+		return 0, validationError
+	}
+
+	if !found {
+		validationError := exception.ValidationErrors{}
+		validationError.Add(corporationIDField, am.constants.Tag.Required)
+		return 0, validationError
+	}
+
+	if corporationID == 0 {
+		validationError := exception.ValidationErrors{}
+		validationError.Add(corporationIDField, am.constants.Tag.InvalidNumber)
+		return 0, validationError
+	}
+
+	return corporationID, nil
+}
+
+func (am *AuthMiddleware) parseUint(str string) (uint, error) {
+	number, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint(number), nil
+}
+
+func (am *AuthMiddleware) validateCorporationAccess(userID, corporationID uint) error {
+	staff, err := am.corporationRepository.FindCorporationStaff(am.db, userID, corporationID)
+	if err != nil {
+		return err
+	}
+	if staff == nil {
+		return exception.NewNoPropertyAccessForbiddenError(am.constants.Field.Corporation)
+	}
+	return nil
 }
