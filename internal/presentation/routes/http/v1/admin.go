@@ -65,21 +65,21 @@ func SetupAdminRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		permissions := accessManagement.Group("/permissions")
 		{
-			permissions.GET("", app.Controllers.Admin.UserController.GetPermissionsList)
-			permissions.GET("/:permissionID/roles", app.Controllers.Admin.UserController.GetPermissionRoles)
+			permissions.GET("", app.Controllers.Admin.RBACController.GetPermissionsList)
+			permissions.GET("/:permissionID/roles", app.Controllers.Admin.RBACController.GetPermissionRoles)
 		}
 
 		roles := accessManagement.Group("/roles")
 		{
-			roles.GET("", app.Controllers.Admin.UserController.GetRolesList)
-			roles.POST("", app.Controllers.Admin.UserController.CreateRole)
+			roles.GET("", app.Controllers.Admin.RBACController.GetRolesList)
+			roles.POST("", app.Controllers.Admin.RBACController.CreateRole)
 
 			rolesSubGroup := roles.Group("/:roleID")
 			{
-				rolesSubGroup.GET("", app.Controllers.Admin.UserController.GetRoleDetails)
+				rolesSubGroup.GET("", app.Controllers.Admin.RBACController.GetRoleDetails)
 				rolesSubGroup.GET("/owners", app.Controllers.Admin.UserController.GetRoleOwners)
-				rolesSubGroup.PUT("", app.Controllers.Admin.UserController.UpdateRole)
-				rolesSubGroup.DELETE("", app.Controllers.Admin.UserController.DeleteRole)
+				rolesSubGroup.PUT("", app.Controllers.Admin.RBACController.UpdateRole)
+				rolesSubGroup.DELETE("", app.Controllers.Admin.RBACController.DeleteRole)
 			}
 		}
 

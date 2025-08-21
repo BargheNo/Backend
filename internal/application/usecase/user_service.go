@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	rbacdto "github.com/BargheNo/Backend/internal/application/dto/rbac"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
@@ -25,15 +26,8 @@ type UserService interface {
 	ResetPassword(resetPassInfo userdto.ResetPasswordRequest) error
 	FindActiveUserByPhone(phone string) (*entity.User, error)
 	UpdateProfile(profileInfo userdto.UpdateProfileRequest) error
-	GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error)
-	GetAllRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error)
-	CreateRole(newRoleRequest userdto.NewRoleRequest) error
-	GetRoleDetails(roleID uint) (userdto.RoleResponse, error)
-	GetRoleOwners(request userdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error)
-	GetUserRoles(userID uint) ([]userdto.RoleResponse, error)
-	DeleteRole(roleID uint) error
-	UpdateRole(newRoleRequest userdto.UpdateRoleRequest) error
-	UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) error
-	GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, int64, error)
+	GetUserRoles(userID uint) ([]rbacdto.RoleResponse, error)
+	UpdateUserRoles(request userdto.UpdateUserRolesRequest) error
+	GetRoleOwners(request rbacdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error)
 	RefreshToken(refreshToken string) (userdto.UserInfoResponse, error)
 }

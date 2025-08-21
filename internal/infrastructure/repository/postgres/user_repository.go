@@ -310,7 +310,6 @@ func (repo *UserRepository) UpdateRole(db database.Database, role *entity.Role) 
 
 func (repo *UserRepository) ReplaceRolePermissions(db database.Database, role *entity.Role, permissions []entity.Permission) error {
 	return db.GetDB().Model(&role).Association("Permissions").Replace(permissions)
-
 }
 
 func (repo *UserRepository) ReplaceUserRoles(db database.Database, user *entity.User, roles []entity.Role) error {

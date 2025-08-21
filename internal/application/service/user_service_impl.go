@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
+	rbacdto "github.com/BargheNo/Backend/internal/application/dto/rbac"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/communication"
@@ -28,6 +29,7 @@ type UserService struct {
 	jwtService          usecase.JWTService
 	smsService          communication.SMSService
 	emailService        communication.EmailService
+	rbacService         usecase.RBACService
 	rabbitMQ            message.Broker
 	s3Storage           s3.S3Storage
 	userRepository      postgres.UserRepository
@@ -42,6 +44,7 @@ type UserServiceDeps struct {
 	JWTService          usecase.JWTService
 	SMSService          communication.SMSService
 	EmailService        communication.EmailService
+	RBACService         usecase.RBACService
 	RabbitMQ            message.Broker
 	S3Storage           s3.S3Storage
 	UserRepository      postgres.UserRepository
@@ -57,6 +60,7 @@ func NewUserService(deps UserServiceDeps) *UserService {
 		jwtService:          deps.JWTService,
 		smsService:          deps.SMSService,
 		emailService:        deps.EmailService,
+		rbacService:         deps.RBACService,
 		rabbitMQ:            deps.RabbitMQ,
 		s3Storage:           deps.S3Storage,
 		userRepository:      deps.UserRepository,
@@ -336,45 +340,6 @@ func (userService *UserService) GetUsersByStatus(request userdto.GetUsersListReq
 	return usersResponse, count, nil
 }
 
-func (userService *UserService) GetPermissionRoles(request userdto.GetPermissionRolesRequest) ([]userdto.RoleResponse, int64, error) {
-	permission, err := userService.userRepository.FindPermissionByID(userService.db, request.PermissionID)
-	if err != nil {
-		return nil, 0, err
-	}
-	if permission == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
-		return nil, 0, notFoundError
-	}
-
-	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset).
-		WithSorting(userService.getSortByColumn(request.SortBy), request.Asc)
-
-	roles, err := userService.userRepository.FindRolesByPermission(userService.db, request.PermissionID, options)
-	if err != nil {
-		return nil, 0, err
-	}
-	rolesResponse := make([]userdto.RoleResponse, len(roles))
-	for i, role := range roles {
-		permissions, err := userService.getRolePermissions(role)
-		if err != nil {
-			return nil, 0, err
-		}
-		isCorpStaff := role.UserType == enum.UserTypeCorporation
-		rolesResponse[i] = userdto.RoleResponse{
-			ID:          role.ID,
-			Name:        role.Name,
-			IsCorpStaff: isCorpStaff,
-			Permissions: permissions,
-		}
-	}
-	count, err := userService.userRepository.CountRolesByPermission(userService.db, request.PermissionID)
-	if err != nil {
-		return nil, 0, err
-	}
-	return rolesResponse, count, nil
-}
-
 func (userService *UserService) BanUser(userID uint) error {
 	user, err := userService.GetUserByID(userID)
 	if err != nil {
@@ -502,21 +467,6 @@ func (userService *UserService) VerifyPhone(verifyInfo userdto.VerifyPhoneReques
 	return nil
 }
 
-func (userService *UserService) FindUserPermissions(user *entity.User) ([]userdto.PermissionResponse, error) {
-	var permissions []userdto.PermissionResponse
-	if err := userService.userRepository.FindUserRoles(userService.db, user); err != nil {
-		return nil, err
-	}
-	for _, role := range user.Roles {
-		rolePermissions, err := userService.getRolePermissions(&role)
-		if err != nil {
-			return nil, err
-		}
-		permissions = append(permissions, rolePermissions...)
-	}
-	return permissions, nil
-}
-
 func (userService *UserService) RefreshToken(refreshToken string) (userdto.UserInfoResponse, error) {
 	claims, err := userService.jwtService.ValidateToken(refreshToken)
 	if err != nil {
@@ -534,7 +484,7 @@ func (userService *UserService) RefreshToken(refreshToken string) (userdto.UserI
 		return userdto.UserInfoResponse{}, err
 	}
 
-	permissions, err := userService.FindUserPermissions(user)
+	permissions, err := userService.rbacService.GetUserPermissions(user)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
 	}
@@ -568,7 +518,7 @@ func (userService *UserService) Login(loginInfo userdto.LoginRequest) (userdto.U
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
 	}
-	permissions, err := userService.FindUserPermissions(user)
+	permissions, err := userService.rbacService.GetUserPermissions(user)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
 	}
@@ -628,7 +578,7 @@ func (userService *UserService) VerifyOTP(verifyInfo userdto.VerifyPhoneRequest)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
 	}
-	permissions, err := userService.FindUserPermissions(user)
+	permissions, err := userService.rbacService.GetUserPermissions(user)
 	if err != nil {
 		return userdto.UserInfoResponse{}, err
 	}
@@ -775,353 +725,49 @@ func (userService *UserService) UpdateProfile(profileInfo userdto.UpdateProfileR
 	return err
 }
 
-func (userService *UserService) getRBACUserType(isStaff bool) enum.UserType {
-	permissionUserType := enum.UserTypeAdmin
-	if isStaff {
-		permissionUserType = enum.UserTypeCorporation
-	}
-	return permissionUserType
-}
-
-func (userService *UserService) GetAllPermissions(request userdto.GetPermissionsListRequest) ([]userdto.PermissionResponse, int64, error) {
-	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset)
-
-	permissionUserType := userService.getRBACUserType(request.IsStaff)
-	permissions, err := userService.userRepository.FindAllPermissions(userService.db, permissionUserType, options)
-	if err != nil {
-		return nil, 0, err
-	}
-	permissionsResponse := make([]userdto.PermissionResponse, len(permissions))
-	for i, permission := range permissions {
-		isCorpStaff := permission.UserType == enum.UserTypeCorporation
-		permissionsResponse[i] = userdto.PermissionResponse{
-			ID:          permission.ID,
-			Name:        permission.Type.String(),
-			Description: permission.Type.Description(),
-			IsCorpStaff: isCorpStaff,
-			Category:    permission.Category.String(),
-		}
-	}
-
-	count, err := userService.userRepository.CountAllPermissions(userService.db, permissionUserType)
-	if err != nil {
-		return nil, 0, err
-	}
-	return permissionsResponse, count, nil
-}
-
-func (userService *UserService) getRolePermissions(role *entity.Role) ([]userdto.PermissionResponse, error) {
-	if err := userService.userRepository.FindRolePermissions(userService.db, role); err != nil {
-		return nil, err
-	}
-	permissions := make([]userdto.PermissionResponse, len(role.Permissions))
-	for i, permission := range role.Permissions {
-		isCorpStaff := permission.UserType == enum.UserTypeCorporation
-		permissions[i] = userdto.PermissionResponse{
-			ID:          permission.ID,
-			Name:        permission.Type.String(),
-			Description: permission.Type.Description(),
-			IsCorpStaff: isCorpStaff,
-			Category:    permission.Category.String(),
-		}
-	}
-	return permissions, nil
-}
-
-func (userService *UserService) getRolesByQuery(query string, userType enum.UserType, options *postgres.QueryOptions) ([]*entity.Role, int64, error) {
-	if query == "" {
-		roles, err := userService.userRepository.FindAllRoles(userService.db, userType, options)
-		if err != nil {
-			return nil, 0, err
-		}
-		count, err := userService.userRepository.CountAllRoles(userService.db, userType)
-		if err != nil {
-			return nil, 0, err
-		}
-		return roles, count, nil
-	}
-	roles, err := userService.userRepository.FindRolesByQuery(userService.db, userType, query, options)
-	if err != nil {
-		return nil, 0, err
-	}
-	count, err := userService.userRepository.CountRolesByQuery(userService.db, userType, query)
-	if err != nil {
-		return nil, 0, err
-	}
-	return roles, count, nil
-}
-
-func (userService *UserService) GetAllRoles(request userdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error) {
-	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset)
-
-	roleUserType := userService.getRBACUserType(request.IsStaff)
-	roles, count, err := userService.getRolesByQuery(request.Query, roleUserType, options)
-	if err != nil {
-		return nil, 0, err
-	}
-	rolesResponse := make([]userdto.RoleResponse, len(roles))
-	for i, role := range roles {
-		permissions, err := userService.getRolePermissions(role)
-		if err != nil {
-			return nil, 0, err
-		}
-		isCorpStaff := role.UserType == enum.UserTypeCorporation
-		rolesResponse[i] = userdto.RoleResponse{
-			ID:          role.ID,
-			Name:        role.Name,
-			IsCorpStaff: isCorpStaff,
-			Permissions: permissions,
-		}
-	}
-
-	return rolesResponse, count, nil
-}
-
-func (userService *UserService) getPermission(permissionID uint) (*entity.Permission, error) {
-	permission, err := userService.userRepository.FindPermissionByID(userService.db, permissionID)
-	if err != nil {
-		return nil, err
-	}
-	if permission == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Permission}
-		return nil, notFoundError
-	}
-	return permission, nil
-}
-
-func (userService *UserService) getRole(roleID uint) (*entity.Role, error) {
-	role, err := userService.userRepository.FindRoleByID(userService.db, roleID)
-	if err != nil {
-		return nil, err
-	}
-	if role == nil {
-		notFoundError := exception.NotFoundError{Item: userService.constants.Field.Role}
-		return nil, notFoundError
-	}
-	return role, nil
-}
-
-func (userService *UserService) CreateRole(newRoleRequest userdto.NewRoleRequest) error {
-	existingRole, err := userService.userRepository.FindRoleByName(userService.db, newRoleRequest.Name)
-	if err != nil {
-		return err
-	}
-	if existingRole != nil {
-		var conflictErrors exception.ConflictErrors
-		conflictErrors.Add(userService.constants.Field.Role, userService.constants.Tag.AlreadyExist)
-		return conflictErrors
-	}
-	userType := enum.UserTypeAdmin
-	if newRoleRequest.IsStaff {
-		userType = enum.UserTypeCorporation
-	}
-	role := &entity.Role{
-		Name:     newRoleRequest.Name,
-		UserType: userType,
-	}
-	err = userService.db.WithTransaction(func(tx database.Database) error {
-		err = userService.userRepository.CreateRole(tx, role)
-		if err != nil {
-			return err
-		}
-
-		existingPermissions := make(map[uint]bool)
-		for _, permissionID := range newRoleRequest.PermissionIDs {
-			if existingPermissions[permissionID] {
-				continue
-			}
-
-			permission, err := userService.getPermission(permissionID)
-			if err != nil {
-				return err
-			}
-			isStaffPermission := permission.UserType == enum.UserTypeCorporation
-			if isStaffPermission != newRoleRequest.IsStaff {
-				continue
-			}
-
-			if err := userService.userRepository.AssignPermissionToRole(tx, role, permission); err != nil {
-				return err
-			}
-			existingPermissions[permissionID] = true
-		}
-
-		return nil
-	})
-	return nil
-}
-
-func (userService *UserService) GetRoleDetails(roleID uint) (userdto.RoleResponse, error) {
-	role, err := userService.getRole(roleID)
-	if err != nil {
-		return userdto.RoleResponse{}, err
-	}
-
-	permissions, err := userService.getRolePermissions(role)
-	if err != nil {
-		return userdto.RoleResponse{}, err
-	}
-
-	isCorpStaff := role.UserType == enum.UserTypeCorporation
-	return userdto.RoleResponse{
-		ID:          role.ID,
-		Name:        role.Name,
-		IsCorpStaff: isCorpStaff,
-		Permissions: permissions,
-	}, nil
-}
-
-func (userService *UserService) GetRoleOwners(request userdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error) {
-	_, err := userService.getRole(request.RoleID)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	options := postgres.NewQueryOptions().
-		WithPagination(request.Limit, request.Offset)
-
-	users, err := userService.userRepository.FindUsersByRoleID(userService.db, request.RoleID, options)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	userCreds := make([]userdto.CredentialResponse, len(users))
-	for i, user := range users {
-		profilePic := ""
-		if user.ProfilePicPath != "" {
-			profilePic, err = userService.s3Storage.GetPresignedURL(enum.ProfilePic, user.ProfilePicPath, 8*time.Hour)
-			if err != nil {
-				return nil, 0, err
-			}
-		}
-		userCreds[i] = userdto.CredentialResponse{
-			ID:            user.ID,
-			FirstName:     user.FirstName,
-			LastName:      user.LastName,
-			Phone:         user.Phone,
-			Email:         user.Email,
-			EmailVerified: user.EmailVerified,
-			NationalID:    user.NationalCode,
-			ProfilePic:    profilePic,
-			Status:        user.Status.String(),
-		}
-	}
-
-	count, err := userService.userRepository.CountUsersByRoleID(userService.db, request.RoleID)
-	if err != nil {
-		return nil, 0, err
-	}
-	return userCreds, count, nil
-}
-
-func (userService *UserService) GetUserRoles(userID uint) ([]userdto.RoleResponse, error) {
+func (userService *UserService) GetUserRoles(userID uint) ([]rbacdto.RoleResponse, error) {
 	user, err := userService.GetUserByID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := userService.userRepository.FindUserRoles(userService.db, user); err != nil {
+	roles, err := userService.rbacService.GetUserRoles(user)
+	if err != nil {
 		return nil, err
-	}
-	roles := make([]userdto.RoleResponse, len(user.Roles))
-	for i, role := range user.Roles {
-		permissions, err := userService.getRolePermissions(&role)
-		if err != nil {
-			return nil, err
-		}
-		isCorpStaff := role.UserType == enum.UserTypeCorporation
-		roles[i] = userdto.RoleResponse{
-			ID:          role.ID,
-			Name:        role.Name,
-			IsCorpStaff: isCorpStaff,
-			Permissions: permissions,
-		}
 	}
 	return roles, nil
 }
 
-func (userService *UserService) DeleteRole(roleID uint) error {
-	_, err := userService.getRole(roleID)
+func (userService *UserService) UpdateUserRoles(request userdto.UpdateUserRolesRequest) error {
+	user, err := userService.GetUserByID(request.UserID)
 	if err != nil {
 		return err
 	}
 
-	if err := userService.userRepository.DeleteRole(userService.db, roleID); err != nil {
-		return err
+	updateRoleRequest := rbacdto.UpdateUserRolesRequest{
+		User:    user,
+		RoleIDs: request.RoleIDs,
 	}
-	return nil
-}
-
-func (userService *UserService) UpdateRole(newRoleRequest userdto.UpdateRoleRequest) error {
-	role, err := userService.getRole(newRoleRequest.RoleID)
-	if err != nil {
-		return err
-	}
-
-	existingPermissions := make(map[uint]bool)
-	var permissions []entity.Permission
-	for _, permissionID := range newRoleRequest.PermissionIDs {
-		if existingPermissions[permissionID] {
-			continue
-		}
-
-		permission, err := userService.getPermission(permissionID)
-		if err != nil {
-			return err
-		}
-		if permission.UserType != role.UserType {
-			continue
-		}
-
-		permissions = append(permissions, *permission)
-		existingPermissions[permissionID] = true
-	}
-
-	err = userService.db.WithTransaction(func(tx database.Database) error {
-		if newRoleRequest.Name != nil {
-			role.Name = *newRoleRequest.Name
-			if err := userService.userRepository.UpdateRole(tx, role); err != nil {
-				return err
-			}
-		}
-
-		if err := userService.userRepository.ReplaceRolePermissions(tx, role, permissions); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return err
-}
-
-func (userService *UserService) UpdateUserRoles(userRolesRequest userdto.UpdateUserRolesRequest) error {
-	user, err := userService.GetUserByID(userRolesRequest.UserID)
-	if err != nil {
-		return err
-	}
-
-	existingRoles := make(map[uint]bool)
-	var roles []entity.Role
-	for _, roleID := range userRolesRequest.RoleIDs {
-		if existingRoles[roleID] {
-			continue
-		}
-
-		role, err := userService.getRole(roleID)
-		if err != nil {
-			return err
-		}
-
-		roles = append(roles, *role)
-		existingRoles[roleID] = true
-	}
-
-	if err := userService.userRepository.ReplaceUserRoles(userService.db, user, roles); err != nil {
+	if err := userService.rbacService.UpdateUserRoles(updateRoleRequest); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (userService *UserService) GetRoleOwners(request rbacdto.GetRoleOwnersRequest) ([]userdto.CredentialResponse, int64, error) {
+	users, count, err := userService.rbacService.GetRoleOwners(request)
+	if err != nil {
+		return nil, 0, err
+	}
+	userCreds := make([]userdto.CredentialResponse, len(users))
+	for i, user := range users {
+		cred, err := userService.GetUserCredential(user.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		userCreds[i] = cred
+	}
+
+	return userCreds, count, nil
 }

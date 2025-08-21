@@ -44,6 +44,7 @@ import (
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/news"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/notification"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/payment"
+	"github.com/BargheNo/Backend/internal/presentation/controller/v1/rbac"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/report"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/ticket"
 	"github.com/BargheNo/Backend/internal/presentation/controller/v1/user"
@@ -76,6 +77,7 @@ var RepositoryProviderSet = wire.NewSet(
 	infraPostgres.NewNewsRepository,
 	infraPostgres.NewBlogRepository,
 	infraPostgres.NewMonitoringRepository,
+	infraPostgres.NewRBACRepository,
 	wire.Bind(new(domainPostgres.UserRepository), new(*infraPostgres.UserRepository)),
 	wire.Bind(new(domainPostgres.InstallationRepository), new(*infraPostgres.InstallationRepository)),
 	wire.Bind(new(domainPostgres.AddressRepository), new(*infraPostgres.AddressRepository)),
@@ -92,6 +94,7 @@ var RepositoryProviderSet = wire.NewSet(
 	wire.Bind(new(domainPostgres.NewsRepository), new(*infraPostgres.NewsRepository)),
 	wire.Bind(new(domainPostgres.BlogRepository), new(*infraPostgres.BlogRepository)),
 	wire.Bind(new(domainPostgres.MonitoringRepository), new(*infraPostgres.MonitoringRepository)),
+	wire.Bind(new(domainPostgres.RBACRepository), new(*infraPostgres.RBACRepository)),
 )
 
 var ServiceProviderSet = wire.NewSet(
@@ -118,6 +121,7 @@ var ServiceProviderSet = wire.NewSet(
 	service.NewNewsService,
 	service.NewBlogService,
 	service.NewMonitoringService,
+	service.NewRBACService,
 	wire.Bind(new(usecase.UserService), new(*service.UserService)),
 	wire.Bind(new(usecase.OTPService), new(*service.OTPService)),
 	wire.Bind(new(communication.SMSService), new(*sms.SMSService)),
@@ -137,6 +141,7 @@ var ServiceProviderSet = wire.NewSet(
 	wire.Bind(new(usecase.NewsService), new(*service.NewsService)),
 	wire.Bind(new(usecase.BlogService), new(*service.BlogService)),
 	wire.Bind(new(usecase.MonitoringService), new(*service.MonitoringService)),
+	wire.Bind(new(usecase.RBACService), new(*service.RBACService)),
 )
 
 var AdapterProviderSet = wire.NewSet(
@@ -204,6 +209,7 @@ var CorporationControllerProviderSet = wire.NewSet(
 	guarantee.NewCorporationGuaranteeController,
 	blog.NewCorporationBlogController,
 	monitoring.NewCorporationMonitoringController,
+	rbac.NewCorporationRBACController,
 	wire.Struct(new(CorporationControllers), "*"),
 )
 
@@ -217,6 +223,7 @@ var AdminControllerProviderSet = wire.NewSet(
 	bid.NewAdminBidController,
 	monitoring.NewAdminMonitoringController,
 	blog.NewAdminBlogController,
+	rbac.NewAdminRBACController,
 	wire.Struct(new(AdminControllers), "*"),
 )
 
@@ -413,6 +420,7 @@ type CorporationControllers struct {
 	GuaranteeController    *guarantee.CorporationGuaranteeController
 	BlogController         *blog.CorporationBlogController
 	MonitoringController   *monitoring.CorporationMonitoringController
+	RBACController         *rbac.CorporationRBACController
 }
 
 type AdminControllers struct {
@@ -425,6 +433,7 @@ type AdminControllers struct {
 	BidController          *bid.AdminBidController
 	MonitoringController   *monitoring.AdminMonitoringController
 	BlogController         *blog.AdminBlogController
+	RBACController         *rbac.AdminRBACController
 }
 
 type Controllers struct {

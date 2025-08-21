@@ -119,6 +119,8 @@ type ErrorTag struct {
 	AlreadyAccepted        string
 	AlreadyDraft           string
 	InvalidRecaptcha       string
+	Required               string
+	InvalidNumber          string
 }
 
 type SMSTemplates struct {
@@ -296,6 +298,8 @@ func NewConstants() *Constants {
 			AlreadyAccepted:        "alreadyAccepted",
 			AlreadyDraft:           "alreadyDraft",
 			InvalidRecaptcha:       "invalidRecaptcha",
+			Required:               "required",
+			InvalidNumber:          "invalidNumber",
 		},
 		SMSTemplates: SMSTemplates{
 			OTP: "sendOTPTemplate",

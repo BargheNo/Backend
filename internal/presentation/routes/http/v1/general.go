@@ -36,6 +36,7 @@ func SetupGeneralRoutes(routerGroup *gin.RouterGroup, app *wire.Application) {
 	{
 		corporations.GET("", app.Controllers.General.CorporationController.GetCorporations)
 		corporations.GET(sortable, app.Controllers.General.CorporationController.GetSortableFields)
+		corporations.GET("staff/sortable", app.Controllers.General.CorporationController.GetStaffSortableFields)
 	}
 
 	notifications := routerGroup.Group("/notifications")
