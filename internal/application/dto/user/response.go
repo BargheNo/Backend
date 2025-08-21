@@ -1,16 +1,18 @@
 package userdto
 
+import rbacdto "github.com/BargheNo/Backend/internal/application/dto/rbac"
+
 type OTPData struct {
 	OTP      string `json:"otp"`
 	Attempts int    `json:"attempts"`
 }
 
 type UserInfoResponse struct {
-	AccessToken  string               `json:"accessToken"`
-	RefreshToken string               `json:"refreshToken"`
-	FirstName    string               `json:"firstName"`
-	LastName     string               `json:"lastName"`
-	Permissions  []PermissionResponse `json:"permissions"`
+	AccessToken  string                       `json:"accessToken"`
+	RefreshToken string                       `json:"refreshToken"`
+	FirstName    string                       `json:"firstName"`
+	LastName     string                       `json:"lastName"`
+	Permissions  []rbacdto.PermissionResponse `json:"permissions"`
 }
 
 type CredentialResponse struct {
@@ -27,21 +29,6 @@ type CredentialResponse struct {
 
 type UserResponse struct {
 	ID uint `json:"id"`
-}
-
-type RoleResponse struct {
-	ID          uint                 `json:"id"`
-	Name        string               `json:"name"`
-	IsCorpStaff bool                 `json:"isCorpStaff"`
-	Permissions []PermissionResponse `json:"permissions"`
-}
-
-type PermissionResponse struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	IsCorpStaff bool   `json:"isCorpStaff"`
-	Category    string `json:"category"`
 }
 
 type UserEnumResponse struct {

@@ -98,8 +98,11 @@ type GetPermissionsListRequest struct {
 
 type GetRoleOwnersRequest struct {
 	RoleID uint
+	Query  string
 	Offset int
 	Limit  int
+	SortBy uint
+	Asc    bool
 }
 
 type GetRolesListRequest struct {

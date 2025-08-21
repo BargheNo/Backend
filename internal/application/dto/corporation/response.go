@@ -2,6 +2,7 @@ package corporationdto
 
 import (
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
+	rbacdto "github.com/BargheNo/Backend/internal/application/dto/rbac"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 )
 
@@ -68,5 +69,5 @@ type StaffDetailsResponse struct {
 	ID     uint                       `json:"id"`
 	Staff  userdto.CredentialResponse `json:"staff"`
 	Status string                     `json:"status"`
-	Roles  []userdto.RoleResponse     `json:"roles"`
+	Roles  []rbacdto.RoleResponse     `json:"roles"`
 }

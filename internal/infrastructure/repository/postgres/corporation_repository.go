@@ -344,7 +344,7 @@ func (repo *CorporationRepository) FindStaffByUserIDAndStatus(db database.Databa
 
 func (repo *CorporationRepository) FindCorporationStaffByID(db database.Database, corporationID, staffID uint) (*entity.CorporationStaff, error) {
 	var staff entity.CorporationStaff
-	result := db.GetDB().Preload("Roles").Where("corporation_id = ?", corporationID).First(&staff, staffID)
+	result := db.GetDB().Where("corporation_id = ?", corporationID).First(&staff, staffID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -387,7 +387,9 @@ func (repo *CorporationRepository) FindRoleByName(db database.Database, name str
 func (repo *CorporationRepository) FindCorporationStaffs(db database.Database, corporationID uint, allowedStatus []enum.StaffStatus, options *postgres.QueryOptions) ([]*entity.CorporationStaff, error) {
 	var staffs []*entity.CorporationStaff
 
-	query := db.GetDB().Preload("Roles").Where("corporation_id = ? AND status IN ?", corporationID, allowedStatus)
+	query := db.GetDB().
+		Joins("LEFT JOIN users ON users.id = corporation_staffs.user_id").
+		Where("corporation_id = ? AND corporation_staffs.status IN ?", corporationID, allowedStatus)
 
 	query = applyQueryOptions(query, options)
 
@@ -417,7 +419,6 @@ func (repo *CorporationRepository) FindCorporationStaffByQuery(db database.Datab
 
 	result := db.GetDB().
 		Preload("User").
-		Preload("Roles").
 		Preload("Corporation").
 		Joins("LEFT JOIN users ON corporation_staffs.user_id = users.id").
 		Where(`

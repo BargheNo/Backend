@@ -1,12 +1,13 @@
 package service
 
 import (
+	"log"
 	"time"
 
 	"github.com/BargheNo/Backend/bootstrap"
 	addressdto "github.com/BargheNo/Backend/internal/application/dto/address"
 	corporationdto "github.com/BargheNo/Backend/internal/application/dto/corporation"
-	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
+	rbacdto "github.com/BargheNo/Backend/internal/application/dto/rbac"
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/domain/entity"
 	"github.com/BargheNo/Backend/internal/domain/enum"
@@ -21,6 +22,7 @@ type CorporationService struct {
 	constants             *bootstrap.Constants
 	userService           usecase.UserService
 	addressService        usecase.AddressService
+	rbacService           usecase.RBACService
 	s3Storage             s3.S3Storage
 	corporationRepository postgres.CorporationRepository
 	db                    database.Database
@@ -30,6 +32,7 @@ func NewCorporationService(
 	constants *bootstrap.Constants,
 	userService usecase.UserService,
 	addressService usecase.AddressService,
+	rbacService usecase.RBACService,
 	s3Storage s3.S3Storage,
 	corporationRepository postgres.CorporationRepository,
 	db database.Database,
@@ -38,6 +41,7 @@ func NewCorporationService(
 		constants:             constants,
 		userService:           userService,
 		addressService:        addressService,
+		rbacService:           rbacService,
 		s3Storage:             s3Storage,
 		corporationRepository: corporationRepository,
 		db:                    db,
@@ -47,6 +51,15 @@ func NewCorporationService(
 func (corporationService *CorporationService) getSortByColumn(requested uint) string {
 	allowed := sortby.GetCorporationSortableColumns()
 	sortBy := sortby.CorporationSortBy(requested)
+	if _, ok := allowed[sortBy]; ok {
+		return sortBy.DBColumn()
+	}
+	return sortby.NewsSortByCreatedAt.DBColumn()
+}
+
+func (corporationService *CorporationService) getStaffSortByColumn(requested uint) string {
+	allowed := sortby.GetStaffSortableColumns()
+	sortBy := sortby.StaffSortBy(requested)
 	if _, ok := allowed[sortBy]; ok {
 		return sortBy.DBColumn()
 	}
@@ -83,6 +96,20 @@ func (corporationService *CorporationService) GetCorporationStatuses() []corpora
 
 func (corporationService *CorporationService) GetCorporationSortableColumns() []corporationdto.GetEnumResponse {
 	columns := sortby.GetCorporationSortableColumns()
+	response := make([]corporationdto.GetEnumResponse, len(columns))
+	i := 0
+	for col := range columns {
+		response[i] = corporationdto.GetEnumResponse{
+			ID:   uint(col),
+			Name: col.Name(),
+		}
+		i++
+	}
+	return response
+}
+
+func (corporationService *CorporationService) GetCorporationStaffSortableColumns() []corporationdto.GetEnumResponse {
+	columns := sortby.GetStaffSortableColumns()
 	response := make([]corporationdto.GetEnumResponse, len(columns))
 	i := 0
 	for col := range columns {
@@ -1095,16 +1122,6 @@ func (corporationService *CorporationService) RejectCorporationRegistration(requ
 	return err
 }
 
-func (corporationService *CorporationService) GetCorporationRoles(request corporationdto.GetRolesListRequest) ([]userdto.RoleResponse, int64, error) {
-	roleRequest := userdto.GetRolesListRequest{
-		IsStaff: true,
-		Query:   request.Query,
-		Offset:  request.Offset,
-		Limit:   request.Limit,
-	}
-	return corporationService.userService.GetAllRoles(roleRequest)
-}
-
 func (corporationService *CorporationService) GetStaffStatuses() []corporationdto.GetEnumResponse {
 	statuses := enum.GetAllStaffStatuses()
 	response := make([]corporationdto.GetEnumResponse, len(statuses))
@@ -1118,28 +1135,41 @@ func (corporationService *CorporationService) GetStaffStatuses() []corporationdt
 }
 
 func (corporationService *CorporationService) createStaff(UserID, CorporationID uint, roleIDs []uint) error {
-	roles, err := corporationService.corporationRepository.FindRolesByIDs(corporationService.db, roleIDs, enum.UserTypeCorporation)
-	if err != nil {
-		return err
-	}
-
 	staff := &entity.CorporationStaff{
 		UserID:        UserID,
 		CorporationID: CorporationID,
 		Status:        enum.StaffStatusActive,
-		Roles:         roles,
 	}
 
-	return corporationService.corporationRepository.CreateStaff(corporationService.db, staff)
+	updateStaffRolesRequest := rbacdto.UpdateStaffRolesRequest{
+		Staff:   staff,
+		RoleIDs: roleIDs,
+	}
+	err := corporationService.db.WithTransaction(func(tx database.Database) error {
+		if err := corporationService.corporationRepository.CreateStaff(corporationService.db, staff); err != nil {
+			return err
+		}
+
+		if err := corporationService.rbacService.UpdateStaffRoles(updateStaffRolesRequest); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (corporationService *CorporationService) updateStaffRoles(staff *entity.CorporationStaff, roleIDs []uint) error {
-	roles, err := corporationService.corporationRepository.FindRolesByIDs(corporationService.db, roleIDs, enum.UserTypeCorporation)
-	if err != nil {
-		return err
+	updateStaffRolesRequest := rbacdto.UpdateStaffRolesRequest{
+		Staff:   staff,
+		RoleIDs: roleIDs,
 	}
 
-	return corporationService.corporationRepository.ReplaceStaffRoles(corporationService.db, staff, roles)
+	if err := corporationService.rbacService.UpdateStaffRoles(updateStaffRolesRequest); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (corporationService *CorporationService) AddStaff(request corporationdto.AddStaffRequest) error {
@@ -1157,7 +1187,9 @@ func (corporationService *CorporationService) AddStaff(request corporationdto.Ad
 		if err := corporationService.createStaff(user.ID, request.CorporationID, request.RoleIDs); err != nil {
 			return err
 		}
+		return nil
 	}
+
 	if err := corporationService.updateStaffRoles(staff, request.RoleIDs); err != nil {
 		return err
 	}
@@ -1211,6 +1243,7 @@ func (corporationService *CorporationService) EditStaff(request corporationdto.E
 		if err := corporationService.updateStaffRoles(staff, request.RoleIDs); err != nil {
 			return err
 		}
+
 		if err := corporationService.corporationRepository.UpdateStaff(corporationService.db, staff); err != nil {
 			return err
 		}
@@ -1221,18 +1254,19 @@ func (corporationService *CorporationService) EditStaff(request corporationdto.E
 
 func (corporationService *CorporationService) getStaffsByQuery(corporationID uint, allowedStatus []enum.StaffStatus, query string, options *postgres.QueryOptions) ([]*entity.CorporationStaff, int64, error) {
 	if query == "" {
-		maintenanceRequests, err := corporationService.corporationRepository.FindCorporationStaffs(corporationService.db, corporationID, allowedStatus, options)
+		staffs, err := corporationService.corporationRepository.FindCorporationStaffs(corporationService.db, corporationID, allowedStatus, options)
 		if err != nil {
+			log.Println("hi am here")
 			return nil, 0, err
 		}
 		count, err := corporationService.corporationRepository.CountCorporationStaffs(corporationService.db, corporationID, allowedStatus)
 		if err != nil {
 			return nil, 0, err
 		}
-		return maintenanceRequests, count, nil
+		return staffs, count, nil
 	}
 
-	maintenanceRequests, err := corporationService.corporationRepository.FindCorporationStaffByQuery(corporationService.db, corporationID, allowedStatus, query, options)
+	staffs, err := corporationService.corporationRepository.FindCorporationStaffByQuery(corporationService.db, corporationID, allowedStatus, query, options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -1240,13 +1274,13 @@ func (corporationService *CorporationService) getStaffsByQuery(corporationID uin
 	if err != nil {
 		return nil, 0, err
 	}
-	return maintenanceRequests, count, nil
+	return staffs, count, nil
 }
 
 func (corporationService *CorporationService) GetStaffList(request corporationdto.GetStaffList) ([]corporationdto.StaffDetailsResponse, int64, error) {
 	options := postgres.NewQueryOptions().
 		WithPagination(request.Limit, request.Offset).
-		WithSorting(corporationService.getSortByColumn(request.SortBy), request.Asc)
+		WithSorting(corporationService.getStaffSortByColumn(request.SortBy), request.Asc)
 
 	allowedStatus := corporationService.mapToStaffStatus(request.Status)
 	staffs, count, err := corporationService.getStaffsByQuery(request.CorporationID, allowedStatus, request.Query, options)
@@ -1261,19 +1295,15 @@ func (corporationService *CorporationService) GetStaffList(request corporationdt
 			return nil, 0, err
 		}
 
-		rolesResponse := make([]userdto.RoleResponse, len(staff.Roles))
-		for j, role := range staff.Roles {
-			roleResponse, err := corporationService.userService.GetRoleDetails(role.ID)
-			if err != nil {
-				continue
-			}
-			rolesResponse[j] = roleResponse
+		roles, err := corporationService.rbacService.GetStaffRoles(staff)
+		if err != nil {
+			return nil, 0, err
 		}
 
 		response[i] = corporationdto.StaffDetailsResponse{
 			ID:     staff.ID,
 			Staff:  user,
-			Roles:  rolesResponse,
+			Roles:  roles,
 			Status: staff.Status.String(),
 		}
 	}
@@ -1291,19 +1321,14 @@ func (corporationService *CorporationService) GetStaff(corporationID, staffID ui
 		return corporationdto.StaffDetailsResponse{}, err
 	}
 
-	rolesResponse := make([]userdto.RoleResponse, len(staff.Roles))
-	for i, role := range staff.Roles {
-		roleResponse, err := corporationService.userService.GetRoleDetails(role.ID)
-		if err != nil {
-			continue
-		}
-		rolesResponse[i] = roleResponse
+	roles, err := corporationService.rbacService.GetStaffRoles(staff)
+	if err != nil {
+		return corporationdto.StaffDetailsResponse{}, err
 	}
-
 	return corporationdto.StaffDetailsResponse{
 		ID:     staff.ID,
 		Staff:  user,
-		Roles:  rolesResponse,
+		Roles:  roles,
 		Status: staff.Status.String(),
 	}, nil
 }

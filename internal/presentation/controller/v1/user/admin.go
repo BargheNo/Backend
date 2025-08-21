@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/BargheNo/Backend/bootstrap"
+	rbacdto "github.com/BargheNo/Backend/internal/application/dto/rbac"
 	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	"github.com/BargheNo/Backend/internal/application/usecase"
 	"github.com/BargheNo/Backend/internal/presentation/controller"
@@ -24,214 +25,6 @@ func NewAdminUserController(
 		pagination:  pagination,
 		userService: userService,
 	}
-}
-
-func (userController *AdminUserController) GetPermissionsList(ctx *gin.Context) {
-	type getPermissionsParams struct {
-		IsStaff  bool `form:"isStaff"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-	}
-	params := controller.Validated[getPermissionsParams](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
-
-	request := userdto.GetPermissionsListRequest{
-		IsStaff: params.IsStaff,
-		Offset:  offset,
-		Limit:   limit,
-	}
-
-	permissions, count, err := userController.userService.GetAllPermissions(request)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(permissions, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
-}
-
-func (userController *AdminUserController) GetPermissionRoles(ctx *gin.Context) {
-	type getPermissionRolesParams struct {
-		PermissionID uint `uri:"permissionID" validate:"required"`
-		Page         int  `form:"page"`
-		PageSize     int  `form:"pageSize"`
-		SortBy       uint `form:"sortBy"`
-		Asc          bool `form:"asc"`
-	}
-	params := controller.Validated[getPermissionRolesParams](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
-
-	request := userdto.GetPermissionRolesRequest{
-		PermissionID: params.PermissionID,
-		Offset:       offset,
-		Limit:        limit,
-		SortBy:       params.SortBy,
-		Asc:          params.Asc,
-	}
-
-	roles, count, err := userController.userService.GetPermissionRoles(request)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(roles, count, offset, limit)
-
-	controller.Response(ctx, 200, "", data)
-}
-
-func (userController *AdminUserController) GetRolesList(ctx *gin.Context) {
-	type getRolesParams struct {
-		IsStaff  bool   `form:"isStaff"`
-		Query    string `form:"query"`
-		Page     int    `form:"page"`
-		PageSize int    `form:"pageSize"`
-	}
-	params := controller.Validated[getRolesParams](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
-
-	request := userdto.GetRolesListRequest{
-		IsStaff: params.IsStaff,
-		Query:   params.Query,
-		Offset:  offset,
-		Limit:   limit,
-	}
-
-	roles, count, err := userController.userService.GetAllRoles(request)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(roles, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
-}
-
-func (userController *AdminUserController) CreateRole(ctx *gin.Context) {
-	type newRoleParams struct {
-		Name          string `json:"name" validate:"required"`
-		IsStaff       bool   `json:"isStaff"`
-		IsCorpStaff   bool   `json:"isCorpStaff"`
-		PermissionIDs []uint `json:"permissionIDs"`
-	}
-	params := controller.Validated[newRoleParams](ctx)
-
-	newRoleRequest := userdto.NewRoleRequest{
-		Name:          params.Name,
-		IsStaff:       params.IsStaff,
-		PermissionIDs: params.PermissionIDs,
-	}
-	if err := userController.userService.CreateRole(newRoleRequest); err != nil {
-		panic(err)
-	}
-
-	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.createRole")
-	controller.Response(ctx, 200, message, nil)
-}
-
-func (userController *AdminUserController) GetRoleDetails(ctx *gin.Context) {
-	type getRoleParams struct {
-		RoleID uint `uri:"roleID" validate:"required"`
-	}
-	params := controller.Validated[getRoleParams](ctx)
-
-	role, err := userController.userService.GetRoleDetails(params.RoleID)
-	if err != nil {
-		panic(err)
-	}
-	controller.Response(ctx, 200, "", role)
-}
-
-func (userController *AdminUserController) GetRoleOwners(ctx *gin.Context) {
-	type getRoleParams struct {
-		RoleID   uint `uri:"roleID" validate:"required"`
-		Page     int  `form:"page"`
-		PageSize int  `form:"pageSize"`
-	}
-	params := controller.Validated[getRoleParams](ctx)
-
-	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
-
-	request := userdto.GetRoleOwnersRequest{
-		RoleID: params.RoleID,
-		Offset: offset,
-		Limit:  limit,
-	}
-
-	roleOwners, count, err := userController.userService.GetRoleOwners(request)
-	if err != nil {
-		panic(err)
-	}
-	data := controller.NewPaginatedResponse(roleOwners, count, offset, limit)
-	controller.Response(ctx, 200, "", data)
-}
-
-func (userController *AdminUserController) UpdateRole(ctx *gin.Context) {
-	type updateRoleParams struct {
-		RoleID        uint    `uri:"roleID" validate:"required"`
-		Name          *string `json:"name"`
-		PermissionIDs []uint  `json:"permissionIDs"`
-	}
-	params := controller.Validated[updateRoleParams](ctx)
-
-	newRoleRequest := userdto.UpdateRoleRequest{
-		RoleID:        params.RoleID,
-		Name:          params.Name,
-		PermissionIDs: params.PermissionIDs,
-	}
-	if err := userController.userService.UpdateRole(newRoleRequest); err != nil {
-		panic(err)
-	}
-
-	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.updateRole")
-	controller.Response(ctx, 200, message, nil)
-}
-
-func (userController *AdminUserController) DeleteRole(ctx *gin.Context) {
-	type deleteRoleParams struct {
-		RoleID uint `uri:"roleID" validate:"required"`
-	}
-	params := controller.Validated[deleteRoleParams](ctx)
-
-	if err := userController.userService.DeleteRole(params.RoleID); err != nil {
-		panic(err)
-	}
-
-	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.deleteRole")
-	controller.Response(ctx, 200, message, nil)
-}
-
-func (userController *AdminUserController) GetUserRoles(ctx *gin.Context) {
-	type getRolesParams struct {
-		UserID uint `uri:"userID" validate:"required"`
-	}
-	params := controller.Validated[getRolesParams](ctx)
-	roles, err := userController.userService.GetUserRoles(params.UserID)
-	if err != nil {
-		panic(err)
-	}
-	controller.Response(ctx, 200, "", roles)
-}
-
-func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
-	type updateUserRolesParams struct {
-		UserID  uint   `uri:"userID" validate:"required"`
-		RoleIDs []uint `json:"roleIDs"`
-	}
-	params := controller.Validated[updateUserRolesParams](ctx)
-
-	userRolesRequest := userdto.UpdateUserRolesRequest{
-		UserID:  params.UserID,
-		RoleIDs: params.RoleIDs,
-	}
-	if err := userController.userService.UpdateUserRoles(userRolesRequest); err != nil {
-		panic(err)
-	}
-
-	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
-	message, _ := trans.Translate("successMessage.updateUserRoles")
-	controller.Response(ctx, 200, message, nil)
 }
 
 func (userController *AdminUserController) GetUsers(ctx *gin.Context) {
@@ -292,4 +85,66 @@ func (userController *AdminUserController) UnbanUser(ctx *gin.Context) {
 	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
 	message, _ := trans.Translate("successMessage.unbanUser")
 	controller.Response(ctx, 200, message, nil)
+}
+
+func (userController *AdminUserController) GetUserRoles(ctx *gin.Context) {
+	type getRolesParams struct {
+		UserID uint `uri:"userID" validate:"required"`
+	}
+	params := controller.Validated[getRolesParams](ctx)
+	roles, err := userController.userService.GetUserRoles(params.UserID)
+	if err != nil {
+		panic(err)
+	}
+	controller.Response(ctx, 200, "", roles)
+}
+
+func (userController *AdminUserController) UpdateUserRoles(ctx *gin.Context) {
+	type updateUserRolesParams struct {
+		UserID  uint   `uri:"userID" validate:"required"`
+		RoleIDs []uint `json:"roleIDs"`
+	}
+	params := controller.Validated[updateUserRolesParams](ctx)
+
+	userRolesRequest := userdto.UpdateUserRolesRequest{
+		UserID:  params.UserID,
+		RoleIDs: params.RoleIDs,
+	}
+	if err := userController.userService.UpdateUserRoles(userRolesRequest); err != nil {
+		panic(err)
+	}
+
+	trans := controller.GetTranslator(ctx, userController.constants.Context.Translator)
+	message, _ := trans.Translate("successMessage.updateUserRoles")
+	controller.Response(ctx, 200, message, nil)
+}
+
+func (userController *AdminUserController) GetRoleOwners(ctx *gin.Context) {
+	type getRoleOwnersParams struct {
+		RoleID   uint   `uri:"roleID" validate:"required"`
+		Query    string `form:"query"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		SortBy   uint   `form:"sortBy"`
+		Asc      bool   `form:"asc"`
+	}
+	params := controller.Validated[getRoleOwnersParams](ctx)
+
+	offset, limit := controller.GetOffsetLimit(params.Page, params.PageSize, userController.pagination.DefaultPage, userController.pagination.DefaultPageSize)
+
+	request := rbacdto.GetRoleOwnersRequest{
+		RoleID: params.RoleID,
+		Query:  params.Query,
+		Offset: offset,
+		Limit:  limit,
+		SortBy: params.SortBy,
+		Asc:    params.Asc,
+	}
+
+	users, count, err := userController.userService.GetRoleOwners(request)
+	if err != nil {
+		panic(err)
+	}
+	data := controller.NewPaginatedResponse(users, count, offset, limit)
+	controller.Response(ctx, 200, "", data)
 }
