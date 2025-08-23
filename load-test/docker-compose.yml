@@ -1,0 +1,76 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/bargheno/backend
+    container_name: backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+    env_file:
+      - ./.env
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    depends_on:
+      - db
+      - rdb
+      - rabbitmq
+
+  db:
+    image: postgres:latest
+    container_name: db
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 2G
+        reservations:
+          cpus: "0.2"
+          memory: 512M
+
+  rdb:
+    image: redis:latest
+    container_name: rdb
+    restart: unless-stopped
+    ports:
+      - ${RDB_PORT}:${RDB_PORT}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "${AMQP_PORT}:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${AMQP_USER}
+      - RABBITMQ_DEFAULT_PASS=${AMQP_PASSWORD}
+      - RABBITMQ_DEFAULT_VHOST=${AMQP_VHOST}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M

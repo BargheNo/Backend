@@ -1,0 +1,74 @@
+name: CD
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - closed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Write .env file
+        run: |
+          echo "${{ secrets.LOADTESTENV }}" > load-test/.env
+
+      - name: Write .pem files
+        run: |
+          echo "${{ secrets.PRIVATE }}" > ./internal/infrastructure/jwt/privateKey.pem
+          echo "${{ secrets.PUBLIC }}" > ./internal/infrastructure/jwt/publicKey.pem
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PAT }}
+
+      - name: Stop Production Services
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd /root/backend
+            docker compose down
+            sleep 10
+
+      - name: Copy Load Test Files
+        uses: appleboy/scp-action@v0.1.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: |
+            load-test/docker-compose.yml
+            load-test/load-test.yml
+            load-test/.env
+          target: "/root/backend/load-test"
+
+      - name: Start Load Test Services
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd /root/backend/load-test
+            docker compose up -d
+            sleep 10
+
+      - name: Load Test
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            dotenv artillery run load-test.yml
