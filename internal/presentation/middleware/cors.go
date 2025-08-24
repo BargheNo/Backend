@@ -21,6 +21,7 @@ func (cm *CORSMiddleware) CORS() gin.HandlerFunc {
 			"https://46.249.99.69:3001",
 			"http://barghe-no.ir",
 			"https://barghe-no.ir",
+			"*",
 		},
 		AllowMethods:     []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "ngrok-skip-browser-warning"},
