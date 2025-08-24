@@ -1,6 +1,9 @@
 name: CD
 
 on:
+  push:
+    branches:
+      - test/user-corp
   pull_request:
     branches:
       - develop
