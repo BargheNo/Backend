@@ -1,9 +1,10 @@
 package mocks
 
 import (
+	"context"
 	"time"
 
-	"github.com/BargheNo/Backend/internal/domain/entity"
+	userdto "github.com/BargheNo/Backend/internal/application/dto/user"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -15,32 +16,15 @@ func NewUserCacheRepositoryMock() *UserCacheRepositoryMock {
 	return &UserCacheRepositoryMock{}
 }
 
-func (u *UserCacheRepositoryMock) SetUser(user *entity.User, expiration time.Duration) error {
-	args := u.Called(user, expiration)
-	return args.Error(0)
+func (u *UserCacheRepositoryMock) Get(ctx context.Context, key string) (*userdto.OTPData, error) {
+	args := u.Called(ctx, key)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userdto.OTPData), args.Error(1)
 }
 
-func (u *UserCacheRepositoryMock) GetUser(userID uint) (*entity.User, error) {
-	args := u.Called(userID)
-	return args.Get(0).(*entity.User), args.Error(1)
-}
-
-func (u *UserCacheRepositoryMock) DeleteUser(userID uint) error {
-	args := u.Called(userID)
-	return args.Error(0)
-}
-
-func (u *UserCacheRepositoryMock) SetUserToken(userID uint, token string, expiration time.Duration) error {
-	args := u.Called(userID, token, expiration)
-	return args.Error(0)
-}
-
-func (u *UserCacheRepositoryMock) GetUserToken(userID uint) (string, error) {
-	args := u.Called(userID)
-	return args.String(0), args.Error(1)
-}
-
-func (u *UserCacheRepositoryMock) DeleteUserToken(userID uint) error {
-	args := u.Called(userID)
+func (u *UserCacheRepositoryMock) Set(ctx context.Context, key, otp string, expiration time.Duration) error {
+	args := u.Called(ctx, key, otp, expiration)
 	return args.Error(0)
 }

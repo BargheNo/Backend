@@ -53,17 +53,17 @@ func (u *UserRepositoryMock) FindRoleByName(db database.Database, name string) (
 
 func (u *UserRepositoryMock) CreateUser(db database.Database, user *entity.User) error {
 	args := u.Called(db, user)
-	return args.Error(1)
+	return args.Error(0)
 }
 
 func (u *UserRepositoryMock) DeleteUserByPhone(db database.Database, phone string) error {
 	args := u.Called(db, phone)
-	return args.Error(1)
+	return args.Error(0)
 }
 
 func (u *UserRepositoryMock) UpdateUser(db database.Database, user *entity.User) error {
 	args := u.Called(db, user)
-	return args.Error(1)
+	return args.Error(0)
 }
 
 func (u *UserRepositoryMock) FindUserRoles(db database.Database, user *entity.User) error {
