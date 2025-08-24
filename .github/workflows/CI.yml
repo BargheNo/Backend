@@ -1,9 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - test/user-corp
   pull_request:
     branches:
       - develop
