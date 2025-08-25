@@ -517,20 +517,17 @@ func (bidService *BidService) AcceptBid(request biddto.GetCustomerBidRequest) er
 		},
 	}
 
-	err = bidService.db.WithTransaction(func(tx database.Database) error {
-		if err := bidService.installationService.ChangeInstallationRequestStatus(changeRequestStatus); err != nil {
-			return err
-		}
+	if err := bidService.installationService.ChangeInstallationRequestStatus(changeRequestStatus); err != nil {
+		return err
+	}
 
-		if err := bidService.bidRepository.UpdateBid(tx, bid); err != nil {
-			return err
-		}
+	if err := bidService.bidRepository.UpdateBid(bidService.db, bid); err != nil {
+		return err
+	}
 
-		if err := bidService.installationService.AddPanel(panelInfo); err != nil {
-			return err
-		}
-		return nil
-	})
+	if err := bidService.installationService.AddPanel(panelInfo); err != nil {
+		return err
+	}
 
 	return err
 }
