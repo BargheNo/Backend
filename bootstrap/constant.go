@@ -113,6 +113,8 @@ type ErrorTag struct {
 	AlreadyActive          string
 	AlreadyResolved        string
 	AlreadyArchived        string
+	AlreadyCompleted       string
+	NotAccepted            string
 	StatusNotChange        string
 	AlreadyCanceled        string
 	AlreadyRejected        string
@@ -292,6 +294,8 @@ func NewConstants() *Constants {
 			AlreadyActive:          "alreadyActive",
 			AlreadyResolved:        "alreadyResolved",
 			AlreadyArchived:        "alreadyArchived",
+			AlreadyCompleted:       "alreadyCompleted",
+			NotAccepted:            "notAccepted",
 			StatusNotChange:        "statusNotChange",
 			AlreadyCanceled:        "alreadyCanceled",
 			AlreadyRejected:        "alreadyRejected",

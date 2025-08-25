@@ -84,6 +84,8 @@ var English = map[string]interface{}{
 		"alreadyBlocked":         "This {0} has been already blocked.",
 		"alreadyActive":          "This {0} has been already active.",
 		"alreadyResolved":        "This {0} has been already resolved.",
+		"alreadyCompleted":       "This {0} has been already completed.",
+		"notAccepted":            "This {0} has not been accepted.",
 		"alreadyArchived":        "This {0} has been already archived.",
 		"statusNotChange":        "This {0} has been already have this status.",
 		"alreadyCanceled":        "This {0} has been already canceled.",
