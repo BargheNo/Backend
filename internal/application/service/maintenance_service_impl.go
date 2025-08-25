@@ -572,12 +572,26 @@ func (maintenanceService *MaintenanceService) ApproveMaintenanceRecord(maintenan
 		return conflictErrors
 	}
 
+	if maintenanceRequest.Status == enum.MaintenanceRequestStatusCompleted {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRecord, maintenanceService.constants.Tag.AlreadyCompleted)
+		return conflictErrors
+	}
+
+	maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
 	record.IsUserApproved = true
 
-	if err = maintenanceService.maintenanceRepository.UpdateMaintenanceRecord(maintenanceService.db, record); err != nil {
-		return err
-	}
-	return nil
+	err = maintenanceService.db.WithTransaction(func(tx database.Database) error {
+		if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(tx, maintenanceRequest); err != nil {
+			return err
+		}
+		if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRecord(tx, record); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
 }
 
 func (maintenanceService *MaintenanceService) getMaintenanceByQuery(corporationID uint, allowedStatus []enum.MaintenanceRequestStatus, query string, options *postgres.QueryOptions) ([]*entity.MaintenanceRequest, int64, error) {
@@ -800,6 +814,12 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo
 		return conflictErrors
 	}
 
+	if maintenanceRequest.Status != enum.MaintenanceRequestStatusAccepted {
+		var conflictErrors exception.ConflictErrors
+		conflictErrors.Add(maintenanceService.constants.Field.MaintenanceRequest, maintenanceService.constants.Tag.NotAccepted)
+		return conflictErrors
+	}
+
 	err = maintenanceService.db.WithTransaction(func(tx database.Database) error {
 		var guaranteeViolationID *uint = nil
 		if recordInfo.GuaranteeViolation != nil {
@@ -829,10 +849,6 @@ func (maintenanceService *MaintenanceService) CreateMaintenanceRecord(recordInfo
 			return err
 		}
 
-		maintenanceRequest.Status = enum.MaintenanceRequestStatusCompleted
-		if err := maintenanceService.maintenanceRepository.UpdateMaintenanceRequest(tx, maintenanceRequest); err != nil {
-			return err
-		}
 		return nil
 	})
 	return err

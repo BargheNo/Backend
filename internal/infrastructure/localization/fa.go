@@ -84,6 +84,8 @@ var Persian = map[string]interface{}{
 		"alreadyBlocked":         "این {0} از پیش مسدود شده است.",
 		"alreadyActive":          "این {0} از پیش فعال شده است.",
 		"alreadyResolved":        "این {0} قبلا بررسی شده است.",
+		"alreadyCompleted":       "این {0} قبلا نهایی شده است.",
+		"notAccepted":            "این {0} قبول نشده است.",
 		"alreadyArchived":        "این {0} قبلا آرشیو شده است.",
 		"statusNotChange":        "این {0} قبلا همین وضعیت را داشته است.",
 		"alreadyCanceled":        "این {0} قبلا لغو شده است.",
