@@ -707,12 +707,12 @@ func (maintenanceService *MaintenanceService) getCorporationMaintenanceRecord(re
 	}
 
 	recordResponse := maintenancedto.CorporationMaintenanceRecordResponse{
-		ID:                 record.ID,
-		CreatedAt:          record.CreatedAt,
+		ID:                 recordModel.ID,
+		CreatedAt:          recordModel.CreatedAt,
 		Operator:           operator,
-		Title:              record.Title,
-		Details:            record.Details,
-		IsUserApproved:     record.IsUserApproved,
+		Title:              recordModel.Title,
+		Details:            recordModel.Details,
+		IsUserApproved:     recordModel.IsUserApproved,
 		GuaranteeViolation: violation,
 	}
 	return recordResponse, nil
