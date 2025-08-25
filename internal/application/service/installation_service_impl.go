@@ -397,6 +397,8 @@ func (installationService *InstallationService) ChangeInstallationRequestStatus(
 		return conflictErrors
 	}
 
+	installationRequest.Status = request.Status
+
 	if err = installationService.installationRepository.UpdateRequest(installationService.db, installationRequest); err != nil {
 		return err
 	}
