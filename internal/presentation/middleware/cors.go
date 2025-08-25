@@ -16,18 +16,18 @@ func NewCorsMiddleware() *CORSMiddleware {
 func (cm *CORSMiddleware) CORS() gin.HandlerFunc {
 	corsConfig := cors.Config{
 		AllowOrigins: []string{
-			"http://localhost:3000",
-			"http://46.249.99.69:3001",
-			"https://46.249.99.69:3001",
-			"http://barghe-no.ir",
-			"https://barghe-no.ir",
+			// "http://localhost:3000",
+			// "http://46.249.99.69:3001",
+			// "https://46.249.99.69:3001",
+			// "http://barghe-no.ir",
+			// "https://barghe-no.ir",
 			"*",
 		},
-		AllowMethods:     []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "ngrok-skip-browser-warning"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+		AllowMethods:  []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
+		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization", "ngrok-skip-browser-warning"},
+		ExposeHeaders: []string{"Content-Length"},
+		// AllowCredentials: true,
+		MaxAge: 12 * time.Hour,
 	}
 
 	return cors.New(corsConfig)
