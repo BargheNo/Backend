@@ -136,8 +136,8 @@ func (maintenanceController *CorporationMaintenanceController) RejectMaintenance
 
 func (maintenanceController *CorporationMaintenanceController) CreateMaintenanceRecord(ctx *gin.Context) {
 	type guaranteeViolation struct {
-		Reason  string `json:"reason" validate:"required_with=Details,omitempty"`
-		Details string `json:"details" validate:"required_with=Reason,omitempty"`
+		Reason  string `json:"reason"`
+		Details string `json:"details"`
 	}
 
 	type createRecordParams struct {
@@ -145,7 +145,7 @@ func (maintenanceController *CorporationMaintenanceController) CreateMaintenance
 		CorporationID      uint                `uri:"corporationID" validate:"required"`
 		Title              string              `json:"title" validate:"required"`
 		Details            string              `json:"details" validate:"required"`
-		GuaranteeViolation *guaranteeViolation `json:"guaranteeViolation" validate:"omitempty,dive"`
+		GuaranteeViolation *guaranteeViolation `json:"guaranteeViolation"`
 	}
 
 	params := controller.Validated[createRecordParams](ctx)
